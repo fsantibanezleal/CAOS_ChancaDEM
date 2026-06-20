@@ -92,3 +92,35 @@ export function profilePolylines(p: ChamberProfile, n = 56): { concave: [number,
 }
 
 export function machineGeom(machine: Machine): ChamberParams { return GEOM[machine]; }
+
+// ---------------------------------------------------------------------------------------------------------------
+// JAW: a PLANAR two-plate mechanism (NOT a surface of revolution). A near-vertical FIXED jaw and an inclined
+// SWING jaw form a V-shaped chamber that converges downward; feed enters at the wide GAPE (top) and the product
+// exits at the CSS (bottom). Modern single-toggle / overhead-eccentric type: the swing motion is largest at the
+// discharge and decays to ~0 at the suspension point near the top (Gauldie 1953; Wills & Finch, Mineral
+// Processing Technology, ch. on crushers). The gap at the discharge oscillates between CSS (closed) and OSS =
+// CSS+throw (open) once per revolution of the eccentric.
+export interface JawProfile {
+  machine: Machine; P: ChamberParams; cssMm: number; throwMm: number;
+  gapeMm: number;                              // feed opening at the top [mm]
+  xFixed: (z: number) => number;               // fixed-plate face x at height z (z: 0=discharge .. zTop=gape)
+  xSwing: (z: number, openFrac: number) => number; // swing-plate face x; openFrac 0=closed(CSS) .. 1=open(OSS)
+  nipDeg: number;                              // included angle between the two plates [deg]
+}
+
+/** Build the planar jaw geometry for a machine + CSS + throw. Fixed plate on the right (slight backward lean),
+ *  swing plate to its left; chamber opening = CSS at z=0 widening to the gape at z=zTop. */
+export function jawProfile(machine: Machine, cssMm: number, throwMm: number): JawProfile {
+  const P = GEOM[machine];
+  const nip = 0.38;            // ~22° included nip (jaw nip is typically 18–26°)
+  const betaF = 0.06;          // fixed plate leans back slightly going up
+  const xFixed = (z: number) => z * Math.tan(betaF);
+  const xSwing = (z: number, openFrac: number) => {
+    const gapClosed = cssMm + z * Math.tan(nip);          // closed-side opening at height z
+    const open = throwMm * (1 - Math.min(1, z / P.zTop)); // throw: max at discharge, 0 at the top pivot
+    return xFixed(z) - (gapClosed + open * openFrac);     // swing face sits to the LEFT of the fixed face
+  };
+  const gapeMm = cssMm + P.zTop * Math.tan(nip);
+  const nipDeg = (nip + betaF) * 180 / Math.PI;
+  return { machine, P, cssMm, throwMm, gapeMm, xFixed, xSwing, nipDeg };
+}
