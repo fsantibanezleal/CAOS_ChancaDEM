@@ -14,7 +14,11 @@
 // unit diagonal ⇒ det = 1 ⇒ the Whiten solve is always non-singular (manifest §topRisks: factor-order +
 // conditioning). Each column is renormalized to exactly 1 so broken mass is conserved.
 
-const GAMMA = 0.62;   // Austin fines-end slope (illustrative, within the published 0.5–0.8 range)
+// Austin slopes. γ is chosen so the appearance function can REPRESENT the full t10 range it is asked to pass
+// through: at the t10 anchor u=1/10, the maximum reachable value (φ=1) is 0.1^γ, so γ=0.35 ⇒ max t10 ≈ 0.447,
+// comfortably above the realistic crusher t10 band (10–40%). With γ=0.62 the cap was ~0.24, which silently
+// clamped φ and made the displayed t10 disagree with the matrix. β is the coarse-end slope.
+const GAMMA = 0.35;   // Austin fines-end slope (max representable t10 = 0.1^γ ≈ 0.447)
 const BETA = 4.2;     // Austin coarse-end slope (illustrative, within 3–6)
 
 /** Specific comminution energy Ecs [kWh/t] applied, as a didactic function of stroke (throw) and speed.
@@ -28,7 +32,9 @@ export function specificEnergy(throwMm: number, speedRpm: number, speedRef = 350
 /** JKMRC t10 [fraction 0..1] from specific energy and ore competence A·b (A≈60 assumed; b = A·b / A). */
 export function t10Of(ecsKwhT: number, oreAxb: number, A = 60): number {
   const b = oreAxb / A;
-  return Math.max(0, Math.min(0.95, (A * (1 - Math.exp(-b * ecsKwhT))) / 100));
+  // cap at 0.44 so the value stays representable by the Austin appearance function (max 0.1^γ ≈ 0.447) — keeps
+  // the displayed t10 consistent with the breakage matrix B actually built from it.
+  return Math.max(0, Math.min(0.44, (A * (1 - Math.exp(-b * ecsKwhT))) / 100));
 }
 
 /** Austin cumulative breakage: fraction of progeny from a parent finer than relative size u = x/y. */
