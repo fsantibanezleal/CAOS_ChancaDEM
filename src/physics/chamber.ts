@@ -1,62 +1,94 @@
-// Parametric chamber geometry — ONE source feeding the 3D view, the 2D axisymmetric slice and the nip diagram.
-// A cone/gyratory chamber is two surfaces of revolution: the fixed concave r_cc(z) and the mantle r_m(z) whose
-// axis NUTATES (gyrates about a fixed pivot) by the eccentric angle, so the gap at a given height oscillates
-// between CSS (closed side) and OSS (open side) once per revolution. The jaw is a planar wedge with a swinging
-// face. All lengths in mm. This geometry is illustrative-to-scale (didactic), not a vendor chamber drawing.
+// Parametric crusher chamber geometry — REBUILT to real liner anatomy (crusher-correction-manifest §1).
+// Prior build was wrong (a mining engineer flagged it): it ended both liners in the same lower zone and set the
+// gap by a single radial subtraction, and the camera auto-rotated so the CONCAVE looked like it spun. Reality
+// (cone/gyratory): the CONCAVE (bowl liner) is FIXED; the MANTLE (head) is a convex ogive whose base extends
+// BELOW the concave lower lip and whose wall THICKENS DOWNWARD — exactly what lets you RAISE the mantle
+// (hydroset) to close the setting. CSS = the true minimum gap over a gyration near the discharge, set by the
+// mantle's vertical position (NOT a radial scale, NOT the tan-difference law). The jaw is a planar two-plate
+// mechanism, NOT a surface of revolution. Lengths in mm. Qualitative-calibrated (manifest §1.3), never printed
+// as measured liner angles.
 
 import type { Machine } from './types';
 
-export interface ChamberProfile {
-  zTop: number; zBot: number;          // chamber height span [mm] (z=0 at discharge, up to feed)
-  rConcave: (z: number) => number;     // fixed concave radius at height z [mm]
-  rMantleBase: (z: number) => number;  // mantle radius (closed side) at height z [mm]
-  eccentricMm: number;                 // horizontal mantle excursion at the discharge (≈ throw) [mm]
-  isJaw: boolean;
+export interface ChamberParams {
+  zTop: number;        // chamber height (discharge z=0 → feed) [mm]
+  zPz: number;         // top of the parallel zone [mm] (short for standard, LONG for short-head, ≈0 gyratory)
+  zRed: number;        // top of the converging (reduction) zone; feed flare above
+  rDis: number;        // concave radius at the discharge [mm]
+  alphaC: number;      // concave half-angle from vertical in the converging zone [rad]
+  alphaFlare: number;  // feed-flare half-angle (steeper opening) [rad]
+  alphaM: number;      // mantle head half-angle [rad] (alphaM < alphaC ⇒ gap widens upward)
+  overlap: number;     // how far the mantle base sits BELOW the concave discharge lip [mm]
+  isRevolution: boolean; // false for jaw (planar mechanism)
 }
 
-interface Geom { height: number; rTopConcave: number; rBotConcave: number; mantleInset: number; }
-const GEOM: Record<Machine, Geom> = {
-  'cone-sec':  { height: 900, rTopConcave: 700, rBotConcave: 360, mantleInset: 70 },
-  'cone-tert': { height: 700, rTopConcave: 560, rBotConcave: 300, mantleInset: 55 },
-  'jaw':       { height: 1300, rTopConcave: 700, rBotConcave: 230, mantleInset: 0 },
+// Per-machine params — calibrated to QUALITATIVE facts (manifest §1.3): standard = SHORT parallel zone;
+// short-head (tertiary) = LONG parallel zone + smaller chamber + STEEPER head; gyratory = near-vertical concave,
+// ~no parallel zone, tall, stacked rings; jaw = planar. Never printed as measured angles.
+const GEOM: Record<Machine, ChamberParams> = {
+  'cone-sec':        { zTop: 950, zPz: 110, zRed: 620, rDis: 360, alphaC: 0.27, alphaFlare: 0.72, alphaM: 0.12, overlap: 90, isRevolution: true },
+  'cone-tert':       { zTop: 760, zPz: 230, zRed: 560, rDis: 300, alphaC: 0.30, alphaFlare: 0.70, alphaM: 0.18, overlap: 75, isRevolution: true },
+  'cone-short-head': { zTop: 720, zPz: 330, zRed: 560, rDis: 290, alphaC: 0.30, alphaFlare: 0.66, alphaM: 0.23, overlap: 70, isRevolution: true },
+  'gyratory':        { zTop: 1500, zPz: 30, zRed: 1150, rDis: 560, alphaC: 0.10, alphaFlare: 0.30, alphaM: 0.05, overlap: 150, isRevolution: true },
+  'jaw':             { zTop: 1300, zPz: 0, zRed: 1000, rDis: 230, alphaC: 0.16, alphaFlare: 0.20, alphaM: 0, overlap: 0, isRevolution: false },
 };
 
-/** Build the chamber profile for a machine + setting. CSS sets the discharge gap; throw the eccentric excursion. */
+export interface ChamberProfile {
+  machine: Machine; P: ChamberParams; cssMm: number; throwMm: number; isRevolution: boolean;
+  rConcave: (z: number) => number;       // fixed bowl liner radius at height z
+  rMantleClosed: (z: number) => number;  // mantle radius (closed azimuth) at height z
+  cssActualMm: number;                   // true min gap over the discharge zone (engine-computed)
+  ossMm: number;
+}
+
+/** CONCAVE: parallel zone → converging (αc) → feed flare (steeper). FIXED; does not move with CSS. */
+function rConcaveAt(z: number, P: ChamberParams): number {
+  if (z <= P.zPz) return P.rDis;
+  if (z <= P.zRed) return P.rDis + (z - P.zPz) * Math.tan(P.alphaC);
+  const rRed = P.rDis + (P.zRed - P.zPz) * Math.tan(P.alphaC);
+  return rRed + (z - P.zRed) * Math.tan(P.alphaFlare);
+}
+
+/** MANTLE (convex ogive): base extends BELOW the concave (overlap); parallel-zone flank runs parallel to the
+ *  concave so the gap there ≈ css; the crushing cone diverges upward (αc−αm). Wall thickens downward. */
+function rMantleClosedAt(z: number, P: ChamberParams, css: number): number {
+  if (z < -P.overlap) return 0;
+  const zc = Math.max(0, z);
+  if (z <= P.zPz) return Math.max(0, rConcaveAt(zc, P) - css);   // parallel zone: gap ≈ CSS
+  const rPz = rConcaveAt(P.zPz, P) - css;
+  return Math.max(0, rPz - (z - P.zPz) * Math.tan(Math.max(0.01, P.alphaC - P.alphaM)));
+}
+
+/** Build the profile for a machine + CSS + throw. */
 export function chamberProfile(machine: Machine, cssMm: number, throwMm: number): ChamberProfile {
-  const g = GEOM[machine];
-  const isJaw = machine === 'jaw';
-  // concave: linear taper from a wide feed opening down to the discharge
-  const rConcave = (z: number) => {
-    const t = (z - 0) / g.height;                 // 0 at discharge, 1 at top
-    return g.rBotConcave + t * (g.rTopConcave - g.rBotConcave);
-  };
-  // mantle (closed side): sits one gap (CSS) inside the concave at the discharge, tapering up; the parallel
-  // zone near the discharge keeps the gap ≈ CSS over a short height (the crushing/parallel zone).
-  const rMantleBase = (z: number) => {
-    const t = z / g.height;
-    const gapTop = cssMm + 0.55 * (g.rTopConcave - g.rBotConcave);  // wider gap up top (feed opening)
-    const gap = cssMm + t * (gapTop - cssMm);
-    return Math.max(8, rConcave(z) - gap);
-  };
-  return { zTop: g.height, zBot: 0, rConcave, rMantleBase, eccentricMm: throwMm, isJaw };
+  const P = GEOM[machine];
+  const rConcave = (z: number) => rConcaveAt(z, P);
+  const rMantleClosed = (z: number) => rMantleClosedAt(z, P, cssMm);
+  // true min perpendicular gap over the discharge zone (Metso HP CSS definition), not the tan-difference law
+  let gmin = Infinity; const zHi = Math.max(P.zPz, P.zTop * 0.14);
+  for (let z = 1; z <= zHi; z += 2) gmin = Math.min(gmin, rConcave(z) - rMantleClosed(z));
+  return { machine, P, cssMm, throwMm, isRevolution: P.isRevolution, rConcave, rMantleClosed, cssActualMm: Math.max(0, gmin), ossMm: cssMm + throwMm };
 }
 
-/** Nip angle [deg] from the local chamber wall slopes near the discharge (the wedge between concave & mantle). */
+/** Nip angle [deg] from the concave/mantle wall slopes near the discharge. */
 export function chamberNipAngle(p: ChamberProfile): number {
-  const z0 = p.zTop * 0.12, z1 = p.zTop * 0.32;
-  const dConcave = (p.rConcave(z1) - p.rConcave(z0)) / (z1 - z0);
-  const dMantle = (p.rMantleBase(z1) - p.rMantleBase(z0)) / (z1 - z0);
-  // the gap-closing angle ≈ atan of the difference in wall slopes, doubled for the two-sided wedge
-  const ang = Math.atan(Math.abs(dConcave - dMantle)) * 2;
-  return (ang * 180) / Math.PI;
+  const z0 = p.P.zPz + 5, z1 = p.P.zPz + Math.max(60, p.P.zTop * 0.18);
+  const dC = (p.rConcave(z1) - p.rConcave(z0)) / (z1 - z0);
+  const dM = (p.rMantleClosed(z1) - p.rMantleClosed(z0)) / (z1 - z0);
+  return Math.max(8, (Math.atan(Math.abs(dC - dM)) * 2 * 180) / Math.PI);
 }
 
-/** Polyline (r,z) samples of concave and mantle for 2D/3D drawing. n points bottom→top. */
-export function profilePolylines(p: ChamberProfile, n = 40): { concave: [number, number][]; mantle: [number, number][] } {
+/** (r,z) polylines for drawing: concave (fixed, z∈[0,zTop]) and mantle (extends below z=0 by overlap). */
+export function profilePolylines(p: ChamberProfile, n = 56): { concave: [number, number][]; mantle: [number, number][] } {
   const concave: [number, number][] = [], mantle: [number, number][] = [];
+  for (let i = 0; i <= n; i++) { const z = (i / n) * p.P.zTop; concave.push([p.rConcave(z), z]); }
+  const zBase = -p.P.overlap;
   for (let i = 0; i <= n; i++) {
-    const z = p.zBot + (i / n) * (p.zTop - p.zBot);
-    concave.push([p.rConcave(z), z]); mantle.push([p.rMantleBase(z), z]);
+    const z = zBase + (i / n) * (p.P.zTop - zBase);
+    const r = p.rMantleClosed(z);
+    if (r > 1) mantle.push([r, z]);
   }
   return { concave, mantle };
 }
+
+export function machineGeom(machine: Machine): ChamberParams { return GEOM[machine]; }

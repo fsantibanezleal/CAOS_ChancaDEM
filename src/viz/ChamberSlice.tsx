@@ -17,10 +17,11 @@ export function ChamberSlice({ op, height = 320 }: { op: Operating; height?: num
   // map (r,z) → svg; z up, r right. Centre the chamber; the concave is the outer bowl, the mantle a solid cone.
   const W = 460, H = height, padX = 46, padY = 22;
   const rMax = Math.max(...concave.map((c) => c[0])) * 1.08;
-  const zMax = prof.zTop;
+  const zMin = -prof.P.overlap, zMax = prof.P.zTop, zRange = zMax - zMin; // include the overlap so the mantle is seen extending BELOW the concave
   const cx = W / 2;
   const sx = (r: number) => (r / rMax) * (W / 2 - padX);
-  const sy = (z: number) => H - padY - (z / zMax) * (H - 2 * padY);
+  const sy = (z: number) => H - padY - ((z - zMin) / zRange) * (H - 2 * padY);
+  const yDischarge = sy(0); // concave discharge lip line
   // outer bowl as a closed polygon (down the right concave wall, across the discharge, up the left wall)
   const bowl = [
     ...concave.map(([r, z]) => `${cx + sx(r)},${sy(z)}`),                  // right wall bottom→top? concave is bottom→top
@@ -38,8 +39,11 @@ export function ChamberSlice({ op, height = 320 }: { op: Operating; height?: num
         <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={es ? 'Corte de cámara' : 'Chamber cross-section'} style={{ font: '11px var(--font-sans, sans-serif)' }}>
           {/* concave bowl (outer, fixed) */}
           <path d={bowlPath} fill="color-mix(in oklab, var(--color-fg-subtle) 8%, transparent)" stroke="var(--color-fg-subtle)" strokeWidth="2.5" />
-          {/* mantle (central solid cone, gyrating) */}
+          {/* mantle (central solid ogive, gyrating) — its base extends BELOW the concave discharge lip */}
           <path d={mantlePath} fill="color-mix(in oklab, #3fb950 30%, transparent)" stroke="#3fb950" strokeWidth="2.5" />
+          {/* concave discharge-lip line — the mantle visibly extends below it (this is what lets the post be raised) */}
+          <line x1={cx - sx(prof.rConcave(2)) - 8} y1={yDischarge} x2={cx + sx(prof.rConcave(2)) + 8} y2={yDischarge} stroke="var(--color-fg-subtle)" strokeWidth="1" strokeDasharray="5 4" />
+          <text x={cx - sx(rMax) + 2} y={yDischarge - 4} fill="var(--color-fg-faint)" fontSize="10">{es ? 'labio cóncavo' : 'concave lip'}</text>
           {/* OSS extreme outline (dashed) */}
           <path d={ossOutline} fill="none" stroke="#3fb950" strokeWidth="1.2" strokeDasharray="4 3" opacity="0.7" />
           {/* labels */}
@@ -47,7 +51,7 @@ export function ChamberSlice({ op, height = 320 }: { op: Operating; height?: num
           <text x={cx + sx(rMax) - 6} y={sy(zMax * 0.85)} textAnchor="end" fill="var(--color-fg-subtle)">{es ? 'cóncavo' : 'concave'}</text>
           {/* CSS / OSS callouts at the discharge (right-side gap) */}
           {(() => {
-            const z = prof.zBot + 6; const rc = prof.rConcave(z), rm = prof.rMantleBase(z);
+            const z = 0 + 6; const rc = prof.rConcave(z), rm = prof.rMantleClosed(z);
             const yC = sy(z);
             return (<g>
               <line x1={cx + sx(rm)} y1={yC} x2={cx + sx(rc)} y2={yC} stroke="#f0883e" strokeWidth="2.5" />

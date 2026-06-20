@@ -1,7 +1,7 @@
 // Domain types for the live crusher-physics engine. All physical quantities are SI-ish mining units:
 // sizes in millimetres, throughput in tonnes/hour, power in kilowatts, specific energy in kWh/tonne.
 
-export type Machine = 'cone-sec' | 'cone-tert' | 'jaw';
+export type Machine = 'cone-sec' | 'cone-tert' | 'cone-short-head' | 'gyratory' | 'jaw';
 
 /** The operating point — exactly the sliders the studio exposes. */
 export interface Operating {

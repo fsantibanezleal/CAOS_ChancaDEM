@@ -32,7 +32,7 @@ export function Chamber3D({ op, p80, f80, height = 360 }: { op: Operating; p80: 
     renderer.setSize(W, H); renderer.setPixelRatio(Math.min(2, devicePixelRatio));
     el.appendChild(renderer.domElement);
     const controls = new OrbitControls(cam, renderer.domElement);
-    controls.enableDamping = true; controls.target.set(0, 350, 0); controls.autoRotate = true; controls.autoRotateSpeed = 0.6;
+    controls.enableDamping = true; controls.target.set(0, 350, 0); controls.autoRotate = false;  // concave is FIXED in a real crusher — no camera spin; user orbits manually
 
     scene.add(new THREE.AmbientLight(0xffffff, dark ? 0.7 : 0.9));
     const dl = new THREE.DirectionalLight(0xffffff, 0.8); dl.position.set(1, 2, 1); scene.add(dl);
@@ -60,8 +60,8 @@ export function Chamber3D({ op, p80, f80, height = 360 }: { op: Operating; p80: 
     const reset = (i: number, top: boolean) => {
       ang[i] = Math.random() * Math.PI * 2;
       const zt = top ? 0.7 + Math.random() * 0.3 : Math.random();
-      const z = zt * prof.zTop;
-      const rc = prof.rConcave(z), rm = prof.rMantleBase(z);
+      const z = zt * prof.P.zTop;
+      const rc = prof.rConcave(z), rm = prof.rMantleClosed(z);
       rad[i] = rm + Math.random() * Math.max(8, rc - rm);
       pos[i * 3] = Math.cos(ang[i]) * rad[i]; pos[i * 3 + 1] = z; pos[i * 3 + 2] = Math.sin(ang[i]) * rad[i];
       sizeRel[i] = 0.5 + Math.random() * 0.5; broke[i] = 0;
@@ -75,11 +75,11 @@ export function Chamber3D({ op, p80, f80, height = 360 }: { op: Operating; p80: 
 
     let raf = 0; let phase = 0;
     const fallSpeed = 5 + op.speedRpm / 40;
-    const breakZone = prof.zTop * 0.32;   // grip/break near the discharge
+    const breakZone = prof.P.zTop * 0.32;   // grip/break near the discharge
     const animate = () => {
       phase += (op.speedRpm / 60) * 0.04;
       // nutation: tilt the mantle axis and gyrate its phase
-      const ecc = Math.atan2(op.throwMm, prof.zTop) * 1.4;
+      const ecc = Math.atan2(op.throwMm, prof.P.zTop) * 1.4;
       mantleGroup.rotation.set(0, 0, 0);
       mantleGroup.rotateY(phase); mantleGroup.rotateZ(ecc); mantleGroup.rotateY(-phase);
       for (let i = 0; i < N; i++) {
@@ -92,7 +92,7 @@ export function Chamber3D({ op, p80, f80, height = 360 }: { op: Operating; p80: 
         if (pos[i * 3 + 1] < 0) reset(i, true);
         else {
           const z = pos[i * 3 + 1];
-          const rc = prof.rConcave(z), rm = prof.rMantleBase(z);
+          const rc = prof.rConcave(z), rm = prof.rMantleClosed(z);
           rad[i] = Math.max(rm, Math.min(rc, rad[i]));
           pos[i * 3] = Math.cos(ang[i]) * rad[i]; pos[i * 3 + 2] = Math.sin(ang[i]) * rad[i];
         }

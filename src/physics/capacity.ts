@@ -16,6 +16,8 @@ interface CapModel { qRef: number; speedOpt: number; refGapMm: number; }
 
 // per-machine reference capacity [t/h], optimal eccentric speed [rpm], reference discharge gap [mm].
 const CAP: Record<Machine, CapModel> = {
+  'cone-short-head': { qRef: 200, speedOpt: 480, refGapMm: 12 }, // tertiary short-head: finer, faster, smaller gap
+  'gyratory':        { qRef: 4500, speedOpt: 150, refGapMm: 175 }, // primary gyratory: very high t/h, slow gyration, OSS-set
   'cone-sec':  { qRef: 520, speedOpt: 360, refGapMm: 38 },
   'cone-tert': { qRef: 240, speedOpt: 400, refGapMm: 16 },
   'jaw':       { qRef: 700, speedOpt: 300, refGapMm: 110 },

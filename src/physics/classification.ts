@@ -20,9 +20,11 @@ interface KModel { k1a: number; k1b: number; k2a: number; k2b: number; k3: numbe
 // provisional literature-typical K-model per machine. K1 ≈ near-CSS (escape threshold); K2 ≈ a few × CSS
 // (full-capture threshold); K3 (shape) ~2.3–3.0. Documented as illustrative pending plant calibration.
 const KMODEL: Record<Machine, KModel> = {
-  'cone-sec':  { k1a: 0.2, k1b: 0.90, k2a: 6.0, k2b: 1.95, k3: 2.3 },
-  'cone-tert': { k1a: 0.1, k1b: 0.85, k2a: 3.0, k2b: 1.75, k3: 2.5 },
-  'jaw':       { k1a: 2.0, k1b: 0.95, k2a: 20.0, k2b: 2.30, k3: 2.1 },
+  'cone-sec':        { k1a: 0.2, k1b: 0.90, k2a: 6.0, k2b: 1.95, k3: 2.3 },
+  'cone-tert':       { k1a: 0.1, k1b: 0.85, k2a: 3.0, k2b: 1.75, k3: 2.5 },
+  'cone-short-head': { k1a: 0.1, k1b: 0.82, k2a: 2.4, k2b: 1.65, k3: 2.7 }, // tighter classification (longer parallel zone)
+  'gyratory':        { k1a: 0.6, k1b: 0.95, k2a: 10.0, k2b: 2.10, k3: 2.0 }, // coarse primary, OSS-controlled
+  'jaw':             { k1a: 2.0, k1b: 0.95, k2a: 20.0, k2b: 2.30, k3: 2.1 },
 };
 
 /** Build K1,K2,K3 from machine + CSS (K1,K2 linear in CSS). */
