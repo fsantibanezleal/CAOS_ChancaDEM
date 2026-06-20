@@ -11,6 +11,20 @@ export default function Introduction() {
         ? 'Trizar es un estudio de física de chancado en el navegador. Defines la máquina (cono secundario/terciario o mandíbula), el setting de lado cerrado (CSS), la carrera y la velocidad excéntrica, y la granulometría de alimentación; el estudio calcula la gradación del producto, la capacidad y la potencia, y muestra por qué.'
         : 'Trizar is an in-browser crusher-physics studio. You set the machine (secondary/tertiary cone or jaw), the closed-side setting (CSS), the eccentric throw and speed, and the feed size distribution; it computes the product gradation, throughput and power — and shows why.'}</p>
 
+      <svg viewBox="0 0 640 120" width="100%" style={{ maxWidth: 640, display: 'block', margin: '0.8rem auto', font: '11px var(--font-sans, sans-serif)' }} role="img" aria-label="model chain overview">
+        <rect x="6" y="44" width="96" height="32" rx="6" fill="var(--color-surface)" stroke="var(--color-border)" /><text x="54" y="64" textAnchor="middle" fill="var(--color-fg-subtle)" fontSize="10">{es ? 'parámetros' : 'parameters'}</text>
+        <line x1="102" y1="60" x2="132" y2="60" stroke="var(--color-fg-subtle)" />
+        <rect x="132" y="22" width="120" height="34" rx="6" fill="var(--color-surface)" stroke="var(--color-accent)" /><text x="192" y="43" textAnchor="middle" fill="var(--color-fg)" fontSize="10">{es ? 'clasificación C' : 'classification C'}</text>
+        <rect x="132" y="64" width="120" height="34" rx="6" fill="var(--color-surface)" stroke="var(--color-accent)" /><text x="192" y="85" textAnchor="middle" fill="var(--color-fg)" fontSize="10">{es ? 'fractura B (t10)' : 'breakage B (t10)'}</text>
+        <line x1="252" y1="60" x2="282" y2="60" stroke="var(--color-fg-subtle)" />
+        <rect x="282" y="40" width="130" height="40" rx="6" fill="var(--color-surface)" stroke="var(--color-accent)" /><text x="347" y="58" textAnchor="middle" fill="var(--color-fg)" fontSize="10">{es ? 'balance Whiten' : 'Whiten balance'}</text><text x="347" y="72" textAnchor="middle" fill="var(--color-fg-subtle)" fontSize="9">p=(I−C)(I−B·C)⁻¹f</text>
+        <line x1="412" y1="60" x2="442" y2="60" stroke="var(--color-fg-subtle)" />
+        <rect x="442" y="22" width="92" height="34" rx="6" fill="var(--color-surface)" stroke="var(--color-border)" /><text x="488" y="43" textAnchor="middle" fill="var(--color-fg-subtle)" fontSize="10">{es ? 'producto PSD' : 'product PSD'}</text>
+        <rect x="442" y="64" width="92" height="34" rx="6" fill="var(--color-surface)" stroke="var(--color-border)" /><text x="488" y="85" textAnchor="middle" fill="var(--color-fg-subtle)" fontSize="10">{es ? 'capacidad+pot.' : 'capacity+power'}</text>
+        <line x1="534" y1="60" x2="560" y2="60" stroke="var(--color-fg-subtle)" />
+        <rect x="560" y="40" width="74" height="40" rx="6" fill="var(--color-surface)" stroke="#3fb950" /><text x="597" y="58" textAnchor="middle" fill="var(--color-fg)" fontSize="9">ONNX</text><text x="597" y="71" textAnchor="middle" fill="var(--color-fg-subtle)" fontSize="8">{es ? 'surrogate+AE' : 'surrogate+AE'}</text>
+      </svg>
+
       <h3>{es ? 'El problema' : 'The problem'}</h3>
       <p>{es
         ? 'La conminución (chancado y molienda) consume la mayor parte de la energía de una planta minera. En la etapa de chancado, el operador ajusta esencialmente tres palancas — CSS, carrera y velocidad — y el resultado (qué tan fino sale el producto, cuánto pasa y cuánta potencia cuesta) emerge de la interacción entre la geometría de la cámara y la mecánica de fractura de la roca. Esa relación no es intuitiva: cerrar el CSS afina el producto pero baja la capacidad; subir la velocidad sube la capacidad hasta un óptimo y luego la derrumba.'

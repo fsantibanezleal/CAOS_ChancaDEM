@@ -10,3 +10,7 @@ tools/**/*.vtk
 tools/**/*.vtu
 *.local
 .vite
+
+# regenerable training data (seeded; run tools/sweep/gen_sweep.mjs)
+tools/sweep/cz-sweep.jsonl
+tools/sweep/cz-sweep-test.jsonl

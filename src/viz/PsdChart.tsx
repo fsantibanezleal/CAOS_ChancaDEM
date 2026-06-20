@@ -19,7 +19,10 @@ export function PsdChart({ feed, product, f80, p80, height = 240 }: { feed: PSD;
       width, height: h,
       scales: { x: { distr: 3, time: false }, y: { range: [0, 100] } },   // distr:3 = log x
       axes: [
-        { stroke: v.dim, grid: { stroke: v.grid, width: 1 }, ticks: { stroke: v.grid }, values: (_u, ts) => ts.map((t) => (t >= 1 ? `${t}` : `${t}`)), label: 'size (mm)', labelSize: 28, font: '11px var(--font-sans, sans-serif)', labelFont: '11px var(--font-sans, sans-serif)' },
+        { stroke: v.dim, grid: { stroke: v.grid, width: 1 }, ticks: { stroke: v.grid },
+          // log axis: label only the decade ticks (10^k), blank the minors — avoids "null" on intermediate splits
+          values: (_u, ts) => ts.map((t) => { if (t == null) return null; const l = Math.log10(t); return Math.abs(l - Math.round(l)) < 1e-6 ? (t >= 1 ? String(t) : String(+t.toFixed(3))) : null; }),
+          label: 'size (mm)', labelSize: 28, font: '11px var(--font-sans, sans-serif)', labelFont: '11px var(--font-sans, sans-serif)' },
         { stroke: v.dim, grid: { stroke: v.grid, width: 1 }, ticks: { stroke: v.grid }, label: '% passing', labelSize: 28, font: '11px var(--font-sans, sans-serif)', labelFont: '11px var(--font-sans, sans-serif)' },
       ],
       cursor: { drag: { x: true, y: false, setScale: true }, points: { show: true }, focus: { prox: 20 } },
