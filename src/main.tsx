@@ -25,7 +25,7 @@ const config: ShellConfig = {
     { path: '/experiments', en: 'Experiments', es: 'Experimentos' },
     { path: '/benchmark', en: 'Benchmark', es: 'Benchmark' },
   ],
-  links: { github: 'https://github.com/fsantibanezleal/CAOS_TRIZAR' },
+  links: { github: 'https://github.com/fsantibanezleal/CAOS_ChancaDEM' },
   version: '0.02.000',
 };
 
