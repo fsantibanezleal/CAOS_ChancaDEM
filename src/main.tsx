@@ -16,7 +16,7 @@ import Benchmark from './pages/Benchmark';
 applyTheme(readTheme());
 
 const config: ShellConfig = {
-  product: { name: 'Trizar', mark: <Mountain size={18} aria-hidden="true" /> },
+  product: { name: 'ChancaDEM', mark: <Mountain size={18} aria-hidden="true" /> },
   routes: [
     { path: '/', en: 'App', es: 'App' },
     { path: '/introduction', en: 'Introduction', es: 'Introducción' },
