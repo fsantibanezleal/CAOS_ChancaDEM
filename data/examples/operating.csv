@@ -1,0 +1,6 @@
+case_id,machine,cssMm,throwMm,speedRpm,feedX63Mm,feedM,oreAxb,oreWi
+ex-sec-choke,cone-sec,32,30,360,90,1.2,55,14
+ex-tert-fines,cone-tert,8,16,400,28,1.5,55,14
+ex-jaw-primary,jaw,125,40,300,400,0.9,42,16
+ex-gyratory,gyratory,165,30,150,600,0.8,40,16
+ex-shorthead,cone-short-head,6,14,500,22,1.6,55,14

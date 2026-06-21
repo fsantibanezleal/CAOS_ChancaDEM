@@ -1,14 +1,14 @@
-# Trizar — 3D Crusher-Physics Studio
+# ChancaDEM — Crusher-Comminution Studio
 
-> Set eccentric speed, throw, closed-side-setting (CSS) and feed size distribution on a cone, jaw or gyratory
-> crusher and watch the product gradation, throughput and power form — and understand *why*. A didactic
+> Set the machine, eccentric speed, throw, closed-side-setting (CSS) and feed size distribution on a cone, jaw or
+> gyratory crusher and watch the product gradation, throughput and power form — and understand *why*. A didactic
 > comminution sandbox, not a plant control system. Part of the **Faena** mining-analytics hub.
 
-Live: **https://trizar.fasl-work.com** (after first deploy)
+Live: **https://chancadem.fasl-work.com**
 
 ## What it is
 
-Trizar couples three cited comminution models, all running **live in pure TypeScript**:
+ChancaDEM couples three cited comminution models, all running **live in pure TypeScript**:
 
 - **Whiten classification–breakage** population balance — product `p = (I − C)(I − B·C)⁻¹·f`, with the breakage
   matrix `B` built from the JKMRC **t10** energy→fineness curve and the **Austin** appearance function.
@@ -20,31 +20,39 @@ population-balance **surrogate MLP** for instant what-ifs and a **denoising auto
 that also flags when the surrogate is extrapolating. The 3D view replays **DEM** particle traces precomputed
 offline (industrial DEM is infeasible in a browser).
 
-## Architecture (deterministic-replay)
+## Architecture
+
+Instantiated from the CAOS product-repo archetype (ADR-0057): a heavy **offline engine** + a **frontend SPA**, bound
+by two data contracts. See [`STRUCTURE.md`](STRUCTURE.md) and the [`docs/`](docs/README.md) wiki.
 
 ```
-OFFLINE (.venv, Python)                         LIVE (browser, TypeScript)
-  coarse-grained DEM (seeded, section)            Whiten + Evertsson + Bond engine  (pure TS, <1 ms)
-  Latin-hypercube sweep → train ONNX              onnxruntime-web  (surrogate + autoencoder)
-        │  commits                                three.js  (replay of the pre-baked DEM trace)
-        ▼                                         zustand store → ~12 reactive views
-  cz-*.bin traces · *.onnx · *.json  ──(git)──▶
+OFFLINE  data-pipeline/chancalab/ (Node sweep + torch)   LIVE  frontend/src/ (browser, TypeScript)
+  sweep/gen_sweep.mjs  LHS over the TS engine               physics/  Whiten + Evertsson + Bond engine (<1 ms)
+  stages/train.py      surrogate MLP + denoising AE         lib/ort.ts onnxruntime-web (surrogate + AE)
+  stages/evaluate.py   held-out R²/MAPE + P80-monotone gate viz/      three.js + uPlot, zustand store
+        │  --retrain regenerates the artifacts
+        ▼
+  data/derived/  models/*.onnx · scaler/ae_scaler/ae_threshold · surrogate_metrics.json · case-results.json
+        │  (the committed compact artifacts = the offline lane's real outputs)
+        ▼
+  pipeline (numpy) → data/derived/<case>/trace.json + manifests/  (CONTRACT 2; copy-data overlays into frontend/public)
 ```
 
-Heavy DEM never runs client-side; the browser replays seeded, decimated traces (<1 MB each) and runs only the
-small live physics + ONNX inference.
+The default pipeline is **numpy-only** (rebuilds the replay layer from the committed artifacts), so a clone replays
+without torch or Node. Heavy work (the Node sweep of the TS engine + torch training) is the local-only `--retrain`.
 
 ## Develop
 
 ```bash
-npm install
-npm run dev       # vite dev server
-npm test          # physics invariant tests (node --test)
-npm run build     # tsc --noEmit && vite build  (+ SPA 404.html)
-```
+./scripts/setup.sh            # venvs + light deps + editable pkg (numpy+ruff+pytest)   [.ps1 on Windows]
+./scripts/precompute.sh       # python -m chancalab.pipeline all  (rebuild the replay layer, numpy-only)
+.venv-pipeline/bin/python -m pytest    # 9 passed     ·     ./scripts/smoke.sh   # CONTRACT 2 OK
+./scripts/dev.sh              # cd frontend && npm install && npm run dev (vite + live TS engine + ONNX)
+cd frontend && npm run build  # tsc --noEmit && vite build (+ copy-data overlay + SPA 404.html)
 
-The offline pipeline lives in `tools/` (its own `.venv`, never committed; raw DEM exports are gitignored). The
-committed artifacts under `public/` are the reproducible, seeded outputs.
+# regenerate the models from the engine (local-only, torch + Node 20+):
+./scripts/setup.sh --precompute && ./scripts/precompute.sh all --retrain
+```
 
 ## Honesty
 

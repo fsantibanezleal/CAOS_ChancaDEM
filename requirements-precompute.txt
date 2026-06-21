@@ -1,0 +1,8 @@
+# PRECOMPUTE lane — the heavy engines, in .venv-pipeline (local-only, never deployed). Run ONLY for
+# `python -m chancalab.pipeline all --retrain` (Node sweep of the TS engine -> torch train -> ONNX export).
+# Also requires Node 20+ (for the sweep + the case bake) — a system tool, not a pip dep. torch is the CPU build.
+#   install torch CPU via:  pip install torch==2.12.1 --index-url https://download.pytorch.org/whl/cpu
+numpy==2.4.6
+torch==2.12.1
+onnx==1.22.0
+onnxruntime==1.27.0

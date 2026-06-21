@@ -1,8 +1,44 @@
 # Changelog
 
-All notable changes to Trizar (ChancaDEM) are documented here. Versions follow `MAJOR.MINOR.PATCH` as
+All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MINOR.PATCH` as
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
+
+## [0.03.001] — 2026-06-21
+
+### Fixed
+- **App design rule: the "Surrogate vs physics" parity scatter moved out of the App → into the Benchmark page.** It
+  is an aggregate, case-independent view (it samples its own 54 operating points), so per the archetype rule (every
+  App tab must react to the case selector; cross-case/aggregate views belong in Benchmark) it now sits under
+  Benchmark §1 next to the held-out R²/MAPE table it visualizes. The App's remaining 11 tabs all react to the case
+  selector + sliders. Cross-references (Experiments) updated.
+
+## [0.03.000] — 2026-06-21
+
+Refactor onto the CAOS product-repo archetype (ADR-0057) — the science core is unchanged; the repo is now a real,
+contract-bounded, staged offline pipeline + a frontend SPA.
+
+### Changed
+- **`tools/` → `data-pipeline/chancalab/`** — the sweep (`sweep/gen_sweep.mjs`, the SAME TS engine — no Python
+  re-port), the surrogate + denoising-AE training, and the offline 2-D DEM tracer split into the six named stages +
+  `model/`. Bodies unchanged.
+- **`src/` → `frontend/src/`**; `public/*.onnx` + scalers + metrics → **`data/derived/`** (the canonical artifact
+  home). `frontend/copy-data.mjs` overlays them back into `public/` at build (the SPA's fetch paths are unchanged).
+- The default pipeline is **numpy-only**: `python -m chancalab.pipeline all` rebuilds every per-case replay trace +
+  manifest from the committed `case-results.json` (the 17 cases baked by the TS engine) + `surrogate_metrics.json`.
+  `--retrain` regenerates everything (Node sweep → torch train → ONNX → re-bake).
+
+### Added
+- **Two data contracts**: Contract 1 (`io/contract.py` — operating-point schema + per-machine envelopes + outlier
+  policy + a PSD guard) and Contract 2 (`core/manifest.py` `chancadem.manifest/v2` + `core/trace.py`
+  `chancadem.trace/v1`), with a TS mirror (`frontend/src/lib/contract.types.ts`) that fails `tsc` on drift.
+- **Cases by category** (`cases/circuit_cases.py`): the 17-case circuit matrix (primary gyratory/jaw · secondary
+  cone · tertiary cone/short-head · negative/invalid/calibration controls).
+- The client-side **lane gate**, two venvs + per-lane requirements, cross-platform `scripts/`, `tests/`
+  (contract/manifest/smoke), CI (`ci.yml`) + `deploy-pages.yml`, a `docs/` wiki (ADR-0056), and a dormant `app/`
+  FastAPI + VPS deploy templates. Brand/version housekeeping (caos-trizar → caos-chancadem; 0.02 → 0.03).
+- Verified running: ruff clean · pytest 9/9 · pipeline 17 cases · CONTRACT 2 OK · deterministic re-run ·
+  `tsc + vite build` green · physics node tests 10/10.
 
 ## [0.02.000] — 2026-06-20
 
