@@ -1,0 +1,4 @@
+# CORE / LIVE-thin lane — what the DEFAULT (no --retrain) pipeline needs: build the per-case replay traces +
+# manifests from the committed real artifacts (case-results.json + surrogate_metrics.json). NumPy only, instant.
+# The deployed live inference runs in the BROWSER (TS engine + onnxruntime-web), not here.
+numpy==2.4.6
