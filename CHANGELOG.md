@@ -4,6 +4,15 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [0.03.001] — 2026-06-21
+
+### Fixed
+- **App design rule: the "Surrogate vs physics" parity scatter moved out of the App → into the Benchmark page.** It
+  is an aggregate, case-independent view (it samples its own 54 operating points), so per the archetype rule (every
+  App tab must react to the case selector; cross-case/aggregate views belong in Benchmark) it now sits under
+  Benchmark §1 next to the held-out R²/MAPE table it visualizes. The App's remaining 11 tabs all react to the case
+  selector + sliders. Cross-references (Experiments) updated.
+
 ## [0.03.000] — 2026-06-21
 
 Refactor onto the CAOS product-repo archetype (ADR-0057) — the science core is unchanged; the repo is now a real,

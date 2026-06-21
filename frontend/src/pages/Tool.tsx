@@ -8,7 +8,6 @@ import { PsdChart } from '../viz/PsdChart';
 import { Gauge } from '../viz/Gauge';
 import { CapacityEnvelope } from '../viz/CapacityEnvelope';
 import { SurrogateWhatIf } from '../viz/SurrogateWhatIf';
-import { ParityScatter } from '../viz/ParityScatter';
 import { BreakageCurves } from '../viz/BreakageCurves';
 import { NipDiagram } from '../viz/NipDiagram';
 import { AnomalyView } from '../viz/AnomalyView';
@@ -49,7 +48,6 @@ export default function Tool() {
     { id: 'kpi', label: es ? 'Indicadores' : 'Gauges', content: <GaugesPanel r={r} es={es} /> },
     { id: 'capacity', label: es ? 'Capacidad' : 'Capacity', content: <CapacityEnvelope op={op} /> },
     { id: 'whatif', label: es ? 'What-if (ONNX)' : 'What-if (ONNX)', content: <SurrogateWhatIf op={op} result={r} /> },
-    { id: 'parity', label: es ? 'Surrogate vs física' : 'Surrogate vs physics', content: <ParityScatter /> },
     { id: 'breakage', label: es ? 'Fractura t10' : 'Breakage t10', content: <BreakageCurves op={op} /> },
     { id: 'nip', label: es ? 'Ángulo de nip' : 'Nip angle', content: <NipDiagram op={op} /> },
     { id: 'anomaly', label: es ? 'Anomalía (AE)' : 'Anomaly (AE)', content: <AnomalyView result={r} /> },
