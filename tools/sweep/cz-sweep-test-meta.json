@@ -1,16 +1,18 @@
 {
-  "nTotal": 1500,
-  "nValid": 1499,
-  "nInvalid": 1,
+  "nTotal": 2500,
+  "nValid": 2402,
+  "nInvalid": 98,
   "nPerMachine": 500,
   "machines": [
     "cone-sec",
     "cone-tert",
-    "jaw"
+    "jaw",
+    "cone-short-head",
+    "gyratory"
   ],
   "seed": 67890,
   "inputs": [
-    "machine(one-hot×3)",
+    "machine(one-hot×5)",
     "cssMm",
     "throwMm",
     "speedRpm",
