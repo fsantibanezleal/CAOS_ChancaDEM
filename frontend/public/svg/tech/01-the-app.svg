@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="900" class="arch-svg" role="img" aria-label="ChancaDEM — crusher chamber to product gradation">
+  <!-- Hand-authored, ChancaDEM. Every colour is a shell CSS variable → themed. -->
+  <style>
+    .arch-svg text { font-family: var(--font-sans, Inter, "Segoe UI", system-ui, sans-serif); }
+    .arch-svg .mono { font-family: var(--font-mono, ui-monospace, Consolas, monospace); }
+    .arch-svg .bx { fill: var(--color-surface-2); stroke: var(--color-border); stroke-width: 1.2; }
+    .arch-svg .bx-hi { stroke: var(--color-accent); }
+    .arch-svg .bx-good { stroke: var(--color-good); }
+    .arch-svg .ttl { fill: var(--color-fg); font-size: 13px; font-weight: 700; }
+    .arch-svg .sub { fill: var(--color-fg-subtle); font-size: 10px; }
+    .arch-svg .it { fill: var(--color-fg); font-size: 11px; font-weight: 600; }
+    .arch-svg .cd { fill: var(--color-accent); font-size: 9.5px; }
+    .arch-svg .mu { fill: var(--color-fg-subtle); font-size: 10px; }
+    .arch-svg .flow { fill: none; stroke: var(--color-fg-faint); stroke-width: 1.6; }
+    .arch-svg .rock { fill: var(--color-surface); stroke: var(--color-accent); stroke-width: 1; }
+    .arch-svg .mantle { fill: var(--color-fg-faint); opacity: 0.5; }
+    .arch-svg .curve { fill: none; stroke: var(--color-good); stroke-width: 2; }
+    .arch-svg .axis { stroke: var(--color-border); stroke-width: 1; }
+  </style>
+  <defs>
+    <marker id="ta-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L8,4 L0,8 z" fill="var(--color-fg-faint)"/>
+    </marker>
+  </defs>
+
+  <text class="ttl" x="22" y="30">ChancaDEM — how does the crusher chamber turn feed into product?</text>
+  <text class="sub" x="22" y="47">a comminution product: set the machine + CSS / throw / speed / feed and watch the product gradation (PSD) + tph + kW form, live in 3-D</text>
+
+  <!-- 1. The question -->
+  <rect class="bx bx-hi" x="20" y="74" width="196" height="150" rx="11"/>
+  <text class="it" x="34" y="98">The question</text>
+  <text class="mu" x="34" y="118">How do the chamber</text>
+  <text class="mu" x="34" y="134">settings shape the</text>
+  <text class="mu" x="34" y="150">product size, the</text>
+  <text class="mu" x="34" y="166">throughput and the</text>
+  <text class="mu" x="34" y="182">power draw?</text>
+  <text class="cd mono" x="34" y="206">5 machines · cone/jaw/gyr.</text>
+
+  <!-- 2. The chamber (cross-section) -->
+  <rect class="bx" x="244" y="74" width="196" height="150" rx="11"/>
+  <text class="it" x="258" y="98">The chamber</text>
+  <path class="mantle" d="M322,116 L362,116 L350,196 L334,196 Z"/>
+  <path class="rock" d="M300,116 L322,116 L334,196 L292,196 Z" fill="none"/>
+  <path class="rock" d="M362,116 L384,116 L392,196 L350,196 Z" fill="none"/>
+  <circle class="rock" cx="312" cy="135" r="6"/>
+  <circle class="rock" cx="372" cy="140" r="7"/>
+  <circle class="rock" cx="318" cy="170" r="5"/>
+  <circle class="rock" cx="368" cy="172" r="5"/>
+  <text class="mu" x="300" y="212">concave · mantle · CSS gap</text>
+  <text class="cd mono" x="258" y="226" style="font-size:8.5px">chamberProfile · jawProfile</text>
+
+  <!-- 3. The model -->
+  <rect class="bx bx-hi" x="468" y="74" width="196" height="150" rx="11"/>
+  <text class="it" x="482" y="98">The model</text>
+  <text class="mu" x="482" y="118">population balance:</text>
+  <text class="mu" x="482" y="134">• Whiten breakage</text>
+  <text class="mu" x="482" y="150">• classification</text>
+  <text class="mu" x="482" y="166">• Evertsson capacity</text>
+  <text class="mu" x="482" y="182">• Bond power</text>
+  <text class="cd mono" x="482" y="206">physics/ + surrogate.onnx</text>
+
+  <!-- 4. The value: product PSD -->
+  <rect class="bx bx-good" x="692" y="74" width="188" height="150" rx="11"/>
+  <text class="it" x="706" y="98">The value</text>
+  <line class="axis" x1="712" y1="190" x2="862" y2="190"/>
+  <line class="axis" x1="712" y1="118" x2="712" y2="190"/>
+  <path class="curve" d="M712,186 C758,178 786,150 808,132 C828,122 848,116 862,114"/>
+  <text class="mu" x="824" y="206">size →</text>
+  <text class="mu" x="706" y="118">% pass</text>
+  <text class="cd mono" x="706" y="218">P80/P50 · tph · kW</text>
+
+  <path class="flow" d="M216,149 H242" marker-end="url(#ta-arrow)"/>
+  <path class="flow" d="M440,149 H466" marker-end="url(#ta-arrow)"/>
+  <path class="flow" d="M664,149 H690" marker-end="url(#ta-arrow)"/>
+
+  <!-- bottom band: it's real -->
+  <rect class="bx" x="20" y="252" width="860" height="184" rx="11"/>
+  <text class="it" x="36" y="278">It is a real system, not a demo:</text>
+  <text class="mu" x="36" y="302">• the population-balance crusher model (frontend/src/physics/) recomputes live in the browser on every CSS / throw / speed / feed change;</text>
+  <text class="mu" x="36" y="324">• the chamber cross-section is drawn from the real machine geometry; the 3-D viewer shows the mantle/concave gap and the nip angle;</text>
+  <text class="mu" x="36" y="346">• a learned surrogate (ONNX) emulates the physics instantly; a denoising autoencoder scores operating-point anomaly / extrapolation — both client-side;</text>
+  <text class="mu" x="36" y="368">• the inverse "target P80 → recommended CSS" is solved by bisection on the monotone surrogate (consistent, no separate inverse net);</text>
+  <text class="mu" x="36" y="390">• Contract 1 accepts your own operating point; six documented pages; every number sourced or labelled synthetic.</text>
+  <text class="cd mono" x="36" y="418">machine + CSS/throw/speed/feed  →  breakage × classification (population balance)  →  product PSD · tph · Bond kW</text>
+</svg>

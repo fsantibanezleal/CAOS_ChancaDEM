@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" width="900" class="arch-svg" role="img" aria-label="ChancaDEM science — Whiten population balance, Evertsson capacity, Bond power, the surrogate + AE">
+  <style>
+    .arch-svg text { font-family: var(--font-sans, Inter, "Segoe UI", system-ui, sans-serif); }
+    .arch-svg .mono { font-family: var(--font-mono, ui-monospace, Consolas, monospace); }
+    .arch-svg .bx { fill: var(--color-surface-2); stroke: var(--color-border); stroke-width: 1.2; }
+    .arch-svg .bx-hi { stroke: var(--color-accent); }
+    .arch-svg .bx-good { stroke: var(--color-good); }
+    .arch-svg .ttl { fill: var(--color-fg); font-size: 13px; font-weight: 700; }
+    .arch-svg .sub { fill: var(--color-fg-subtle); font-size: 10px; }
+    .arch-svg .st { fill: var(--color-accent); font-size: 11px; font-weight: 700; }
+    .arch-svg .it { fill: var(--color-fg); font-size: 10.5px; }
+    .arch-svg .cd { fill: var(--color-accent); font-size: 9px; }
+    .arch-svg .eq { fill: var(--color-fg); font-size: 12.5px; }
+    .arch-svg .eqi { fill: var(--color-fg); font-size: 12.5px; font-style: italic; }
+    .arch-svg .mu { fill: var(--color-fg-subtle); font-size: 9.5px; }
+    .arch-svg .flow { fill: none; stroke: var(--color-fg-faint); stroke-width: 1.6; }
+  </style>
+  <defs>
+    <marker id="sc-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L8,4 L0,8 z" fill="var(--color-fg-faint)"/>
+    </marker>
+  </defs>
+
+  <text class="ttl" x="22" y="28">The science — a population-balance crusher model (Whiten + Evertsson + Bond)</text>
+  <text class="sub" x="22" y="45">frontend/src/physics/ · the same TypeScript runs live in the browser and under Node in the offline bake</text>
+
+  <!-- Stage 1 -->
+  <rect class="bx bx-hi" x="16" y="66" width="170" height="104" rx="9"/>
+  <text class="st" x="28" y="88">① Feed PSD</text>
+  <text class="it" x="28" y="108">size classes (mass)</text>
+  <text class="mu" x="28" y="124">F80, fines fraction</text>
+  <text class="cd mono" x="28" y="148">feed.ts · sieve.ts</text>
+
+  <!-- Stage 2 -->
+  <rect class="bx bx-hi" x="202" y="66" width="170" height="104" rx="9"/>
+  <text class="st" x="214" y="88">② Breakage</text>
+  <text class="it" x="214" y="108">Whiten t10 / tn</text>
+  <text class="mu" x="214" y="124">appearance + matrix B</text>
+  <text class="cd mono" x="214" y="148">breakage.ts</text>
+
+  <!-- Stage 3 -->
+  <rect class="bx bx-hi" x="388" y="66" width="170" height="104" rx="9"/>
+  <text class="st" x="400" y="88">③ Classification</text>
+  <text class="it" x="400" y="108">selection C(d) by CSS</text>
+  <text class="mu" x="400" y="124">recycle until passing</text>
+  <text class="cd mono" x="400" y="148">classification.ts · whiten.ts</text>
+
+  <!-- Stage 4 -->
+  <rect class="bx bx-hi" x="574" y="66" width="170" height="104" rx="9"/>
+  <text class="st" x="586" y="88">④ Capacity</text>
+  <text class="it" x="586" y="108">Evertsson throughput</text>
+  <text class="mu" x="586" y="124">nip angle, choke</text>
+  <text class="cd mono" x="586" y="148">capacity.ts</text>
+
+  <!-- Stage 5 -->
+  <rect class="bx bx-good" x="760" y="66" width="124" height="104" rx="9"/>
+  <text class="st" x="772" y="88" style="fill:var(--color-good)">⑤ Outputs</text>
+  <text class="it" x="772" y="108">product PSD</text>
+  <text class="mu" x="772" y="124">tph · Bond kW</text>
+  <text class="cd mono" x="772" y="148">engine.ts</text>
+
+  <path class="flow" d="M186,118 H200" marker-end="url(#sc-arrow)"/>
+  <path class="flow" d="M372,118 H386" marker-end="url(#sc-arrow)"/>
+  <path class="flow" d="M558,118 H572" marker-end="url(#sc-arrow)"/>
+  <path class="flow" d="M744,118 H758" marker-end="url(#sc-arrow)"/>
+
+  <!-- equations -->
+  <rect class="bx" x="16" y="190" width="430" height="120" rx="9"/>
+  <text class="it" x="30" y="212" style="font-weight:700">Whiten breakage + product balance</text>
+  <text class="eqi" x="30" y="240">t10 = A·(1 − e^(−b·Ecs))</text>
+  <text class="eq" x="30" y="266">p = (I − C·B)⁻¹ · (I − C) · f</text>
+  <text class="mu" x="30" y="292">Ecs = specific comminution energy; B = breakage matrix; C = classification (selection) by CSS.</text>
+
+  <rect class="bx" x="454" y="190" width="430" height="120" rx="9"/>
+  <text class="it" x="468" y="212" style="font-weight:700">Evertsson capacity + Bond power</text>
+  <text class="eqi" x="468" y="240">Q = ρ · A_open · v_choke · k(nip)</text>
+  <text class="eq" x="468" y="266">W = 10·Wi·(1/√P80 − 1/√F80)</text>
+  <text class="mu" x="468" y="292">throughput from the open area + choke speed; Bond's law for the specific power (kWh/t → kW).</text>
+
+  <!-- learned lane -->
+  <rect class="bx" x="16" y="330" width="430" height="124" rx="9"/>
+  <text class="it" x="30" y="352" style="font-weight:700">Physics engine (always on)</text>
+  <text class="mu" x="30" y="374">the transparent, deterministic population</text>
+  <text class="mu" x="30" y="392">balance — the reference every result is</text>
+  <text class="mu" x="30" y="410">measured against; recomputes live.</text>
+  <text class="cd mono" x="30" y="436">physics/engine.ts · evaluate() (live)</text>
+
+  <rect class="bx bx-good" x="454" y="330" width="430" height="124" rx="9"/>
+  <text class="it" x="468" y="352" style="font-weight:700">Learned lane (ONNX, client-side)</text>
+  <text class="mu" x="468" y="374">• surrogate: 11-vec → 10-vec, emulates the</text>
+  <text class="mu" x="468" y="392">  engine instantly (+ inverse P80→CSS by bisection).</text>
+  <text class="mu" x="468" y="410">• denoising AE: reconstruction MSE = anomaly / OOD.</text>
+  <text class="cd mono" x="468" y="436">train.py → surrogate.onnx · psd-ae.onnx → ort.ts</text>
+</svg>
