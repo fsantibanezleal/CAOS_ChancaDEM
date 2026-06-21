@@ -1,6 +1,6 @@
 {
   "name": "caos-chancadem",
-  "version": "0.03.000",
+  "version": "0.03.001",
   "private": true,
   "type": "module",
   "description": "ChancaDEM — a real, in-browser crusher-comminution studio. Set eccentric speed, throw, closed-side-setting (CSS) and feed size distribution on a cone / jaw / gyratory crusher and watch the product gradation, throughput and power form. A pure-TypeScript Whiten population-balance + Evertsson capacity + Bond power engine runs live, and two learned ONNX models (a surrogate MLP + a denoising autoencoder operating-anomaly score) run in-browser. A didactic comminution sandbox, not a plant control system. Part of the Faena mining-analytics hub.",

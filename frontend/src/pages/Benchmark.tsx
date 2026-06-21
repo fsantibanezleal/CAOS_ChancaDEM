@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Refs, useShellLang } from '@fasl-work/caos-app-shell';
 import { loadLearned, learnedMetrics, type Metrics } from '../physics/surrogate';
+import { ParityScatter } from '../viz/ParityScatter';
 
 // Benchmark — the three honest, separable checks (the central defense against over-claiming). The surrogate-vs-
 // physics numbers are loaded LIVE from the committed surrogate_metrics.json (the real held-out values from the
@@ -27,7 +28,9 @@ export default function Benchmark() {
           ))}</tbody>
         </table>
       ) : <p className="tz-panel-sub">…{es ? 'cargando métricas' : 'loading metrics'}…</p>}
-      {met && <p className="tz-panel-sub">{es ? 'Entrenado con' : 'Trained on'} {met.nTrain} {es ? 'puntos, evaluado en' : 'points, evaluated on'} {met.nTest} {es ? 'puntos held-out independientes. Monotonicidad P80 vs CSS verificada' : 'independent held-out points. P80-vs-CSS monotonicity verified'}: <b>{String(met.p80MonotoneVsCss)}</b>. {es ? 'La pestaña «Surrogate vs física» del App muestra el scatter de paridad en vivo.' : 'The App’s “Surrogate vs physics” tab shows the live parity scatter.'}</p>}
+      {met && <p className="tz-panel-sub">{es ? 'Entrenado con' : 'Trained on'} {met.nTrain} {es ? 'puntos, evaluado en' : 'points, evaluated on'} {met.nTest} {es ? 'puntos held-out independientes. Monotonicidad P80 vs CSS verificada' : 'independent held-out points. P80-vs-CSS monotonicity verified'}: <b>{String(met.p80MonotoneVsCss)}</b>. {es ? 'El scatter de paridad en vivo (surrogate ONNX vs motor físico) está abajo.' : 'The live parity scatter (ONNX surrogate vs the physics engine) is below.'}</p>}
+
+      <ParityScatter />
 
       <h3>{es ? '2 · Acuerdo balance-poblacional ↔ DEM' : '2 · Population-balance ↔ DEM agreement'}</h3>
       <p>{es ? 'El check de "¿la capa en vivo ES de verdad la física?": la salida de la matriz de Whiten contra los escalares del DEM grueso offline (P80, t/h, kW) en puntos compartidos, con tolerancia declarada. Una brecha mayor a la tolerancia es señal de rediseño (derivar B/S del DEM), no algo para tapar.' : 'The "is the live tier actually the physics?" check: the Whiten-matrix output vs the offline coarse-grained DEM scalars (P80, t/h, kW) on shared points, with a stated tolerance. A gap beyond tolerance is a redesign signal (derive B/S from the DEM), not something to paper over.'}</p>
