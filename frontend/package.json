@@ -3,7 +3,7 @@
   "version": "0.03.001",
   "private": true,
   "type": "module",
-  "description": "ChancaDEM — a real, in-browser crusher-comminution studio. Set eccentric speed, throw, closed-side-setting (CSS) and feed size distribution on a cone / jaw / gyratory crusher and watch the product gradation, throughput and power form. A pure-TypeScript Whiten population-balance + Evertsson capacity + Bond power engine runs live, and two learned ONNX models (a surrogate MLP + a denoising autoencoder operating-anomaly score) run in-browser. A didactic comminution sandbox, not a plant control system. Part of the Faena mining-analytics hub.",
+  "description": "ChancaDEM \u2014 a real, in-browser crusher-comminution studio. Set eccentric speed, throw, closed-side-setting (CSS) and feed size distribution on a cone / jaw / gyratory crusher and watch the product gradation, throughput and power form. A pure-TypeScript Whiten population-balance + Evertsson capacity + Bond power engine runs live, and two learned ONNX models (a surrogate MLP + a denoising autoencoder operating-anomaly score) run in-browser. A didactic comminution sandbox, not a plant control system. Part of the Faena mining-analytics hub.",
   "scripts": {
     "predev": "node copy-data.mjs",
     "dev": "vite",
@@ -13,7 +13,7 @@
     "test": "node --import tsx --test test/physics.test.ts"
   },
   "dependencies": {
-    "@fasl-work/caos-app-shell": "^0.1.1",
+    "@fasl-work/caos-app-shell": "^0.1.2",
     "katex": "^0.16.11",
     "lucide-react": "^0.469.0",
     "onnxruntime-web": "^1.27.0",
