@@ -7,7 +7,7 @@ const sv = { maxWidth: 620, display: 'block', margin: '0.8rem auto', font: '11px
 export default function Implementation() {
   const es = useShellLang() === 'es';
   return (
-    <section className="tz-prose" style={{ maxWidth: '100%' }}>
+    <section className="page-body prose">
       <h2>{es ? 'Implementación' : 'Implementation'}</h2>
       <p className="tz-lead">{es ? 'Dos capas: lo pesado (DEM) se precalcula offline y se versiona como trazas reproducibles + modelos ONNX; lo liviano (balance poblacional + inferencia aprendida) corre en vivo en el navegador.' : 'Two tiers: the heavy work (DEM) is precomputed offline and versioned as reproducible traces + ONNX models; the light work (population balance + learned inference) runs live in the browser.'}</p>
 

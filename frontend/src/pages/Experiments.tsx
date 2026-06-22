@@ -7,7 +7,7 @@ import { CASES } from '../data/cases';
 export default function Experiments() {
   const es = useShellLang() === 'es';
   return (
-    <section className="tz-prose" style={{ maxWidth: '100%' }}>
+    <section className="page-body prose">
       <h2>{es ? 'Experimentos' : 'Experiments'}</h2>
       <p className="tz-lead">{es ? 'La cobertura de casos y los barridos controlados que explora el estudio: tipo de máquina, dureza, granulometría de alimentación, régimen y los dos controles (paso directo e inválido).' : 'The case coverage and controlled sweeps the studio explores: machine type, hardness, feed gradation, regime, and the two controls (pass-through and invalid).'}</p>
 

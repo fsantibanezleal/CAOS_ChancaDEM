@@ -14,7 +14,7 @@ export default function Benchmark() {
   const OUTS = ['p80', 'p50', 'p20', 'pass1', 'pass4', 'pass8', 'pass16', 'pass32', 'tph', 'kW'];
 
   return (
-    <section className="tz-prose" style={{ maxWidth: '100%' }}>
+    <section className="page-body prose">
       <h2>Benchmark</h2>
       <p className="tz-lead">{es ? 'Tres comprobaciones separables y reportadas con honestidad — la defensa central contra el sobre-ajuste y la precisión hueca.' : 'Three separable, honestly-reported checks — the central defense against over-claiming and hollow accuracy.'}</p>
 

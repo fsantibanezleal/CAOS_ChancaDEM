@@ -15,7 +15,7 @@ export default function Methodology() {
     { id: 'learned', label: es ? 'Tier aprendido' : 'Learned tier', content: <Learned es={es} /> },
   ];
   return (
-    <section className="tz-prose" style={{ maxWidth: '100%' }}>
+    <section className="page-body prose">
       <h2>{es ? 'Metodología' : 'Methodology'}</h2>
       <p className="tz-lead">{es ? 'La cadena de modelos, citada de extremo a extremo: de la geometría de la cámara al producto, la capacidad y la potencia, y los dos modelos aprendidos.' : 'The model chain, cited end-to-end: from chamber geometry to product, capacity and power, plus the two learned models.'}</p>
       <SubTabs tabs={tabs} ariaLabel="methodology" />

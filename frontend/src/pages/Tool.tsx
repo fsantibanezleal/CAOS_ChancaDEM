@@ -56,7 +56,7 @@ export default function Tool() {
   ];
 
   return (
-    <section className="tz-layout">
+    <section className="page-body tz-layout">
       {/* ---- control sidebar ---- */}
       <aside className="tz-controls">
         <div className="tz-ctl">
