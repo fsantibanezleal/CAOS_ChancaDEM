@@ -5,7 +5,7 @@ import { Refs, useShellLang } from '@fasl-work/caos-app-shell';
 export default function Introduction() {
   const es = useShellLang() === 'es';
   return (
-    <section className="tz-prose">
+    <section className="page-body prose">
       <h2>{es ? 'Introducción' : 'Introduction'}</h2>
       <p className="tz-lead">{es
         ? 'Trizar es un estudio de física de chancado en el navegador. Defines la máquina (cono secundario/terciario o mandíbula), el setting de lado cerrado (CSS), la carrera y la velocidad excéntrica, y la granulometría de alimentación; el estudio calcula la gradación del producto, la capacidad y la potencia, y muestra por qué.'
