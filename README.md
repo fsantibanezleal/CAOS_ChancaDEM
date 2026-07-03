@@ -1,5 +1,9 @@
 # ChancaDEM — Crusher-Comminution Studio
 
+[![CI](https://img.shields.io/github/actions/workflow/status/fsantibanezleal/CAOS_ChancaDEM/ci.yml?branch=main&label=CI)](https://github.com/fsantibanezleal/CAOS_ChancaDEM/actions)
+[![License](https://img.shields.io/github/license/fsantibanezleal/CAOS_ChancaDEM)](LICENSE)
+[![Live demo](https://img.shields.io/badge/demo-live-2ea44f)](https://chancadem.fasl-work.com)
+
 > Set the machine, eccentric speed, throw, closed-side-setting (CSS) and feed size distribution on a cone, jaw or
 > gyratory crusher and watch the product gradation, throughput and power form — and understand *why*. A didactic
 > comminution sandbox, not a plant control system. Part of the **Faena** mining-analytics hub.
