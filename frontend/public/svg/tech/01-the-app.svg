@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="900" class="arch-svg" role="img" aria-label="ChancaDEM — crusher chamber to product gradation">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="900" class="arch-svg" role="img" aria-label="ChancaDEM, crusher chamber to product gradation">
   <!-- Hand-authored, ChancaDEM. Every colour is a shell CSS variable → themed. -->
   <style>
     .arch-svg text { font-family: var(--font-sans, Inter, "Segoe UI", system-ui, sans-serif); }
@@ -23,7 +23,7 @@
     </marker>
   </defs>
 
-  <text class="ttl" x="22" y="30">ChancaDEM — how does the crusher chamber turn feed into product?</text>
+  <text class="ttl" x="22" y="30">ChancaDEM, how does the crusher chamber turn feed into product?</text>
   <text class="sub" x="22" y="47">a comminution product: set the machine + CSS / throw / speed / feed and watch the product gradation (PSD) + tph + kW form, live in 3-D</text>
 
   <!-- 1. The question -->
@@ -78,7 +78,7 @@
   <text class="it" x="36" y="278">It is a real system, not a demo:</text>
   <text class="mu" x="36" y="302">• the population-balance crusher model (frontend/src/physics/) recomputes live in the browser on every CSS / throw / speed / feed change;</text>
   <text class="mu" x="36" y="324">• the chamber cross-section is drawn from the real machine geometry; the 3-D viewer shows the mantle/concave gap and the nip angle;</text>
-  <text class="mu" x="36" y="346">• a learned surrogate (ONNX) emulates the physics instantly; a denoising autoencoder scores operating-point anomaly / extrapolation — both client-side;</text>
+  <text class="mu" x="36" y="346">• a learned surrogate (ONNX) emulates the physics instantly; a denoising autoencoder scores operating-point anomaly / extrapolation, both client-side;</text>
   <text class="mu" x="36" y="368">• the inverse "target P80 → recommended CSS" is solved by bisection on the monotone surrogate (consistent, no separate inverse net);</text>
   <text class="mu" x="36" y="390">• Contract 1 accepts your own operating point; six documented pages; every number sourced or labelled synthetic.</text>
   <text class="cd mono" x="36" y="418">machine + CSS/throw/speed/feed  →  breakage × classification (population balance)  →  product PSD · tph · Bond kW</text>

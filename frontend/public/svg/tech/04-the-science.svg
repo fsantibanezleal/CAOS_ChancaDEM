@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" width="900" class="arch-svg" role="img" aria-label="ChancaDEM science — Whiten population balance, Evertsson capacity, Bond power, the surrogate + AE">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" width="900" class="arch-svg" role="img" aria-label="ChancaDEM science, Whiten population balance, Evertsson capacity, Bond power, the surrogate + AE">
   <style>
     .arch-svg text { font-family: var(--font-sans, Inter, "Segoe UI", system-ui, sans-serif); }
     .arch-svg .mono { font-family: var(--font-mono, ui-monospace, Consolas, monospace); }
@@ -21,7 +21,7 @@
     </marker>
   </defs>
 
-  <text class="ttl" x="22" y="28">The science — a population-balance crusher model (Whiten + Evertsson + Bond)</text>
+  <text class="ttl" x="22" y="28">The science, a population-balance crusher model (Whiten + Evertsson + Bond)</text>
   <text class="sub" x="22" y="45">frontend/src/physics/ · the same TypeScript runs live in the browser and under Node in the offline bake</text>
 
   <!-- Stage 1 -->
@@ -81,7 +81,7 @@
   <rect class="bx" x="16" y="330" width="430" height="124" rx="9"/>
   <text class="it" x="30" y="352" style="font-weight:700">Physics engine (always on)</text>
   <text class="mu" x="30" y="374">the transparent, deterministic population</text>
-  <text class="mu" x="30" y="392">balance — the reference every result is</text>
+  <text class="mu" x="30" y="392">balance, the reference every result is</text>
   <text class="mu" x="30" y="410">measured against; recomputes live.</text>
   <text class="cd mono" x="30" y="436">physics/engine.ts · evaluate() (live)</text>
 

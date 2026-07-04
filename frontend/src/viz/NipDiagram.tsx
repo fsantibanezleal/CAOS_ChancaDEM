@@ -4,7 +4,7 @@ import { nipLimit } from '../physics/capacity';
 import type { Operating } from '../physics/types';
 
 // Nip-angle diagram: a particle wedged between the mantle and the concave, with the nip angle drawn against the
-// friction grip limit. Makes the geometric grip condition α_nip ≤ 2·arctan(µ) visible — WHY a particle is
+// friction grip limit. Makes the geometric grip condition α_nip ≤ 2·arctan(µ) visible, WHY a particle is
 // gripped and crushed vs squeezed up and out.
 export function NipDiagram({ op, height = 300 }: { op: Operating; height?: number }) {
   const es = useShellLang() === 'es';

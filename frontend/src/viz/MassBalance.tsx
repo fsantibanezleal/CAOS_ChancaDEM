@@ -21,7 +21,7 @@ export function MassBalance({ op, result }: { op: Operating; result: CrusherResu
     { ok: cssInvalid ? !result.valid || result.regime !== 'choke' : true, t: es ? 'CSS≥F80 ⇒ marcado' : 'CSS≥F80 ⇒ flagged' },
   ];
 
-  // a compact sankey-ish flow: the share of feed gripped (classified for breakage) vs passing unbroken — high
+  // a compact sankey-ish flow: the share of feed gripped (classified for breakage) vs passing unbroken, high
   // when the setting actually reduces, near-1-passing in the pass-through regime.
   const W = 460, H = 150;
   // unbroken-pass share decreases as the reduction ratio rises (more material gets gripped & broken).

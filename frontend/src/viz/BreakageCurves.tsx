@@ -6,7 +6,7 @@ import { t10Of, specificEnergy, tFamily } from '../physics/breakage';
 import type { Operating } from '../physics/types';
 
 // Breakage / appearance curves: the JKMRC t10 vs specific-energy curve (with the current operating point) and
-// the t-family (tn vs 1/n) that fills the breakage matrix B — showing B is DERIVED from the cited A,b, never
+// the t-family (tn vs 1/n) that fills the breakage matrix B, showing B is DERIVED from the cited A,b, never
 // hand-tuned. Reacts to throw/speed (→ Ecs) and ore A·b.
 export function BreakageCurves({ op, height = 220 }: { op: Operating; height?: number }) {
   const es = useShellLang() === 'es';

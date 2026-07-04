@@ -1,6 +1,6 @@
 import { Equation, InlineMath, Refs, SubTabs, useShellLang } from '@fasl-work/caos-app-shell';
 
-// Methodology — the model chain, one sub-tab per stage, with the governing equations. SVG diagrams per sub-tab
+// Methodology, the model chain, one sub-tab per stage, with the governing equations. SVG diagrams per sub-tab
 // are added in the runtime stage; the equations + derivations are the substance and are complete here.
 const sv = { maxWidth: 560, display: 'block', margin: '0.5rem auto', font: '11px var(--font-sans, sans-serif)' } as const;
 
@@ -26,7 +26,7 @@ export default function Methodology() {
 
 function Chamber({ es }: { es: boolean }) {
   return (<>
-    <p>{es ? 'En un chancador de cono/giratorio el manto es un cuerpo de revolución inclinado un ángulo excéntrico γ que NUTA (gira como un péndulo cónico) alrededor de un pivote fijo a velocidad ω — no rota sobre su eje. El eje del manto es n̂(φ)=(sin γ cos φ, sin γ sin φ, cos γ) con φ=ωt. El CSS es la abertura mínima durante un giro, el OSS la máxima, y la carrera (throw) = OSS − CSS.' : 'In a cone/gyratory crusher the mantle is a body of revolution tilted by an eccentric angle γ that NUTATES (gyrates like a conical pendulum) about a fixed pivot at speed ω — it does not spin on its own axis. The mantle axis is n̂(φ)=(sin γ cos φ, sin γ sin φ, cos γ) with φ=ωt. The CSS is the minimum gap over one gyration, the OSS the maximum, and the throw = OSS − CSS.'}</p>
+    <p>{es ? 'En un chancador de cono/giratorio el manto es un cuerpo de revolución inclinado un ángulo excéntrico γ que NUTA (gira como un péndulo cónico) alrededor de un pivote fijo a velocidad ω, no rota sobre su eje. El eje del manto es n̂(φ)=(sin γ cos φ, sin γ sin φ, cos γ) con φ=ωt. El CSS es la abertura mínima durante un giro, el OSS la máxima, y la carrera (throw) = OSS − CSS.' : 'In a cone/gyratory crusher the mantle is a body of revolution tilted by an eccentric angle γ that NUTATES (gyrates like a conical pendulum) about a fixed pivot at speed ω, it does not spin on its own axis. The mantle axis is n̂(φ)=(sin γ cos φ, sin γ sin φ, cos γ) with φ=ωt. The CSS is the minimum gap over one gyration, the OSS the maximum, and the throw = OSS − CSS.'}</p>
     <Equation tex={String.raw`\hat{n}(\phi)=\big(\sin\gamma\cos\phi,\ \sin\gamma\sin\phi,\ \cos\gamma\big),\qquad \text{CSS}=\min_\phi g(\phi),\quad \text{throw}=\text{OSS}-\text{CSS}`} />
     <svg viewBox="0 0 560 170" width="100%" style={sv} role="img" aria-label="mantle nutation">
       {/* concave walls */}
@@ -61,7 +61,7 @@ function Classify({ es }: { es: boolean }) {
       <text x="110" y="132" fill="var(--color-fg-faint)" fontSize="10">{es ? 'pasa directo' : 'passes through'}</text>
       <text x="420" y="24" fill="var(--color-fg-faint)" fontSize="10">{es ? 'siempre roto' : 'always broken'}</text>
     </svg>
-    <p>{es ? <>K1 y K2 son lineales en el CSS (un setting más cerrado atrapa partículas más pequeñas); K3 (~2.3–3.0) es la forma. Las pendientes exactas <InlineMath tex={String.raw`K=a_0+a_1\,\text{CSS}`} /> son específicas de cada máquina y requieren datos industriales — aquí se usan rangos típicos de literatura, rotulados como ilustrativos.</> : <>K1 and K2 are linear in CSS (a tighter setting captures smaller particles); K3 (~2.3–3.0) is the shape. The exact slopes <InlineMath tex={String.raw`K=a_0+a_1\,\text{CSS}`} /> are machine-specific and need industrial data — literature-typical ranges are used here, labelled illustrative.</>}</p>
+    <p>{es ? <>K1 y K2 son lineales en el CSS (un setting más cerrado atrapa partículas más pequeñas); K3 (~2.3–3.0) es la forma. Las pendientes exactas <InlineMath tex={String.raw`K=a_0+a_1\,\text{CSS}`} /> son específicas de cada máquina y requieren datos industriales, aquí se usan rangos típicos de literatura, rotulados como ilustrativos.</> : <>K1 and K2 are linear in CSS (a tighter setting captures smaller particles); K3 (~2.3–3.0) is the shape. The exact slopes <InlineMath tex={String.raw`K=a_0+a_1\,\text{CSS}`} /> are machine-specific and need industrial data, literature-typical ranges are used here, labelled illustrative.</>}</p>
   </>);
 }
 
@@ -81,7 +81,7 @@ function Breakage({ es }: { es: boolean }) {
       <text x="56" y="36" fill="var(--color-fg-faint)" fontSize="10">A {es ? '(asíntota)' : '(asymptote)'}</text>
       <text x="300" y="110" fill="var(--color-fg-faint)" fontSize="10">{es ? 'más energía → progenie más fina' : 'more energy → finer progeny'}</text>
     </svg>
-    <p>{es ? <>La matriz de fractura B se construye estrictamente triangular inferior (la progenie es estrictamente más fina que la madre), y cada columna se renormaliza a 1 — así la masa se conserva exactamente y <InlineMath tex={String.raw`(I-B\,C)`} /> tiene diagonal unitaria, garantizando que el sistema nunca es singular.</> : <>The breakage matrix B is built strictly lower-triangular (progeny is strictly finer than the parent), and each column renormalizes to 1 — so mass is conserved exactly and <InlineMath tex={String.raw`(I-B\,C)`} /> has a unit diagonal, guaranteeing the system is never singular.</>}</p>
+    <p>{es ? <>La matriz de fractura B se construye estrictamente triangular inferior (la progenie es estrictamente más fina que la madre), y cada columna se renormaliza a 1, así la masa se conserva exactamente y <InlineMath tex={String.raw`(I-B\,C)`} /> tiene diagonal unitaria, garantizando que el sistema nunca es singular.</> : <>The breakage matrix B is built strictly lower-triangular (progeny is strictly finer than the parent), and each column renormalizes to 1, so mass is conserved exactly and <InlineMath tex={String.raw`(I-B\,C)`} /> has a unit diagonal, guaranteeing the system is never singular.</>}</p>
   </>);
 }
 
@@ -98,13 +98,13 @@ function Whiten({ es }: { es: boolean }) {
       <line x1="420" y1="46" x2="462" y2="46" stroke="var(--color-fg-subtle)" />
       <rect x="462" y="32" width="86" height="28" rx="5" fill="var(--color-surface)" stroke="var(--color-border)" /><text x="505" y="50" textAnchor="middle" fill="var(--color-fg)" fontSize="11">{es ? 'producto p' : 'product p'}</text>
     </svg>
-    <p>{es ? <>Nótese que <InlineMath tex={String.raw`(I-C)`} /> va a la IZQUIERDA del inverso (Whiten 1972; Napier-Munn et al. 1996) — el orden importa porque las matrices no conmutan. No formamos el inverso: resolvemos <InlineMath tex={String.raw`(I-B\,C)\,x=f`} /> por LU sobre Float64Array y aplicamos <InlineMath tex={String.raw`(I-C)`} />. Un guard de condicionamiento marca (no produce NaN) los puntos casi-choke donde C→1.</> : <>Note <InlineMath tex={String.raw`(I-C)`} /> sits on the LEFT of the inverse (Whiten 1972; Napier-Munn et al. 1996) — order matters because matrices don’t commute. We never form the inverse: we LU-solve <InlineMath tex={String.raw`(I-B\,C)\,x=f`} /> on a Float64Array and apply <InlineMath tex={String.raw`(I-C)`} />. A conditioning guard flags (never NaNs) the near-choke points where C→1.</>}</p>
+    <p>{es ? <>Nótese que <InlineMath tex={String.raw`(I-C)`} /> va a la IZQUIERDA del inverso (Whiten 1972; Napier-Munn et al. 1996), el orden importa porque las matrices no conmutan. No formamos el inverso: resolvemos <InlineMath tex={String.raw`(I-B\,C)\,x=f`} /> por LU sobre Float64Array y aplicamos <InlineMath tex={String.raw`(I-C)`} />. Un guard de condicionamiento marca (no produce NaN) los puntos casi-choke donde C→1.</> : <>Note <InlineMath tex={String.raw`(I-C)`} /> sits on the LEFT of the inverse (Whiten 1972; Napier-Munn et al. 1996), order matters because matrices don’t commute. We never form the inverse: we LU-solve <InlineMath tex={String.raw`(I-B\,C)\,x=f`} /> on a Float64Array and apply <InlineMath tex={String.raw`(I-C)`} />. A conditioning guard flags (never NaNs) the near-choke points where C→1.</>}</p>
   </>);
 }
 
 function Capacity({ es }: { es: boolean }) {
   return (<>
-    <p>{es ? 'La capacidad es unimodal en la velocidad (modelo de flujo de Evertsson, forma reducida): a baja velocidad la cámara descarga lento; pasado un óptimo, el manto obstruye la caída libre más rápido de lo que la gravedad limpia el material y la capacidad CAE — la joroba de capacidad.' : 'Capacity is unimodal in speed (Evertsson flow model, reduced form): at low speed the chamber discharges slowly; past an optimum the mantle obstructs free-fall faster than gravity clears material and capacity FALLS — the capacity hump.'}</p>
+    <p>{es ? 'La capacidad es unimodal en la velocidad (modelo de flujo de Evertsson, forma reducida): a baja velocidad la cámara descarga lento; pasado un óptimo, el manto obstruye la caída libre más rápido de lo que la gravedad limpia el material y la capacidad CAE, la joroba de capacidad.' : 'Capacity is unimodal in speed (Evertsson flow model, reduced form): at low speed the chamber discharges slowly; past an optimum the mantle obstructs free-fall faster than gravity clears material and capacity FALLS, the capacity hump.'}</p>
     <Equation tex={String.raw`Q=Q_{\text{ref}}\cdot\frac{\text{CSS}+\text{throw}/2}{g_{\text{ref}}}\cdot s\,e^{1-s},\qquad s=\frac{\omega}{\omega_{\text{opt}}}`} />
     <svg viewBox="0 0 560 150" width="100%" style={sv} role="img" aria-label="capacity hump">
       <line x1="50" y1="120" x2="540" y2="120" stroke="var(--color-fg-subtle)" /><line x1="50" y1="20" x2="50" y2="120" stroke="var(--color-fg-subtle)" />

@@ -1,4 +1,4 @@
-"""CONTRACT 2 — artifact (pipeline -> web). The manifest is the authoritative, versioned record of a baked case:
+"""CONTRACT 2, artifact (pipeline -> web). The manifest is the authoritative, versioned record of a baked case:
 its category/stage, seed, engine+version, the shared learned-tier artifacts, the compact per-case trace pointer +
 byte size, the lane/gate verdict, the CONTRACT-1 flags, and the case metrics. The web loads ONLY manifests + traces
 + the shared artifacts; frontend/src/lib/contract.types.ts mirrors this schema so a drift fails the build. The

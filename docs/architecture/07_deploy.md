@@ -1,8 +1,8 @@
-# 07 — Deploy (GitHub Pages, static deterministic-replay)
+# 07, Deploy (GitHub Pages, static deterministic-replay)
 
 ChancaDEM is static-first (no backend at request time). `.github/workflows/deploy-pages.yml` on push to `main`:
 
-1. installs the **light** Python lane (`requirements.txt` + editable pkg, numpy-only — **no torch/Node**) and runs
+1. installs the **light** Python lane (`requirements.txt` + editable pkg, numpy-only, **no torch/Node**) and runs
    `python -m chancalab.pipeline all` to regenerate the per-case traces + manifests from the committed artifacts;
 2. builds the SPA (`cd frontend && npm ci && npm run build`; `copy-data.mjs` overlays `data/derived/` into
    `public/`);

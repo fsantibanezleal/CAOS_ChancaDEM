@@ -1,8 +1,8 @@
-// Capacity, power and nip geometry — the scalar performance envelope.
+// Capacity, power and nip geometry, the scalar performance envelope.
 //
 // CAPACITY (Evertsson flow model, reduced form): throughput is unimodal in eccentric speed. At low speed the
 // chamber discharges slowly; past an optimum the gyrating head obstructs free-fall faster than gravity can
-// clear material, so capacity FALLS — the well-known capacity hump. We use Q = Q_ref · openFactor · s·e^{1−s}
+// clear material, so capacity FALLS, the well-known capacity hump. We use Q = Q_ref · openFactor · s·e^{1−s}
 // with s = speed/speed_opt (peaks at s=1), openFactor ∝ effective discharge opening (CSS + throw/2). This is a
 // reduced parametric form of Evertsson (2000) "Cone Crusher Performance"; absolute numbers are illustrative
 // per-machine references, not a specific plant's curve.
@@ -32,7 +32,7 @@ export function throughput(machine: Machine, cssMm: number, throwMm: number, spe
   return Math.max(0, m.qRef * openFactor * hump);
 }
 
-/** The speed [rpm] that maximizes throughput for a machine (the hump apex) — used to mark the operating point. */
+/** The speed [rpm] that maximizes throughput for a machine (the hump apex), used to mark the operating point. */
 export function optimalSpeed(machine: Machine): number {
   return CAP[machine].speedOpt;
 }
@@ -45,7 +45,7 @@ export function bondPower(tph: number, f80Mm: number, p80Mm: number, wi: number)
   return Math.max(0, w * tph);
 }
 
-/** Nip angle [deg] (the wedge between mantle and concave) — rises modestly with a wider setting. Illustrative
+/** Nip angle [deg] (the wedge between mantle and concave), rises modestly with a wider setting. Illustrative
  *  geometry within published ranges (cone ~22–28°, jaw ~18–26°). */
 export function nipAngle(machine: Machine, cssMm: number): number {
   const base = machine === 'jaw' ? 19 : 22;

@@ -27,7 +27,7 @@ def build_trace(case: Any, *, case_result: dict, surrogate_metrics: dict) -> dic
             "reduction": case_result["reduction"], "ecs": case_result["ecs"],
             "regime": case_result["regime"], "valid": case_result["valid"],
         },
-        # the learned-tier accuracy this engine is emulated by (held-out, global) — referenced, not recomputed
+        # the learned-tier accuracy this engine is emulated by (held-out, global), referenced, not recomputed
         "surrogate": {
             "p80": surrogate_metrics["perOutput"].get("p80"),
             "tph": surrogate_metrics["perOutput"].get("tph"),

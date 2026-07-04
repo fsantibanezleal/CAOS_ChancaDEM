@@ -6,7 +6,7 @@ import type { CrusherResult, Operating } from '../physics/types';
 
 // The decision / recommendation layer (didactic what-if, NOT a plant setpoint controller). Given a target
 // product P80 it recommends a CSS (inverse via bisection on the monotone engine); it diagnoses the binding
-// constraint (capacity / power / nip); and it gives a RAG verdict on the operating point — all with honest
+// constraint (capacity / power / nip); and it gives a RAG verdict on the operating point, all with honest
 // framing, no overconfident single number.
 export function DecisionPanel({ op, result, onApplyCss }: { op: Operating; result: CrusherResult; onApplyCss: (css: number) => void }) {
   const es = useShellLang() === 'es';
@@ -43,7 +43,7 @@ export function DecisionPanel({ op, result, onApplyCss }: { op: Operating; resul
           : <>{es ? 'CSS recomendado' : 'Recommended CSS'}: <b style={{ color: 'var(--color-fg)', fontFamily: 'var(--font-mono)' }}>{rec.toFixed(1)} mm</b>{' '}
             <button className="chip" style={{ marginLeft: '0.3rem' }} onClick={() => onApplyCss(+rec.toFixed(1))}>{es ? 'aplicar' : 'apply'}</button></>}
       </div>
-      <span className="tz-panel-sub" style={{ marginTop: '0.2rem' }}>{es ? 'Inverso por bisección sobre el motor monótono — qué-pasaría-si didáctico, no un setpoint de planta.' : 'Inverse via bisection on the monotone engine — a didactic what-if, not a plant setpoint.'}</span>
+      <span className="tz-panel-sub" style={{ marginTop: '0.2rem' }}>{es ? 'Inverso por bisección sobre el motor monótono, qué-pasaría-si didáctico, no un setpoint de planta.' : 'Inverse via bisection on the monotone engine, a didactic what-if, not a plant setpoint.'}</span>
     </div>
   );
 }

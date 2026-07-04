@@ -1,5 +1,5 @@
 // Latin-hypercube sweep over the operating space, evaluated by the SAME live TypeScript engine the app runs.
-// Rather than re-port the Whiten/Evertsson/Bond engine to Python (divergence risk — the lesson from the sibling
+// Rather than re-port the Whiten/Evertsson/Bond engine to Python (divergence risk, the lesson from the sibling
 // products), we generate the surrogate's training labels by running the real TS engine via tsx and logging
 // (inputs → outputs) at each sampled operating point. The Python trainer then fits the ONNX surrogate + the
 // denoising autoencoder on this dataset. The engine is the single source of physics truth; the surrogate
@@ -12,7 +12,7 @@ import { dirname, resolve } from 'node:path';
 import { evaluate } from '../../../frontend/src/physics/engine.ts';
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-// training data is an OFFLINE artifact (the surrogate's labels), NOT a web payload — it stays beside the generator,
+// training data is an OFFLINE artifact (the surrogate's labels), NOT a web payload, it stays beside the generator,
 // the ONNX models + metrics.json (the web artifacts) go to data/derived/ from the Python trainer.
 const OUT = HERE;
 mkdirSync(OUT, { recursive: true });
@@ -54,8 +54,8 @@ function lhs(n, d, rnd) {
   return Array.from({ length: n }, (_, i) => cols.map((c) => c[i]));
 }
 
-// argv: [seed] [outName] [nPerMachine] — defaults generate the TRAIN set; an independent seed/name gives the
-// held-out TEST set (a second LHS draw, NOT a row-split — a row-split leaks the stratified design).
+// argv: [seed] [outName] [nPerMachine], defaults generate the TRAIN set; an independent seed/name gives the
+// held-out TEST set (a second LHS draw, NOT a row-split, a row-split leaks the stratified design).
 const SEED = Number(process.argv[2] ?? 12345);
 const OUT_NAME = process.argv[3] ?? 'cz-sweep';
 const N_PER_MACHINE = Number(process.argv[4] ?? 1400);
@@ -76,7 +76,7 @@ for (const machine of MACHINES) {
     const oreAxb = lerp(R.axb, u[5]);
     const op = { machine, cssMm, throwMm, speedRpm, feedX63Mm, feedM, oreAxb, oreWi: wiOf(oreAxb) };
     const r = evaluate(op);
-    // discard physically-invalid draws (CSS ≥ feed top, ill-conditioned) — they become the AE's negative set,
+    // discard physically-invalid draws (CSS ≥ feed top, ill-conditioned), they become the AE's negative set,
     // not surrogate training labels.
     const ok = r.valid && r.regime !== 'invalid' && r.reductionRatio >= 1.02 && isFinite(r.p80) && r.p80 > 0;
     rows.push({
