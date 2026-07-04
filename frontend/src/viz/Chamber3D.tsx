@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { useThemeStore } from '@fasl-work/caos-app-shell';
+import { usePausedViz, useThemeStore } from '@fasl-work/caos-app-shell';
 import { chamberProfile, profilePolylines, jawProfile } from '../physics/chamber';
 import type { Operating } from '../physics/types';
 
@@ -25,6 +25,13 @@ export function Chamber3D({ op, p80, f80, height = 360 }: { op: Operating; p80: 
   const ref = useRef<HTMLDivElement>(null);
   const theme = useThemeStore((s) => s.theme);
 
+  // No-compute-bomb (ADR-0059): the chamber animation is DEFAULT PAUSED and mounts through
+  // usePausedViz, which also halts the rAF when the tab is hidden. The per-frame step is defined
+  // inside the scene effect (it closes over the THREE objects) and read here via a ref. loop:true
+  // because the mantle gyration / jaw swing is a continuous dynamics view; the user presses Play.
+  const stepRef = useRef<(() => void) | null>(null);
+  const viz = usePausedViz(() => { stepRef.current?.(); }, { loop: true });
+
   useEffect(() => {
     const el = ref.current; if (!el) return;
     const W = el.clientWidth || 600, H = height;
@@ -46,11 +53,11 @@ export function Chamber3D({ op, p80, f80, height = 360 }: { op: Operating; p80: 
     const geo = new THREE.BufferGeometry();
     const pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
     const sizeRel = new Float32Array(N), broke = new Uint8Array(N);
-    let raf = 0, phase = 0;
+    let phase = 0;
     const fallSpeed = 5 + op.speedRpm / 40;
     const setColor = (i: number) => { const c = viridis(1 - sizeRel[i]); col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; };
 
-    let animate: () => void;
+    let step: () => void;
 
     if (prof.isRevolution) {
       // ---------- surface-of-revolution chamber (cone / gyratory / short-head) ----------
@@ -74,7 +81,7 @@ export function Chamber3D({ op, p80, f80, height = 360 }: { op: Operating; p80: 
       };
       for (let i = 0; i < N; i++) reset(i, false);
       const breakZone = prof.P.zTop * 0.32;
-      animate = () => {
+      step = () => {
         phase += (op.speedRpm / 60) * 0.04;
         const ecc = Math.atan2(op.throwMm, prof.P.zTop) * 1.4;
         mantleGroup.rotation.set(0, 0, 0); mantleGroup.rotateY(phase); mantleGroup.rotateZ(ecc); mantleGroup.rotateY(-phase);
@@ -87,7 +94,6 @@ export function Chamber3D({ op, p80, f80, height = 360 }: { op: Operating; p80: 
         geo.attributes.position.needsUpdate = true; geo.attributes.color.needsUpdate = true;
         pMat.size = 8 + 26 * Math.min(1, p80 / Math.max(1, f80));
         controls.update(); renderer.render(scene, cam);
-        raf = requestAnimationFrame(animate);
       };
     } else {
       // ---------- planar jaw mechanism (fixed + swing plate, swing pivots at the overhead eccentric) ----------
@@ -131,7 +137,7 @@ export function Chamber3D({ op, p80, f80, height = 360 }: { op: Operating; p80: 
       };
       for (let i = 0; i < N; i++) reset(i, false);
       const breakZone = zTop * 0.3;
-      animate = () => {
+      step = () => {
         phase += (op.speedRpm / 60) * 0.05;
         pivot.rotation.z = swingAmp * Math.sin(phase);   // single-toggle swing about the overhead eccentric
         for (let i = 0; i < N; i++) {
@@ -143,7 +149,6 @@ export function Chamber3D({ op, p80, f80, height = 360 }: { op: Operating; p80: 
         geo.attributes.position.needsUpdate = true; geo.attributes.color.needsUpdate = true;
         pMat.size = 8 + 26 * Math.min(1, p80 / Math.max(1, f80));
         controls.update(); renderer.render(scene, cam);
-        raf = requestAnimationFrame(animate);
       };
     }
 
@@ -152,11 +157,16 @@ export function Chamber3D({ op, p80, f80, height = 360 }: { op: Operating; p80: 
     const pMat = new THREE.PointsMaterial({ size: 18, vertexColors: true, sizeAttenuation: true });
     scene.add(new THREE.Points(geo, pMat)); disposables.push(geo, pMat);
 
-    animate();
-    const ro = new ResizeObserver(() => { const w = el.clientWidth || W; renderer.setSize(w, H); cam.aspect = w / H; cam.updateProjectionMatrix(); });
+    // hand the per-frame step to the rAF hook (default paused), draw ONE static frame so the paused
+    // chamber is visible (not a blank canvas), and keep orbit responsive while paused.
+    stepRef.current = step;
+    renderer.render(scene, cam);
+    controls.addEventListener('change', () => renderer.render(scene, cam));
+
+    const ro = new ResizeObserver(() => { const w = el.clientWidth || W; renderer.setSize(w, H); cam.aspect = w / H; cam.updateProjectionMatrix(); renderer.render(scene, cam); });
     ro.observe(el);
     return () => {
-      cancelAnimationFrame(raf); ro.disconnect(); controls.dispose();
+      stepRef.current = null; ro.disconnect(); controls.dispose();
       for (const d of disposables) d.dispose();
       renderer.dispose(); el.removeChild(renderer.domElement);
     };
@@ -165,7 +175,12 @@ export function Chamber3D({ op, p80, f80, height = 360 }: { op: Operating; p80: 
   return (
     <div className="tz-canvas-wrap">
       <div ref={ref} style={{ width: '100%', height }} />
-      <div className="tz-precomp-banner">Kinematic chamber animation · drag to orbit · particles coloured by size</div>
+      <div className="tz-precomp-banner">
+        <button type="button" className="btn" onClick={() => (viz.playing ? viz.pause() : viz.play())}>
+          {viz.playing ? 'Pause' : 'Play'}
+        </button>
+        <span>Kinematic chamber animation · drag to orbit · particles coloured by size</span>
+      </div>
     </div>
   );
 }
