@@ -44,6 +44,7 @@ the shared ONNX, the trace byte size, the lane/gate verdict, the Contract-1 flag
 ## Provenance / honesty
 
 The physics engine (Whiten 1972 population balance + Evertsson 2000 capacity + Bond/JKMRC breakage) is the source of
-truth, calibrated to published cone data (Duarte et al. 2021, DOI 10.3390/min11111256); the surrogate emulates IT,
+truth; its constants are illustrative, pending calibration to published cone data (Duarte et al. 2021, DOI
+10.3390/min11111256 — CK1 is the designated anchor case). The surrogate emulates the ENGINE,
 NOT a real plant. The CP1/CI1 controls are deliberate negative/invalid cases (the engine must show ~zero reduction
 or flag invalidity). No real plant data is used or claimed.

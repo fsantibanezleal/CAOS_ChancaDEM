@@ -40,7 +40,7 @@ export const CASES: Case[] = [
   // ---- CONTROLS (must NOT render silent garbage) ----
   { id: 'CP1', name: 'Pass-through (negative control)', stage: 'control', blurb: 'CSS wider than F80 — material passes mostly ungripped. The engine must show ≈zero reduction, not a pretty plot, and flag the pass-through regime.', machine: 'cone-sec', cssMm: 160, throwMm: 30, speedRpm: 360, feedX63Mm: 90, feedM: 1.2, oreAxb: 55, oreWi: 14, control: 'negative' },
   { id: 'CI1', name: 'CSS > feed top (invalid control)', stage: 'control', blurb: 'CSS wider than the feed top size — physically meaningless. The engine must FLAG invalidity (conditioning / mass-closure / non-negativity guard), never render silent garbage.', machine: 'cone-sec', cssMm: 280, throwMm: 30, speedRpm: 360, feedX63Mm: 90, feedM: 1.2, oreAxb: 55, oreWi: 14, control: 'invalid' },
-  { id: 'CK1', name: 'Calibration anchor (HP-class cone)', stage: 'control', blurb: 'Operating point matched to published industrial cone data (Duarte et al. 2021) for absolute-number calibration; kept disjoint from any held-out validation point.', machine: 'cone-sec', cssMm: 25, throwMm: 30, speedRpm: 350, feedX63Mm: 80, feedM: 1.15, oreAxb: 52, oreWi: 15, control: 'calibration' },
+  { id: 'CK1', name: 'Calibration anchor (HP-class cone)', stage: 'control', blurb: 'Operating point chosen as the anchor for absolute-number calibration against published industrial cone data (Duarte et al. 2021); the calibration fit itself is pending. Kept disjoint from any held-out validation point.', machine: 'cone-sec', cssMm: 25, throwMm: 30, speedRpm: 350, feedX63Mm: 80, feedM: 1.15, oreAxb: 52, oreWi: 15, control: 'calibration' },
 ];
 
 // Reference operating point shown on first load — the secondary-cone choke optimum (S01).
