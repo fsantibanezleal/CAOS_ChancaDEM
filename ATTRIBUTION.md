@@ -12,9 +12,10 @@
 
 ## Data / honesty
 
-ChancaDEM uses **no real plant data**. The physics engine (Whiten/Evertsson/Bond) is the source of truth; it is
-calibrated to the published cone data above (the CK1 control anchors absolute numbers). The learned tier (a surrogate
+ChancaDEM uses **no real plant data**. The physics engine (Whiten/Evertsson/Bond) is the source of truth; its
+constants are illustrative, pending calibration to the published cone data above (the CK1 control is the designated
+anchor for absolute numbers; the fit is not yet executed). The learned tier (a surrogate
 MLP + a denoising autoencoder) is trained on a Latin-hypercube **sweep of that engine** — so the surrogate honestly
-emulates the calibrated physics model, NOT a plant. The held-out surrogate metrics are vs an independent 2nd LHS draw
+emulates the physics model, NOT a plant. The held-out surrogate metrics are vs an independent 2nd LHS draw
 of the engine. The 3D chamber is a kinematic animation (honestly labelled); the offline 2-D DEM tracer is the
 documented next increment. No fabricated benchmark numbers.

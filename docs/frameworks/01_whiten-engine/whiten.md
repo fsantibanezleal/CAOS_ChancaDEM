@@ -27,7 +27,8 @@ p = (I − C)·(I − B·C)⁻¹·f
 
 A population-balance + capacity + power engine is the standard analytic comminution model — cheap, differentiable
 enough to run live, and physically interpretable (mass closure + a conditioning estimate of `(I − B·C)` guard every
-result). It is calibrated to published cone data and honestly labelled as a model, not a plant.
+result). Its constants are illustrative (they reproduce the correct trends), pending calibration to published cone
+data (Duarte et al. 2021), and it is honestly labelled as a model, not a plant.
 
 ## Applying to other data
 
