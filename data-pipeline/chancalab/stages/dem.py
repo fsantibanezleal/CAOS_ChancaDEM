@@ -1,23 +1,23 @@
-"""Offline 2-D soft-sphere DEM of a crusher chamber cross-section, WITH breakage — the SOTA "physics" tier the
+"""Offline 2-D soft-sphere DEM of a crusher chamber cross-section, WITH breakage, the SOTA "physics" tier the
 analytic Whiten+Evertsson live engine is benchmarked against (ADR-0054 deterministic-replay: this runs OFFLINE
 for minutes, bakes a decimated/quantized particle trace + the EMERGENT product granulometry, and the web app
 REPLAYS it; it never solves DEM in the browser).
 
-What it actually is (honesty register — printed into the manifest):
+What it actually is (honesty register, printed into the manifest):
   • A real explicit-time soft-sphere (linear spring–dashpot) DEM in the axisymmetric (r,z) half-plane. Disks fall
     under gravity between a FIXED concave bowl (outer wall) and a GYRATING mantle (inner wall, oscillates in r by
     the throw once per revolution). Particle–particle and particle–wall normal contacts are Hookean with damping;
     tangential is Coulomb-capped viscous. This is the standard Cundall–Strack contact model (Géotechnique 1979).
-  • BREAKAGE: when a disk is nipped — simultaneously loaded by the mantle and the concave with a compressive force
-    above its size-dependent strength — it fractures into progeny whose mass split follows the JKMRC t10–tn
+  • BREAKAGE: when a disk is nipped, simultaneously loaded by the mantle and the concave with a compressive force
+    above its size-dependent strength, it fractures into progeny whose mass split follows the JKMRC t10–tn
     appearance function (t10 from the ore A·b via the Ecs–t10 law, Narayanan & Whiten 1988). Progeny disks are
     placed in the local gap conserving area (2-D mass proxy). This is the particle-replacement breakage model
     (Cleary & Sinnott 2015; Tavares progeny).
-  • The EMERGENT product PSD is built from the sizes of disks that exit below the discharge — it is NOT prescribed.
+  • The EMERGENT product PSD is built from the sizes of disks that exit below the discharge, it is NOT prescribed.
     Agreement with the analytic Whiten product on the same operating point is the cross-check the project lives or
     dies by (manifest §validation): if the "live" matrix model and the offline DEM disagree, we report it.
 
-This is a DIDACTIC 2-D DEM (hundreds of disks, the axisymmetric slice), not an industrial 3-D BPM run — said so
+This is a DIDACTIC 2-D DEM (hundreds of disks, the axisymmetric slice), not an industrial 3-D BPM run, said so
 in the UI. It is a genuine particle simulation, not a kinematic animation.
 
 Run:  python dem2d.py            (bakes the default reference case to public/dem/)
@@ -32,7 +32,7 @@ OUT = os.path.abspath(os.path.join(HERE, "..", "..", "public", "dem"))
 os.makedirs(OUT, exist_ok=True)
 
 # ---------------------------------------------------------------------------------------------------------------
-# Chamber geometry — kept consistent with src/physics/chamber.ts (cone/gyratory surface-of-revolution liners).
+# Chamber geometry, kept consistent with src/physics/chamber.ts (cone/gyratory surface-of-revolution liners).
 # Concave: parallel zone -> converging (alphaC) -> feed flare. Mantle ogive base sits BELOW the concave lip by
 # `overlap` and the gap in the parallel zone is ~CSS. Lengths in mm.
 GEOM = {
@@ -95,7 +95,7 @@ def progeny_sizes(parent_mm, t10, rng):
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# Vectorised geometry (numpy) — same liner shapes as above, evaluated over a particle array at once.
+# Vectorised geometry (numpy), same liner shapes as above, evaluated over a particle array at once.
 def r_concave_vec(z, P):
     rRed = P["rDis"] + (P["zRed"] - P["zPz"]) * math.tan(P["alphaC"])
     below = P["rDis"]
@@ -115,7 +115,7 @@ def r_mantle_closed_vec(z, P, css):
 
 
 # ---------------------------------------------------------------------------------------------------------------
-# The DEM solver — numpy-vectorised soft-sphere contacts (pairwise via broadcasting), explicit time integration.
+# The DEM solver, numpy-vectorised soft-sphere contacts (pairwise via broadcasting), explicit time integration.
 def run_dem(machine, css, throw, speed_rpm, x63, m, axb, n_seed=260, steps=5200, seed=7, n_frames=90):
     P = GEOM[machine]
     rng = np.random.default_rng(seed)

@@ -1,4 +1,4 @@
-"""Stage 3 — train (OFFLINE, heavy lane): fit the surrogate MLP (Adam 2e-3, 500 ep, MSE in z-space) and the
+"""Stage 3, train (OFFLINE, heavy lane): fit the surrogate MLP (Adam 2e-3, 500 ep, MSE in z-space) and the
 denoising AE (Adam 2e-3, 400 ep, MSE on noised input) on the sweep. Deterministic. Requires torch (lazy)."""
 from __future__ import annotations
 

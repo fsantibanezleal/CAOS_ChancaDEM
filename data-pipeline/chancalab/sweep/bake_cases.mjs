@@ -1,5 +1,5 @@
 // Bake the 18-case circuit matrix through the SAME live TypeScript Whiten/Evertsson/Bond engine the browser runs,
-// and write data/derived/case-results.json — the committed, deterministic per-case engine outputs the LIGHT Python
+// and write data/derived/case-results.json, the committed, deterministic per-case engine outputs the LIGHT Python
 // pipeline reshapes into per-case replay traces + manifests (CONTRACT 2). Run after the SPA lives under frontend/:
 //   node --import tsx data-pipeline/chancalab/sweep/bake_cases.mjs
 import { mkdirSync, writeFileSync } from 'node:fs';

@@ -38,8 +38,8 @@ export function AnomalyView({ result }: { result: CrusherResult }) {
             <span className="tz-panel-sub" style={{ fontFamily: 'var(--font-mono)' }}>{es ? 'umbral p99' : 'p99 threshold'} {a.threshold.toFixed(3)} · {(a.ratio).toFixed(2)}×</span>
           </div>
           <p className="tz-panel-sub" style={{ marginTop: '0.5rem' }}>{a.isAnomaly
-            ? (es ? 'Esta operación produce una firma de gradación/potencia poco frecuente en el entrenamiento — el surrogate puede estar extrapolando; confía más en el motor físico.' : 'This operating point yields a gradation/power signature rare in training — the surrogate may be extrapolating; trust the physics engine more here.')
-            : (es ? 'Firma dentro de la distribución de entrenamiento — el surrogate es confiable aquí.' : 'Signature within the training distribution — the surrogate is reliable here.')}</p>
+            ? (es ? 'Esta operación produce una firma de gradación/potencia poco frecuente en el entrenamiento, el surrogate puede estar extrapolando; confía más en el motor físico.' : 'This operating point yields a gradation/power signature rare in training, the surrogate may be extrapolating; trust the physics engine more here.')
+            : (es ? 'Firma dentro de la distribución de entrenamiento, el surrogate es confiable aquí.' : 'Signature within the training distribution, the surrogate is reliable here.')}</p>
         </div>
       )}
     </div>

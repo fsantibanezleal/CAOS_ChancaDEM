@@ -1,11 +1,11 @@
-# ChancaDEM — Crusher-Comminution Studio
+# ChancaDEM, Crusher-Comminution Studio
 
 [![CI](https://img.shields.io/github/actions/workflow/status/fsantibanezleal/CAOS_ChancaDEM/ci.yml?branch=main&label=CI)](https://github.com/fsantibanezleal/CAOS_ChancaDEM/actions)
 [![License](https://img.shields.io/github/license/fsantibanezleal/CAOS_ChancaDEM)](LICENSE)
 [![Live demo](https://img.shields.io/badge/demo-live-2ea44f)](https://chancadem.fasl-work.com)
 
 > Set the machine, eccentric speed, throw, closed-side-setting (CSS) and feed size distribution on a cone, jaw or
-> gyratory crusher and watch the product gradation, throughput and power form — and understand *why*. A didactic
+> gyratory crusher and watch the product gradation, throughput and power form, and understand *why*. A didactic
 > comminution sandbox, not a plant control system. Part of the **Faena** mining-analytics hub.
 
 Live: **https://chancadem.fasl-work.com**
@@ -14,9 +14,9 @@ Live: **https://chancadem.fasl-work.com**
 
 ChancaDEM couples three cited comminution models, all running **live in pure TypeScript**:
 
-- **Whiten classification–breakage** population balance — product `p = (I − C)(I − B·C)⁻¹·f`, with the breakage
+- **Whiten classification–breakage** population balance, product `p = (I − C)(I − B·C)⁻¹·f`, with the breakage
   matrix `B` built from the JKMRC **t10** energy→fineness curve and the **Austin** appearance function.
-- **Evertsson** flow-capacity model — the unimodal capacity hump vs eccentric speed.
+- **Evertsson** flow-capacity model, the unimodal capacity hump vs eccentric speed.
 - **Bond** power.
 
 On top, two **learned ONNX models** run in-browser (trained offline on the population-balance engine): a
@@ -61,7 +61,7 @@ cd frontend && npm run build  # tsc --noEmit && vite build (+ copy-data overlay 
 
 ## Honesty
 
-The K1/K2/K3 classification constants and the operating-energy coupling are **illustrative** — they reproduce the
+The K1/K2/K3 classification constants and the operating-energy coupling are **illustrative**, they reproduce the
 correct trends (CSS↓ ⇒ finer product; the capacity hump), not a specific plant's absolute numbers, pending
 calibration to open industrial data (Duarte et al. 2021, CC-BY). Synthetic numbers are labelled as such; no
 benchmark numbers are fabricated.
