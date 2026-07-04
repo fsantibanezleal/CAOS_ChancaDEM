@@ -21,8 +21,9 @@ ChancaDEM couples three cited comminution models, all running **live in pure Typ
 
 On top, two **learned ONNX models** run in-browser (trained offline on the population-balance engine): a
 population-balance **surrogate MLP** for instant what-ifs and a **denoising autoencoder** operating-anomaly score
-that also flags when the surrogate is extrapolating. The 3D view replays **DEM** particle traces precomputed
-offline (industrial DEM is infeasible in a browser).
+that also flags when the surrogate is extrapolating. The 3D view is a **kinematic chamber animation** (geometry +
+motion + the engine's gradation), not a DEM solve; replaying offline pre-baked DEM traces is the documented next
+increment (industrial DEM is infeasible in a browser).
 
 ## Architecture
 
