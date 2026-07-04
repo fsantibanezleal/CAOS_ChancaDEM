@@ -2,7 +2,7 @@
 
 ChancaDEM depends on the following open-source components. Each retains its own license.
 
-## Offline lane (Python — `requirements*.txt`)
+## Offline lane (Python, `requirements*.txt`)
 
 | Package | License |
 |---|---|
@@ -15,7 +15,7 @@ ChancaDEM depends on the following open-source components. Each retains its own 
 
 The offline sweep + the case bake run on **Node.js** (the SAME TypeScript engine the browser uses, via `tsx`).
 
-## Frontend (npm — `frontend/package.json`)
+## Frontend (npm, `frontend/package.json`)
 
 | Package | License |
 |---|---|

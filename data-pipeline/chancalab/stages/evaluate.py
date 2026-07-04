@@ -1,4 +1,4 @@
-"""Stage 5 — evaluate (the TEST stage, heavy lane): held-out per-output R2 + MAPE in ORIGINAL units, the P80
+"""Stage 5, evaluate (the TEST stage, heavy lane): held-out per-output R2 + MAPE in ORIGINAL units, the P80
 monotone-vs-CSS gate, and the frozen inference contract (scalers + AE threshold). Held-out = an independent 2nd
 LHS draw (seed 67890), NOT a row-split. Requires numpy (+ torch only for the monotone probe)."""
 from __future__ import annotations

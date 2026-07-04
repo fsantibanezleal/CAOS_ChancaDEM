@@ -34,13 +34,13 @@ def _load_artifacts() -> tuple[dict, dict]:
     if missing:
         raise SystemExit(
             f"missing committed artifacts in {DERIVED}: {missing}. case-results.json is baked by the TS engine "
-            f"(sweep/bake_cases.mjs); surrogate_metrics.json is the heavy lane's output — run --retrain to regenerate."
+            f"(sweep/bake_cases.mjs); surrogate_metrics.json is the heavy lane's output, run --retrain to regenerate."
         )
     return read_json(DERIVED / "case-results.json"), read_json(DERIVED / "surrogate_metrics.json")
 
 
 def _contract_flags() -> list[dict]:
-    """Apply CONTRACT 1 to the 17 cases' operating points — proves the ingestion gate, carries flags (e.g. the
+    """Apply CONTRACT 1 to the 17 cases' operating points, proves the ingestion gate, carries flags (e.g. the
     pass-through / invalid controls)."""
     rows = [{"case_id": c.id, "machine": c.machine, "cssMm": c.cssMm, "throwMm": c.throwMm, "speedRpm": c.speedRpm,
              "feedX63Mm": c.feedX63Mm, "feedM": c.feedM, "oreAxb": c.oreAxb} for c in registry.list_cases()]

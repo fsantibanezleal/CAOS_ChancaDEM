@@ -1,4 +1,4 @@
-"""CONTRACT 1 — ingestion (raw operating point + feed PSD -> pipeline). The *bring-your-own-operating-point* gate.
+"""CONTRACT 1, ingestion (raw operating point + feed PSD -> pipeline). The *bring-your-own-operating-point* gate.
 
 Declares the required schema (columns, units, machine envelopes) of a crusher operating point and an EXPLICIT
 outlier policy: a row is ACCEPTED iff it passes; physically-meaningless rows are REJECTED with a reason (never
@@ -72,16 +72,16 @@ def validate_records(raw_rows: list[dict[str, Any]]) -> ContractReport:
             rejected.append({"row": i, "case_id": cid, "reason": "NaN/Inf or non-positive value"})
             continue
         if v["cssMm"] > CSS_INVALID_FACTOR * v["feedX63Mm"]:
-            rejected.append({"row": i, "case_id": cid, "reason": f"cssMm={v['cssMm']:g} > {CSS_INVALID_FACTOR}x feed F63={v['feedX63Mm']:g} (CSS wider than the feed top — physically invalid)"})
+            rejected.append({"row": i, "case_id": cid, "reason": f"cssMm={v['cssMm']:g} > {CSS_INVALID_FACTOR}x feed F63={v['feedX63Mm']:g} (CSS wider than the feed top, physically invalid)"})
             continue
 
         env = ENVELOPE[machine]
         rec_flags: list[str] = []
         for k, (lo, hi) in env.items():
             if not (lo <= v[k] <= hi):
-                rec_flags.append(f"{k}={v[k]:g} outside {machine} envelope [{lo:g},{hi:g}] — surrogate extrapolating (deep-AE anomaly is the live guard)")
+                rec_flags.append(f"{k}={v[k]:g} outside {machine} envelope [{lo:g},{hi:g}], surrogate extrapolating (deep-AE anomaly is the live guard)")
         if v["cssMm"] >= v["feedX63Mm"]:
-            rec_flags.append(f"cssMm={v['cssMm']:g} >= feed F63={v['feedX63Mm']:g} — pass-through regime (near-zero reduction)")
+            rec_flags.append(f"cssMm={v['cssMm']:g} >= feed F63={v['feedX63Mm']:g}, pass-through regime (near-zero reduction)")
         if not (FEEDM_RANGE[0] <= v["feedM"] <= FEEDM_RANGE[1]):
             rec_flags.append(f"feedM={v['feedM']:g} outside [{FEEDM_RANGE[0]},{FEEDM_RANGE[1]}]")
 

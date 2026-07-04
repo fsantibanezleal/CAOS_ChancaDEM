@@ -4,10 +4,10 @@ import { nipLimit } from '../physics/capacity';
 import type { Operating } from '../physics/types';
 
 // The honest MEASUREMENT view that ships alongside the 3D gestalt: a 2D cross-section where you READ the CSS/OSS
-// gap, the throw stroke and — critically — the live nip angle vs the friction grip limit, as numbers. For the
+// gap, the throw stroke and, critically, the live nip angle vs the friction grip limit, as numbers. For the
 // cone/gyratory it is the axisymmetric profile (mantle ogive inside the fixed concave bowl); for the JAW it is
 // the planar two-plate mechanism (fixed jaw + swing jaw). They are fundamentally different machines, drawn
-// differently — not one shape recoloured.
+// differently, not one shape recoloured.
 export function ChamberSlice({ op, height = 320 }: { op: Operating; height?: number }) {
   const es = useShellLang() === 'es';
   if (!machineGeom(op.machine).isRevolution) return <JawSlice op={op} height={height} es={es} />;
@@ -32,7 +32,7 @@ export function ChamberSlice({ op, height = 320 }: { op: Operating; height?: num
   const bowlPath = `M${concave.map(([r, z]) => `${cx + sx(r)},${sy(z)}`).join(' L')} L${[...concave].reverse().map(([r, z]) => `${cx - sx(r)},${sy(z)}`).join(' L')} Z`;
   // mantle as a solid central cone (up the right edge, down the left edge), closed
   const mantlePath = `M${mantle.map(([r, z]) => `${cx + sx(r)},${sy(z)}`).join(' L')} L${[...mantle].reverse().map(([r, z]) => `${cx - sx(r)},${sy(z)}`).join(' L')} Z`;
-  // open-side mantle outline (mantle shifted toward the right by the throw — the OSS extreme of one gyration)
+  // open-side mantle outline (mantle shifted toward the right by the throw, the OSS extreme of one gyration)
   const ossOutline = `M${mantle.map(([r, z]) => `${cx + sx(r) + sx(op.throwMm) / 2},${sy(z)}`).join(' L')}`;
   void bowl;
 
@@ -42,9 +42,9 @@ export function ChamberSlice({ op, height = 320 }: { op: Operating; height?: num
         <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={es ? 'Corte de cámara' : 'Chamber cross-section'} style={{ font: '11px var(--font-sans, sans-serif)' }}>
           {/* concave bowl (outer, fixed) */}
           <path d={bowlPath} fill="color-mix(in oklab, var(--color-fg-subtle) 8%, transparent)" stroke="var(--color-fg-subtle)" strokeWidth="2.5" />
-          {/* mantle (central solid ogive, gyrating) — its base extends BELOW the concave discharge lip */}
+          {/* mantle (central solid ogive, gyrating), its base extends BELOW the concave discharge lip */}
           <path d={mantlePath} fill="color-mix(in oklab, #3fb950 30%, transparent)" stroke="#3fb950" strokeWidth="2.5" />
-          {/* concave discharge-lip line — the mantle visibly extends below it (this is what lets the post be raised) */}
+          {/* concave discharge-lip line, the mantle visibly extends below it (this is what lets the post be raised) */}
           <line x1={cx - sx(prof.rConcave(2)) - 8} y1={yDischarge} x2={cx + sx(prof.rConcave(2)) + 8} y2={yDischarge} stroke="var(--color-fg-subtle)" strokeWidth="1" strokeDasharray="5 4" />
           <text x={cx - sx(rMax) + 2} y={yDischarge - 4} fill="var(--color-fg-faint)" fontSize="10">{es ? 'labio cóncavo' : 'concave lip'}</text>
           {/* OSS extreme outline (dashed) */}
@@ -84,7 +84,7 @@ export function ChamberSlice({ op, height = 320 }: { op: Operating; height?: num
 
 // The JAW is a planar two-plate mechanism: a near-vertical FIXED jaw and an inclined SWING jaw forming a V that
 // converges down to the discharge. Feed enters at the wide GAPE (top); product exits at the CSS (bottom). The
-// swing plate is drawn at its CLOSED extreme (solid) and OPEN extreme (dashed) — the throw is largest at the
+// swing plate is drawn at its CLOSED extreme (solid) and OPEN extreme (dashed), the throw is largest at the
 // discharge and decays to ~0 at the suspension point near the top (single-toggle / overhead-eccentric).
 function JawSlice({ op, height, es }: { op: Operating; height: number; es: boolean }) {
   const j = jawProfile(op.machine, op.cssMm, op.throwMm);
@@ -118,7 +118,7 @@ function JawSlice({ op, height, es }: { op: Operating; height: number; es: boole
           {/* fixed jaw (right, near-vertical, FIXED) */}
           <polyline points={fixedPts.join(' ')} fill="none" stroke="var(--color-fg-subtle)" strokeWidth="6" strokeLinecap="round" />
           <text x={sx(j.xFixed(zTop * 0.5)) + 10} y={sy(zTop * 0.5)} fill="var(--color-fg-subtle)">{es ? 'placa fija' : 'fixed jaw'}</text>
-          {/* swing jaw — open extreme (dashed) then closed extreme (solid) */}
+          {/* swing jaw, open extreme (dashed) then closed extreme (solid) */}
           <polyline points={swingOpen.join(' ')} fill="none" stroke="#3fb950" strokeWidth="2" strokeDasharray="5 4" opacity="0.7" />
           <polyline points={swingClosed.join(' ')} fill="none" stroke="#2ea043" strokeWidth="6" strokeLinecap="round" />
           <text x={sx(j.xSwing(zTop * 0.5, 0)) - 10} y={sy(zTop * 0.5)} textAnchor="end" fill="#2ea043">{es ? 'placa móvil' : 'swing jaw'}</text>

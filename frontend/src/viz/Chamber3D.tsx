@@ -9,11 +9,11 @@ import type { Operating } from '../physics/types';
 //  • SURFACE-OF-REVOLUTION (cone / gyratory / short-head): the fixed concave (wireframe lathe) + the gyrating
 //    mantle (solid lathe whose axis NUTATES about a fixed pivot at the eccentric speed) + a kinematic particle
 //    cloud that falls, is gripped near the discharge and breaks into finer fragments.
-//  • JAW: a PLANAR two-plate mechanism — a near-vertical FIXED plate and an inclined SWING plate that pivots
+//  • JAW: a PLANAR two-plate mechanism, a near-vertical FIXED plate and an inclined SWING plate that pivots
 //    about the overhead eccentric (so the throw is largest at the discharge, ~0 at the suspension) + particles
 //    that fall through the converging V and break near the discharge.
 // Drag to orbit. This is a KINEMATIC chamber animation (geometry + motion + the gradation the engine computes)
-// — NOT a DEM solve; the physically-faithful trajectories are the offline DEM-trace upgrade.
+//, NOT a DEM solve; the physically-faithful trajectories are the offline DEM-trace upgrade.
 const VIRIDIS = [[68, 1, 84], [59, 82, 139], [33, 145, 140], [94, 201, 98], [253, 231, 37]];
 function viridis(t: number): THREE.Color {
   t = Math.max(0, Math.min(1, t)); const x = t * 4; const i = Math.min(3, Math.floor(x)); const f = x - i;
@@ -35,7 +35,7 @@ export function Chamber3D({ op, p80, f80, height = 360 }: { op: Operating; p80: 
     renderer.setSize(W, H); renderer.setPixelRatio(Math.min(2, devicePixelRatio));
     el.appendChild(renderer.domElement);
     const controls = new OrbitControls(cam, renderer.domElement);
-    controls.enableDamping = true; controls.autoRotate = false;  // the fixed liner is FIXED — no camera spin; user orbits manually
+    controls.enableDamping = true; controls.autoRotate = false;  // the fixed liner is FIXED, no camera spin; user orbits manually
 
     scene.add(new THREE.AmbientLight(0xffffff, dark ? 0.7 : 0.9));
     const dl = new THREE.DirectionalLight(0xffffff, 0.8); dl.position.set(1, 2, 1); scene.add(dl);

@@ -1,6 +1,6 @@
-# 02 — Bring your own operating point / feed PSD
+# 02, Bring your own operating point / feed PSD
 
-ChancaDEM is not limited to the 17 baked cases — Contract 1 is the gate that lets it evaluate a NEW operating point.
+ChancaDEM is not limited to the 17 baked cases, Contract 1 is the gate that lets it evaluate a NEW operating point.
 
 ## 1. Describe the operating point (Contract 1)
 
@@ -16,12 +16,12 @@ ok, reason = validate_psd([32, 16, 8, 4, 1], [1.0, 0.8, 0.5, 0.3, 0.1])   # a br
 ```
 
 `cssMm > 2.5× feedX63Mm` is **rejected** (CSS wider than the feed top); `cssMm ≥ feedX63Mm` is **flagged**
-(pass-through); an out-of-machine-envelope value is **flagged** (the surrogate is extrapolating — the deep-AE
+(pass-through); an out-of-machine-envelope value is **flagged** (the surrogate is extrapolating, the deep-AE
 anomaly score is the live guard); a bad machine / non-numeric / non-positive is **rejected with a reason**.
 
 ## 2. Evaluate it
 
 Live: the browser's TS Whiten engine computes the full result for any accepted operating point (move the sliders);
 the surrogate gives the instant what-if and the AE flags if you steer off the trained manifold. Offline: feed the
-operating point into the engine (the sweep generator is the worked example). The honesty caveat stands — the engine
+operating point into the engine (the sweep generator is the worked example). The honesty caveat stands, the engine
 is a calibrated model, not a real plant (see `docs/cases/README.md`).

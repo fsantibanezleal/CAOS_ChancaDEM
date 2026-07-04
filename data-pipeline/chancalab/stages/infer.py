@@ -1,4 +1,4 @@
-"""Stage 4 — infer (heavy lane): run the trained surrogate over the held-out rows in z-space and inverse-transform
+"""Stage 4, infer (heavy lane): run the trained surrogate over the held-out rows in z-space and inverse-transform
 to original units (the offline mirror of the in-browser surrogate path). Requires torch (lazy)."""
 from __future__ import annotations
 

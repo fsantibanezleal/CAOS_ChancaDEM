@@ -23,7 +23,7 @@ const BETA = 4.2;     // Austin coarse-end slope (illustrative, within 3–6)
 
 /** Specific comminution energy Ecs [kWh/t] applied, as a didactic function of stroke (throw) and speed.
  *  Larger throw = more energy per nip; faster gyration = more nips. Scaled to the realistic ~0.3–2.5 kWh/t band
- *  for crushers. Labelled illustrative in the UI — it reproduces the trend (more stroke/speed ⇒ finer), not a
+ *  for crushers. Labelled illustrative in the UI, it reproduces the trend (more stroke/speed ⇒ finer), not a
  *  measured plant energy. */
 export function specificEnergy(throwMm: number, speedRpm: number, speedRef = 350): number {
   return 0.033 * throwMm * (speedRpm / speedRef);
@@ -32,7 +32,7 @@ export function specificEnergy(throwMm: number, speedRpm: number, speedRef = 350
 /** JKMRC t10 [fraction 0..1] from specific energy and ore competence A·b (A≈60 assumed; b = A·b / A). */
 export function t10Of(ecsKwhT: number, oreAxb: number, A = 60): number {
   const b = oreAxb / A;
-  // cap at 0.44 so the value stays representable by the Austin appearance function (max 0.1^γ ≈ 0.447) — keeps
+  // cap at 0.44 so the value stays representable by the Austin appearance function (max 0.1^γ ≈ 0.447), keeps
   // the displayed t10 consistent with the breakage matrix B actually built from it.
   return Math.max(0, Math.min(0.44, (A * (1 - Math.exp(-b * ecsKwhT))) / 100));
 }
@@ -51,7 +51,7 @@ export function phiFromT10(t10: number): number {
   return Math.max(0.02, Math.min(0.98, phi));
 }
 
-/** The standard JKMRC t-family (tn = % passing 1/n of parent) for a given t10 — used by the methodology view to
+/** The standard JKMRC t-family (tn = % passing 1/n of parent) for a given t10, used by the methodology view to
  *  show B is derived from the cited A,b, never hand-tuned. Returns cumulative passing at parent/n. */
 export function tFamily(t10: number): { n: number; tn: number }[] {
   const phi = phiFromT10(t10);

@@ -1,4 +1,4 @@
-"""Stage 1 — preprocess (heavy lane): read the Latin-hypercube sweep (produced by sweep/gen_sweep.mjs, the SAME TS
+"""Stage 1, preprocess (heavy lane): read the Latin-hypercube sweep (produced by sweep/gen_sweep.mjs, the SAME TS
 engine the browser runs) and apply CONTRACT 1 over the operating points. Returns the valid train/test rows. The
 sweep itself already discards physically-invalid draws (they become the AE's negative set). NumPy/stdlib only."""
 from __future__ import annotations

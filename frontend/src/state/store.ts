@@ -1,5 +1,5 @@
 // The single workbench store. A case preset or any slider writes the Operating point; `result` is the live
-// engine evaluation every view reads. Pure + synchronous — the engine is sub-millisecond, so we recompute on
+// engine evaluation every view reads. Pure + synchronous, the engine is sub-millisecond, so we recompute on
 // each change rather than memoizing across the tree.
 import { create } from 'zustand';
 import { evaluate } from '../physics/engine';
@@ -11,7 +11,7 @@ const opOf = (c: Case): Operating => ({
   feedX63Mm: c.feedX63Mm, feedM: c.feedM, oreAxb: c.oreAxb, oreWi: c.oreWi,
 });
 
-// Per-machine reference REGIME (mid-of-envelope) — applied when the user switches machine so the operating
+// Per-machine reference REGIME (mid-of-envelope), applied when the user switches machine so the operating
 // point stays physically sensible (a gyratory never sits at a 32 mm CSS). Only the machine-dependent geometry /
 // speed / feed-size snap; the ore properties (feedM grading, oreAxb hardness) are carried over unchanged.
 const MACHINE_REF: Record<Machine, Pick<Operating, 'cssMm' | 'throwMm' | 'speedRpm' | 'feedX63Mm'>> = {

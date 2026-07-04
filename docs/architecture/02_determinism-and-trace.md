@@ -1,11 +1,11 @@
-# 02 — Determinism & the replay trace
+# 02, Determinism & the replay trace
 
 ## Determinism
 
 Every run is a pure function of `(case, seed)`. The TS engine is analytic (no RNG), so `case-results.json` is fully
 deterministic; the LHS sweep uses a seeded mulberry32 (seed 12345 train / 67890 held-out); torch training seeds
 `torch.manual_seed(0); np.random.seed(0)`. Consequence: re-running the default pipeline produces **byte-identical**
-traces + manifests (the CI determinism guard) — no wall-clock in any committed artifact.
+traces + manifests (the CI determinism guard), no wall-clock in any committed artifact.
 
 ## The compact trace (`chancadem.trace/v1`)
 

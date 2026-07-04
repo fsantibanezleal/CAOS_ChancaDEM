@@ -1,4 +1,4 @@
-# 03 — GPU lane (DORMANT)
+# 03, GPU lane (DORMANT)
 
 This solution does not require a GPU at the moment. ChancaDEM's training is tiny (a small MLP + a denoising AE over a
 few thousand sweep points, seconds on CPU). `requirements-gpu.txt` is a dormant placeholder.

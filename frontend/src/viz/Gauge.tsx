@@ -1,4 +1,4 @@
-// Value-banded gauge — a needle over coloured zones, never a bare number. Ported from the validated visual
+// Value-banded gauge, a needle over coloured zones, never a bare number. Ported from the validated visual
 // language. Shows the value, its band, and (optionally) an uncertainty span so a reading is honest about spread.
 export function Gauge({ title, value, min, max, unit, zones, band, fmt = (v: number) => v.toFixed(0) }: {
   title: string; value: number; min: number; max: number; unit?: string;
