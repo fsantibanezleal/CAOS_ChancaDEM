@@ -1,8 +1,8 @@
-// Parametric crusher chamber geometry — REBUILT to real liner anatomy (crusher-correction-manifest §1).
+// Parametric crusher chamber geometry, REBUILT to real liner anatomy (crusher-correction-manifest §1).
 // Prior build was wrong (a mining engineer flagged it): it ended both liners in the same lower zone and set the
 // gap by a single radial subtraction, and the camera auto-rotated so the CONCAVE looked like it spun. Reality
 // (cone/gyratory): the CONCAVE (bowl liner) is FIXED; the MANTLE (head) is a convex ogive whose base extends
-// BELOW the concave lower lip and whose wall THICKENS DOWNWARD — exactly what lets you RAISE the mantle
+// BELOW the concave lower lip and whose wall THICKENS DOWNWARD, exactly what lets you RAISE the mantle
 // (hydroset) to close the setting. CSS = the true minimum gap over a gyration near the discharge, set by the
 // mantle's vertical position (NOT a radial scale, NOT the tan-difference law). The jaw is a planar two-plate
 // mechanism, NOT a surface of revolution. Lengths in mm. Qualitative-calibrated (manifest §1.3), never printed
@@ -22,7 +22,7 @@ export interface ChamberParams {
   isRevolution: boolean; // false for jaw (planar mechanism)
 }
 
-// Per-machine params — calibrated to QUALITATIVE facts (manifest §1.3): standard = SHORT parallel zone;
+// Per-machine params, calibrated to QUALITATIVE facts (manifest §1.3): standard = SHORT parallel zone;
 // short-head (tertiary) = LONG parallel zone + smaller chamber + STEEPER head; gyratory = near-vertical concave,
 // ~no parallel zone, tall, stacked rings; jaw = planar. Never printed as measured angles.
 const GEOM: Record<Machine, ChamberParams> = {

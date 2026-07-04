@@ -1,6 +1,6 @@
 import { Refs, useShellLang } from '@fasl-work/caos-app-shell';
 
-// Introduction — what the studio is, the problem it addresses, and the honest scope boundary (didactic
+// Introduction, what the studio is, the problem it addresses, and the honest scope boundary (didactic
 // comminution sandbox, not a plant controller). Deepened with diagrams in the runtime stage.
 export default function Introduction() {
   const es = useShellLang() === 'es';
@@ -9,7 +9,7 @@ export default function Introduction() {
       <h2>{es ? 'Introducción' : 'Introduction'}</h2>
       <p className="tz-lead">{es
         ? 'ChancaDEM es un estudio de física de chancado en el navegador. Defines la máquina (giratoria primaria, mandíbula, cono secundario/terciario o short-head), el setting de lado cerrado (CSS), la carrera y la velocidad excéntrica, y la granulometría de alimentación; el estudio calcula la gradación del producto, la capacidad y la potencia, y muestra por qué.'
-        : 'ChancaDEM is an in-browser crusher-physics studio. You set the machine (primary gyratory, jaw, secondary/tertiary cone or short-head), the closed-side setting (CSS), the eccentric throw and speed, and the feed size distribution; it computes the product gradation, throughput and power — and shows why.'}</p>
+        : 'ChancaDEM is an in-browser crusher-physics studio. You set the machine (primary gyratory, jaw, secondary/tertiary cone or short-head), the closed-side setting (CSS), the eccentric throw and speed, and the feed size distribution; it computes the product gradation, throughput and power, and shows why.'}</p>
 
       <svg viewBox="0 0 640 120" width="100%" style={{ maxWidth: 640, display: 'block', margin: '0.8rem auto', font: '11px var(--font-sans, sans-serif)' }} role="img" aria-label="model chain overview">
         <rect x="6" y="44" width="96" height="32" rx="6" fill="var(--color-surface)" stroke="var(--color-border)" /><text x="54" y="64" textAnchor="middle" fill="var(--color-fg-subtle)" fontSize="10">{es ? 'parámetros' : 'parameters'}</text>
@@ -27,8 +27,8 @@ export default function Introduction() {
 
       <h3>{es ? 'El problema' : 'The problem'}</h3>
       <p>{es
-        ? 'La conminución (chancado y molienda) consume la mayor parte de la energía de una planta minera. En la etapa de chancado, el operador ajusta esencialmente tres palancas — CSS, carrera y velocidad — y el resultado (qué tan fino sale el producto, cuánto pasa y cuánta potencia cuesta) emerge de la interacción entre la geometría de la cámara y la mecánica de fractura de la roca. Esa relación no es intuitiva: cerrar el CSS afina el producto pero baja la capacidad; subir la velocidad sube la capacidad hasta un óptimo y luego la derrumba.'
-        : 'Comminution (crushing and grinding) consumes most of a mine’s energy. At the crushing stage an operator essentially turns three levers — CSS, throw and speed — and the outcome (how fine the product is, how much passes, how much power it costs) emerges from the interaction of chamber geometry and rock breakage mechanics. That relationship is non-intuitive: closing the CSS makes the product finer but lowers capacity; raising the speed raises capacity up to an optimum and then collapses it.'}</p>
+        ? 'La conminución (chancado y molienda) consume la mayor parte de la energía de una planta minera. En la etapa de chancado, el operador ajusta esencialmente tres palancas, CSS, carrera y velocidad, y el resultado (qué tan fino sale el producto, cuánto pasa y cuánta potencia cuesta) emerge de la interacción entre la geometría de la cámara y la mecánica de fractura de la roca. Esa relación no es intuitiva: cerrar el CSS afina el producto pero baja la capacidad; subir la velocidad sube la capacidad hasta un óptimo y luego la derrumba.'
+        : 'Comminution (crushing and grinding) consumes most of a mine’s energy. At the crushing stage an operator essentially turns three levers, CSS, throw and speed, and the outcome (how fine the product is, how much passes, how much power it costs) emerges from the interaction of chamber geometry and rock breakage mechanics. That relationship is non-intuitive: closing the CSS makes the product finer but lowers capacity; raising the speed raises capacity up to an optimum and then collapses it.'}</p>
 
       <h3>{es ? 'Qué hace ChancaDEM' : 'What ChancaDEM does'}</h3>
       <p>{es
@@ -37,8 +37,8 @@ export default function Introduction() {
 
       <h3>{es ? 'Alcance honesto' : 'Honest scope'}</h3>
       <p>{es
-        ? 'Esto es un sandbox didáctico de conminución, no un sistema de control de planta. El DEM industrial (millones de partículas, ~4 h de cómputo por segundo de operación) es imposible en el navegador; la vista 3D actual es una animación cinemática — no resuelve partículas — y el replay de trazas DEM pre-horneadas offline es el siguiente incremento documentado. Las constantes son ilustrativas (reproducen tendencias) hasta calibrar con datos industriales abiertos; los números sintéticos se rotulan como tales.'
-        : 'This is a didactic comminution sandbox, not a plant control system. Industrial DEM (millions of particles, ~4 h of compute per second of operation) is impossible in a browser; today\'s 3D view is a kinematic animation — it does not solve particles — and replaying offline pre-baked DEM traces is the documented next increment. Constants are illustrative (they reproduce trends) pending calibration to open industrial data; synthetic numbers are labelled as such.'}</p>
+        ? 'Esto es un sandbox didáctico de conminución, no un sistema de control de planta. El DEM industrial (millones de partículas, ~4 h de cómputo por segundo de operación) es imposible en el navegador; la vista 3D actual es una animación cinemática, no resuelve partículas, y el replay de trazas DEM pre-horneadas offline es el siguiente incremento documentado. Las constantes son ilustrativas (reproducen tendencias) hasta calibrar con datos industriales abiertos; los números sintéticos se rotulan como tales.'
+        : 'This is a didactic comminution sandbox, not a plant control system. Industrial DEM (millions of particles, ~4 h of compute per second of operation) is impossible in a browser; today\'s 3D view is a kinematic animation, it does not solve particles, and replaying offline pre-baked DEM traces is the documented next increment. Constants are illustrative (they reproduce trends) pending calibration to open industrial data; synthetic numbers are labelled as such.'}</p>
 
       <p className="tz-note">{es
         ? 'ChancaDEM es parte del hub de analítica minera Faena. Cada app cubre una etapa de la cadena de valor; ChancaDEM es la de chancado.'

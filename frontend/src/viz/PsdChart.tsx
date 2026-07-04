@@ -3,7 +3,7 @@ import uPlot from 'uplot';
 import { UPlotChart, themeVars } from './UPlotChart';
 import type { PSD } from '../physics/types';
 
-// Feed-vs-product gradation on a semilog %-passing axis — the canonical comminution chart. Feed (dashed) vs
+// Feed-vs-product gradation on a semilog %-passing axis, the canonical comminution chart. Feed (dashed) vs
 // product (solid accent); P80/F80 markers show the reduction. Reacts live to every slider.
 export function PsdChart({ feed, product, f80, p80, height = 240 }: { feed: PSD; product: PSD; f80: number; p80: number; height?: number }) {
   // x = sieve edge size (mm, ascending for a left-to-right fine→coarse plot), y = % passing (0..100)
@@ -20,7 +20,7 @@ export function PsdChart({ feed, product, f80, p80, height = 240 }: { feed: PSD;
       scales: { x: { distr: 3, time: false }, y: { range: [0, 100] } },   // distr:3 = log x
       axes: [
         { stroke: v.dim, grid: { stroke: v.grid, width: 1 }, ticks: { stroke: v.grid },
-          // log axis: label only the decade ticks (10^k), blank the minors — avoids "null" on intermediate splits
+          // log axis: label only the decade ticks (10^k), blank the minors, avoids "null" on intermediate splits
           values: (_u, ts) => ts.map((t) => { if (t == null) return null; const l = Math.log10(t); return Math.abs(l - Math.round(l)) < 1e-6 ? (t >= 1 ? String(t) : String(+t.toFixed(3))) : null; }),
           label: 'size (mm)', labelSize: 28, font: '11px var(--font-sans, sans-serif)', labelFont: '11px var(--font-sans, sans-serif)' },
         { stroke: v.dim, grid: { stroke: v.grid, width: 1 }, ticks: { stroke: v.grid }, label: '% passing', labelSize: 28, font: '11px var(--font-sans, sans-serif)', labelFont: '11px var(--font-sans, sans-serif)' },

@@ -3,7 +3,7 @@
 
 export type Machine = 'cone-sec' | 'cone-tert' | 'cone-short-head' | 'gyratory' | 'jaw';
 
-/** The operating point — exactly the sliders the studio exposes. */
+/** The operating point, exactly the sliders the studio exposes. */
 export interface Operating {
   machine: Machine;
   cssMm: number;        // closed-side setting (narrowest gap) [mm]
@@ -23,7 +23,7 @@ export interface PSD {
   passing: number[];     // K+1 cumulative % passing at each edge [0..1]
 }
 
-/** A complete evaluation of one operating point — what every view reads. */
+/** A complete evaluation of one operating point, what every view reads. */
 export interface CrusherResult {
   op: Operating;
   feed: PSD;

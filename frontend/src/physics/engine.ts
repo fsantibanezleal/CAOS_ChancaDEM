@@ -1,6 +1,6 @@
 // Top-level live engine: an Operating point → a full CrusherResult. This is the single source of physics truth
 // the whole app reads, AND the ground-truth the offline LHS sweep samples to train the ONNX surrogate (so the
-// surrogate honestly emulates THIS engine). Pure TypeScript, sub-millisecond — no Pyodide, no backend.
+// surrogate honestly emulates THIS engine). Pure TypeScript, sub-millisecond, no Pyodide, no backend.
 
 import { makeGrid, midSizes, toPSD, sizeAtPassing, passingAtSize } from './sieve';
 import { makeFeed } from './feed';
@@ -59,10 +59,10 @@ export function evaluate(op: Operating): CrusherResult {
   let valid = true;
   if (op.cssMm >= f80) {                       // setting wider than 80% of feed → most material passes ungripped
     regime = 'pass-through';
-    if (op.cssMm >= feed.edgesMm[0]) { valid = false; flags.push('CSS ≥ feed top size — nothing is gripped'); }
-    else flags.push('CSS ≥ F80 — little size reduction (pass-through regime)');
+    if (op.cssMm >= feed.edgesMm[0]) { valid = false; flags.push('CSS ≥ feed top size, nothing is gripped'); }
+    else flags.push('CSS ≥ F80, little size reduction (pass-through regime)');
   }
-  if (reductionRatio < 1.05 && valid) { regime = regime === 'choke' ? 'pass-through' : regime; flags.push('reduction ratio ≈ 1 — negligible breakage'); }
+  if (reductionRatio < 1.05 && valid) { regime = regime === 'choke' ? 'pass-through' : regime; flags.push('reduction ratio ≈ 1, negligible breakage'); }
   if (!isFinite(cond) || cond > 1e6) { valid = false; flags.push('ill-conditioned breakage matrix near choke'); }
   if (op.cssMm >= feed.edgesMm[0]) regime = 'invalid';
 

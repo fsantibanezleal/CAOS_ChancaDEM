@@ -1,11 +1,11 @@
-"""Stage 6 — export (CONTRACT 2). Two paths:
+"""Stage 6, export (CONTRACT 2). Two paths:
 
 * build_replay (LIGHT, numpy/stdlib): the default pipeline path. Builds the compact per-case trace from the REAL
   committed engine outputs (case-results.json, produced by the SAME TS engine the browser runs) + the surrogate's
-  held-out metrics, runs the lane gate, and writes the manifest. No torch/node — so the contract + replay regenerate
+  held-out metrics, runs the lane gate, and writes the manifest. No torch/node, so the contract + replay regenerate
   deterministically anywhere, and CI stays fast.
 * export_models (HEAVY, torch): the --retrain path. Writes surrogate.onnx + psd-ae.onnx (opset 17, dynamic batch),
-  the frozen scalers, and surrogate_metrics.json — the artifacts the LIGHT path then consumes.
+  the frozen scalers, and surrogate_metrics.json, the artifacts the LIGHT path then consumes.
 """
 from __future__ import annotations
 

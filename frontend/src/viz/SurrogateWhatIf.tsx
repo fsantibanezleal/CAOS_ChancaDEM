@@ -4,7 +4,7 @@ import { surrogatePredict, type SurOut, learnedMetrics, loadLearned, type Metric
 import type { CrusherResult, Operating } from '../physics/types';
 
 // Live surrogate what-if: the ONNX MLP runs in-browser on the current operating point and predicts the product
-// in a single forward pass. We show it next to the exact engine values — the surrogate's job is to EMULATE the
+// in a single forward pass. We show it next to the exact engine values, the surrogate's job is to EMULATE the
 // physics instantly, so a small gap here is the honest measure of the learned model (it is benchmarked against
 // the physics it emulates, not a real plant).
 export function SurrogateWhatIf({ op, result }: { op: Operating; result: CrusherResult }) {

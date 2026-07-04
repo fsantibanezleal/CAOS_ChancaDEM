@@ -1,4 +1,4 @@
-# 01 — Overview
+# 01, Overview
 
 ChancaDEM is split into a heavy **offline engine** (`data-pipeline/chancalab/`) and a **frontend SPA**
 (`frontend/`), bound by two data contracts. The committed compact artifacts under `data/derived/` are the offline
@@ -19,18 +19,18 @@ frontend (copy-data.mjs overlays data/derived) ──► the TS engine + onnxrun
 
 ## Packages
 
-* **`data-pipeline/chancalab/`** — the offline engine: `io/` (contracts, formats), `core/` (rng, trace, manifest,
+* **`data-pipeline/chancalab/`**, the offline engine: `io/` (contracts, formats), `core/` (rng, trace, manifest,
   gate), `model/` (surrogate, psd_ae), `stages/` (the named pipeline + the offline 2-D DEM tracer `dem.py`),
   `cases/` + `registry.py` (the 17 cases by category), `sweep/` (the Node sweep + the case bake), `pipeline.py`
   (orchestrator + CLI), `live.py` (dormant Pyodide).
-* **`frontend/`** — the React/Vite SPA: `src/physics/` (the TS Whiten/Evertsson/Bond engine), `src/lib/ort.ts`
+* **`frontend/`**, the React/Vite SPA: `src/physics/` (the TS Whiten/Evertsson/Bond engine), `src/lib/ort.ts`
   (onnxruntime-web), `src/viz/` (the visualizations), `src/pages/` (the 6 standard pages), `src/state/store.ts`
   (zustand), `src/lib/contract.types.ts` (the Contract-2 mirror).
-* **`app/`** — a dormant FastAPI backend (ChancaDEM is static-first).
+* **`app/`**, a dormant FastAPI backend (ChancaDEM is static-first).
 
 ## The two lanes of the pipeline
 
 * **Default (numpy-only):** `python -m chancalab.pipeline all` rebuilds every per-case replay trace + manifest from
-  the committed `case-results.json` + `surrogate_metrics.json` — no torch, no Node. A clone replays immediately.
+  the committed `case-results.json` + `surrogate_metrics.json`, no torch, no Node. A clone replays immediately.
 * **Heavy (`--retrain`, two-language):** Node runs the LHS sweep of the TS engine → torch trains the surrogate + AE
   → exports ONNX + metrics → re-bakes `case-results.json`. Needs the `--precompute` setup (torch) + Node 20+.

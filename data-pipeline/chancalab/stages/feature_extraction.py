@@ -1,4 +1,4 @@
-"""Stage 2 — feature_extraction (heavy lane): encode the sweep rows into the surrogate's inputs/outputs and the
+"""Stage 2, feature_extraction (heavy lane): encode the sweep rows into the surrogate's inputs/outputs and the
 deep-AE's product-gradation signature. This encoding is the SINGLE SOURCE OF TRUTH the web app reproduces
 (frontend/src/lib/ort.ts). The machine one-hot ORDER is frozen to the committed ONNX's order. NumPy only."""
 from __future__ import annotations
@@ -7,7 +7,7 @@ import math
 
 import numpy as np
 
-# one-hot order MUST match the committed surrogate.onnx (gen_sweep/train.py order) — do NOT reorder.
+# one-hot order MUST match the committed surrogate.onnx (gen_sweep/train.py order), do NOT reorder.
 MACHINES = ["cone-sec", "cone-tert", "jaw", "cone-short-head", "gyratory"]
 NM = len(MACHINES)                                                    # 5
 CONT = ["cssMm", "throwMm", "speedRpm", "feedX63Mm", "feedM", "oreAxb"]

@@ -1,4 +1,4 @@
-# Method — population-balance surrogate MLP
+# Method, population-balance surrogate MLP
 
 **What:** a small MLP that emulates the (cheap, analytic) Whiten/Evertsson/Bond engine in a single differentiable
 forward pass: operating parameters → product P80/P50/P20, %-passing at {1,4,8,16,32} mm, throughput, power. It gives

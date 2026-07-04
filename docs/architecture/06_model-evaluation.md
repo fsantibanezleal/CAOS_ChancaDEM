@@ -1,9 +1,9 @@
-# 06 — Model evaluation
+# 06, Model evaluation
 
 ## The held-out protocol
 
 The surrogate is measured against an **independent second Latin-hypercube draw** of the engine (seed 67890), NOT a
-row-split of the training sweep — a row-split would leak the stratified LHS design. `evaluate.py` reports per-output
+row-split of the training sweep, a row-split would leak the stratified LHS design. `evaluate.py` reports per-output
 **R²** and **MAPE** in original units (sizes inverse-transformed from log-space), across all 10 outputs
 (P80/P50/P20, %-passing at {1,4,8,16,32} mm, throughput, power). The committed `surrogate_metrics.json` carries the
 real numbers (e.g. P80 R² 0.9935 / MAPE 4.74%).
@@ -12,7 +12,7 @@ real numbers (e.g. P80 R² 0.9935 / MAPE 4.74%).
 
 A physics surrogate must respect physics: **P80 must rise with CSS** (a wider closed-side-setting → coarser
 product). `evaluate.py` probes the surrogate over a CSS grid {12,20,32,50,80} mm at a fixed operating point and
-asserts the predicted P80 is non-decreasing (`p80MonotoneVsCss`). This is a manifest CI gate — a surrogate that
+asserts the predicted P80 is non-decreasing (`p80MonotoneVsCss`). This is a manifest CI gate, a surrogate that
 learned a non-monotone artifact is rejected, not shipped.
 
 ## The denoising AE = the OOD guard

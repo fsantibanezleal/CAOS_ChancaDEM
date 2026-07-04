@@ -1,4 +1,4 @@
-// Tiny dense linear algebra on Float64Array — no external matrix library (manifest §liveTier: the live crusher
+// Tiny dense linear algebra on Float64Array, no external matrix library (manifest §liveTier: the live crusher
 // math is small dense linear algebra; a hand-written LU keeps the bundle lean and the maths auditable). All
 // matrices are row-major flat Float64Array of length n·n.
 
