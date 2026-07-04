@@ -57,7 +57,8 @@
 /* ---- 3D chamber host + mandatory precomputed banner ---- */
 .tz-canvas-wrap { position: relative; }
 .tz-canvas-wrap canvas { display: block; width: 100%; border-radius: 10px; border: 1px solid var(--color-border); background: var(--color-surface); }
-.tz-precomp-banner { position: absolute; top: 8px; left: 8px; background: color-mix(in oklab, var(--color-surface) 88%, transparent); border: 1px solid var(--color-border); border-radius: 6px; padding: 0.2rem 0.5rem; font-size: 0.68rem; color: var(--color-fg-subtle); pointer-events: none; }
+.tz-precomp-banner { position: absolute; top: 8px; left: 8px; display: flex; align-items: center; gap: 0.45rem; background: color-mix(in oklab, var(--color-surface) 88%, transparent); border: 1px solid var(--color-border); border-radius: 6px; padding: 0.2rem 0.5rem; font-size: 0.68rem; color: var(--color-fg-subtle); pointer-events: none; }
+.tz-precomp-banner .btn { pointer-events: auto; font-size: 0.72rem; padding: 0.15rem 0.55rem; }
 
 /* ---- generic helpers ---- */
 .tz-note { font-size: 0.76rem; border-left: 3px solid var(--color-warn, #d29922); padding-left: 0.6rem; color: var(--color-fg-subtle); }
