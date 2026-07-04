@@ -1,4 +1,4 @@
-# STRUCTURE — ChancaDEM on the CAOS product-repo archetype (ADR-0057)
+# STRUCTURE, ChancaDEM on the CAOS product-repo archetype (ADR-0057)
 
 ```
 CAOS_ChancaDEM/
@@ -26,7 +26,7 @@ CAOS_ChancaDEM/
 │  ├─ test/physics.test.ts (node --test)
 │  └─ src/  pages/ (App/Introduction/Methodology/Implementation/Experiments/Benchmark) · physics/ (the engine) · viz/ ·
 │           lib/ort.ts (onnxruntime-web) · lib/contract.types.ts (CONTRACT-2 mirror) · state/store.ts · data/
-├─ app/                             # OPTIONAL FastAPI backend — DORMANT (static-first)
+├─ app/                             # OPTIONAL FastAPI backend, DORMANT (static-first)
 ├─ scripts/  setup · precompute · dev · smoke {.sh,.ps1} · check_artifacts.py
 ├─ deploy/   pages.md (default) · fasl-slug.service · domain.nginx (VPS, dormant)
 ├─ docs/     README · architecture/ · frameworks/ · cases/ · guides/   (the wiki, ADR-0056)
@@ -34,6 +34,6 @@ CAOS_ChancaDEM/
 └─ .github/workflows/  ci.yml (ruff+pytest+pipeline+check_artifacts+guards) · deploy-pages.yml
 ```
 
-**The base is frozen** — edits land only in the CORE (the engine in `frontend/src/physics/`, the surrogate/AE in
+**The base is frozen**, edits land only in the CORE (the engine in `frontend/src/physics/`, the surrogate/AE in
 `model/` + `stages/`, the visualizations, and the cases/content), never in the structure, contracts, env, or deploy.
 The offline lane is two-language by design: the Node sweep runs the SAME TS engine the browser does (no re-port).

@@ -8,7 +8,7 @@ import { runSurrogate, runAutoencoder } from '../lib/ort';
 import { evaluate } from './engine';
 import type { Operating, CrusherResult, Machine } from './types';
 
-// IDENTICAL order to train.py MACHINES / scaler.json inputOrder — the one-hot index must match byte-for-byte.
+// IDENTICAL order to train.py MACHINES / scaler.json inputOrder, the one-hot index must match byte-for-byte.
 const MACHINES: Machine[] = ['cone-sec', 'cone-tert', 'jaw', 'cone-short-head', 'gyratory'];
 const CONT: (keyof Operating)[] = ['cssMm', 'throwMm', 'speedRpm', 'feedX63Mm', 'feedM', 'oreAxb'];
 const OUTS = ['p80', 'p50', 'p20', 'pass1', 'pass4', 'pass8', 'pass16', 'pass32', 'tph', 'kW'] as const;
@@ -61,7 +61,7 @@ export async function surrogatePredict(op: Operating): Promise<SurOut> {
   return { p80: v[0], p50: v[1], p20: v[2], pass: { 1: v[3], 4: v[4], 8: v[5], 16: v[6], 32: v[7] }, tph: v[8], kW: v[9] };
 }
 
-/** Build the 14-D autoencoder feature vector from a (physics) result — identical order to train.py's AE_FEATS. */
+/** Build the 14-D autoencoder feature vector from a (physics) result, identical order to train.py's AE_FEATS. */
 function aeFeats(r: CrusherResult): number[] {
   const L = (x: number) => Math.log10(Math.max(x, 1e-6));
   return [L(r.p80), L(r.p50), L(r.p20), r.pctPassing[1], r.pctPassing[4], r.pctPassing[8], r.pctPassing[16], r.pctPassing[32],

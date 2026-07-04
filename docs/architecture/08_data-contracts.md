@@ -1,8 +1,8 @@
-# 08 — The two data contracts
+# 08, The two data contracts
 
 The full schemas live in [`../../data/README.md`](../../data/README.md); this is the architecture-level summary.
 
-## Contract 1 — ingestion (operating point + feed PSD → pipeline)
+## Contract 1, ingestion (operating point + feed PSD → pipeline)
 
 `data-pipeline/chancalab/io/contract.py`. The *bring-your-own-operating-point* gate. `validate_records` accepts an
 operating row iff it satisfies the schema (`machine ∈ {cone-sec, cone-tert, cone-short-head, gyratory, jaw}`,
@@ -11,7 +11,7 @@ positive numeric css/throw/speed/feed/m/axb), **rejects** with a reason otherwis
 (`cssMm ≥ feedX63Mm`). A `validate_psd` guard checks a bring-your-own feed PSD (descending sieve edges, monotone
 passing). A committed `data/examples/operating.csv` PASSES Contract 1 (a clone-time test asserts it).
 
-## Contract 2 — artifact (pipeline → web)
+## Contract 2, artifact (pipeline → web)
 
 `data-pipeline/chancalab/core/{trace.py, manifest.py}`. Each case writes a compact `data/derived/<case>/trace.json`
 (`chancadem.trace/v1`) + a manifest `data/derived/manifests/<case>.json` (`chancadem.manifest/v2`) recording the

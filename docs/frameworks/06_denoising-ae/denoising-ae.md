@@ -1,7 +1,7 @@
-# Method — denoising autoencoder (operating-anomaly / OOD score)
+# Method, denoising autoencoder (operating-anomaly / OOD score)
 
 **What:** an autoencoder over the 14-D product-gradation signature; its reconstruction error is an operating-anomaly
-score that **doubles as the surrogate's out-of-distribution guard** — a query far from the training manifold (e.g. a
+score that **doubles as the surrogate's out-of-distribution guard**, a query far from the training manifold (e.g. a
 gyratory at a 32 mm CSS) reconstructs poorly → "the surrogate is extrapolating, distrust it".
 
 ## Architecture (`model/psd_ae.py`)
@@ -23,4 +23,4 @@ implicit negative set.
 ## Why it fits
 
 The surrogate is only trustworthy on the manifold it was trained on; the AE gives a continuous, label-free signal for
-when a live what-if has steered off that manifold — the honest companion to an instant emulator.
+when a live what-if has steered off that manifold, the honest companion to an instant emulator.

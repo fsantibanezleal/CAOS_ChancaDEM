@@ -1,4 +1,4 @@
-"""Typed objects passed between pipeline stages — the inter-stage contract. Plain dataclasses (no heavy deps); the
+"""Typed objects passed between pipeline stages, the inter-stage contract. Plain dataclasses (no heavy deps); the
 same types describe an operating point whether it came from a case, a CSV, or a live bring-your-own query."""
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ SURROGATE_OUTPUTS = ("p80", "p50", "p20", "pass1", "pass4", "pass8", "pass16", "
 
 @dataclass(frozen=True)
 class Operating:
-    """One validated crusher operating point (CONTRACT 1 output) — exactly the studio's sliders."""
+    """One validated crusher operating point (CONTRACT 1 output), exactly the studio's sliders."""
     case_id: str
     machine: str               # one of MACHINES
     cssMm: float               # closed-side setting (narrowest gap) [mm]

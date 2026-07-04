@@ -1,5 +1,5 @@
 // Prebuild overlay: copy the committed CONTRACT-2 artifacts (../data/derived) into the SPA's public/ so the static
-// site serves them. Canonical copies live in ../data/derived — public/ is a build-time overlay (git-ignored). The
+// site serves them. Canonical copies live in ../data/derived, public/ is a build-time overlay (git-ignored). The
 // served paths match what frontend/src/lib/ort.ts + physics/surrogate.ts fetch (root: /surrogate.onnx, /psd-ae.onnx,
 // /scaler.json, /ae_scaler.json, /ae_threshold.json, /surrogate_metrics.json); manifests + per-case traces +
 // case-results go under /data/ for the CONTRACT-2 index loader.
@@ -13,7 +13,7 @@ const DERIVED = join(ROOT, 'data', 'derived');
 const PUB = join(HERE, 'public');
 
 if (!existsSync(DERIVED)) {
-  console.warn('[copy-data] no data/derived — run scripts/precompute first');
+  console.warn('[copy-data] no data/derived, run scripts/precompute first');
   process.exit(0);
 }
 mkdirSync(PUB, { recursive: true });
@@ -31,7 +31,7 @@ const rootArtifacts = [
 for (const [src, dst] of rootArtifacts) {
   const from = join(DERIVED, src);
   if (existsSync(from)) copyFileSync(from, join(PUB, dst));
-  else console.warn(`[copy-data] missing ${src} — run scripts/precompute (or --retrain)`);
+  else console.warn(`[copy-data] missing ${src}, run scripts/precompute (or --retrain)`);
 }
 
 // 2) the CONTRACT-2 manifests + per-case traces + case-results -> public/data (the index loader reads /data/manifests/index.json)

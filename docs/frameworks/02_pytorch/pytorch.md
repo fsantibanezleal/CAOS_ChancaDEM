@@ -2,7 +2,7 @@
 
 **What:** trains the surrogate MLP + the denoising AE on the sweep and exports them to ONNX.
 **Why binding:** the learned tier (an instant differentiable what-if + the OOD score) is what the closed-form grid
-cannot give live. Training is tiny (a small MLP + AE over a few thousand sweep points, seconds on CPU) — no GPU.
+cannot give live. Training is tiny (a small MLP + AE over a few thousand sweep points, seconds on CPU), no GPU.
 
 **Lane:** offline only (`stages/{train,infer,evaluate,export}.py`). Never shipped to the browser.
 

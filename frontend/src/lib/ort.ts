@@ -1,6 +1,6 @@
 // Live in-browser inference of the two learned models (onnxruntime-web). The surrogate emulates the live
 // physics engine; the autoencoder scores operating-anomaly / surrogate-extrapolation. The npm package
-// (onnxruntime-web ^1.27.0) and the CDN wasmPaths are pinned to the SAME version — a version skew is the
+// (onnxruntime-web ^1.27.0) and the CDN wasmPaths are pinned to the SAME version, a version skew is the
 // classic "Session already started" / load-failure trap. WASM EP, single-threaded (GitHub Pages has no
 // COOP/COEP for threaded WASM).
 import * as ort from 'onnxruntime-web';
@@ -13,7 +13,7 @@ const base = () => (import.meta.env.BASE_URL || '/');
 const get = (name: string) => (sessions[name] ??= ort.InferenceSession.create(`${base()}${name}`, { executionProviders: ['wasm'] }));
 
 // onnxruntime-web forbids concurrent run() on one session; StrictMode double-effects + rapid slider re-renders
-// can trigger it — so serialise per model.
+// can trigger it, so serialise per model.
 const locks: Record<string, Promise<unknown>> = {};
 
 async function run(model: string, inputName: string, outputName: string, flat: Float32Array, dims: number[]): Promise<Float32Array> {

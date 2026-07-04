@@ -10,7 +10,7 @@
 // K1, K2 are LINEAR in the closed-side setting (CSS): a tighter setting captures smaller particles. The exact
 // a0+a1·CSS slopes are machine-specific and require the open-access industrial-calibration data (Duarte et al.
 // 2021, DOI 10.3390/min11111256) to fix; the literature-typical ranges used here are labelled provisional /
-// illustrative in the UI and methodology — they reproduce the correct TRENDS (CSS↓ ⇒ finer product), not a
+// illustrative in the UI and methodology, they reproduce the correct TRENDS (CSS↓ ⇒ finer product), not a
 // specific plant's absolute numbers.
 
 import type { Classification, Machine } from './types';

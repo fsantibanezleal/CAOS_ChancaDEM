@@ -1,7 +1,7 @@
 import { type Citation } from '@fasl-work/caos-app-shell';
 
 // DOI-verified references. The adversarial research pass corrected several venues/DOIs and flagged a
-// phantom-author citation ("Bhuiyan 2021" does not exist — the real industrial-calibration source is Duarte
+// phantom-author citation ("Bhuiyan 2021" does not exist, the real industrial-calibration source is Duarte
 // et al. 2021). Citations without a DOI are pre-DOI-era articles, theses or handbooks (text only, never a
 // fabricated link).
 export const CITATIONS: Citation[] = [
