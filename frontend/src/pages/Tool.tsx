@@ -62,7 +62,7 @@ export default function Tool() {
         <div className="tz-ctl">
           <span>{es ? 'Caso' : 'Case'}</span>
           <select className="tz-sel" value={caseId} onChange={(e) => setCase(e.target.value)}>
-            {CASES.map((c) => <option key={c.id} value={c.id}>{c.id} — {c.name}</option>)}
+            {CASES.map((c) => <option key={c.id} value={c.id}>{c.id}, {c.name}</option>)}
           </select>
           {cur && <span className="tz-panel-sub">{cur.blurb}</span>}
         </div>

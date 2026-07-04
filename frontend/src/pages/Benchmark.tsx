@@ -3,9 +3,9 @@ import { Refs, useShellLang } from '@fasl-work/caos-app-shell';
 import { loadLearned, learnedMetrics, type Metrics } from '../physics/surrogate';
 import { ParityScatter } from '../viz/ParityScatter';
 
-// Benchmark — the three honest, separable checks (the central defense against over-claiming). The surrogate-vs-
+// Benchmark, the three honest, separable checks (the central defense against over-claiming). The surrogate-vs-
 // physics numbers are loaded LIVE from the committed surrogate_metrics.json (the real held-out values from the
-// independent 2nd LHS draw) — no fabricated numbers.
+// independent 2nd LHS draw), no fabricated numbers.
 export default function Benchmark() {
   const es = useShellLang() === 'es';
   const [met, setMet] = useState<Metrics | null>(null);
@@ -16,7 +16,7 @@ export default function Benchmark() {
   return (
     <section className="page-body prose">
       <h2>Benchmark</h2>
-      <p className="tz-lead">{es ? 'Tres comprobaciones separables y reportadas con honestidad — la defensa central contra el sobre-ajuste y la precisión hueca.' : 'Three separable, honestly-reported checks — the central defense against over-claiming and hollow accuracy.'}</p>
+      <p className="tz-lead">{es ? 'Tres comprobaciones separables y reportadas con honestidad, la defensa central contra el sobre-ajuste y la precisión hueca.' : 'Three separable, honestly-reported checks, the central defense against over-claiming and hollow accuracy.'}</p>
 
       <h3>{es ? '1 · Surrogate vs la física que emula (held-out)' : '1 · Surrogate vs the physics it emulates (held-out)'}</h3>
       <p>{es ? 'R²/MAPE por salida del MLP ONNX contra el motor exacto de balance poblacional, en un segundo barrido Latin-hypercube INDEPENDIENTE (otra semilla, no un split de filas). Crítico: mide acuerdo con la física barata (de constantes ilustrativas), NO con una planta real.' : 'Per-output R²/MAPE of the ONNX MLP vs the exact population-balance engine, on a second INDEPENDENT Latin-hypercube draw (different seed, not a row-split). Critical: it measures agreement with the cheap physics (illustrative constants), NOT a real plant.'}</p>

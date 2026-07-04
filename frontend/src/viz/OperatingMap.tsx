@@ -5,7 +5,7 @@ import type { Operating } from '../physics/types';
 
 // Operating map: P80 over the speed × CSS plane, computed LIVE from the exact engine (fast), rendered as a
 // viridis heatmap with iso-P80 contours and the current operating point marked. Shows the whole operating
-// envelope at a glance — where the product is fine vs coarse.
+// envelope at a glance, where the product is fine vs coarse.
 const VIRIDIS = [[68, 1, 84], [59, 82, 139], [33, 145, 140], [94, 201, 98], [253, 231, 37]];
 function vir(t: number) { t = Math.max(0, Math.min(1, t)); const x = t * 4, i = Math.min(3, Math.floor(x)), f = x - i; const a = VIRIDIS[i], b = VIRIDIS[i + 1]; return `rgb(${Math.round(a[0] + f * (b[0] - a[0]))},${Math.round(a[1] + f * (b[1] - a[1]))},${Math.round(a[2] + f * (b[2] - a[2]))})`; }
 
@@ -53,7 +53,7 @@ export function OperatingMap({ op, height = 300 }: { op: Operating; height?: num
   return (
     <div>
       <div className="tz-svg-wrap"><canvas ref={ref} style={{ width: '100%', height, display: 'block', borderRadius: 8 }} /></div>
-      <div className="tz-panel-sub" style={{ marginTop: '0.3rem' }}>{es ? 'P80 del producto (mm) sobre velocidad × CSS — calculado en vivo por el motor. Oscuro/morado = fino, claro/amarillo = grueso. ○ = operación actual.' : 'Product P80 (mm) over speed × CSS — computed live by the engine. Dark/purple = fine, light/yellow = coarse. ○ = current operating point.'}</div>
+      <div className="tz-panel-sub" style={{ marginTop: '0.3rem' }}>{es ? 'P80 del producto (mm) sobre velocidad × CSS, calculado en vivo por el motor. Oscuro/morado = fino, claro/amarillo = grueso. ○ = operación actual.' : 'Product P80 (mm) over speed × CSS, computed live by the engine. Dark/purple = fine, light/yellow = coarse. ○ = current operating point.'}</div>
     </div>
   );
 }

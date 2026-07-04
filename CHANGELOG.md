@@ -4,7 +4,14 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
-## [0.03.001] — 2026-06-21
+## [0.03.002], 2026-07-04
+
+### Changed
+- Content standards (ADR-0067): removed every em-dash from tracked content (replaced with commas, or
+  "n/a" in table cells). No behaviour change. Added `scripts/check_content_standards.py` + wired it
+  into the CI `guards` job so the repo cannot regress on em-dashes or emojis.
+
+## [0.03.001], 2026-06-21
 
 ### Fixed
 - **App design rule: the "Surrogate vs physics" parity scatter moved out of the App → into the Benchmark page.** It
@@ -13,13 +20,13 @@ open industrial data.
   Benchmark §1 next to the held-out R²/MAPE table it visualizes. The App's remaining 11 tabs all react to the case
   selector + sliders. Cross-references (Experiments) updated.
 
-## [0.03.000] — 2026-06-21
+## [0.03.000], 2026-06-21
 
-Refactor onto the CAOS product-repo archetype (ADR-0057) — the science core is unchanged; the repo is now a real,
+Refactor onto the CAOS product-repo archetype (ADR-0057), the science core is unchanged; the repo is now a real,
 contract-bounded, staged offline pipeline + a frontend SPA.
 
 ### Changed
-- **`tools/` → `data-pipeline/chancalab/`** — the sweep (`sweep/gen_sweep.mjs`, the SAME TS engine — no Python
+- **`tools/` → `data-pipeline/chancalab/`**, the sweep (`sweep/gen_sweep.mjs`, the SAME TS engine, no Python
   re-port), the surrogate + denoising-AE training, and the offline 2-D DEM tracer split into the six named stages +
   `model/`. Bodies unchanged.
 - **`src/` → `frontend/src/`**; `public/*.onnx` + scalers + metrics → **`data/derived/`** (the canonical artifact
@@ -29,7 +36,7 @@ contract-bounded, staged offline pipeline + a frontend SPA.
   `--retrain` regenerates everything (Node sweep → torch train → ONNX → re-bake).
 
 ### Added
-- **Two data contracts**: Contract 1 (`io/contract.py` — operating-point schema + per-machine envelopes + outlier
+- **Two data contracts**: Contract 1 (`io/contract.py`, operating-point schema + per-machine envelopes + outlier
   policy + a PSD guard) and Contract 2 (`core/manifest.py` `chancadem.manifest/v2` + `core/trace.py`
   `chancadem.trace/v1`), with a TS mirror (`frontend/src/lib/contract.types.ts`) that fails `tsc` on drift.
 - **Cases by category** (`cases/circuit_cases.py`): the 17-case circuit matrix (primary gyratory/jaw · secondary
@@ -40,7 +47,7 @@ contract-bounded, staged offline pipeline + a frontend SPA.
 - Verified running: ruff clean · pytest 9/9 · pipeline 17 cases · CONTRACT 2 OK · deterministic re-run ·
   `tsc + vite build` green · physics node tests 10/10.
 
-## [0.02.000] — 2026-06-20
+## [0.02.000], 2026-06-20
 
 The full studio: the 12-tab App workbench, the two learned ONNX models running live, and the six deepened
 documentation pages.
@@ -67,7 +74,7 @@ documentation pages.
 - The t10 curve disagreed with the t-family table (Austin γ=0.62 capped t10 at ~24% and clamped φ) → γ=0.35 +
   t10 cap 0.44, so the displayed t10 matches the breakage matrix. Surrogate retrained on the corrected engine.
 
-## [0.01.000] — 2026-06-20
+## [0.01.000], 2026-06-20
 
 Initial scaffold + live physics core.
 
