@@ -13,7 +13,8 @@ both running in the browser via onnxruntime-web.
   cone, tertiary cone/short-head, + negative/invalid/calibration controls), move the sliders, and every view reacts;
   the surrogate gives an instant what-if and the AE flags when you steer off the trained manifold.
 * **Is NOT:** a plant control system. The physics **engine is the source of truth and the surrogate emulates IT**,
-  NOT a real plant; the engine is calibrated to published cone data (Duarte et al. 2021). The 3D chamber is a
+  NOT a real plant; the engine's constants are illustrative, pending calibration to published cone data (Duarte et
+  al. 2021 — the CK1 anchor case is defined, the fit is not yet executed). The 3D chamber is a
   kinematic animation; the offline 2-D DEM tracer is the documented next increment. No real plant data is used.
 
 ## Map
@@ -33,3 +34,5 @@ both running in the browser via onnxruntime-web.
    `data/derived/`.
 2. **Live (client-side)** — the TS Whiten/Evertsson/Bond engine + onnxruntime-web (surrogate + AE), in the browser.
 3. **Replay (static)** — the committed per-case traces + metrics; the default (numpy-only) pipeline rebuilds them.
+   Today this is a build/CI artifact lane: the SPA fetches the shared learned-tier JSONs, and no page consumes the
+   per-case traces yet.

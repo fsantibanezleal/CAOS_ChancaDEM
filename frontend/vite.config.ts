@@ -18,7 +18,7 @@ function spaFallback(): Plugin {
   };
 }
 
-// Static SPA for GitHub Pages at trizar.fasl-work.com (custom domain → base '/').
+// Static SPA for GitHub Pages at chancadem.fasl-work.com (custom domain → base '/').
 export default defineConfig({
   base: '/',
   plugins: [react(), spaFallback()],
