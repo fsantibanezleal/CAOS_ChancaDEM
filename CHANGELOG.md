@@ -4,6 +4,19 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [0.04.000], 2026-07-04
+
+### Changed
+- **Chamber3D no longer autoplays** (no-compute-bomb rule, ADR-0059 / the feedback rule). The 3D crusher-
+  chamber animation was an uncontrolled `requestAnimationFrame` loop that started on landing and ran
+  forever, burning CPU on an unattended tab. It now mounts through the shared `usePausedViz` hook
+  (`@fasl-work/caos-app-shell` bumped to `^0.3.0`): **default paused**, an explicit **Play/Pause** button,
+  `loop: true` (the mantle gyration / jaw swing is a continuous dynamics view), and the rAF **halts when
+  the tab is hidden**. A static frame is drawn on mount so the paused chamber is visible (not a blank
+  canvas), and orbiting while paused still re-renders via a `controls.change` listener. Screenshot-verified:
+  Play button present, 0 console errors.
+- Bumped `@fasl-work/caos-app-shell` `^0.2.0` -> `^0.3.0`.
+
 ## [0.03.002], 2026-07-04
 
 ### Changed
