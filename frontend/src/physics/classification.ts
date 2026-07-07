@@ -27,8 +27,23 @@ const KMODEL: Record<Machine, KModel> = {
   'jaw':             { k1a: 2.0, k1b: 0.95, k2a: 20.0, k2b: 2.30, k3: 2.1 },
 };
 
-/** Build K1,K2,K3 from machine + CSS (K1,K2 linear in CSS). */
-export function classificationParams(machine: Machine, cssMm: number): Classification {
+// HP500 secondary-cone classification CALIBRATED to the 10 Minas Rio surveys (Rocha et al. 2024, Table 5).
+// Unlike the provisional per-machine model above, the published fit is linear in BOTH the CSS and the feed f80:
+//   K1 = 0.23·CSS + 0.30·f80   [mm]   (escape threshold)
+//   K2 = 12.0 + 0.55·CSS + 0.40·f80   [mm]   (full-capture threshold)
+//   K3 = 2.3   (held constant)
+// Absent parameters are zero. This is a real plant calibration, not an illustrative constant.
+function hp500Params(cssMm: number, f80Mm: number): Classification {
+  const k1 = 0.23 * cssMm + 0.3 * f80Mm;
+  const k2 = 12.0 + 0.55 * cssMm + 0.4 * f80Mm;
+  return { k1, k2: Math.max(k2, k1 * 1.05), k3: 2.3 };
+}
+
+/** Build K1,K2,K3 from machine + CSS. Synthetic path: K1,K2 linear in CSS (per-machine illustrative model).
+ *  Calibrated path (opts.calibrated, cone-sec, f80 supplied): the HP500 fit, linear in CSS AND f80 (Table 5).
+ *  Synthetic behavior is unchanged when no f80 / calibration is supplied. */
+export function classificationParams(machine: Machine, cssMm: number, opts?: { f80Mm?: number; calibrated?: boolean }): Classification {
+  if (opts?.calibrated && machine === 'cone-sec' && opts.f80Mm != null) return hp500Params(cssMm, opts.f80Mm);
   const km = KMODEL[machine];
   const k1 = km.k1a + km.k1b * cssMm;
   const k2 = km.k2a + km.k2b * cssMm;
