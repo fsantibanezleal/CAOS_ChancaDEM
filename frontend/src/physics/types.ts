@@ -13,6 +13,10 @@ export interface Operating {
   feedM: number;        // Rosin–Rammler uniformity exponent of the feed [-]
   oreAxb: number;       // JKMRC drop-weight ore competence A·b [-] (lower = harder/tougher)
   oreWi: number;        // Bond work index [kWh/t]
+  // When true, the engine uses the HP500 secondary-cone parameters CALIBRATED to the Rocha et al. 2024 surveys
+  // (classification linear in CSS AND f80, calibrated t10, HP500 capacity base, current-based power model). This
+  // is set only on the Real-sample lane; synthetic operation leaves it undefined and behaves exactly as before.
+  calibrated?: boolean;
 }
 
 /** Particle-size distribution on the engine's geometric sieve grid. */

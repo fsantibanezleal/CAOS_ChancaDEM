@@ -5,9 +5,9 @@
 import { makeGrid, midSizes, toPSD, sizeAtPassing, passingAtSize } from './sieve';
 import { makeFeed } from './feed';
 import { classificationParams, classify } from './classification';
-import { specificEnergy, t10Of, phiFromT10, breakageMatrix } from './breakage';
+import { specificEnergy, t10Of, t10Calibrated, phiFromT10, breakageMatrix } from './breakage';
 import { whitenSolve } from './whiten';
-import { throughput, bondPower, nipAngle, nipLimit } from './capacity';
+import { throughput, bondPower, calibratedPower, nipAngle, nipLimit } from './capacity';
 import type { Operating, CrusherResult, Regime } from './types';
 
 const TOP_MM = 256;     // sieve top size [mm]
@@ -25,13 +25,14 @@ export function evaluate(op: Operating): CrusherResult {
   const feed = makeFeed(EDGES, op.feedX63Mm, op.feedM);
   const f80 = sizeAtPassing(feed, 0.8);
 
-  // classification C(d)
-  const cparams = classificationParams(op.machine, op.cssMm);
+  // classification C(d). On the Real lane (calibrated cone-sec) the HP500 fit is linear in CSS AND f80.
+  const cparams = classificationParams(op.machine, op.cssMm, { f80Mm: f80, calibrated: op.calibrated });
   const c = MID.map((d) => classify(d, cparams));
 
-  // breakage B from energy → t10 → Austin Φ
+  // breakage B from energy → t10 → Austin Φ. Calibrated: t10 comes straight from the HP500 fit (Table 5),
+  // not from the illustrative energy→A·b path.
   const ecs = specificEnergy(op.throwMm, op.speedRpm);
-  const t10 = t10Of(ecs, op.oreAxb);
+  const t10 = op.calibrated ? t10Calibrated(op.cssMm, f80) : t10Of(ecs, op.oreAxb);
   const phi = phiFromT10(t10);
   const B = breakageMatrix(EDGES, MID, phi);
 
@@ -46,8 +47,10 @@ export function evaluate(op: Operating): CrusherResult {
   const pctPassing: Record<number, number> = {};
   for (const s of READOUT_SIZES) pctPassing[s] = passingAtSize(product, s);
 
-  const tph = throughput(op.machine, op.cssMm, op.throwMm, op.speedRpm);
-  const powerKw = bondPower(tph, f80, p80, op.oreWi);
+  const tph = throughput(op.machine, op.cssMm, op.throwMm, op.speedRpm, op.calibrated);
+  const bondPd = bondPower(tph, f80, p80, op.oreWi);
+  // Calibrated: the HP500 current-based model Pc = 1.30·Pd + 110 kW (no-load); synthetic keeps the raw Bond draw.
+  const powerKw = op.calibrated ? calibratedPower(bondPd) : bondPd;
 
   const ossMm = op.cssMm + op.throwMm;
   const nip = nipAngle(op.machine, op.cssMm);
