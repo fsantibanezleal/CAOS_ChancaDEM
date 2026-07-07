@@ -28,6 +28,11 @@ open industrial data.
     operating map overlays all 10 surveys as the real feed-rate x CSS envelope (coloured by f80), the selected
     one ringed. Each real view carries the in-panel citation. Honesty caveats stated: the full feed/product PSD
     curves are figure-only in the paper (feed is f80-reconstructed) and power is a current-based estimate.
+  - On the Real lane the gauges report only MEASURED energy: the specific-energy gauge shows the real
+    measured power / feed rate (about 0.13 kWh/t on survey 1), and the derived line no longer prints a
+    Bond-basis "model power" (Bond's third theory overpredicts coarse crushing duty by ~2x, so a model number
+    next to the real 209 kW would mislead). The faithful calibrated outputs (P80, reduction ratio) stay; the
+    measured power and throughput are the real reference.
 
 ## [0.04.001], 2026-07-07
 
