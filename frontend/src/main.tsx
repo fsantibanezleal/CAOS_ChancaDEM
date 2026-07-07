@@ -7,6 +7,13 @@ import '@fasl-work/caos-app-shell/styles.css';
 import './trizar.css';
 import { CITATIONS } from './data/citations';
 import { architecture } from './architecture';
+import pkg from '../package.json';
+
+// Display version X.XX.XXX derived from the semver manifest (single source, no drift).
+const displayVersion = pkg.version
+  .split('.')
+  .map((p, i) => (i === 0 ? p : p.padStart(i === 1 ? 2 : 3, '0')))
+  .join('.');
 import Tool from './pages/Tool';
 import Introduction from './pages/Introduction';
 import Methodology from './pages/Methodology';
@@ -27,7 +34,7 @@ const config: ShellConfig = {
     { path: '/benchmark', en: 'Benchmark', es: 'Benchmark' },
   ],
   links: { github: 'https://github.com/fsantibanezleal/CAOS_ChancaDEM' },
-  version: '0.03.001',
+  version: displayVersion,                    // single source: frontend/package.json (no drift)
   architecture,
 };
 

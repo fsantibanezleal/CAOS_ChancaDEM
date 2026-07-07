@@ -4,6 +4,14 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [0.04.001], 2026-07-07
+
+### Fixed
+- Version drift: the in-app footer read `0.03.001` while the package, CHANGELOG and latest tag were at
+  `0.04.000`. The shell version now derives from `frontend/package.json` (padded to the `X.XX.XXX` display
+  form in `main.tsx`), so the footer can no longer drift from the manifest. Added a root `VERSION` file so
+  all four sources agree.
+
 ## [0.04.000], 2026-07-04
 
 ### Changed
