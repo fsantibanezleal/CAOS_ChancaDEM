@@ -181,14 +181,14 @@ function GaugesPanel({ r, es, survey }: { r: CrusherResult; es: boolean; survey:
       )}
       {survey && (
         <div className="tz-panel-sub" style={{ fontFamily: 'var(--font-mono)' }}>
-          {es ? 'Derivado (calibrado):' : 'Derived (calibrated):'} P80 = <b style={{ color: 'var(--color-fg)' }}>{r.p80.toFixed(1)} mm</b> · {es ? 'reducción' : 'reduction'} = <b style={{ color: 'var(--color-fg)' }}>{r.reductionRatio.toFixed(2)}×</b> · {es ? 'potencia modelo' : 'model power'} = <b style={{ color: 'var(--color-fg)' }}>{r.powerKw.toFixed(0)} kW</b>
+          {es ? 'Derivado (calibrado):' : 'Derived (calibrated):'} P80 = <b style={{ color: 'var(--color-fg)' }}>{r.p80.toFixed(1)} mm</b> · {es ? 'reducción' : 'reduction'} = <b style={{ color: 'var(--color-fg)' }}>{r.reductionRatio.toFixed(2)}×</b> {es ? 'desde el ajuste Andersen-Whiten (Tabla 5); la potencia y el t/h medidos son la referencia real.' : 'from the Andersen-Whiten fit (Table 5); the measured power and t/h are the real reference.'}
         </div>
       )}
       <Gauge title={es ? 'Capacidad' : 'Throughput'} value={survey ? survey.measured.feedRateTph : r.throughputTph} min={0} max={1800} unit="t/h"
         zones={[{ from: 0, to: 1800, color: 'color-mix(in oklab, #58a6ff 35%, transparent)' }]} />
       <Gauge title={es ? 'Potencia' : 'Power'} value={survey ? survey.measured.powerKW : r.powerKw} min={0} max={550} unit="kW"
         zones={[{ from: 0, to: 350, color: 'color-mix(in oklab, #3fb950 40%, transparent)' }, { from: 350, to: 550, color: 'color-mix(in oklab, #f85149 40%, transparent)' }]} />
-      <Gauge title={es ? 'Energía específica Ecs' : 'Specific energy Ecs'} value={r.specificEnergyKwhT} min={0} max={3} unit="kWh/t" fmt={(v) => v.toFixed(2)}
+      <Gauge title={es ? 'Energía específica Ecs' : 'Specific energy Ecs'} value={survey ? survey.measured.powerKW / survey.measured.feedRateTph : r.specificEnergyKwhT} min={0} max={3} unit="kWh/t" fmt={(v) => v.toFixed(2)}
         zones={[{ from: 0, to: 3, color: 'color-mix(in oklab, #d29922 35%, transparent)' }]} />
       <Gauge title={es ? 'Razón de reducción' : 'Reduction ratio'} value={r.reductionRatio} min={1} max={12} unit="×" fmt={(v) => v.toFixed(2)}
         zones={[{ from: 1, to: 12, color: 'color-mix(in oklab, #58a6ff 35%, transparent)' }]} />
