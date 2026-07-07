@@ -23,13 +23,27 @@ const CAP: Record<Machine, CapModel> = {
   'jaw':       { qRef: 700, speedOpt: 300, refGapMm: 110 },
 };
 
-/** Throughput [t/h] from machine + CSS + throw + speed. Unimodal in speed (the capacity hump). */
-export function throughput(machine: Machine, cssMm: number, throwMm: number, speedRpm: number): number {
+// HP500 secondary cone CALIBRATED capacity base (Rocha et al. 2024, Table 4): the throughput model is anchored at
+// QT ≈ 647 t/h so the modeled curve sits within the measured 813-1639 t/h band of the 10 surveys, instead of the
+// ~3x-low synthetic cone-sec reference (qRef 520). Used only on the Real-sample lane.
+const HP500_QREF = 647;
+
+/** Throughput [t/h] from machine + CSS + throw + speed. Unimodal in speed (the capacity hump). On the Real lane
+ *  (calibrated, cone-sec) the base is the HP500-anchored QT so the curve overlays the measured survey points. */
+export function throughput(machine: Machine, cssMm: number, throwMm: number, speedRpm: number, calibrated = false): number {
   const m = CAP[machine];
+  const qRef = calibrated && machine === 'cone-sec' ? HP500_QREF : m.qRef;
   const openFactor = (cssMm + throwMm / 2) / m.refGapMm;
   const s = speedRpm / m.speedOpt;
   const hump = s * Math.exp(1 - s);             // peaks at s=1 → value 1
-  return Math.max(0, m.qRef * openFactor * hump);
+  return Math.max(0, qRef * openFactor * hump);
+}
+
+/** HP500 current-based power model (Rocha et al. 2024, Table 5): Pc = ζ·Pd + Pn with ζ = 1.30 and no-load
+ *  Pn = 110 kW, where Pd is the Bond net comminution draw. Returns the modeled crusher power [kW] for the
+ *  measured-vs-model parity readout on the Real lane. */
+export function calibratedPower(bondPdKw: number): number {
+  return 1.3 * bondPdKw + 110;
 }
 
 /** The speed [rpm] that maximizes throughput for a machine (the hump apex), used to mark the operating point. */
