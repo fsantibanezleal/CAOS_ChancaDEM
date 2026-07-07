@@ -52,7 +52,21 @@
 .tz-badge.ok { background: color-mix(in oklab, #3fb950 22%, transparent); color: #3fb950; border-color: #3fb95066; }
 .tz-badge.warn { background: color-mix(in oklab, #d29922 22%, transparent); color: #d29922; border-color: #d2992266; }
 .tz-badge.bad { background: color-mix(in oklab, #f85149 22%, transparent); color: #f85149; border-color: #f8514966; }
+/* Source-lane provenance badges: REAL (measured), CALIBRATED (model fitted to the same surveys),
+   STRUCTURE-REAL (geometry illustrative), SYNTHETIC-MODEL (a synthetic-trained net on real input). */
+.tz-badge.real { background: color-mix(in oklab, #3fb950 20%, transparent); color: #3fb950; border-color: #3fb95066; letter-spacing: 0.03em; }
+.tz-badge.calib { background: color-mix(in oklab, #58a6ff 20%, transparent); color: #58a6ff; border-color: #58a6ff66; letter-spacing: 0.03em; }
+.tz-badge.struct { background: color-mix(in oklab, #d29922 20%, transparent); color: #d29922; border-color: #d2992266; letter-spacing: 0.03em; }
+.tz-badge.synthmodel { background: color-mix(in oklab, #8b949e 22%, transparent); color: var(--color-fg-subtle); border-color: var(--color-border); letter-spacing: 0.03em; }
 .tz-flags { margin: 0; padding-left: 1.1rem; font-size: 0.76rem; color: var(--color-fg-subtle); }
+
+/* ---- Source-lane badge bar (above a Real-sample tab) + provenance citation ---- */
+.tz-badgebar { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+.tz-cite { font-size: 0.7rem; color: var(--color-fg-faint); font-style: italic; }
+.tz-source-note { font-size: 0.72rem; color: var(--color-fg-faint); margin-top: 0.3rem; }
+/* disabled slider on the Real lane (the operating point is fixed by the survey) */
+.tz-ctl.is-disabled { opacity: 0.45; }
+.tz-ctl.is-disabled .range { cursor: not-allowed; }
 
 /* ---- 3D chamber host + mandatory precomputed banner ---- */
 .tz-canvas-wrap { position: relative; }
