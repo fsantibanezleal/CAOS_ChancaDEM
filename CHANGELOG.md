@@ -4,6 +4,31 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [0.05.000], 2026-07-07
+
+### Added
+- **The Synthetic | Real Source lane on real HP500 data.** A first-level Source selector at the top of the App
+  sidebar switches the workbench between the synthetic simulator and a real industrial artifact. Real sample =
+  10 surveys of a Metso HP500 secondary cone crusher at Minas Rio (Anglo American), itabirite iron ore, from
+  Rocha, Campos, Silva & Tavares, Minerals 2024, 14(9), 919 (DOI 10.3390/min14090919, CC BY 4.0). In Real mode
+  the sim sliders disable, a survey picker (#1 to #10) appears, and the exact same pure-TypeScript engine runs
+  on the survey's MEASURED closed-side setting and feed f80.
+  - New `frontend/src/data/real/hp500-minasrio.ts`: the 10 survey rows (Table A1, verbatim), the source
+    provenance, the itabirite drop-weight A,b / Bond Wi bands (Table 1), and the Rosin-Rammler f80 to x63 feed
+    reconstruction (documented assumption).
+  - The `cone-sec` machine is now calibrated to the Andersen-Whiten fit of those surveys (Table 5): the Whiten
+    classification is linear in CSS AND f80 (`K1 = 0.23·CSS + 0.30·f80`, `K2 = 12 + 0.55·CSS + 0.40·f80`,
+    `K3 = 2.3`), t10 = `64 - 0.12·CSS - 0.23·f80`, the capacity base is re-anchored to the HP500 QT (about
+    647 t/h so the modeled curve overlays the measured 813-1639 t/h band), and power uses the paper current-based
+    model `Pc = 1.30·Pd + 110 kW`. Synthetic behaviour is unchanged (the calibrated paths activate only on the
+    Real lane).
+  - Every App tab is badged by provenance: gradation, gauges, capacity, breakage/t10, operating map and mass
+    balance run on the real survey (REAL / CALIBRATED); the 3 geometry tabs are STRUCTURE-REAL; the ONNX
+    surrogate and anomaly autoencoder are labelled SYNTHETIC-MODEL on real input (retrain is out of scope). The
+    operating map overlays all 10 surveys as the real feed-rate x CSS envelope (coloured by f80), the selected
+    one ringed. Each real view carries the in-panel citation. Honesty caveats stated: the full feed/product PSD
+    curves are figure-only in the paper (feed is f80-reconstructed) and power is a current-based estimate.
+
 ## [0.04.001], 2026-07-07
 
 ### Fixed

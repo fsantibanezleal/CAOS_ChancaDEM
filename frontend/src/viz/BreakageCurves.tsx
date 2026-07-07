@@ -2,16 +2,17 @@ import { useCallback } from 'react';
 import uPlot from 'uplot';
 import { useShellLang, InlineMath } from '@fasl-work/caos-app-shell';
 import { UPlotChart, themeVars } from './UPlotChart';
-import { t10Of, specificEnergy, tFamily } from '../physics/breakage';
+import { t10Of, t10Calibrated, specificEnergy, tFamily } from '../physics/breakage';
 import type { Operating } from '../physics/types';
 
 // Breakage / appearance curves: the JKMRC t10 vs specific-energy curve (with the current operating point) and
 // the t-family (tn vs 1/n) that fills the breakage matrix B, showing B is DERIVED from the cited A,b, never
-// hand-tuned. Reacts to throw/speed (→ Ecs) and ore A·b.
-export function BreakageCurves({ op, height = 220 }: { op: Operating; height?: number }) {
+// hand-tuned. Reacts to throw/speed (→ Ecs) and ore A·b. On the Real lane the t10 comes from the HP500 fit
+// (Table 5, linear in CSS and f80), so the marked point reflects the calibrated appearance, not the A·b path.
+export function BreakageCurves({ op, height = 220, f80Mm }: { op: Operating; height?: number; f80Mm?: number }) {
   const es = useShellLang() === 'es';
   const ecsCur = specificEnergy(op.throwMm, op.speedRpm);
-  const t10Cur = t10Of(ecsCur, op.oreAxb);
+  const t10Cur = op.calibrated && f80Mm != null ? t10Calibrated(op.cssMm, f80Mm) : t10Of(ecsCur, op.oreAxb);
 
   const ecsGrid: number[] = [], t10s: number[] = [];
   for (let e = 0; e <= 4; e += 0.05) { ecsGrid.push(e); t10s.push(t10Of(e, op.oreAxb) * 100); }

@@ -37,6 +37,14 @@ export function t10Of(ecsKwhT: number, oreAxb: number, A = 60): number {
   return Math.max(0, Math.min(0.44, (A * (1 - Math.exp(-b * ecsKwhT))) / 100));
 }
 
+/** HP500 secondary-cone t10 [fraction 0..1] CALIBRATED to the Minas Rio surveys (Rocha et al. 2024, Table 5):
+ *  t10(%) = 64 - 0.12·CSS - 0.23·f80 (sizes in mm). The itabirite surveys ran a high 20-50% t10 band, so the
+ *  value is capped at the Austin appearance function's max representable t10 (0.1^γ ≈ 0.447) before it feeds the
+ *  breakage matrix, exactly as the synthetic t10Of does, keeping the displayed t10 consistent with the matrix. */
+export function t10Calibrated(cssMm: number, f80Mm: number): number {
+  return Math.max(0, Math.min(0.44, (64 - 0.12 * cssMm - 0.23 * f80Mm) / 100));
+}
+
 /** Austin cumulative breakage: fraction of progeny from a parent finer than relative size u = x/y. */
 export function appearanceCum(u: number, phi: number): number {
   if (u <= 0) return 0;
