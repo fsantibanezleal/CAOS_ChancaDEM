@@ -1,4 +1,4 @@
-import { Equation, InlineMath, Refs, SubTabs, useShellLang } from '@fasl-work/caos-app-shell';
+import { Cite, Equation, InlineMath, Refs, SubTabs, useShellLang } from '@fasl-work/caos-app-shell';
 
 // Methodology, the model chain, one sub-tab per stage, with the governing equations. SVG diagrams per sub-tab
 // are added in the runtime stage; the equations + derivations are the substance and are complete here.
@@ -12,16 +12,68 @@ export default function Methodology() {
     { id: 'breakage', label: es ? 'Fractura B / t10' : 'Breakage B / t10', content: <Breakage es={es} /> },
     { id: 'whiten', label: es ? 'Balance de Whiten' : 'Whiten balance', content: <Whiten es={es} /> },
     { id: 'capacity', label: es ? 'Capacidad y potencia' : 'Capacity & power', content: <Capacity es={es} /> },
+    { id: 'dem', label: es ? 'DEM / SOTA' : 'DEM / SOTA', content: <DemSota es={es} /> },
+    { id: 'calib', label: es ? 'Calibración y UQ' : 'Calibration & UQ', content: <CalibUq es={es} /> },
     { id: 'learned', label: es ? 'Tier aprendido' : 'Learned tier', content: <Learned es={es} /> },
   ];
   return (
     <section className="page-body prose">
       <h2>{es ? 'Metodología' : 'Methodology'}</h2>
-      <p className="tz-lead">{es ? 'La cadena de modelos, citada de extremo a extremo: de la geometría de la cámara al producto, la capacidad y la potencia, y los dos modelos aprendidos.' : 'The model chain, cited end-to-end: from chamber geometry to product, capacity and power, plus the two learned models.'}</p>
+      <p className="tz-lead">{es ? 'La cadena de modelos, citada de extremo a extremo: de la geometría de la cámara al producto, la capacidad y la potencia; el frente DEM/SOTA que NO somos; la calibración a datos reales con validación held-out (LOO) e incertidumbre; y los dos modelos aprendidos.' : 'The model chain, cited end-to-end: from chamber geometry to product, capacity and power; the DEM/SOTA frontier we are NOT; the calibration to real data with held-out (LOO) validation and uncertainty; and the two learned models.'}</p>
       <SubTabs tabs={tabs} ariaLabel="methodology" />
-      <Refs ids={['whiten1972', 'narayanan1988', 'andersen1988', 'austin1984', 'evertsson2000', 'bond1952', 'morrell2009', 'quist2016', 'napiermunn1996']} label="References" />
+      <Refs ids={['whiten1972', 'narayanan1988', 'andersen1988', 'austin1984', 'evertsson2000', 'evertsson1997', 'bond1952', 'morrell2009', 'quist2016', 'delaney2015', 'johansson2017val', 'koh2021', 'rocha2024', 'duarte2021', 'napiermunn1996']} label="References" />
     </section>
   );
+}
+
+function DemSota({ es }: { es: boolean }) {
+  return (<>
+    <p>{es ? <>El frente de vanguardia para el MECANISMO de un chancador de cono es el DEM (método de elementos discretos): partículas que fluyen y se fracturan resueltas por contacto. Dos familias: reemplazo de partículas (PRM, Cleary y Sinnott <Cite id="cleary2015" paren />; Delaney et al. <Cite id="delaney2015" paren />, super-cuádricas que se rompen en progenie dimensionada por el t10 del JKMRC) y roca de partículas ligadas (Quist y Evertsson <Cite id="quist2016" paren />), validadas contra laboratorio (Johansson et al. <Cite id="johansson2017val" paren />). El frente para la PREDICCIÓN rápida es un surrogate DNN de un modelo fenomenológico (Koh et al. <Cite id="koh2021" paren />).</> : <>The frontier for a cone crusher's MECHANISM is DEM (the discrete element method): flowing, breaking particles resolved by contact. Two families: particle replacement (PRM, Cleary and Sinnott <Cite id="cleary2015" paren />; Delaney et al. <Cite id="delaney2015" paren />, super-quadrics breaking into progeny sized by the JKMRC t10) and bonded-particle rock (Quist and Evertsson <Cite id="quist2016" paren />), validated against lab data (Johansson et al. <Cite id="johansson2017val" paren />). The frontier for fast PREDICTION is a DNN surrogate of a phenomenological model (Koh et al. <Cite id="koh2021" paren />).</>}</p>
+    <div className="tz-note">{es ? <><b>ChancaDEM NO es un solver DEM.</b> Corre un modelo de balance poblacional (PBM) / empírico (Whiten + Evertsson + Bond) en TypeScript puro, en vivo en el navegador. El DEM es el frente de referencia que citamos y contra el que nos posicionamos, no lo que corre en el navegador (un paso DEM industrial toma horas de GPU). Ese es exactamente el hueco que ocupamos: una recalibración validada held-out, con incertidumbre, sobre datos abiertos, entregada en vivo.</> : <><b>ChancaDEM is NOT a DEM solver.</b> It runs a population-balance (PBM) / empirical model (Whiten + Evertsson + Bond) in pure TypeScript, live in the browser. DEM is the reference frontier we cite and position against, not what runs in the browser (an industrial DEM step is GPU-hours). That gap is exactly what we occupy: a held-out-validated, uncertainty-aware recalibration on open data, delivered live.</>}</div>
+    <svg viewBox="0 0 560 190" width="100%" style={sv} role="img" aria-label="PBM vs DEM positioning">
+      <rect x="20" y="30" width="240" height="130" rx="8" fill="color-mix(in oklab,#3fb950 10%,transparent)" stroke="#3fb950" strokeWidth="1.2" />
+      <rect x="300" y="30" width="240" height="130" rx="8" fill="color-mix(in oklab,#58a6ff 8%,transparent)" stroke="var(--color-fg-subtle)" strokeWidth="1.2" strokeDasharray="4 3" />
+      <text x="140" y="52" textAnchor="middle" fill="#3fb950" fontSize="12" fontWeight="700">ChancaDEM (PBM)</text>
+      <text x="420" y="52" textAnchor="middle" fill="var(--color-fg-subtle)" fontSize="12" fontWeight="700">DEM (SOTA frontier)</text>
+      <text x="140" y="78" textAnchor="middle" fill="var(--color-fg-subtle)" fontSize="10">Whiten C + B, Evertsson Q</text>
+      <text x="140" y="96" textAnchor="middle" fill="var(--color-fg-subtle)" fontSize="10">{es ? 'sub-ms, en vivo (navegador)' : 'sub-ms, live (browser)'}</text>
+      <text x="140" y="120" textAnchor="middle" fill="#3fb950" fontSize="10">{es ? 'LOO + UQ, datos abiertos' : 'LOO + UQ, open data'}</text>
+      <text x="140" y="138" textAnchor="middle" fill="#3fb950" fontSize="10">{es ? 'entregado en vivo' : 'delivered live'}</text>
+      <text x="420" y="78" textAnchor="middle" fill="var(--color-fg-faint)" fontSize="10">PRM / bonded-particle</text>
+      <text x="420" y="96" textAnchor="middle" fill="var(--color-fg-faint)" fontSize="10">{es ? 'horas de GPU, offline' : 'GPU-hours, offline'}</text>
+      <text x="420" y="120" textAnchor="middle" fill="var(--color-fg-faint)" fontSize="10">{es ? 'ajuste en-muestra, sin UQ' : 'in-sample fit, no UQ'}</text>
+      <text x="420" y="138" textAnchor="middle" fill="var(--color-fg-faint)" fontSize="10">{es ? 'progenie DWT (t10) ← puente' : 'DWT (t10) progeny ← bridge'}</text>
+    </svg>
+    <p>{es ? 'El puente entre ambos: el DEM SOTA dimensiona la progenie de fractura con la misma familia de aparición t10-tn del JKMRC que usa nuestro PBM (Delaney et al.), así que las tendencias de fractura son comparables aunque el mecanismo se resuelva distinto.' : 'The bridge between them: the SOTA DEM sizes breakage progeny with the same JKMRC t10-tn appearance family our PBM uses (Delaney et al.), so breakage trends are comparable even though the mechanism is resolved differently.'}</p>
+  </>);
+}
+
+function CalibUq({ es }: { es: boolean }) {
+  return (<>
+    <p>{es ? <>El motor está CALIBRADO a 10 encuestas industriales reales de un cono secundario Metso HP500 (mina Minas Rio, itabirita) mediante el ajuste Andersen-Whiten publicado (Rocha et al. <Cite id="rocha2024" paren />, Tabla 5), lineal en CSS y f80:</> : <>The engine is CALIBRATED to 10 real industrial surveys of a Metso HP500 secondary cone (Minas Rio, itabirite iron ore) via the published Andersen-Whiten fit (Rocha et al. <Cite id="rocha2024" paren />, Table 5), linear in CSS and f80:</>}</p>
+    <Equation tex={String.raw`K_1=0.23\,\text{CSS}+0.30\,f_{80},\quad K_2=12+0.55\,\text{CSS}+0.40\,f_{80},\quad K_3=2.3,\quad t_{10}[\%]=64-0.12\,\text{CSS}-0.23\,f_{80}`} />
+    <p>{es ? 'La potencia del paper tiene la forma lineal Pc = ζ·Pd + Pn con ζ=1.30 y Pn=110 kW (sin carga), donde Pd es una potencia NETA específica de tamaño del propio modelo del paper:' : "The paper's power has the linear form Pc = ζ·Pd + Pn with ζ=1.30 and Pn=110 kW (no-load), where Pd is a size-specific NET power from the paper's own model:"}</p>
+    <Equation tex={String.raw`P_c=\zeta\,P_d+P_n,\qquad \zeta=1.30,\quad P_n=110\ \text{kW}`} />
+    <div className="tz-note">{es ? <><b>Hallazgo honesto sobre la potencia.</b> El tiro de Bond que calcula nuestro motor NO es el Pd del paper (es el draw clásico de Bond, casi plano en estas encuestas), así que aplicar ζ=1.30, Pn=110 sobre nuestro Pd sobreestima. La premisa de "eliminar una sobrepredicción 2x de Bond" NO se sostiene con los números del motor: se reporta como corrección en Benchmark. La potencia MEDIDA es la referencia que muestra la app. El resultado real at-bar es la paridad de t/h, no la potencia.</> : <><b>Honest finding on power.</b> The Bond draw our engine computes is NOT the paper's Pd (it is the classical Bond draw, nearly flat over these surveys), so applying ζ=1.30, Pn=110 on our Pd overshoots. The "removes a Bond 2x overprediction" premise does NOT hold against the engine's numbers: it is reported as a correction in Benchmark. The MEASURED power is the reference the app shows. The real at-bar result is the t/h parity, not the power.</>}</div>
+    <p>{es ? 'La validación es leave-one-survey-out (LOO): para cada encuesta i se predice con las otras 9 (escalares del backbone reajustados por fold), y se comparan tres modelos en los mismos folds:' : 'Validation is leave-one-survey-out (LOO): for each survey i predict from the other 9 (backbone scalars refit per fold), comparing three models on identical folds:'}</p>
+    <Equation tex={String.raw`\hat{y}^{(-i)}_{\,M0}=\text{backbone},\quad \hat{y}^{(-i)}_{\,M1}=\text{backbone}+\underbrace{\text{clip}\big(g_\theta(\text{CSS},f_{80})\big)}_{|\Delta|\le 0.20\,\text{backbone}},\quad \hat{y}^{(-i)}_{\,M2}=\text{OLS libre}`} />
+    <svg viewBox="0 0 560 150" width="100%" style={sv} role="img" aria-label="leave-one-out folds">
+      {Array.from({ length: 10 }).map((_, i) => (
+        <g key={i}>
+          <rect x={20 + i * 52} y={40} width={44} height={22} rx={4}
+            fill={i === 3 ? 'color-mix(in oklab,#f0883e 30%,transparent)' : 'color-mix(in oklab,#3fb950 22%,transparent)'}
+            stroke={i === 3 ? '#f0883e' : '#3fb950'} strokeWidth="1.1" />
+          <text x={42 + i * 52} y={55} textAnchor="middle" fill="var(--color-fg-subtle)" fontSize="9">#{i + 1}</text>
+        </g>
+      ))}
+      <text x="20" y="30" fill="var(--color-fg-subtle)" fontSize="10">{es ? 'fold: se deja fuera #4 (naranja), se entrena con las 9 verdes, se predice #4' : 'fold: hold out #4 (orange), train on the 9 green, predict #4'}</text>
+      <text x="20" y="95" fill="#3fb950" fontSize="10">{es ? 'entrenamiento (9)' : 'train (9)'}</text>
+      <text x="200" y="95" fill="#f0883e" fontSize="10">{es ? 'validación held-out (1)' : 'held-out validation (1)'}</text>
+      <text x="20" y="120" fill="var(--color-fg-faint)" fontSize="10">{es ? 'controles: media constante · etiqueta-barajada · fold con fuga vs estricto' : 'controls: constant-mean · label-shuffle · leaky vs strict fold'}</text>
+      <text x="20" y="138" fill="var(--color-fg-faint)" fontSize="10">{es ? 'UQ: intervalo predictivo 80% = M0 ± 1.28·σ(residuo held-out); se chequea la cobertura' : 'UQ: 80% predictive interval = M0 ± 1.28·σ(held-out residual); coverage is checked'}</text>
+    </svg>
+    <p>{es ? <>Resultado (ver Benchmark): en t/h el backbone calibrado alcanza ~12% MAPE held-out (dentro de la banda ~15% del paper), supera a la media constante y pasa la etiqueta-barajada; el residuo M1 NO lo supera fuera de muestra (nulo pre-registrado), así que se envía el backbone + banda empírica. La novedad es metodológica (LOO + UQ + datos abiertos + navegador en vivo), no un error menor que el DEM/paper. Segundo ancla de cono: Duarte et al. <Cite id="duarte2021" paren />.</> : <>Result (see Benchmark): for t/h the calibrated backbone reaches ~12% held-out MAPE (inside the paper's ~15% band), beats the constant-mean baseline and passes label-shuffle; the M1 residual does NOT beat it out-of-sample (a pre-registered null), so the backbone + empirical band is shipped. The novelty is methodological (LOO + UQ + open data + live browser), not a lower error than the DEM/paper. Second cone anchor: Duarte et al. <Cite id="duarte2021" paren />.</>}</p>
+  </>);
 }
 
 function Chamber({ es }: { es: boolean }) {
