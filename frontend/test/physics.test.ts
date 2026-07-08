@@ -95,3 +95,35 @@ test('throughput and power are positive and finite for a valid point', () => {
   assert.ok(r.throughputTph > 0 && isFinite(r.throughputTph), `tph ${r.throughputTph}`);
   assert.ok(r.powerKw > 0 && isFinite(r.powerKw), `kW ${r.powerKw}`);
 });
+
+test('envelope gate: a valid in-support point is inside the envelope', () => {
+  const r = evaluate(base);
+  assert.equal(r.outOfEnvelope, false, 'base point is in-envelope');
+  assert.equal(r.implausible, false);
+  assert.equal(r.envelopeCodes.length, 0);
+});
+
+test('envelope gate: an implausible point (CSS >= feed F80) is flagged AND marked invalid', () => {
+  // wide setting relative to a fine feed -> f80 < CSS -> physically nonsensical
+  const r = evaluate({ ...base, cssMm: 120, feedX63Mm: 40 });
+  assert.equal(r.implausible, true, 'implausible flagged');
+  assert.equal(r.outOfEnvelope, true);
+  assert.equal(r.valid, false, 'implausible => invalid (no confident number)');
+  assert.ok(r.envelopeCodes.includes('f80_lt_css'));
+});
+
+test('envelope gate: calibrated lane flags out-of-support CSS/f80 as extrapolating (not implausible)', () => {
+  // calibrated HP500 support is CSS [38,55], f80 [47,140]; CSS 60 with a coarse feed extrapolates
+  const r = evaluate({ ...base, machine: 'cone-sec', cssMm: 60, feedX63Mm: 120, calibrated: true });
+  assert.equal(r.outOfEnvelope, true, 'extrapolation flagged');
+  assert.ok(r.envelopeCodes.includes('css_outside_calibrated'), `codes ${r.envelopeCodes}`);
+  assert.equal(r.implausible, false, 'extrapolation is not implausible');
+});
+
+test('envelope gate: the 10 real HP500 surveys are all physically plausible', () => {
+  const surveys: Array<[number, number]> = [[54, 88], [54, 84], [48, 47], [48, 88], [48, 62], [40, 79], [38, 140], [44, 123], [40, 81], [55, 81]];
+  for (const [css, f80] of surveys) {
+    const r = evaluate({ ...base, machine: 'cone-sec', cssMm: css, feedX63Mm: f80 * 1.4, calibrated: true });
+    assert.equal(r.implausible, false, `survey CSS ${css} f80 ${f80} not implausible`);
+  }
+});
