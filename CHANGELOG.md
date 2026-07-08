@@ -4,6 +4,51 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [0.06.000], 2026-07-07
+
+### Added
+- **CrusherCal: a leave-one-survey-out (LOO) validation of the calibrated HP500 backbone, with honest results.**
+  The novel-beyond-SOTA contribution is methodological, held-out (LOO) parity + calibrated uncertainty on OPEN
+  industrial data, running live in the browser. It is NOT a claim of lower error than the DEM / phenomenological
+  SOTA, and every number is computed from the 10 real Rocha et al. 2024 surveys (none asserted).
+  - New offline validator `data-pipeline/chancalab/hp500/loo.py` (numpy-only, deterministic, seeded) grades three
+    models on identical LOO folds for the measured targets t/h and kW (P80 is a model output, reported as
+    self-consistency): M0 calibrated backbone (global scalars refit per fold), M1 backbone + bounded ridge
+    residual (the CrusherCal proposal), M2 free-form OLS (the overfit strawman). Strict AND leaky folds expose the
+    optimism gap; negative controls (label-shuffle, constant-mean) and an 80% predictive-interval coverage check
+    are included. Traces committed to `data/derived/hp500/loo.json`.
+  - New Node bridge `data-pipeline/chancalab/sweep/bake_hp500.mjs` runs the SAME live TypeScript engine on the 10
+    surveys and writes `data/derived/hp500/backbone.json` (the physics stays the single source of truth). Wired
+    into `chancalab.pipeline` (light lane rebuilds the LOO from the committed backbone; `--retrain` re-bridges).
+  - Tests `tests/test_hp500_loo.py`: determinism, the label-shuffle control not beating the backbone, the t/h
+    backbone beating the constant-mean baseline, and the leaky-vs-strict overfitting gap being exposed.
+- **Benchmark: real power-parity + LOO parity panels (live).** New `PowerParity` and `LooParity` views read the
+  committed traces and render measured-vs-modeled scatters with the honest metrics and the pre-registered null.
+- **Prediction bands on the App gauges (Real lane).** t/h and kW gauges show the LOO-derived 80% predictive
+  interval; the null on the residual net is stated in-panel (we ship the backbone + empirical band, not an
+  overfit residual).
+- **Envelope gate (negative control).** `frontend/src/physics/envelope.ts` flags implausible / out-of-validated
+  inputs (f80 < CSS, CSS <= 0, negative feed, f80 outside the calibrated [47,140] mm on the real lane) so a view
+  says "out of validated envelope" instead of emitting a confident number.
+- **Deeper docs + Methodology.** New Methodology sub-tabs (DEM / SOTA landscape; Calibration & UQ) with the
+  term-by-term math and verified DOIs; new `docs/frameworks/07_dem_pbm_landscape`, `08_calibration_validation`,
+  `09_power_model` wiki units; new theme-aware SVGs; new verified citations (Cleary/Delaney/Quist/Johansson/Koh
+  DEM + surrogate SOTA, Rocha 2024).
+
+### Results (held-out, honest, from the 10 surveys)
+- **t/h (genuine at-bar win):** the calibrated Evertsson capacity backbone reproduces the measured throughput at
+  ~12% strict-LOO MAPE (within the paper's ~15% band), beating the constant-mean baseline (~18%) and passing the
+  label-shuffle control. Real calibrated-capacity skill.
+- **kW (honest negative):** the classical Bond draw computed by the engine is nearly flat (~196 to 237 kW) and
+  carries little information about the measured 187 to 355 kW spread, so the backbone (~26% MAPE) is no better than
+  predicting the survey mean (~24%). The engine's `Pc = 1.30*Pd + 110` (the paper form on our Bond Pd) is a
+  miscalibration (~48%) because the paper's Pd is a size-specific net power, not the classical Bond draw. The
+  dossier's "removes the Bond ~2x overprediction" premise is NOT supported by the engine and is reported as a
+  corrected finding; no 2x-removal is claimed.
+- **M1 residual (pre-registered null):** the bounded residual does not beat the backbone out-of-sample (t/h ~13%
+  vs ~12%; kW marginal), and its leaky-vs-strict gap confirms overfitting at n=10. We ship the backbone with
+  empirical uncertainty bands, not an overfit residual ONNX, and say so in-app.
+
 ## [0.05.000], 2026-07-07
 
 ### Added
