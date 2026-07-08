@@ -76,6 +76,9 @@
 
 /* ---- generic helpers ---- */
 .tz-note { font-size: 0.76rem; border-left: 3px solid var(--color-warn, #d29922); padding-left: 0.6rem; color: var(--color-fg-subtle); }
+.tz-envelope-warn { margin: 0.6rem 0; padding: 0.6rem 0.8rem; border: 1px solid #f8514966; border-left: 4px solid #f85149; border-radius: 8px; background: color-mix(in oklab, #f85149 12%, transparent); font-size: 0.82rem; color: var(--color-fg); }
+.tz-envelope-warn b { color: #f85149; }
+.tz-envelope-warn ul { margin: 0.3rem 0 0; padding-left: 1.1rem; color: var(--color-fg-subtle); }
 .tz-readout { position: absolute; pointer-events: none; background: color-mix(in oklab, var(--color-surface) 92%, transparent); border: 1px solid var(--color-border); border-radius: 6px; padding: 0.2rem 0.45rem; font-family: var(--font-mono); font-size: 0.72rem; color: var(--color-fg); white-space: nowrap; }
 .tz-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 .tz-table th, .tz-table td { text-align: left; padding: 0.35rem 0.5rem; border-bottom: 1px solid var(--color-border); }
