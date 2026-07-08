@@ -1,8 +1,10 @@
-import type { ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Tabs, useShellLang } from '@fasl-work/caos-app-shell';
 import { useWorkbench } from '../state/store';
 import { CASES } from '../data/cases';
 import { HP500_SURVEYS, HP500_SOURCE } from '../data/real/hp500-minasrio';
+import { loadLoo, type LooDoc } from '../data/loadLoo';
+import { envelopeText, type EnvelopeCode } from '../physics/envelope';
 import type { Machine, CrusherResult } from '../physics/types';
 import type { RealSurvey } from '../data/real/hp500-minasrio';
 import { Chamber3D } from '../viz/Chamber3D';
@@ -157,6 +159,12 @@ export default function Tool() {
             </>
           )}
         </div>
+        {r.outOfEnvelope && (
+          <div className="tz-envelope-warn" role="alert">
+            <b>{es ? 'Fuera de la envolvente validada' : 'Out of validated envelope'}</b>
+            <ul>{(r.envelopeCodes as EnvelopeCode[]).map((c) => <li key={c}>{envelopeText(c, es)}</li>)}</ul>
+          </div>
+        )}
         <Tabs tabs={tabs} ariaLabel={es ? 'vistas' : 'views'} />
         <p className="tz-note">{real
           ? (es
@@ -171,6 +179,15 @@ export default function Tool() {
 }
 
 function GaugesPanel({ r, es, survey }: { r: CrusherResult; es: boolean; survey: RealSurvey | null }) {
+  const [loo, setLoo] = useState<LooDoc | null>(null);
+  useEffect(() => { if (survey) loadLoo().then(setLoo).catch(() => {}); }, [survey]);
+  // CrusherCal held-out 80% predictive-interval half-widths (t/h, kW) from the committed LOO trace, shown as the
+  // uncertainty band on the real-lane gauges. On the synthetic lane no held-out band is available (no bands shown).
+  const tphHalf = survey ? loo?.loo.tph.strict.uq?.band_halfwidth : undefined;
+  const kwHalf = survey ? loo?.loo.kW.strict.uq?.band_halfwidth : undefined;
+  const clamp = (lo: number, hi: number, min: number, max: number): [number, number] => [Math.max(min, lo), Math.min(max, hi)];
+  const tphVal = survey ? survey.measured.feedRateTph : r.throughputTph;
+  const kwVal = survey ? survey.measured.powerKW : r.powerKw;
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       {survey && (
@@ -184,9 +201,18 @@ function GaugesPanel({ r, es, survey }: { r: CrusherResult; es: boolean; survey:
           {es ? 'Derivado (calibrado):' : 'Derived (calibrated):'} P80 = <b style={{ color: 'var(--color-fg)' }}>{r.p80.toFixed(1)} mm</b> · {es ? 'reducción' : 'reduction'} = <b style={{ color: 'var(--color-fg)' }}>{r.reductionRatio.toFixed(2)}×</b> {es ? 'desde el ajuste Andersen-Whiten (Tabla 5); la potencia y el t/h medidos son la referencia real.' : 'from the Andersen-Whiten fit (Table 5); the measured power and t/h are the real reference.'}
         </div>
       )}
-      <Gauge title={es ? 'Capacidad' : 'Throughput'} value={survey ? survey.measured.feedRateTph : r.throughputTph} min={0} max={1800} unit="t/h"
+      {survey && (tphHalf || kwHalf) && (
+        <div className="tz-panel-sub">
+          {es ? 'La banda sombreada en los medidores es el intervalo predictivo del 80% held-out de CrusherCal (LOO): ' : 'The shaded band on the gauges is CrusherCal\'s 80% held-out predictive interval (LOO): '}
+          {tphHalf ? `±${tphHalf.toFixed(0)} t/h` : ''}{tphHalf && kwHalf ? ' · ' : ''}{kwHalf ? `±${kwHalf.toFixed(0)} kW` : ''}.
+          {es ? ' El residuo M1 no supera al backbone fuera de muestra (nulo pre-registrado); se muestra el backbone + banda empírica.' : ' The M1 residual does not beat the backbone out-of-sample (pre-registered null); the backbone + empirical band is shown.'}
+        </div>
+      )}
+      <Gauge title={es ? 'Capacidad' : 'Throughput'} value={tphVal} min={0} max={1800} unit="t/h"
+        band={tphHalf ? clamp(tphVal - tphHalf, tphVal + tphHalf, 0, 1800) : undefined}
         zones={[{ from: 0, to: 1800, color: 'color-mix(in oklab, #58a6ff 35%, transparent)' }]} />
-      <Gauge title={es ? 'Potencia' : 'Power'} value={survey ? survey.measured.powerKW : r.powerKw} min={0} max={550} unit="kW"
+      <Gauge title={es ? 'Potencia' : 'Power'} value={kwVal} min={0} max={550} unit="kW"
+        band={kwHalf ? clamp(kwVal - kwHalf, kwVal + kwHalf, 0, 550) : undefined}
         zones={[{ from: 0, to: 350, color: 'color-mix(in oklab, #3fb950 40%, transparent)' }, { from: 350, to: 550, color: 'color-mix(in oklab, #f85149 40%, transparent)' }]} />
       <Gauge title={es ? 'Energía específica Ecs' : 'Specific energy Ecs'} value={survey ? survey.measured.powerKW / survey.measured.feedRateTph : r.specificEnergyKwhT} min={0} max={3} unit="kWh/t" fmt={(v) => v.toFixed(2)}
         zones={[{ from: 0, to: 3, color: 'color-mix(in oklab, #d29922 35%, transparent)' }]} />

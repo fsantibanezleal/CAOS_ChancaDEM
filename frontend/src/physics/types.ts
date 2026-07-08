@@ -48,6 +48,11 @@ export interface CrusherResult {
   // honesty: validity guard
   valid: boolean;
   flags: string[];                   // why a point is flagged invalid / extrapolating
+  // envelope gate (negative control): implausible / out-of-calibrated-support inputs are FLAGGED, not answered
+  // with a confident number. `envelopeCodes` are stable codes the UI maps to bilingual text (see physics/envelope).
+  outOfEnvelope: boolean;            // true if any envelope check tripped (implausible OR extrapolating)
+  implausible: boolean;              // true only for physically-nonsensical inputs (worse than extrapolation)
+  envelopeCodes: string[];
   // numerical health of the Whiten solve
   massClosure: number;               // |Σproduct − Σfeed| (should be ~0)
   condEstimate: number;              // rough conditioning proxy of (I − B·C)
