@@ -1,0 +1,183 @@
+{
+  "schema": "chancadem.hp500.backbone/v1",
+  "source": {
+    "paper": "Rocha, Campos, Silva & Tavares 2024",
+    "doi": "10.3390/min14090919",
+    "license": "CC BY 4.0",
+    "table": "A1 (measured) + 5 (fit)"
+  },
+  "note": "Backbone = the live calibrated TypeScript Whiten/Evertsson/Bond engine on each real survey. Measured t/h and kW are ground truth; P80 is a model output (paper PSD curves are figure-only), graded as self-consistency. The paper power constants zeta=1.30, Pn=110 apply to the paper size-specific Pd, NOT the classical Bond draw here.",
+  "n": 10,
+  "surveys": [
+    {
+      "id": "HP500-01",
+      "n": 1,
+      "measured": {
+        "cssMm": 54,
+        "f80Mm": 88,
+        "tph": 1639,
+        "kW": 209
+      },
+      "backbone": {
+        "p80": 32.56,
+        "tph": 1208.87,
+        "bondPd": 229.5,
+        "calibratedKw": 408.34,
+        "f80Model": 84.86
+      }
+    },
+    {
+      "id": "HP500-02",
+      "n": 2,
+      "measured": {
+        "cssMm": 54,
+        "f80Mm": 84,
+        "tph": 1267,
+        "kW": 212
+      },
+      "backbone": {
+        "p80": 31.36,
+        "tph": 1208.87,
+        "bondPd": 233.73,
+        "calibratedKw": 413.85,
+        "f80Model": 81.7
+      }
+    },
+    {
+      "id": "HP500-03",
+      "n": 3,
+      "measured": {
+        "cssMm": 48,
+        "f80Mm": 47,
+        "tph": 1240,
+        "kW": 262
+      },
+      "backbone": {
+        "p80": 21.23,
+        "tph": 1106.71,
+        "bondPd": 224.86,
+        "calibratedKw": 402.31,
+        "f80Model": 47.15
+      }
+    },
+    {
+      "id": "HP500-04",
+      "n": 4,
+      "measured": {
+        "cssMm": 48,
+        "f80Mm": 88,
+        "tph": 1034,
+        "kW": 349
+      },
+      "backbone": {
+        "p80": 30.8,
+        "tph": 1106.71,
+        "bondPd": 225.66,
+        "calibratedKw": 403.36,
+        "f80Model": 84.86
+      }
+    },
+    {
+      "id": "HP500-05",
+      "n": 5,
+      "measured": {
+        "cssMm": 48,
+        "f80Mm": 62,
+        "tph": 1124,
+        "kW": 325
+      },
+      "backbone": {
+        "p80": 24.54,
+        "tph": 1106.71,
+        "bondPd": 234.76,
+        "calibratedKw": 415.19,
+        "f80Model": 61.66
+      }
+    },
+    {
+      "id": "HP500-06",
+      "n": 6,
+      "measured": {
+        "cssMm": 40,
+        "f80Mm": 79,
+        "tph": 813,
+        "kW": 355
+      },
+      "backbone": {
+        "p80": 26.54,
+        "tph": 970.5,
+        "bondPd": 222.5,
+        "calibratedKw": 399.26,
+        "f80Model": 77.55
+      }
+    },
+    {
+      "id": "HP500-07",
+      "n": 7,
+      "measured": {
+        "cssMm": 38,
+        "f80Mm": 140,
+        "tph": 1050,
+        "kW": 306
+      },
+      "backbone": {
+        "p80": 36.6,
+        "tph": 936.45,
+        "bondPd": 196.14,
+        "calibratedKw": 364.98,
+        "f80Model": 118.94
+      }
+    },
+    {
+      "id": "HP500-08",
+      "n": 8,
+      "measured": {
+        "cssMm": 44,
+        "f80Mm": 123,
+        "tph": 1138,
+        "kW": 325
+      },
+      "backbone": {
+        "p80": 35.69,
+        "tph": 1038.61,
+        "bondPd": 212.74,
+        "calibratedKw": 386.56,
+        "f80Model": 109.85
+      }
+    },
+    {
+      "id": "HP500-09",
+      "n": 9,
+      "measured": {
+        "cssMm": 40,
+        "f80Mm": 81,
+        "tph": 820,
+        "kW": 350
+      },
+      "backbone": {
+        "p80": 26.97,
+        "tph": 970.5,
+        "bondPd": 221.57,
+        "calibratedKw": 398.04,
+        "f80Model": 79.24
+      }
+    },
+    {
+      "id": "HP500-10",
+      "n": 10,
+      "measured": {
+        "cssMm": 55,
+        "f80Mm": 81,
+        "tph": 1334,
+        "kW": 187
+      },
+      "backbone": {
+        "p80": 30.72,
+        "tph": 1225.89,
+        "bondPd": 237.49,
+        "calibratedKw": 418.74,
+        "f80Model": 79.24
+      }
+    }
+  ]
+}

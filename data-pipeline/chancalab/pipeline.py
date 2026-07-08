@@ -79,7 +79,24 @@ def retrain(seed: int = 42) -> None:
     export.export_models(train_out=tout, eval_metrics=metrics, scalers=scalers, derived_dir=str(DERIVED))
     print("[retrain] re-bake case-results (TS engine over the 18 cases) ...", flush=True)
     _node(str(SWEEP_DIR / "bake_cases.mjs"))
-    print(f"[retrain] wrote ONNX + scalers + metrics + case-results -> {DERIVED}", flush=True)
+    print("[retrain] bridge the HP500 real surveys through the TS engine (backbone.json) ...", flush=True)
+    _node(str(SWEEP_DIR / "bake_hp500.mjs"))
+    print(f"[retrain] wrote ONNX + scalers + metrics + case-results + hp500 backbone -> {DERIVED}", flush=True)
+
+
+def rebuild_hp500_loo() -> None:
+    """Light lane: recompute the CrusherCal LOO validation (data/derived/hp500/loo.json) from the committed
+    backbone.json (bridged from the TS engine). numpy-only + deterministic, so it is regenerated on every plain
+    `pipeline all`, proving the held-out numbers are reproducible from the committed backbone (no Node needed)."""
+    from . import hp500  # noqa: F401  (package marker)
+    from .hp500 import loo
+
+    if not loo.BACKBONE.exists():
+        print(f"[hp500] no backbone.json ({loo.BACKBONE}); run --retrain to bridge the TS engine. Skipping LOO.")
+        return
+    backbone = read_json(loo.BACKBONE)
+    write_json(loo.OUT, loo.run(backbone))
+    print(f"[hp500] rebuilt CrusherCal LOO -> {loo.OUT}")
 
 
 def run_all(seed: int = 42) -> list[dict]:
@@ -91,6 +108,7 @@ def run_all(seed: int = 42) -> list[dict]:
         entries.append({"case_id": c.id, "category": c.category, "stage": c.stage,
                         "manifest_path": f"manifests/{c.id}.json"})
     write_json(MANIFESTS / "index.json", build_index(entries))
+    rebuild_hp500_loo()
     return entries
 
 

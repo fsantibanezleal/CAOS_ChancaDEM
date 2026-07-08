@@ -11,4 +11,4 @@ the labels; Python (`stages/train.py`) fits the ONNX models. The default pipelin
 per-case replay from the committed artifacts.
 """
 
-__version__ = "0.04.000"  # display X.XX.XXX; PEP 440 form in pyproject.toml (0.4.0)
+__version__ = "0.06.000"  # display X.XX.XXX; PEP 440 form in pyproject.toml (0.6.0)
