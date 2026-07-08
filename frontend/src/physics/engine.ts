@@ -8,6 +8,7 @@ import { classificationParams, classify } from './classification';
 import { specificEnergy, t10Of, t10Calibrated, phiFromT10, breakageMatrix } from './breakage';
 import { whitenSolve } from './whiten';
 import { throughput, bondPower, calibratedPower, nipAngle, nipLimit } from './capacity';
+import { checkEnvelope } from './envelope';
 import type { Operating, CrusherResult, Regime } from './types';
 
 const TOP_MM = 256;     // sieve top size [mm]
@@ -69,11 +70,18 @@ export function evaluate(op: Operating): CrusherResult {
   if (!isFinite(cond) || cond > 1e6) { valid = false; flags.push('ill-conditioned breakage matrix near choke'); }
   if (op.cssMm >= feed.edgesMm[0]) regime = 'invalid';
 
+  // envelope gate (negative control): flag implausible / out-of-calibrated-support inputs. A physically-nonsensical
+  // point is also marked invalid so no view treats it as a trustworthy reading.
+  const env = checkEnvelope(op, f80);
+  for (const code of env.codes) if (!flags.includes(code)) flags.push(code);
+  if (env.implausible) valid = false;
+
   return {
     op, feed, product,
     f80, p80, p50, p20, reductionRatio, pctPassing,
     throughputTph: tph, powerKw, specificEnergyKwhT: ecs,
     ossMm, nipAngleDeg: nip, nipLimitDeg: nipLim, regime,
     valid, flags, massClosure, condEstimate: cond,
+    outOfEnvelope: !env.inEnvelope, implausible: env.implausible, envelopeCodes: env.codes,
   };
 }

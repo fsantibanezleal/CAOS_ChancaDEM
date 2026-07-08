@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { Refs, useShellLang } from '@fasl-work/caos-app-shell';
 import { loadLearned, learnedMetrics, type Metrics } from '../physics/surrogate';
 import { ParityScatter } from '../viz/ParityScatter';
+import { PowerParity, LooParity } from '../viz/CrusherCalPanels';
 
-// Benchmark, the three honest, separable checks (the central defense against over-claiming). The surrogate-vs-
-// physics numbers are loaded LIVE from the committed surrogate_metrics.json (the real held-out values from the
-// independent 2nd LHS draw), no fabricated numbers.
+// Benchmark, the honest, separable checks, the central defense against over-claiming. Two of them (power parity,
+// LOO held-out) read the committed CrusherCal trace (data/hp500/loo.json) computed offline on the 10 real HP500
+// surveys; the surrogate-vs-physics numbers load from the committed surrogate_metrics.json. No number is fabricated
+// and null results are stated as such.
 export default function Benchmark() {
   const es = useShellLang() === 'es';
   const [met, setMet] = useState<Metrics | null>(null);
@@ -16,10 +18,18 @@ export default function Benchmark() {
   return (
     <section className="page-body prose">
       <h2>Benchmark</h2>
-      <p className="tz-lead">{es ? 'Tres comprobaciones separables y reportadas con honestidad, la defensa central contra el sobre-ajuste y la precisión hueca.' : 'Three separable, honestly-reported checks, the central defense against over-claiming and hollow accuracy.'}</p>
+      <p className="tz-lead">{es ? 'Comprobaciones separables y reportadas con honestidad, la defensa central contra el sobre-ajuste y la precisión hueca. Cada número proviene de una traza versionada; los resultados nulos se declaran como nulos.' : 'Separable, honestly-reported checks, the central defense against over-claiming and hollow accuracy. Every number comes from a committed trace; null results are stated as null.'}</p>
 
-      <h3>{es ? '1 · Surrogate vs la física que emula (held-out)' : '1 · Surrogate vs the physics it emulates (held-out)'}</h3>
-      <p>{es ? 'R²/MAPE por salida del MLP ONNX contra el motor exacto de balance poblacional, en un segundo barrido Latin-hypercube INDEPENDIENTE (otra semilla, no un split de filas). Crítico: mide acuerdo con la física barata (de constantes ilustrativas), NO con una planta real.' : 'Per-output R²/MAPE of the ONNX MLP vs the exact population-balance engine, on a second INDEPENDENT Latin-hypercube draw (different seed, not a row-split). Critical: it measures agreement with the cheap physics (illustrative constants), NOT a real plant.'}</p>
+      <h3>{es ? '1 · Paridad de t/h held-out (CrusherCal, leave-one-survey-out)' : '1 · Held-out t/h parity (CrusherCal, leave-one-survey-out)'}</h3>
+      <p>{es ? 'La prueba "más allá del ajuste en-muestra": para cada una de las 10 encuestas HP500 reales, se predice con las otras 9. Se comparan tres modelos en los MISMOS folds: M0 backbone calibrado (escalares reajustados por fold), M1 backbone + residuo acotado (la propuesta CrusherCal), M2 libre (el hombre de paja de sobreajuste). Controles: media constante y etiqueta-barajada. UQ: intervalo predictivo del 80%.' : 'The "beyond the in-sample fit" test: for each of the 10 real HP500 surveys, predict from the other 9. Three models on identical folds: M0 calibrated backbone (scalars refit per fold), M1 backbone + bounded residual (the CrusherCal proposal), M2 free-form (the overfit strawman). Controls: constant-mean and label-shuffle. UQ: an 80% predictive interval.'}</p>
+      <LooParity />
+
+      <h3>{es ? '2 · Paridad de potencia medida vs modelada (hallazgo honesto)' : '2 · Measured-vs-modeled power parity (an honest finding)'}</h3>
+      <p>{es ? 'El dossier esperaba que el modelo de potencia calibrado eliminara una sobrepredicción ~2x de Bond. Los números reales del motor sobre las 10 encuestas NO respaldan esa premisa, y aquí se reporta la corrección con transparencia.' : 'The dossier expected the calibrated power model to remove a Bond ~2x overprediction. The engine\'s real numbers over the 10 surveys do NOT support that premise, and the correction is reported here transparently.'}</p>
+      <PowerParity />
+
+      <h3>{es ? '3 · Surrogate vs la física que emula (held-out)' : '3 · Surrogate vs the physics it emulates (held-out)'}</h3>
+      <p>{es ? 'R²/MAPE por salida del MLP ONNX contra el motor exacto de balance poblacional, en un segundo barrido Latin-hypercube INDEPENDIENTE (otra semilla, no un split de filas). Crítico: mide acuerdo con la física barata, NO con una planta real.' : 'Per-output R²/MAPE of the ONNX MLP vs the exact population-balance engine, on a second INDEPENDENT Latin-hypercube draw (different seed, not a row-split). Critical: it measures agreement with the cheap physics, NOT a real plant.'}</p>
       {met ? (
         <table className="tz-table" style={{ maxWidth: 620 }}>
           <thead><tr><th>{es ? 'salida' : 'output'}</th><th className="num">R²</th><th className="num">MAPE %</th></tr></thead>
@@ -28,20 +38,21 @@ export default function Benchmark() {
           ))}</tbody>
         </table>
       ) : <p className="tz-panel-sub">…{es ? 'cargando métricas' : 'loading metrics'}…</p>}
-      {met && <p className="tz-panel-sub">{es ? 'Entrenado con' : 'Trained on'} {met.nTrain} {es ? 'puntos, evaluado en' : 'points, evaluated on'} {met.nTest} {es ? 'puntos held-out independientes. Monotonicidad P80 vs CSS verificada' : 'independent held-out points. P80-vs-CSS monotonicity verified'}: <b>{String(met.p80MonotoneVsCss)}</b>. {es ? 'El scatter de paridad en vivo (surrogate ONNX vs motor físico) está abajo.' : 'The live parity scatter (ONNX surrogate vs the physics engine) is below.'}</p>}
-
+      {met && <p className="tz-panel-sub">{es ? 'Entrenado con' : 'Trained on'} {met.nTrain} {es ? 'puntos, evaluado en' : 'points, evaluated on'} {met.nTest} {es ? 'puntos held-out independientes. Monotonicidad P80 vs CSS' : 'independent held-out points. P80-vs-CSS monotonicity'}: <b>{String(met.p80MonotoneVsCss)}</b>.</p>}
       <ParityScatter />
 
-      <h3>{es ? '2 · Acuerdo balance-poblacional ↔ DEM' : '2 · Population-balance ↔ DEM agreement'}</h3>
-      <p>{es ? 'El check de "¿la capa en vivo ES de verdad la física?": la salida de la matriz de Whiten contra los escalares del DEM grueso offline (P80, t/h, kW) en puntos compartidos, con tolerancia declarada. Una brecha mayor a la tolerancia es señal de rediseño (derivar B/S del DEM), no algo para tapar.' : 'The "is the live tier actually the physics?" check: the Whiten-matrix output vs the offline coarse-grained DEM scalars (P80, t/h, kW) on shared points, with a stated tolerance. A gap beyond tolerance is a redesign signal (derive B/S from the DEM), not something to paper over.'}</p>
-      <p className="tz-note">{es ? 'Las trazas DEM offline y este cruce se incorporan en el siguiente incremento (la capa DEM 3D); el balance poblacional + la capacidad ya corren en vivo y se validan con los tests de invariantes (cierre de masa, monotonicidad, joroba de capacidad).' : 'The offline DEM traces and this cross-check are wired in the next increment (the 3D DEM tier); the population balance + capacity already run live and are validated by the invariant tests (mass closure, monotonicity, the capacity hump).'}</p>
+      <h3>{es ? '4 · Controles negativos + la compuerta de envolvente' : '4 · Negative controls + the envelope gate'}</h3>
+      <p>{es ? 'Cada resultado debe pasar todos, o es nulo:' : 'Every result must pass all of these, or it is void:'}</p>
+      <ul>
+        <li>{es ? <><b>Etiqueta-barajada:</b> un modelo entrenado con residuos permutados NO debe superar al backbone (arriba, columna del control). Si lo hiciera, habría fuga.</> : <><b>Label-shuffle:</b> a model trained on permuted residual targets must NOT beat the backbone (table above, control row). If it did, there would be leakage.</>}</li>
+        <li>{es ? <><b>Media constante:</b> M0 debe superar a predecir la media de las encuestas para reclamar habilidad. Lo hace en t/h; NO en kW (limitación honesta de la potencia de Bond).</> : <><b>Constant-mean:</b> M0 must beat predicting the survey mean to claim skill. It does for t/h; it does NOT for kW (an honest Bond-power limitation).</>}</li>
+        <li>{es ? <><b>Fold estricto vs con fuga:</b> los modelos libres se ven mejor con fuga que estrictos (la brecha expone el sobreajuste); el backbone calibrado es estable entre ambos.</> : <><b>Strict vs leaky fold:</b> the free-form models look better leaky than strict (the gap exposes overfitting); the calibrated backbone is stable across both.</>}</li>
+        <li>{es ? <><b>Compuerta de envolvente:</b> entradas implausibles (f80 &lt; CSS, CSS ≤ 0, alimento ≤ 0) o fuera del soporte calibrado HP500 (CSS 38-55 mm, f80 47-140 mm) se MARCAN ("fuera de la envolvente validada"), nunca se responden con un número confiado. Cableada en el motor (physics/envelope.ts).</> : <><b>Envelope gate:</b> implausible inputs (f80 &lt; CSS, CSS ≤ 0, feed ≤ 0) or points outside the calibrated HP500 support (CSS 38-55 mm, f80 47-140 mm) are FLAGGED ("out of validated envelope"), never answered with a confident number. Wired into the engine (physics/envelope.ts).</>}</li>
+      </ul>
 
-      <h3>{es ? '3 · Calibración a número absoluto' : '3 · Absolute-number calibration'}</h3>
-      <p>{es ? 'DISEÑADA, aún no ejecutada: se ajustarán factores de escala contra datos industriales publicados de cono clase HP (Duarte et al. 2021, CC-BY), manteniendo el ancla de calibración (el caso CK1, ya definido) ESTRICTAMENTE disjunta de cualquier punto de validación held-out. Hoy no existe ningún factor de escala ajustado en el motor y no se calcula ningún AUC; cuando esta etapa corra, el autoencoder se evaluará como AUC de clasificación de régimen del error de reconstrucción.' : 'DESIGNED, not yet executed: scale factors will be fitted against published HP-class cone industrial data (Duarte et al. 2021, CC-BY), keeping the calibration anchor (case CK1, already defined) STRICTLY disjoint from any held-out validation point. No fitted scale factor exists in the engine today and no AUC is computed anywhere; once this stage runs, the autoencoder will be scored as the regime-classification AUC of its reconstruction error.'}</p>
-
-      <h3>{es ? 'Honestidad' : 'Honesty'}</h3>
-      <p>{es ? 'Las constantes K1/K2/K3 y el acople de energía son ilustrativos (reproducen tendencias) hasta calibrar con los datos abiertos. El surrogate emula la física barata calibrada, no una planta. Reproducibilidad: semillas fijas + flags deterministas de torch; el contrato de replay es el .onnx + metrics.json versionados, no un reentrenamiento bit-idéntico. No se reportan números fabricados.' : 'The K1/K2/K3 constants and the energy coupling are illustrative (they reproduce trends) pending calibration to the open data. The surrogate emulates the calibrated cheap physics, not a plant. Reproducibility: fixed seeds + deterministic torch flags; the replay contract is the committed .onnx + metrics.json, not a bit-identical retrain. No fabricated numbers are reported.'}</p>
-      <Refs ids={['duarte2021', 'morrell2009', 'quist2016', 'napiermunn1996']} label="References" />
+      <h3>{es ? '5 · Honestidad' : '5 · Honesty'}</h3>
+      <p>{es ? 'La novedad de CrusherCal es METODOLÓGICA: paridad held-out (LOO) + incertidumbre calibrada sobre datos industriales ABIERTOS, corriendo en vivo en el navegador, una combinación ausente en el SOTA de DEM/fenomenológico (S6-S14, D1-D2). NO se afirma un error menor que el DEM/paper. El resultado real at-bar es la paridad de t/h (~12% held-out); la potencia es un negativo reportado; el residuo M1 es un nulo pre-registrado. Reproducibilidad: la traza LOO es numpy-only + determinista desde el backbone.json versionado (puenteado del mismo motor TS). No se reportan números fabricados.' : 'CrusherCal\'s novelty is METHODOLOGICAL: held-out (LOO) parity + calibrated uncertainty on OPEN industrial data, running live in the browser, a combination absent from the DEM / phenomenological SOTA (S6-S14, D1-D2). We do NOT claim a lower error than the DEM / paper. The real at-bar result is the t/h parity (~12% held-out); the power is a reported negative; the M1 residual is a pre-registered null. Reproducibility: the LOO trace is numpy-only + deterministic from the committed backbone.json (bridged from the same TS engine). No fabricated numbers are reported.'}</p>
+      <Refs ids={['rocha2024', 'koh2021', 'quist2016', 'delaney2015', 'johansson2017val', 'duarte2021', 'morrell2009', 'napiermunn1996']} label="References" />
     </section>
   );
 }
