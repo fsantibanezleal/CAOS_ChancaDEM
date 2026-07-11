@@ -36,6 +36,7 @@ frontend/public/surrogate_metrics.json
 
 # --- the offline sweep datasets (the surrogate's training labels) — regenerable, never committed ---
 data-pipeline/chancalab/sweep/*.jsonl
+data-pipeline/chancalab/sweep/*-meta.json
 # raw offline DEM solver exports — NEVER a web payload
 data/raw/
 **/*.vtk

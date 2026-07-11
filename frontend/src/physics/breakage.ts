@@ -21,12 +21,14 @@
 const GAMMA = 0.35;   // Austin fines-end slope (max representable t10 = 0.1^γ ≈ 0.447)
 const BETA = 4.2;     // Austin coarse-end slope (illustrative, within 3–6)
 
-/** Specific comminution energy Ecs [kWh/t] applied, as a didactic function of stroke (throw) and speed.
- *  Larger throw = more energy per nip; faster gyration = more nips. Scaled to the realistic ~0.3–2.5 kWh/t band
- *  for crushers. Labelled illustrative in the UI, it reproduces the trend (more stroke/speed ⇒ finer), not a
- *  measured plant energy. */
-export function specificEnergy(throwMm: number, speedRpm: number, speedRef = 350): number {
-  return 0.033 * throwMm * (speedRpm / speedRef);
+/** Specific comminution energy Ecs [kWh/t] applied per nip, a didactic function of the machine DESIGN stroke and
+ *  the gyration rate. Faster gyration = more nips per unit time = more energy delivered per tonne. It is driven by
+ *  the design throw (a per-machine constant, refThrowMm), NOT the live throw slider: increasing the live throw
+ *  OPENS the chamber (larger OSS), so its effect is a COARSER product via the classification window (K2), not a
+ *  finer product via more energy. Scaled to the realistic ~0.3–2.5 kWh/t band, illustrative, not a measured plant
+ *  energy. */
+export function specificEnergy(speedRpm: number, refThrowMm: number, speedRef = 350): number {
+  return 0.033 * refThrowMm * (speedRpm / speedRef);
 }
 
 /** JKMRC t10 [fraction 0..1] from specific energy and ore competence A·b (A≈60 assumed; b = A·b / A). */

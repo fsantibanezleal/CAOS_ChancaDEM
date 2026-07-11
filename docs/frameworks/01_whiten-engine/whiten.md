@@ -18,9 +18,15 @@ p = (I − C)·(I − B·C)⁻¹·f
 
 * **f**, the feed PSD (Rosin–Rammler from `feedX63Mm`, `feedM`).
 * **C**, the classification/selection diagonal: the probability a particle in each size class is captured + broken
-  per pass (rises with size relative to the CSS). `classification.ts`.
+  per pass (Whiten K1/K2/K3, Andersen & Napier-Munn). `classification.ts`. K1 (the always-escape threshold) tracks
+  the closed-side gap CSS; **K2 (the always-broken threshold) tracks the open-side gap OSS = CSS + throw**, so a
+  larger eccentric throw opens the chamber wider, lets larger particles escape in the open phase, and yields a
+  COARSER product at fixed CSS with a higher capacity (Evertsson 1999, DOI 10.1016/S0892-6875(99)00136-3). Throw
+  therefore acts on the product through the capture window, NOT through the per-nip energy.
 * **B**, the breakage/appearance matrix (strictly lower-triangular, column-conserved mass): the JKMRC t10 → Austin
-  distribution of progeny. `breakage.ts`.
+  distribution of progeny. `breakage.ts`. The per-nip specific energy is driven by the gyration rate and the
+  machine DESIGN stroke (a per-machine constant, `machines.ts`), not the live throw, precisely so that throw
+  coarsens (via C) rather than wrongly fining the product (via more energy).
 * **capacity**, Evertsson's throughput "hump" vs eccentric speed; **power**, Bond from the work index + reduction.
 
 ## Why it fits
