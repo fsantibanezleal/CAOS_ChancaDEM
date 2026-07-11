@@ -10,24 +10,22 @@ The state of the art for the *mechanism* of a cone/gyratory crusher is the discr
 flowing, colliding, breaking particles resolved by contact laws. Two families appear in the literature:
 
 - **Particle replacement (PRM).** A particle that reaches a breakage criterion is deleted and replaced by a set
-  of smaller progeny. Cleary and Sinnott (2015) develop it for compression crushers (DOI
-  `10.1016/j.mineng.2014.10.021`); Delaney et al. (2015) model an industrial-scale cone with non-spherical
-  (super-quadric) particles whose progeny are sized by the **JKMRC drop-weight t10** (DOI
-  `10.1016/j.mineng.2015.01.013`). That last point is the bridge to our PBM: both size breakage progeny with the
+  of smaller progeny. Cleary and Sinnott (2015) develop it for compression crushers ([doi:10.1016/j.mineng.2014.10.021](https://doi.org/10.1016/j.mineng.2014.10.021)); Delaney et al. (2015) model an industrial-scale cone with non-spherical
+  (super-quadric) particles whose progeny are sized by the **JKMRC drop-weight t10** ([doi:10.1016/j.mineng.2015.01.013](https://doi.org/10.1016/j.mineng.2015.01.013)). That last point is the bridge to our PBM: both size breakage progeny with the
   same t10-tn appearance family.
 - **Bonded-particle rock.** A rock is a bonded assembly of sub-particles; bonds break under load, so fracture
   emerges from the contact model rather than a replacement rule. Quist and Evertsson (2016) calibrate this to
-  single-particle breakage for a cone (DOI `10.1016/j.mineng.2015.11.004`).
+  single-particle breakage for a cone ([doi:10.1016/j.mineng.2015.11.004](https://doi.org/10.1016/j.mineng.2015.11.004)).
 
 Validation of DEM against physical experiments is itself a research task: Johansson et al. (2017) evaluate cone
-performance with DEM against laboratory experiments (DOI `10.1016/j.mineng.2016.09.015`), the template our LOO
+performance with DEM against laboratory experiments ([doi:10.1016/j.mineng.2016.09.015](https://doi.org/10.1016/j.mineng.2016.09.015)), the template our LOO
 plan mirrors (predict held-out, do not grade only in-sample).
 
 ## The fast-prediction frontier
 
 For fast *prediction* (not mechanism), the SOTA is a neural surrogate of a phenomenological model: Koh et al.
 (2021) train a DNN to approximate a comminution-circuit model, about 3363x faster, with sub-percent test errors
-(DOI `10.1016/j.mineng.2021.107026`). Two honest gaps remain in that work, and they are exactly the space
+([doi:10.1016/j.mineng.2021.107026](https://doi.org/10.1016/j.mineng.2021.107026)). Two honest gaps remain in that work, and they are exactly the space
 ChancaDEM occupies:
 
 1. it is a surrogate of a *model*, not of *real surveys*, and reports no uncertainty;
@@ -51,8 +49,8 @@ ChancaDEM occupies:
 
 ## References (DOI-verified)
 
-- Cleary & Sinnott 2015, `10.1016/j.mineng.2014.10.021`
-- Delaney et al. 2015, `10.1016/j.mineng.2015.01.013`
-- Quist & Evertsson 2016, `10.1016/j.mineng.2015.11.004`
-- Johansson et al. 2017, `10.1016/j.mineng.2016.09.015`
-- Koh et al. 2021, `10.1016/j.mineng.2021.107026`
+- Cleary & Sinnott 2015, [doi:10.1016/j.mineng.2014.10.021](https://doi.org/10.1016/j.mineng.2014.10.021)
+- Delaney et al. 2015, [doi:10.1016/j.mineng.2015.01.013](https://doi.org/10.1016/j.mineng.2015.01.013)
+- Quist & Evertsson 2016, [doi:10.1016/j.mineng.2015.11.004](https://doi.org/10.1016/j.mineng.2015.11.004)
+- Johansson et al. 2017, [doi:10.1016/j.mineng.2016.09.015](https://doi.org/10.1016/j.mineng.2016.09.015)
+- Koh et al. 2021, [doi:10.1016/j.mineng.2021.107026](https://doi.org/10.1016/j.mineng.2021.107026)
