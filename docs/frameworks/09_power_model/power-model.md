@@ -13,7 +13,7 @@ draw [kW] = W · Q [t/h]
 ```
 
 with Wi the Bond work index and Q the throughput. Bond's law is calibrated for grinding, and is known to be a
-poor descriptor of coarse crushing duty; Morrell's size-specific energy (Mic, DOI `10.1016/j.mineng.2009.01.005`)
+poor descriptor of coarse crushing duty; Morrell's size-specific energy (Mic, [doi:10.1016/j.mineng.2009.01.005](https://doi.org/10.1016/j.mineng.2009.01.005))
 is the documented SOTA alternative.
 
 ## The paper's calibrated form (Rocha 2024, Table 5)
@@ -53,7 +53,7 @@ the lower throughput cancels it in tonnes). So:
 
 ## References (DOI-verified)
 
-- Bond 1952 (no DOI, pre-DOI era) via Napier-Munn et al. 1996 (JKMRC monograph, no DOI)
-- Morrell 2009, `10.1016/j.mineng.2009.01.005`
-- Rocha et al. 2024, `10.3390/min14090919`
-- Gröndahl et al. 2018, `10.1016/j.mineng.2018.07.008` (real power-draw signatures)
+- Bond 1952 (pre-DOI), [open on OneMine](https://onemine.org/documents/the-third-theory-of-comminution); Napier-Munn et al. 1996 (JKMRC monograph), [WorldCat](https://search.worldcat.org/title/37081193)
+- Morrell 2009, [doi:10.1016/j.mineng.2009.01.005](https://doi.org/10.1016/j.mineng.2009.01.005)
+- Rocha et al. 2024, [doi:10.3390/min14090919](https://doi.org/10.3390/min14090919)
+- Gröndahl et al. 2018, [doi:10.1016/j.mineng.2018.07.008](https://doi.org/10.1016/j.mineng.2018.07.008) (real power-draw signatures)
