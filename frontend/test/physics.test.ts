@@ -69,10 +69,24 @@ test('tighter CSS gives a finer product (monotone P80 vs CSS)', () => {
   for (let i = 1; i < p80s.length; i++) assert.ok(p80s[i] >= p80s[i - 1] - 1e-9, `P80 rises with CSS: ${p80s}`);
 });
 
-test('more throw (more energy) gives an equal-or-finer product', () => {
-  const lo = evaluate({ ...base, throwMm: 16 }).p80;
-  const hi = evaluate({ ...base, throwMm: 44 }).p80;
-  assert.ok(hi <= lo + 1e-9, `more throw ⇒ finer: throw16 P80=${lo}, throw44 P80=${hi}`);
+test('more throw widens OSS and gives an equal-or-COARSER product (Evertsson/Andersen), with higher capacity', () => {
+  // At fixed CSS, a larger eccentric throw opens the chamber wider (OSS = CSS + throw), so larger particles
+  // escape during the open phase: the product coarsens, the reduction ratio drops, and capacity rises. This is
+  // the OEM/Evertsson direction; routing throw into the per-nip energy (the old model) wrongly made it finer.
+  const lo = evaluate({ ...base, throwMm: 16 });
+  const hi = evaluate({ ...base, throwMm: 44 });
+  assert.ok(hi.p80 >= lo.p80 - 1e-9, `more throw ⇒ coarser: throw16 P80=${lo.p80}, throw44 P80=${hi.p80}`);
+  assert.ok(hi.reductionRatio <= lo.reductionRatio + 1e-9, `more throw ⇒ lower reduction ratio: ${lo.reductionRatio} → ${hi.reductionRatio}`);
+  assert.ok(hi.throughputTph >= lo.throughputTph - 1e-9, `more throw ⇒ higher capacity: ${lo.throughputTph} → ${hi.throughputTph}`);
+  assert.ok(Math.abs(hi.ossMm - (base.cssMm + 44)) < 1e-9, `OSS = CSS + throw (got ${hi.ossMm})`);
+});
+
+test('throw is neutral at the machine design throw (reference baseline preserved)', () => {
+  // K2 gains the throw term centered on the machine design throw (cone-sec 30 mm), so at the design throw the
+  // classification window (and hence the product) is identical to the pre-throw-model baseline.
+  const cpDesign = classificationParams('cone-sec', 32, { throwMm: 30 });
+  const cpNone = classificationParams('cone-sec', 32);
+  assert.ok(Math.abs(cpDesign.k2 - cpNone.k2) < 1e-9, `K2 unchanged at design throw (${cpDesign.k2} vs ${cpNone.k2})`);
 });
 
 test('capacity is unimodal in speed (the hump rises then falls)', () => {
