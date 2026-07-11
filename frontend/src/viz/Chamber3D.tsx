@@ -50,7 +50,7 @@ function fitCamera(cam: THREE.PerspectiveCamera, controls: OrbitControls, box: T
   controls.update();
 }
 
-export function Chamber3D({ op, p80, f80, height = 360 }: { op: Operating; p80: number; f80: number; height?: number }) {
+export function Chamber3D({ op, p80, f80, height = 620 }: { op: Operating; p80: number; f80: number; height?: number }) {
   const ref = useRef<HTMLDivElement>(null);
   const theme = useThemeStore((s) => s.theme);
 
@@ -70,7 +70,9 @@ export function Chamber3D({ op, p80, f80, height = 360 }: { op: Operating; p80: 
 
   useEffect(() => {
     const el = ref.current; if (!el) return;
-    const W = el.clientWidth || 600, H = height;
+    // Height is driven by the CSS on the mount div (responsive to the viewport), so read the ACTUAL rendered
+    // height; the `height` prop is only a fallback before first layout. The ResizeObserver keeps it in sync.
+    const W = el.clientWidth || 600, H = el.clientHeight || height;
     const dark = theme === 'dark';
     const scene = new THREE.Scene();
     const cam = new THREE.PerspectiveCamera(45, W / H, 1, 20000);
@@ -224,7 +226,7 @@ export function Chamber3D({ op, p80, f80, height = 360 }: { op: Operating; p80: 
     stepRef.current = step;
     step();
 
-    const ro = new ResizeObserver(() => { const w = el.clientWidth || W; renderer.setSize(w, H); cam.aspect = w / H; cam.updateProjectionMatrix(); renderer.render(scene, cam); });
+    const ro = new ResizeObserver(() => { const w = el.clientWidth || W, h = el.clientHeight || H; renderer.setSize(w, h); cam.aspect = w / h; cam.updateProjectionMatrix(); renderer.render(scene, cam); });
     ro.observe(el);
     return () => {
       stepRef.current = null; resetViewRef.current = () => {}; ro.disconnect(); controls.dispose();
@@ -235,7 +237,8 @@ export function Chamber3D({ op, p80, f80, height = 360 }: { op: Operating; p80: 
 
   return (
     <div className="tz-canvas-wrap">
-      <div ref={ref} style={{ width: '100%', height }} />
+      {/* Responsive: fill the available workbench height (the bottom controls are compact), not a fixed box. */}
+      <div ref={ref} style={{ width: '100%', height: 'clamp(460px, 74vh, 900px)' }} />
       <div className="tz-precomp-banner">
         <button type="button" className="btn" onClick={() => (viz.playing ? viz.pause() : viz.play())}>{viz.playing ? 'Pause' : 'Play'}</button>
         <span>Kinematic chamber, drag to orbit, rocks coloured by size</span>
