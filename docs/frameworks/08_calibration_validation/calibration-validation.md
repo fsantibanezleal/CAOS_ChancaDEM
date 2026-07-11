@@ -20,7 +20,7 @@ Pc = 1.30·Pd + 110 kW                     (the paper's current-based power FORM
 ```
 
 Provenance: Rocha, Campos, Silva & Tavares (2024), *Fit-for-Purpose Model of HP500 Cone Crusher in Size Reduction
-of Itabirite Iron Ore*, Minerals 14(9):919, DOI `10.3390/min14090919` (CC BY 4.0). Table A1 = the 10 measured
+of Itabirite Iron Ore*, Minerals 14(9):919, [doi:10.3390/min14090919](https://doi.org/10.3390/min14090919) (CC BY 4.0). Table A1 = the 10 measured
 surveys; Table 5 = the fit; Table 1 = the ore drop-weight A,b and Bond Wi.
 
 ## The held-out validation (leave-one-survey-out)
@@ -82,6 +82,6 @@ pytest tests/test_hp500_loo.py                                   # invariants + 
 
 ## References (DOI-verified)
 
-- Rocha et al. 2024, `10.3390/min14090919` (the real data + fit)
-- Duarte et al. 2021, `10.3390/min11111256` (second cone anchor)
-- Johansson et al. 2017, `10.1016/j.mineng.2016.09.015` (the DEM-vs-experiment validation template)
+- Rocha et al. 2024, [doi:10.3390/min14090919](https://doi.org/10.3390/min14090919) (the real data + fit)
+- Duarte et al. 2021, [doi:10.3390/min11111256](https://doi.org/10.3390/min11111256) (second cone anchor)
+- Johansson et al. 2017, [doi:10.1016/j.mineng.2016.09.015](https://doi.org/10.1016/j.mineng.2016.09.015) (the DEM-vs-experiment validation template)
