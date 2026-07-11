@@ -4,6 +4,15 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [0.07.002], 2026-07-11
+
+### Changed
+- 3D chamber now fills the available workbench height instead of a fixed 360px box: the mount uses a responsive
+  `clamp(460px, 74vh, 900px)` and the renderer reads the actual rendered height, staying in sync on window
+  resize (the ResizeObserver now tracks height as well as width). The bottom viz controls are compact, so the
+  view is far larger on a normal screen. The fit-all camera already accounts for aspect/fov, so centering is
+  preserved at the taller size.
+
 ## [0.07.001], 2026-07-11
 
 ### Fixed
