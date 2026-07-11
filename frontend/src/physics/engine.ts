@@ -6,6 +6,7 @@ import { makeGrid, midSizes, toPSD, sizeAtPassing, passingAtSize } from './sieve
 import { makeFeed } from './feed';
 import { classificationParams, classify } from './classification';
 import { specificEnergy, t10Of, t10Calibrated, phiFromT10, breakageMatrix } from './breakage';
+import { REF_THROW_MM } from './machines';
 import { whitenSolve } from './whiten';
 import { throughput, bondPower, calibratedPower, nipAngle, nipLimit } from './capacity';
 import { checkEnvelope } from './envelope';
@@ -26,13 +27,16 @@ export function evaluate(op: Operating): CrusherResult {
   const feed = makeFeed(EDGES, op.feedX63Mm, op.feedM);
   const f80 = sizeAtPassing(feed, 0.8);
 
-  // classification C(d). On the Real lane (calibrated cone-sec) the HP500 fit is linear in CSS AND f80.
-  const cparams = classificationParams(op.machine, op.cssMm, { f80Mm: f80, calibrated: op.calibrated });
+  // classification C(d). K2 (open-side capture) tracks OSS = CSS + throw, so a larger throw coarsens the product
+  // (Evertsson/Andersen). On the Real lane (calibrated cone-sec) the HP500 fit is linear in CSS AND f80 and is
+  // throw-independent (Rocha et al. did not vary throw).
+  const cparams = classificationParams(op.machine, op.cssMm, { f80Mm: f80, calibrated: op.calibrated, throwMm: op.throwMm });
   const c = MID.map((d) => classify(d, cparams));
 
-  // breakage B from energy → t10 → Austin Φ. Calibrated: t10 comes straight from the HP500 fit (Table 5),
-  // not from the illustrative energy→A·b path.
-  const ecs = specificEnergy(op.throwMm, op.speedRpm);
+  // breakage B from energy → t10 → Austin Φ. The per-nip energy uses the machine DESIGN throw (throw acts on the
+  // product through the classification window above, not through Ecs). Calibrated: t10 comes straight from the
+  // HP500 fit (Table 5), not from the illustrative energy→A·b path.
+  const ecs = specificEnergy(op.speedRpm, REF_THROW_MM[op.machine]);
   const t10 = op.calibrated ? t10Calibrated(op.cssMm, f80) : t10Of(ecs, op.oreAxb);
   const phi = phiFromT10(t10);
   const B = breakageMatrix(EDGES, MID, phi);
