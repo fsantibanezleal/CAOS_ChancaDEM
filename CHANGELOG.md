@@ -4,6 +4,27 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [0.07.001], 2026-07-11
+
+### Fixed
+- Reference integrity (ADR-0017 §4): every on-page citation now carries a real, checkable `doi` or `url`. The
+  nine pre-DOI references that previously rendered as bare, non-clickable text now link to an authoritative open
+  archive (Whiten 1972 on SAIMM; Evertsson 2000 on Chalmers Research; Bond 1952 on OneMine; Rosin & Rammler 1933
+  on CiNii) or an authoritative catalog record (Napier-Munn 1996, Austin 1984 on WorldCat). Andersen & Napier-Munn
+  1988 links to its Semantic Scholar record.
+- Corrected a conflated Karra reference: the vibrating-screen title (Karra 1979, CIM Bulletin) was wrongly merged
+  with the 1982 IMPC venue. The engine uses the cone-crusher capacity paper, now cited correctly as Karra (1982),
+  "A process performance model for cone crushers", 14th IMPC.
+- Corrected the Evertsson (2000) thesis ISBN checksum digit (91-7197-856-7 became 91-7197-856-9, per the Chalmers
+  record).
+- `docs/` wiki references are now clickable: DOIs render as `doi.org` links (in the reference lists and inline
+  prose) and the pre-DOI works carry their open-archive/catalog links, matching the app.
+
+### Note
+- Two genuinely print-only society papers (Narayanan & Whiten 1988, Trans. IMM Sec. C; Karra 1982, 14th IMPC)
+  have no open landing page and are explicitly marked as such in the citation text (never a fabricated link);
+  their method is corroborated by linked references (Napier-Munn 1996, Tavares 2022).
+
 ## [0.07.000], 2026-07-10
 
 ### Changed
