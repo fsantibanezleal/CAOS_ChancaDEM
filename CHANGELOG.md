@@ -4,6 +4,20 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [0.07.000], 2026-07-10
+
+### Changed
+- 3D chamber viz upgrade: the camera now FITS + centers the chamber (cone/gyratory revolution and jaw), and the
+  point-of-view PERSISTS across operating-point/machine/theme changes (only Reset view re-fits), so orbiting is
+  no longer lost on every option change.
+- Rocks are now low-poly instanced meshes coloured by size; on crossing the break zone a rock shrinks and, with
+  Fracture on, SHATTERS into scattering shards, so the crushing reads visually.
+
+### Added
+- Bottom viz controls under the 3D chamber: animation speed (0.25-4x), rock size (0.5-2.5x), Fracture on/off,
+  Reset view.
+- Autoplay on load (usePausedViz autoStart) for visual impact; the rAF still halts on a hidden tab (ADR-0059).
+
 ## [0.06.000], 2026-07-07
 
 ### Added
