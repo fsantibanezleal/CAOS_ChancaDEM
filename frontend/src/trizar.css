@@ -73,6 +73,11 @@
 .tz-canvas-wrap canvas { display: block; width: 100%; border-radius: 10px; border: 1px solid var(--color-border); background: var(--color-surface); }
 .tz-precomp-banner { position: absolute; top: 8px; left: 8px; display: flex; align-items: center; gap: 0.45rem; background: color-mix(in oklab, var(--color-surface) 88%, transparent); border: 1px solid var(--color-border); border-radius: 6px; padding: 0.2rem 0.5rem; font-size: 0.68rem; color: var(--color-fg-subtle); pointer-events: none; }
 .tz-precomp-banner .btn { pointer-events: auto; font-size: 0.72rem; padding: 0.15rem 0.55rem; }
+.tz-viz-controls { display: flex; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.5rem; padding: 0.4rem 0.6rem; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface); font-size: 0.74rem; color: var(--color-fg-subtle); }
+.tz-viz-controls label { display: inline-flex; align-items: center; gap: 0.4rem; }
+.tz-viz-controls input[type="range"] { width: 96px; vertical-align: middle; }
+.tz-viz-controls b { font-family: var(--font-mono, ui-monospace, monospace); color: var(--color-fg); min-width: 2.4rem; }
+.tz-viz-controls .btn.on { background: var(--color-accent); color: var(--color-accent-fg, #fff); border-color: transparent; }
 
 /* ---- generic helpers ---- */
 .tz-note { font-size: 0.76rem; border-left: 3px solid var(--color-warn, #d29922); padding-left: 0.6rem; color: var(--color-fg-subtle); }
