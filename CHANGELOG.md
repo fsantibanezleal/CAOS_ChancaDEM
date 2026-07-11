@@ -4,6 +4,27 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [0.08.000], 2026-07-11
+
+### Changed (physics fidelity: eccentric throw)
+- Corrected the direction of eccentric THROW on product size. The engine previously routed throw through the
+  per-nip specific energy (`more stroke => finer`), which INVERTED the crusher literature. Throw now acts through
+  the Whiten classification window: K2 (the always-broken threshold) tracks the open-side gap OSS = CSS + throw,
+  so a larger throw opens the chamber wider, larger particles escape in the open phase, and the product is
+  COARSER at fixed CSS with a higher capacity and a lower reduction ratio. This is the Evertsson 1999
+  (doi:10.1016/S0892-6875(99)00136-3) / Andersen and Napier-Munn 1988 direction. Verified: at CSS 32 mm on the
+  cone-sec, throw 16 to 50 mm moves P80 25.0 to 31.7 mm (coarser) and capacity 547 to 780 t/h.
+- The per-nip breakage energy Ecs is now driven by the gyration rate and the machine DESIGN stroke (a per-machine
+  reference in the new `physics/machines.ts`), not the live throw, so throw coarsens via classification rather
+  than wrongly fining via energy. The classification throw term is centered on the design throw, so the reference
+  cases and the calibrated lane are unchanged (S01 P80 stays 27.70 mm, bit-identical).
+- The calibrated HP500 (Real) lane is untouched: `t10Calibrated` and `hp500Params` have no throw term (Rocha et
+  al. did not vary throw), so the held-out LOO benchmark and the backbone are byte-identical.
+- Surrogate + denoising-AE re-baked on the corrected engine (independent LHS held-out): P80 R2 0.995, t/h R2
+  0.998, monotone-vs-CSS preserved, so the ONNX still honestly emulates the engine.
+- Methodology (Classification) + the docs Whiten-engine card now state K2 tracks OSS = CSS + throw (throw
+  coarsens); added the verified Evertsson 1999 flow-model reference.
+
 ## [0.07.002], 2026-07-11
 
 ### Changed
