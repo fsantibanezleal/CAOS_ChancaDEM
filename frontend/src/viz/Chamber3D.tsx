@@ -6,17 +6,17 @@ import { chamberProfile, profilePolylines, jawProfile } from '../physics/chamber
 import type { Operating } from '../physics/types';
 
 // Interactive 3D crusher chamber. Two genuinely different machine kinds are drawn differently:
-//  * SURFACE-OF-REVOLUTION (cone / gyratory / short-head): the fixed concave (wireframe lathe) + the gyrating
-//    mantle (solid lathe whose axis NUTATES about a fixed pivot at the eccentric speed) + rocks that fall, are
-//    gripped near the discharge and FRACTURE into finer fragments.
-//  * JAW: a PLANAR two-plate mechanism, a near-vertical FIXED plate and an inclined SWING plate that pivots
+//  * Surface-of-revolution (cone / gyratory / short-head): the fixed concave (wireframe lathe) + the gyrating
+//    mantle (solid lathe whose axis nutates about a fixed pivot at the eccentric speed) + rocks that fall, are
+//    gripped near the discharge and fracture into finer fragments.
+//  * Jaw: a planar two-plate mechanism, a near-vertical fixed plate and an inclined swing plate that pivots
 //    about the overhead eccentric (throw largest at the discharge, ~0 at the suspension) + rocks that fall
 //    through the converging V and fracture near the discharge.
-// Rocks are low-poly instanced meshes; on breakage a rock shrinks and (fracture ON) SHATTERS into scattering
-// shards, so the crushing reads visually. Camera fits the chamber and the POV PERSISTS across option changes
+// Rocks are low-poly instanced meshes; on breakage a rock shrinks and (fracture on) shatters into scattering
+// shards, so the crushing reads visually. Camera fits the chamber and the POV persists across option changes
 // (only "Reset view" re-fits). Autoplay on load for visual impact; the rAF still halts on a hidden tab (ADR-0059),
-// so it is not a compute bomb. This is a KINEMATIC view of the geometry + motion + the gradation the engine
-// computes, NOT a DEM solve; the physically-faithful trajectories are the offline DEM-trace upgrade.
+// so it is not a compute bomb. This is a kinematic view of the geometry + motion + the gradation the engine
+// computes, not a DEM solve; the physically-faithful trajectories are the offline DEM-trace upgrade.
 const VIRIDIS = [[68, 1, 84], [59, 82, 139], [33, 145, 140], [94, 201, 98], [253, 231, 37]];
 function viridis(t: number): THREE.Color {
   t = Math.max(0, Math.min(1, t)); const x = t * 4; const i = Math.min(3, Math.floor(x)); const f = x - i;
@@ -54,7 +54,7 @@ export function Chamber3D({ op, p80, f80, height = 620 }: { op: Operating; p80: 
   const ref = useRef<HTMLDivElement>(null);
   const theme = useThemeStore((s) => s.theme);
 
-  // viz controls (refs so changing them does NOT recreate the scene, which would reset the POV)
+  // viz controls (refs so changing them does not recreate the scene, which would reset the POV)
   const [speed, setSpeed] = useState(1.5);
   const [rockSize, setRockSize] = useState(1.3);
   const [fracture, setFracture] = useState(true);
@@ -70,7 +70,7 @@ export function Chamber3D({ op, p80, f80, height = 620 }: { op: Operating; p80: 
 
   useEffect(() => {
     const el = ref.current; if (!el) return;
-    // Height is driven by the CSS on the mount div (responsive to the viewport), so read the ACTUAL rendered
+    // Height is driven by the CSS on the mount div (responsive to the viewport), so read the actual rendered
     // height; the `height` prop is only a fallback before first layout. The ResizeObserver keeps it in sync.
     const W = el.clientWidth || 600, H = el.clientHeight || height;
     const dark = theme === 'dark';

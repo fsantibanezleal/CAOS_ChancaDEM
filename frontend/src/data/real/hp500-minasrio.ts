@@ -1,7 +1,7 @@
-// REAL "Real sample" lane data: 10 industrial surveys of a Metso HP500 secondary cone crusher at the Minas Rio
+// "Real sample" lane data: 10 industrial surveys of a Metso HP500 secondary cone crusher at the Minas Rio
 // operation (Anglo American), crushing itabirite iron ore. This is the genuine measured artifact the Faena
-// "real artifacts processed LIVE" Source selector picks from: you choose which survey, and the exact same
-// pure-TypeScript engine runs on the survey's MEASURED closed-side setting (CSS) and feed 80%-passing size (f80).
+// "real artifacts processed live" Source selector picks from: the user chooses which survey, and the exact same
+// pure-TypeScript engine runs on the survey's measured closed-side setting (CSS) and feed 80%-passing size (f80).
 //
 // Source (open access, CC BY 4.0 -- transcribed verbatim from the paper text):
 //   Rocha, B.K.N.d.; Campos, T.M.; Silva, J.; Tavares, L.M.
@@ -11,15 +11,15 @@
 //   ore drop-weight A,b and Bond Wi = Table 1.
 //
 // Honesty caveats (see the app badges + methodology):
-//   1. The full feed/product particle-size-distribution CURVES are published as figures only (Figs 5/6), not as
-//      a table. The feed here is therefore RECONSTRUCTED from the measured f80 with a Rosin-Rammler band
+//   1. The full feed/product particle-size-distribution curves are published as figures only (Figs 5/6), not as
+//      a table. The feed here is therefore reconstructed from the measured f80 with a Rosin-Rammler band
 //      (see x63FromF80 below), not read off a tabulated curve.
 //   2. The power (kW) is the paper's estimate from measured electric current, not a calibrated dynamometer.
 //
-// This artifact is a SECONDARY CONE, so every survey is fixed to machine "cone-sec". Jaw / gyratory / tertiary /
+// This artifact is a secondary cone, so every survey is fixed to machine "cone-sec". Jaw / gyratory / tertiary /
 // short-head stay synthetic (no equally clean open per-survey table was found for those).
 
-/** Provenance of the real artifact, surfaced in-panel on every REAL view (Faena honesty rule). */
+/** Provenance of the real artifact, surfaced in-panel on every real view (Faena honesty rule). */
 export const HP500_SOURCE = {
   paper: 'Rocha, Campos, Silva & Tavares 2024',
   doi: '10.3390/min14090919',
@@ -40,16 +40,16 @@ export const HP500_ORE = {
   blendWiKwhT: 9.0,
 } as const;
 
-/** One industrial survey: MEASURED operating point of the HP500 secondary cone. */
+/** One industrial survey: the measured operating point of the HP500 secondary cone. */
 export interface RealSurvey {
   id: string;                // "HP500-01" .. "HP500-10"
   n: number;                 // survey index 1..10 (as published)
   machine: 'cone-sec';       // fixed: this artifact is a secondary cone
   measured: {
-    cssMm: number;           // closed-side setting [mm]           (REAL, Table A1)
-    f80Mm: number;           // feed 80%-passing size [mm]         (REAL, Table A1)
-    feedRateTph: number;     // solid feed rate [t/h]              (REAL, Table A1)
-    powerKW: number;         // crusher power [kW] (current-based) (REAL*, Table A1)
+    cssMm: number;           // closed-side setting [mm]           (measured, Table A1)
+    f80Mm: number;           // feed 80%-passing size [mm]         (measured, Table A1)
+    feedRateTph: number;     // solid feed rate [t/h]              (measured, Table A1)
+    powerKW: number;         // crusher power [kW] (current-based) (measured*, Table A1)
   };
 }
 

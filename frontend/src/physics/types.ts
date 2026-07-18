@@ -13,8 +13,8 @@ export interface Operating {
   feedM: number;        // Rosin–Rammler uniformity exponent of the feed [-]
   oreAxb: number;       // JKMRC drop-weight ore competence A·b [-] (lower = harder/tougher)
   oreWi: number;        // Bond work index [kWh/t]
-  // When true, the engine uses the HP500 secondary-cone parameters CALIBRATED to the Rocha et al. 2024 surveys
-  // (classification linear in CSS AND f80, calibrated t10, HP500 capacity base, current-based power model). This
+  // When true, the engine uses the HP500 secondary-cone parameters calibrated to the Rocha et al. 2024 surveys
+  // (classification linear in CSS and f80, calibrated t10, HP500 capacity base, current-based power model). This
   // is set only on the Real-sample lane; synthetic operation leaves it undefined and behaves exactly as before.
   calibrated?: boolean;
 }
@@ -48,9 +48,9 @@ export interface CrusherResult {
   // honesty: validity guard
   valid: boolean;
   flags: string[];                   // why a point is flagged invalid / extrapolating
-  // envelope gate (negative control): implausible / out-of-calibrated-support inputs are FLAGGED, not answered
+  // envelope gate (negative control): implausible / out-of-calibrated-support inputs are flagged, not answered
   // with a confident number. `envelopeCodes` are stable codes the UI maps to bilingual text (see physics/envelope).
-  outOfEnvelope: boolean;            // true if any envelope check tripped (implausible OR extrapolating)
+  outOfEnvelope: boolean;            // true if any envelope check tripped (implausible or extrapolating)
   implausible: boolean;              // true only for physically-nonsensical inputs (worse than extrapolation)
   envelopeCodes: string[];
   // numerical health of the Whiten solve

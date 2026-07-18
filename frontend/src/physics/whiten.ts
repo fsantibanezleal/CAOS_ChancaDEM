@@ -1,6 +1,6 @@
 // The Whiten crusher solve. The chamber is one breakage zone with classification C (which particles are
 // nipped) and breakage B (how the nipped ones distribute to finer sizes). The internal balance x = f + B·C·x
-// gives the product p = (I − C)·x = (I − C)·(I − B·C)⁻¹·f , note (I − C) sits on the LEFT of the inverse
+// gives the product p = (I − C)·x = (I − C)·(I − B·C)⁻¹·f , note (I − C) sits on the left of the inverse
 // (Whiten 1972; Napier-Munn et al. 1996). We never form the inverse: we LU-solve (I − B·C)·x = f, then apply
 // (I − C). Because B is strictly lower-triangular, B·C has a zero diagonal so (I − B·C) is unit-diagonal and
 // always non-singular; we still keep a conditioning guard for the near-choke C→1 regime.

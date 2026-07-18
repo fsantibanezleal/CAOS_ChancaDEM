@@ -1,5 +1,5 @@
 // Loader for the committed CrusherCal LOO traces (data/derived/hp500/{loo,backbone}.json, copied to public/data by
-// copy-data.mjs). The frontend NEVER recomputes these numbers; it reads the offline-validated, deterministic
+// copy-data.mjs). The frontend never recomputes these numbers; it reads the offline-validated, deterministic
 // artifact so the App, Benchmark and docs all quote exactly the same held-out results.
 
 export interface StatBlock { mape_pct: number; rmse: number; r2: number; maxdev_pct: number }

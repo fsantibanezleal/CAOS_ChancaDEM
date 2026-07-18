@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useShellLang } from '@fasl-work/caos-app-shell';
 import { loadLoo, type LooDoc, type StatBlock } from '../data/loadLoo';
 
-// CrusherCal benchmark panels. All numbers are READ from the committed, offline-validated LOO trace
+// CrusherCal benchmark panels. All numbers are read from the committed, offline-validated LOO trace
 // (data/hp500/loo.json); nothing is recomputed or asserted here. Two honest views:
 //   PowerParity  measured kW vs the bare Bond draw, the engine Pc=1.30*Pd+110, and a refit Pc (the corrected
 //                finding: our Bond draw is uninformative for the measured power spread; no 2x-removal is claimed).
@@ -62,7 +62,7 @@ function ParitySvg({ series, unit, bandPct = 0.15, errHalf, es }: {
             <span style={{ width: 10, height: 10, borderRadius: 5, background: s.color, display: 'inline-block' }} />{s.label}
           </span>
         ))}
-        <span style={{ color: 'var(--color-fg-faint)' }}>{es ? `banda +-${Math.round(bandPct * 100)}% + linea 1:1` : `+-${Math.round(bandPct * 100)}% band + 1:1 line`}</span>
+        <span style={{ color: 'var(--color-fg-faint)' }}>{es ? `banda +-${Math.round(bandPct * 100)}% + línea 1:1` : `+-${Math.round(bandPct * 100)}% band + 1:1 line`}</span>
       </div>
     </div>
   );
@@ -100,8 +100,8 @@ export function PowerParity() {
         </tbody>
       </table>
       <p className="tz-note">{es
-        ? `Hallazgo honesto (corrige la premisa del dossier): el tiro de Bond del motor es casi plano (${pp.bond_pd_range_kw[0]} a ${pp.bond_pd_range_kw[1]} kW) y no explica la dispersión medida (${pp.measured_range_kw[0]} a ${pp.measured_range_kw[1]} kW), así que ni Bond crudo ni el Pc del paper (cuyo Pd es una potencia específica de tamaño, no el tiro de Bond clásico) reproducen la variación. El mejor reajuste de la FORMA del paper sobre nuestro Pd colapsa hacia la media. NO se afirma que se elimine una sobrepredicción 2x de Bond; el resultado real at-bar es la paridad de t/h, no la potencia. En la app la potencia medida es la referencia mostrada.`
-        : `Honest finding (corrects the dossier premise): the engine Bond draw is nearly flat (${pp.bond_pd_range_kw[0]} to ${pp.bond_pd_range_kw[1]} kW) and does not explain the measured spread (${pp.measured_range_kw[0]} to ${pp.measured_range_kw[1]} kW), so neither the bare Bond draw nor the paper Pc (whose Pd is a size-specific net power, not the classical Bond draw) reproduces the variation. The best refit of the paper FORM on our Pd collapses toward the mean. We do NOT claim a Bond 2x-overprediction is removed; the real at-bar result is the t/h parity, not the power. In the app the MEASURED power is the shown reference.`}</p>
+        ? `Hallazgo honesto (corrige la premisa del dossier): el tiro de Bond del motor es casi plano (${pp.bond_pd_range_kw[0]} a ${pp.bond_pd_range_kw[1]} kW) y no explica la dispersión medida (${pp.measured_range_kw[0]} a ${pp.measured_range_kw[1]} kW), así que ni Bond crudo ni el Pc del paper (cuyo Pd es una potencia específica de tamaño, no el tiro de Bond clásico) reproducen la variación. El mejor reajuste de la forma del paper sobre nuestro Pd colapsa hacia la media. No se afirma que se elimine una sobrepredicción 2x de Bond; el resultado real at-bar es la paridad de t/h, no la potencia. En la app la potencia medida es la referencia mostrada.`
+        : `Honest finding (corrects the dossier premise): the engine Bond draw is nearly flat (${pp.bond_pd_range_kw[0]} to ${pp.bond_pd_range_kw[1]} kW) and does not explain the measured spread (${pp.measured_range_kw[0]} to ${pp.measured_range_kw[1]} kW), so neither the bare Bond draw nor the paper Pc (whose Pd is a size-specific net power, not the classical Bond draw) reproduces the variation. The best refit of the paper form on our Pd collapses toward the mean. We do not claim a Bond 2x-overprediction is removed; the real at-bar result is the t/h parity, not the power. In the app the measured power is the shown reference.`}</p>
     </div>
   );
 }
@@ -121,8 +121,8 @@ export function LooParity() {
   return (
     <div>
       <p className="tz-panel-sub">{es
-        ? `Paridad HELD-OUT (leave-one-survey-out, ${d.n} encuestas): cada punto se predice con las otras ${d.n - 1}. La barra vertical en M0 es el intervalo predictivo del 80% (UQ). El t/h es el objetivo medido primario.`
-        : `HELD-OUT parity (leave-one-survey-out, ${d.n} surveys): each point is predicted from the other ${d.n - 1}. The vertical bar on M0 is the 80% predictive interval (UQ). t/h is the primary measured target.`}</p>
+        ? `Paridad held-out (leave-one-survey-out, ${d.n} encuestas): cada punto se predice con las otras ${d.n - 1}. La barra vertical en M0 es el intervalo predictivo del 80% (UQ). El t/h es el objetivo medido primario.`
+        : `Held-out parity (leave-one-survey-out, ${d.n} surveys): each point is predicted from the other ${d.n - 1}. The vertical bar on M0 is the 80% predictive interval (UQ). t/h is the primary measured target.`}</p>
       <ParitySvg series={tphSeries} unit="t/h" es={es} errHalf={tph.uq?.band_halfwidth} />
       <table className="tz-table" style={{ marginTop: '0.5rem', maxWidth: 640 }}>
         <thead><tr><th>{es ? 'modelo (LOO estricto)' : 'model (strict LOO)'}</th><th className="num">t/h MAPE %</th><th className="num">kW MAPE %</th><th className="num">t/h R²</th></tr></thead>
@@ -140,8 +140,8 @@ export function LooParity() {
           : `UQ (t/h): 80% interval = M0 ± ${tph.uq.band_halfwidth} t/h (±${tph.uq.band_rel_pct}%); empirical coverage ${(tph.uq.empirical_coverage * 100).toFixed(0)}% vs 80% nominal (n=${d.n}, coarse estimate).`}</p>
       )}
       <p className="tz-note">{es
-        ? `Resultado pre-registrado: en t/h el backbone calibrado alcanza ${tph.M0_backbone.mape_pct}% MAPE held-out (dentro de la banda ~15% del paper), supera a la media constante (${tph.constant_mean.mape_pct}%) y pasa el control de etiqueta-barajada (${tph.M1_label_shuffle.mape_pct}%): habilidad real. El residuo M1 NO supera al backbone fuera de muestra (${tph.M1_residual.mape_pct}% vs ${tph.M0_backbone.mape_pct}%): NULO pre-registrado, por eso enviamos el backbone + banda empírica, no un residuo sobreajustado. En kW el backbone no supera a la media (limitación de la potencia de Bond, ver panel de potencia).`
-        : `Pre-registered result: for t/h the calibrated backbone reaches ${tph.M0_backbone.mape_pct}% held-out MAPE (inside the paper's ~15% band), beats the constant-mean baseline (${tph.constant_mean.mape_pct}%) and passes the label-shuffle control (${tph.M1_label_shuffle.mape_pct}%): real skill. The M1 residual does NOT beat the backbone out-of-sample (${tph.M1_residual.mape_pct}% vs ${tph.M0_backbone.mape_pct}%): a pre-registered NULL, so we ship the backbone + empirical band, not an overfit residual. For kW the backbone does not beat the mean (the Bond power limitation, see the power panel).`}</p>
+        ? `Resultado pre-registrado: en t/h el backbone calibrado alcanza ${tph.M0_backbone.mape_pct}% MAPE held-out (dentro de la banda ~15% del paper), supera a la media constante (${tph.constant_mean.mape_pct}%) y pasa el control de etiqueta-barajada (${tph.M1_label_shuffle.mape_pct}%): habilidad real. El residuo M1 no supera al backbone fuera de muestra (${tph.M1_residual.mape_pct}% vs ${tph.M0_backbone.mape_pct}%): nulo pre-registrado, por eso enviamos el backbone + banda empírica, no un residuo sobreajustado. En kW el backbone no supera a la media (limitación de la potencia de Bond, ver panel de potencia).`
+        : `Pre-registered result: for t/h the calibrated backbone reaches ${tph.M0_backbone.mape_pct}% held-out MAPE (inside the paper's ~15% band), beats the constant-mean baseline (${tph.constant_mean.mape_pct}%) and passes the label-shuffle control (${tph.M1_label_shuffle.mape_pct}%): real skill. The M1 residual does not beat the backbone out-of-sample (${tph.M1_residual.mape_pct}% vs ${tph.M0_backbone.mape_pct}%): a pre-registered null, so we ship the backbone + empirical band, not an overfit residual. For kW the backbone does not beat the mean (the Bond power limitation, see the power panel).`}</p>
     </div>
   );
 }

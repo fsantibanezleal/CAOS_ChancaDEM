@@ -3,7 +3,7 @@
 **What:** a small MLP that emulates the (cheap, analytic) Whiten/Evertsson/Bond engine in a single differentiable
 forward pass: operating parameters → product P80/P50/P20, %-passing at {1,4,8,16,32} mm, throughput, power. It gives
 an instant, differentiable what-if the closed-form grid cannot give live, and an honest benchmark (it emulates the
-physics it is measured against, NOT a real plant).
+physics it is measured against, not a real plant).
 
 ## Architecture (`model/surrogate.py`)
 

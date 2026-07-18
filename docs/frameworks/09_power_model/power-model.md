@@ -1,6 +1,6 @@
 # Method, the power model, Bond vs the calibrated form, and an honest negative
 
-**What this card is:** the power path, and the adversarial finding that the calibrated power model does NOT
+**What this card is:** the power path, and the adversarial finding that the calibrated power model does not
 reproduce the measured power on the 10 HP500 surveys. This card exists so the negative is documented, not buried.
 
 ## Bond's law (the classical draw)
@@ -19,7 +19,7 @@ is the documented SOTA alternative.
 ## The paper's calibrated form (Rocha 2024, Table 5)
 
 The paper reports a linear power model `Pc = ζ·Pd + Pn` with ζ = 1.30 and a no-load Pn = 110 kW, where **Pd is a
-size-specific NET power from the paper's own model**, not the classical Bond draw.
+size-specific net power from the paper's own model**, not the classical Bond draw.
 
 ## The honest finding (measured over the 10 surveys)
 
@@ -28,7 +28,7 @@ Grading each power estimate against the measured kW (from `data/derived/hp500/lo
 | power estimate | MAPE vs measured | what it shows |
 |---|---|---|
 | bare Bond draw | ~27% | nearly flat (~196 to 237 kW); does not track the measured 187 to 355 kW spread |
-| `Pc = 1.30·Pd + 110` on OUR Bond Pd | ~48% | overshoots; the paper's ζ,Pn are for the paper's Pd, not the Bond draw |
+| `Pc = 1.30·Pd + 110` on our Bond Pd | ~48% | overshoots; the paper's ζ,Pn are for the paper's Pd, not the Bond draw |
 | refit `Pc = ζ·Pd + Pn` on our Pd | ~19% | best the form can do; collapses toward the survey mean |
 | constant-mean baseline | ~24% | the Bond backbone is no better than this |
 
@@ -36,18 +36,18 @@ Grading each power estimate against the measured kW (from `data/derived/hp500/lo
 measured power tracks CSS more than the Bond draw, because as CSS tightens the finer product raises kWh/t while
 the lower throughput cancels it in tonnes). So:
 
-- the dossier's premise that the calibrated model "removes a Bond ~2x coarse-duty overprediction" is **NOT
+- the dossier's premise that the calibrated model "removes a Bond ~2x coarse-duty overprediction" is **not
   supported** by the engine's numbers, and is reported as a corrected finding;
 - no 2x-overprediction removal is claimed anywhere;
 - on the App's real lane the **measured** power is the shown reference (the mis-scaled model kW is never surfaced
   as a prediction);
 - the genuine at-bar result is the t/h parity (see the calibration/validation card), not the power.
 
-## What this IS and IS NOT
+## What this is and is not
 
-- **IS:** an honest, transparent contrast of three power estimates against measured data, with the negative
+- **Is:** an honest, transparent contrast of three power estimates against measured data, with the negative
   stated plainly and the corrected finding recorded.
-- **IS NOT:** a validated power surrogate. Reconstructing the paper's size-specific Pd (to apply ζ,Pn correctly)
+- **Is not:** a validated power surrogate. Reconstructing the paper's size-specific Pd (to apply ζ,Pn correctly)
   or digitizing the paper's PSD figures for an independent P80 would be the next step; until then the power path
   is documented as a known limitation, not a result.
 
