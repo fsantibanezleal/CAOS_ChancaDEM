@@ -1,6 +1,6 @@
 // The case matrix, distinct, fully-configurable operating scenarios spanning the whole comminution circuit
 // (manifest §caseMatrix). Each case is a complete Operating point; the workbench loads one and every view
-// reacts. The sliders then let the user move freely off the preset. The set deliberately exercises all FIVE
+// reacts. The sliders then let the user move freely off the preset. The set deliberately exercises all five
 // machine kinds (primary gyratory + jaw, secondary cone, tertiary cone + short-head) across soft↔hard ore,
 // fine↔RoM feed, tight↔open settings and under/at/over the capacity-hump optimum, not two of everything.
 // CP1 (pass-through) and CI1 (CSS>F80) are deliberate negative / invalid controls (the engine must show ≈zero
@@ -37,9 +37,9 @@ export const CASES: Case[] = [
   { id: 'H01', name: 'Short-head tertiary · fine product', stage: 'tertiary', blurb: 'Short-head (long parallel zone, steep head): finest product, fast, smallest chamber, the cubicity duty.', machine: 'cone-short-head', cssMm: 6, throwMm: 14, speedRpm: 500, feedX63Mm: 22, feedM: 1.6, oreAxb: 55, oreWi: 14 },
   { id: 'H02', name: 'Short-head tertiary · hard · choke', stage: 'tertiary', blurb: 'Short-head choke-fed on hard ore, tightest classification, high specific energy.', machine: 'cone-short-head', cssMm: 10, throwMm: 16, speedRpm: 470, feedX63Mm: 30, feedM: 1.5, oreAxb: 36, oreWi: 18 },
 
-  // ---- CONTROLS (must NOT render silent garbage) ----
+  // ---- CONTROLS (must not render silent garbage) ----
   { id: 'CP1', name: 'Pass-through (negative control)', stage: 'control', blurb: 'CSS wider than F80, material passes mostly ungripped. The engine must show ≈zero reduction, not a pretty plot, and flag the pass-through regime.', machine: 'cone-sec', cssMm: 160, throwMm: 30, speedRpm: 360, feedX63Mm: 90, feedM: 1.2, oreAxb: 55, oreWi: 14, control: 'negative' },
-  { id: 'CI1', name: 'CSS > feed top (invalid control)', stage: 'control', blurb: 'CSS wider than the feed top size, physically meaningless. The engine must FLAG invalidity (conditioning / mass-closure / non-negativity guard), never render silent garbage.', machine: 'cone-sec', cssMm: 280, throwMm: 30, speedRpm: 360, feedX63Mm: 90, feedM: 1.2, oreAxb: 55, oreWi: 14, control: 'invalid' },
+  { id: 'CI1', name: 'CSS > feed top (invalid control)', stage: 'control', blurb: 'CSS wider than the feed top size, physically meaningless. The engine must flag invalidity (conditioning / mass-closure / non-negativity guard), never render silent garbage.', machine: 'cone-sec', cssMm: 280, throwMm: 30, speedRpm: 360, feedX63Mm: 90, feedM: 1.2, oreAxb: 55, oreWi: 14, control: 'invalid' },
   { id: 'CK1', name: 'Calibration anchor (HP-class cone)', stage: 'control', blurb: 'Operating point chosen as the anchor for absolute-number calibration against published industrial cone data (Duarte et al. 2021); the calibration fit itself is pending. Kept disjoint from any held-out validation point.', machine: 'cone-sec', cssMm: 25, throwMm: 30, speedRpm: 350, feedX63Mm: 80, feedM: 1.15, oreAxb: 52, oreWi: 15, control: 'calibration' },
 ];
 

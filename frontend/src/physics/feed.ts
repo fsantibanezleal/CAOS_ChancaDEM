@@ -6,7 +6,7 @@
 import { toPSD } from './sieve';
 import type { PSD } from './types';
 
-/** Rosin–Rammler cumulative fraction PASSING size x. */
+/** Rosin–Rammler cumulative fraction passing size x. */
 export function rosinRammlerPassing(xMm: number, x63: number, m: number): number {
   if (xMm <= 0) return 0;
   return 1 - Math.exp(-Math.pow(xMm / x63, m));

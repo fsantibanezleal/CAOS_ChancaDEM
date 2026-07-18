@@ -4,9 +4,9 @@ import { evaluate } from '../physics/engine';
 import { surrogatePredict, learnedMetrics, loadLearned, type Metrics } from '../physics/surrogate';
 import type { Machine, Operating } from '../physics/types';
 
-// Surrogate-vs-physics parity: sample operating points, run the EXACT engine (truth) and the ONNX surrogate
-// (prediction) LIVE in-browser, and scatter predicted vs true P80 against the y=x line. The honest score of the
-// learned model against the physics it emulates (NOT a real plant). The aggregate R²/MAPE is the held-out value
+// Surrogate-vs-physics parity: sample operating points, run the exact engine (truth) and the ONNX surrogate
+// (prediction) live in-browser, and scatter predicted vs true P80 against the y=x line. The honest score of the
+// learned model against the physics it emulates (not a real plant). The aggregate R²/MAPE is the held-out value
 // from training (an independent 2nd LHS draw).
 const MACHINES: Machine[] = ['cone-sec', 'cone-tert', 'jaw'];
 

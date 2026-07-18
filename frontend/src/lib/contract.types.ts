@@ -1,6 +1,6 @@
-// CONTRACT 2 mirror (frontend side). MUST stay in lock-step with the Python schemas in
-// data-pipeline/chancalab/core/{trace.py, manifest.py}. A drift here makes `tsc` fail -> the contract is enforced at
-// BUILD time (the web cannot ship reading a shape the pipeline does not produce).
+// Contract 2 mirror (frontend side). Stays in lock-step with the Python schemas in
+// data-pipeline/chancalab/core/{trace.py, manifest.py}. A drift here makes `tsc` fail, so the contract is enforced at
+// build time (the web cannot ship reading a shape the pipeline does not produce).
 
 // ---------- per-case replay trace (chancadem.trace/v1) ----------
 

@@ -1,6 +1,6 @@
 // The geometric sieve grid (√2 series, the standard lab sieve progression) and PSD utilities. Sizes are in mm,
-// classes are ordered COARSE → FINE (descending edges) to match the strictly-lower-triangular breakage matrix
-// (progeny is always finer → lower class index appears LATER, so B is lower-triangular in this ordering).
+// classes are ordered coarse to fine (descending edges) to match the strictly-lower-triangular breakage matrix
+// (progeny is always finer, so the lower class index appears later and B is lower-triangular in this ordering).
 
 import type { PSD } from './types';
 
