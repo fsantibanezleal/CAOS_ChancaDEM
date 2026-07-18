@@ -7,13 +7,13 @@ pure-TypeScript **Whiten population-balance + Evertsson capacity + Bond power** 
 **surrogate MLP** (instant differentiable what-if) and a **denoising autoencoder** (operating-anomaly / OOD score),
 both running in the browser via onnxruntime-web.
 
-## What it is / what it is NOT
+## What it is / what it is not
 
 * **Is:** a real, interactive comminution sandbox, pick one of 17 circuit cases (primary gyratory/jaw, secondary
   cone, tertiary cone/short-head, + negative/invalid/calibration controls), move the sliders, and every view reacts;
-  the surrogate gives an instant what-if and the AE flags when you steer off the trained manifold.
-* **Is NOT:** a plant control system. The physics **engine is the source of truth and the surrogate emulates IT**,
-  NOT a real plant; the engine's constants are illustrative, pending calibration to published cone data (Duarte et
+  the surrogate gives an instant what-if and the AE flags when the query steers off the trained manifold.
+* **Is not:** a plant control system. The physics **engine is the source of truth and the surrogate emulates it**,
+  not a real plant; the engine's constants are illustrative, pending calibration to published cone data (Duarte et
   al. 2021, the CK1 anchor case is defined, the fit is not yet executed). The 3D chamber is a
   kinematic animation; the offline 2-D DEM tracer is the documented next increment. No real plant data is used.
 

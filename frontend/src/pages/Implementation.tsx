@@ -2,7 +2,7 @@ import { Refs, useShellLang } from '@fasl-work/caos-app-shell';
 
 // Implementation, the two-tier architecture: heavy work offline (LHS sweep of the TS engine + torch training →
 // ONNX artifacts); the pure-TS physics + ONNX inference live. The offline 2-D DEM tracer (stages/dem.py) is the
-// documented next increment, it is NOT wired into the shipped app yet.
+// documented next increment, it is not wired into the shipped app yet.
 const sv = { maxWidth: 620, display: 'block', margin: '0.8rem auto', font: '11px var(--font-sans, sans-serif)' } as const;
 
 export default function Implementation() {
@@ -10,7 +10,7 @@ export default function Implementation() {
   return (
     <section className="page-body prose">
       <h2>{es ? 'Implementación' : 'Implementation'}</h2>
-      <p className="tz-lead">{es ? 'Dos capas: lo pesado (el barrido LHS del motor + el entrenamiento de los modelos) se precalcula offline y se versiona como artefactos reproducibles + modelos ONNX; lo liviano (balance poblacional + inferencia aprendida) corre en vivo en el navegador.' : 'Two tiers: the heavy work (the LHS sweep of the engine + model training) is precomputed offline and versioned as reproducible artifacts + ONNX models; the light work (population balance + learned inference) runs live in the browser.'}</p>
+      <p className="tz-lead">{es ? 'Dos capas: lo pesado (el barrido LHS del motor + el entrenamiento de los modelos) se precalcula offline y se versiona como artefactos reproducibles + modelos ONNX; lo liviano (balance poblacional + inferencia aprendida) se ejecuta en vivo en el navegador.' : 'Two tiers: the heavy work (the LHS sweep of the engine + model training) is precomputed offline and versioned as reproducible artifacts + ONNX models; the light work (population balance + learned inference) runs live in the browser.'}</p>
 
       <svg viewBox="0 0 640 220" width="100%" style={sv} role="img" aria-label="architecture">
         <rect x="10" y="14" width="300" height="92" rx="8" fill="none" stroke="var(--color-border)" strokeDasharray="4 3" />
@@ -34,7 +34,7 @@ export default function Implementation() {
       <ul>
         <li>{es ? <><b>TypeScript puro, no Pyodide.</b> El cálculo en vivo es álgebra lineal densa pequeña (un solve de Whiten de ~28×28, sub-milisegundo); un solveLU escrito a mano sobre Float64Array evita un arranque en frío de ~6–10 MB de Pyodide+numpy.</> : <><b>Pure TypeScript, not Pyodide.</b> The live compute is small dense linear algebra (a ~28×28 Whiten solve, sub-millisecond); a hand-written solveLU on Float64Array avoids a ~6–10 MB Pyodide+numpy cold start.</>}</li>
         <li>{es ? <><b>DEM sólo offline.</b> El DEM industrial es ~10⁶ partículas/litro y ~4 h de cómputo por segundo de operación, imposible en el navegador. La vista 3D actual es una animación cinemática de la cámara (no resuelve partículas); reproducir trazas DEM pre-precalculadas y decimadas (&lt;1 MB) es el siguiente incremento documentado.</> : <><b>DEM offline only.</b> Industrial DEM is ~10⁶ particles/litre and ~4 h compute per second of operation, impossible in-browser. Today's 3D view is a kinematic chamber animation (it does not solve particles); replaying pre-baked, decimated DEM traces (&lt;1 MB) is the documented next increment.</>}</li>
-        <li>{es ? <><b>ONNX sólo para lo aprendido.</b> onnxruntime-web (WASM, 1 hilo: Pages no tiene COOP/COEP) corre el surrogate y el autoencoder; el paquete npm y los .wasm se fijan a la misma versión.</> : <><b>ONNX only for the learned models.</b> onnxruntime-web (WASM, 1 thread: Pages has no COOP/COEP) runs the surrogate and the autoencoder; the npm package and the .wasm are pinned to the same version.</>}</li>
+        <li>{es ? <><b>ONNX sólo para lo aprendido.</b> onnxruntime-web (WASM, 1 hilo: Pages no tiene COOP/COEP) ejecuta el surrogate y el autoencoder; el paquete npm y los .wasm se fijan a la misma versión.</> : <><b>ONNX only for the learned models.</b> onnxruntime-web (WASM, 1 thread: Pages has no COOP/COEP) runs the surrogate and the autoencoder; the npm package and the .wasm are pinned to the same version.</>}</li>
         <li>{es ? <><b>Contrato de preprocesamiento congelado.</b> Un <code>scaler.json</code> aplica el z-scoring idéntico en entrenamiento e inferencia, con un test de paridad PyTorch↔onnxruntime-web.</> : <><b>Frozen preprocessing contract.</b> A <code>scaler.json</code> applies identical z-scoring at train and inference time, with a PyTorch↔onnxruntime-web parity test.</>}</li>
       </ul>
       <Refs ids={['quist2016', 'cleary2009', 'tavares2021', 'napiermunn1996']} label="References" />

@@ -4,9 +4,9 @@ import { evaluate } from '../physics/engine';
 import type { Operating } from '../physics/types';
 import type { RealSurvey } from '../data/real/hp500-minasrio';
 
-// Operating map. Synthetic lane: P80 over the speed × CSS plane, computed LIVE from the exact engine, rendered as
+// Operating map. Synthetic lane: P80 over the speed × CSS plane, computed live from the exact engine, rendered as
 // a viridis heatmap with the current operating point marked. Real lane: the 10 industrial HP500 surveys plotted
-// as the MEASURED operating envelope (feed rate t/h × CSS, point colour = feed f80), with the selected survey
+// as the measured operating envelope (feed rate t/h × CSS, point colour = feed f80), with the selected survey
 // ringed. The real overlay is genuinely new value: it is the actual plant envelope, not a modeled surface.
 const VIRIDIS = [[68, 1, 84], [59, 82, 139], [33, 145, 140], [94, 201, 98], [253, 231, 37]];
 function vir(t: number) { t = Math.max(0, Math.min(1, t)); const x = t * 4, i = Math.min(3, Math.floor(x)), f = x - i; const a = VIRIDIS[i], b = VIRIDIS[i + 1]; return `rgb(${Math.round(a[0] + f * (b[0] - a[0]))},${Math.round(a[1] + f * (b[1] - a[1]))},${Math.round(a[2] + f * (b[2] - a[2]))})`; }

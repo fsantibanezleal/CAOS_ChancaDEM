@@ -46,7 +46,7 @@ export function solveLU(A: Float64Array, b: Float64Array, n: number): Float64Arr
   return x;
 }
 
-/** Cheap 1-norm condition proxy of M = I − B·C: ‖M‖₁ · ‖M⁻¹·e‖∞ surrogate. We do NOT form M⁻¹; instead we
+/** Cheap 1-norm condition proxy of M = I − B·C: ‖M‖₁ · ‖M⁻¹·e‖∞ surrogate. We do not form M⁻¹; instead we
  *  return the ratio of the largest to smallest absolute row-sum, a fast monotone proxy that rises as C→1 across
  *  many classes near choke (manifest: flag, don't NaN). Purely an internal health flag, not a reported metric. */
 export function condProxy(M: Float64Array, n: number): number {

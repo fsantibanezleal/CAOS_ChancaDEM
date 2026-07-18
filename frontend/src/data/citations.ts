@@ -1,7 +1,7 @@
 import { type Citation } from '@fasl-work/caos-app-shell';
 
 // DOI/URL-verified references. Per ADR-0017 §4, every entry carries a real, checkable doi (preferred) or
-// url; a bare author-year with no link is a FAIL. The adversarial research pass corrected several venues/DOIs,
+// url; a bare author-year with no link is a fail. The adversarial research pass corrected several venues/DOIs,
 // flagged a phantom-author citation ("Bhuiyan 2021" does not exist, the real industrial-calibration source is
 // Duarte et al. 2021), and corrected a conflated Karra reference (the screening-model title belonged to Karra
 // 1979; the cone-crusher capacity paper this engine uses is Karra 1982, 14th IMPC). Pre-DOI works are linked to
@@ -30,7 +30,7 @@ export const CITATIONS: Citation[] = [
   { id: 'evertsson1997', label: 'Evertsson & Bearman 1997', citation: 'Evertsson, C.M., Bearman, R.A. (1997). Investigation of interparticle breakage as applied to cone crushing. Minerals Engineering 10(2), 199-214. The inter-particle breakage foundation behind the size-reduction model.', doi: '10.1016/s0892-6875(96)00146-x' },
   { id: 'hulthen2009', label: 'Hulthén & Evertsson 2009', citation: 'Hulthén, E., Evertsson, C.M. (2009). Algorithm for dynamic cone crusher control. Minerals Engineering 22(3), 296-303. Real-time CSS/speed control, the basis for the what-if / operating-map views.', doi: '10.1016/j.mineng.2008.08.007' },
   { id: 'grondahl2018', label: 'Gröndahl et al. 2018', citation: 'Gröndahl, A., Asbjörnsson, G., Hulthén, E., Evertsson, C.M. (2018). Diagnostics of cone crusher feed segregation using power draw measurements. Minerals Engineering 127, 15-21. The real power-draw signature of feed segregation grounding the anomaly view.', doi: '10.1016/j.mineng.2018.07.008' },
-  // --- DEM SOTA landscape (the reference frontier ChancaDEM is NOT: it is PBM/empirical, not a DEM solver) ---
+  // --- DEM SOTA landscape (the reference frontier ChancaDEM is not: it is PBM/empirical, not a DEM solver) ---
   { id: 'cleary2015', label: 'Cleary & Sinnott 2015', citation: 'Cleary, P.W., Sinnott, M.D. (2015). Simulation of particle flows and breakage in crushers using DEM: Part 1 - Compression crushers. Minerals Engineering 74, 178-197. The DEM particle-replacement method (PRM) for compression crushers.', doi: '10.1016/j.mineng.2014.10.021' },
   { id: 'delaney2015', label: 'Delaney et al. 2015', citation: 'Delaney, G.W., Morrison, R.D., Sinnott, M.D., Cummins, S., Cleary, P.W. (2015). DEM modelling of non-spherical particle breakage and flow in an industrial scale cone crusher. Minerals Engineering 74, 112-122. Super-quadric particles break into progeny sized by the JKMRC t10, the DEM/PBM bridge.', doi: '10.1016/j.mineng.2015.01.013' },
   { id: 'johansson2017val', label: 'Johansson et al. 2017', citation: 'Johansson, M., Quist, J., Evertsson, C.M., Hulthén, E. (2017). Cone crusher performance evaluation using DEM simulations and laboratory experiments for model validation. Minerals Engineering 103-104, 93-101. The DEM-vs-lab validation template mirrored by the LOO plan.', doi: '10.1016/j.mineng.2016.09.015' },

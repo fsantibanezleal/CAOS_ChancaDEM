@@ -3,9 +3,9 @@ import { chamberProfile, chamberNipAngle, profilePolylines, jawProfile, machineG
 import { nipLimit } from '../physics/capacity';
 import type { Operating } from '../physics/types';
 
-// The honest MEASUREMENT view that ships alongside the 3D gestalt: a 2D cross-section where you READ the CSS/OSS
+// The honest measurement view that ships alongside the 3D gestalt: a 2D cross-section that reads the CSS/OSS
 // gap, the throw stroke and, critically, the live nip angle vs the friction grip limit, as numbers. For the
-// cone/gyratory it is the axisymmetric profile (mantle ogive inside the fixed concave bowl); for the JAW it is
+// cone/gyratory it is the axisymmetric profile (mantle ogive inside the fixed concave bowl); for the jaw it is
 // the planar two-plate mechanism (fixed jaw + swing jaw). They are fundamentally different machines, drawn
 // differently, not one shape recoloured.
 export function ChamberSlice({ op, height = 320 }: { op: Operating; height?: number }) {
@@ -20,7 +20,7 @@ export function ChamberSlice({ op, height = 320 }: { op: Operating; height?: num
   // map (r,z) → svg; z up, r right. Centre the chamber; the concave is the outer bowl, the mantle a solid cone.
   const W = 460, H = height, padX = 46, padY = 22;
   const rMax = Math.max(...concave.map((c) => c[0])) * 1.08;
-  const zMin = -prof.P.overlap, zMax = prof.P.zTop, zRange = zMax - zMin; // include the overlap so the mantle is seen extending BELOW the concave
+  const zMin = -prof.P.overlap, zMax = prof.P.zTop, zRange = zMax - zMin; // include the overlap so the mantle is seen extending below the concave
   const cx = W / 2;
   const sx = (r: number) => (r / rMax) * (W / 2 - padX);
   const sy = (z: number) => H - padY - ((z - zMin) / zRange) * (H - 2 * padY);
@@ -82,9 +82,9 @@ export function ChamberSlice({ op, height = 320 }: { op: Operating; height?: num
   );
 }
 
-// The JAW is a planar two-plate mechanism: a near-vertical FIXED jaw and an inclined SWING jaw forming a V that
-// converges down to the discharge. Feed enters at the wide GAPE (top); product exits at the CSS (bottom). The
-// swing plate is drawn at its CLOSED extreme (solid) and OPEN extreme (dashed), the throw is largest at the
+// The jaw is a planar two-plate mechanism: a near-vertical fixed jaw and an inclined swing jaw forming a V that
+// converges down to the discharge. Feed enters at the wide gape (top); product exits at the CSS (bottom). The
+// swing plate is drawn at its closed extreme (solid) and open extreme (dashed), the throw is largest at the
 // discharge and decays to ~0 at the suspension point near the top (single-toggle / overhead-eccentric).
 function JawSlice({ op, height, es }: { op: Operating; height: number; es: boolean }) {
   const j = jawProfile(op.machine, op.cssMm, op.throwMm);
@@ -115,7 +115,7 @@ function JawSlice({ op, height, es }: { op: Operating; height: number; es: boole
         <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={es ? 'Mecanismo de mandíbula' : 'Jaw mechanism'} style={{ font: '11px var(--font-sans, sans-serif)' }}>
           {/* crushing chamber (interior, between the plates, closed side) */}
           <path d={wedge} fill="color-mix(in oklab, #3fb950 16%, transparent)" stroke="none" />
-          {/* fixed jaw (right, near-vertical, FIXED) */}
+          {/* fixed jaw (right, near-vertical) */}
           <polyline points={fixedPts.join(' ')} fill="none" stroke="var(--color-fg-subtle)" strokeWidth="6" strokeLinecap="round" />
           <text x={sx(j.xFixed(zTop * 0.5)) + 10} y={sy(zTop * 0.5)} fill="var(--color-fg-subtle)">{es ? 'placa fija' : 'fixed jaw'}</text>
           {/* swing jaw, open extreme (dashed) then closed extreme (solid) */}

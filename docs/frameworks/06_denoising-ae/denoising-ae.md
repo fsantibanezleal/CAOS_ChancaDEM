@@ -16,7 +16,7 @@ log, specific energy, feed modulus), standardized by the committed `ae_scaler.js
 ## Training & threshold
 
 Adam (lr 2e-3, weight-decay 1e-5), **denoising** (Gaussian noise added to the input each step), 400 epochs, seeded,
-on the VALID sweep points only. The decision threshold is the **p99** of the reconstruction error over the training
+on the valid sweep points only. The decision threshold is the **p99** of the reconstruction error over the training
 signature (`ae_threshold.json`); the physically-invalid sweep draws (CSS ≥ feed top, ill-conditioned) form the
 implicit negative set.
 

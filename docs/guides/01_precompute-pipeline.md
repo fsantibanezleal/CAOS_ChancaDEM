@@ -1,7 +1,7 @@
 # 01, Regenerate the models (`--retrain`, two-language)
 
 The heavy lane reproduces `surrogate.onnx`, `psd-ae.onnx`, the scalers, `surrogate_metrics.json`, and re-bakes
-`case-results.json`, from the SAME TS engine the browser runs. Local-only (CI never retrains). Deterministic.
+`case-results.json`, from the same TS engine the browser runs. Local-only (CI never retrains). Deterministic.
 
 ```bash
 # 1) install the heavy engine (torch CPU + onnx) into .venv-pipeline (also needs Node 20+ for the sweep)

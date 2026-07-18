@@ -5,7 +5,7 @@ import { UPlotChart, themeVars } from './UPlotChart';
 import { throughput, optimalSpeed } from '../physics/capacity';
 import type { Operating } from '../physics/types';
 
-// Capacity envelope: throughput vs eccentric speed, showing the capacity HUMP (rises to an optimum then falls
+// Capacity envelope: throughput vs eccentric speed, showing the capacity hump (rises to an optimum then falls
 // as the gyrating head obstructs free-fall). The current operating point is marked; the optimum is annotated.
 export function CapacityEnvelope({ op, height = 240, measuredTph }: { op: Operating; height?: number; measuredTph?: number }) {
   const es = useShellLang() === 'es';
@@ -14,7 +14,7 @@ export function CapacityEnvelope({ op, height = 240, measuredTph }: { op: Operat
   const curQ = throughput(op.machine, op.cssMm, op.throwMm, op.speedRpm, op.calibrated);
   const opt = optimalSpeed(op.machine);
   const yMax = Math.max(Math.max(...q), measuredTph ?? 0) * 1.1;
-  // measured survey point (Real lane): plotted at the nominal running speed as a REAL anchor next to the curve
+  // measured survey point (Real lane): plotted at the nominal running speed as a real anchor next to the curve
   const measuredSeries = measuredTph != null ? speeds.map((s) => (Math.abs(s - op.speedRpm) < 4 ? measuredTph : null)) : null;
   const data: uPlot.AlignedData = measuredSeries
     ? [speeds, q, speeds.map((s) => (Math.abs(s - op.speedRpm) < 4 ? curQ : null)), measuredSeries]

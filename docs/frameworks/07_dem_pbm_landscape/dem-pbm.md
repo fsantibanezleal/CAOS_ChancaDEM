@@ -1,7 +1,7 @@
-# Method, the DEM / SOTA landscape (and why ChancaDEM is NOT a DEM solver)
+# Method, the DEM / SOTA landscape (and why ChancaDEM is not a DEM solver)
 
 **What this card is:** the reference frontier ChancaDEM positions against, with DOI-verified provenance, and an
-explicit statement of what our engine is and is NOT. ChancaDEM runs a population-balance (PBM) / empirical model
+explicit statement of what our engine is and is not. ChancaDEM runs a population-balance (PBM) / empirical model
 live in the browser; DEM is the mechanism frontier it cites, not what runs client-side.
 
 ## The two DEM families for crushers
@@ -33,12 +33,12 @@ ChancaDEM occupies:
    2024; the cone fit Duarte 2021) reports a held-out validation, a calibrated uncertainty, or an open
    browser deployment.
 
-## What ChancaDEM IS and IS NOT
+## What ChancaDEM is and is not
 
-- **IS:** a population-balance (Whiten classification + breakage) + Evertsson capacity + Bond power model in pure
+- **Is:** a population-balance (Whiten classification + breakage) + Evertsson capacity + Bond power model in pure
   TypeScript, sub-millisecond, live in the browser, calibrated to open industrial data (Rocha 2024), validated
   leave-one-survey-out, with calibrated prediction bands.
-- **IS NOT:** a DEM solver. An industrial DEM step is GPU-hours; it does not run client-side. DEM is the frontier
+- **Is not:** a DEM solver. An industrial DEM step is GPU-hours; it does not run client-side. DEM is the frontier
   we cite and compare *trends* against (via the shared t10 appearance), not the engine in the browser.
 
 ## Caveats
