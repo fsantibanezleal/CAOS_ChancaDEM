@@ -12,7 +12,7 @@ const opOf = (c: Case): Operating => ({
   feedX63Mm: c.feedX63Mm, feedM: c.feedM, oreAxb: c.oreAxb, oreWi: c.oreWi,
 });
 
-// Real-sample lane: an HP500 survey → an Operating point driven by its MEASURED CSS + f80. Throw and speed are the
+// Real-sample lane: an HP500 survey → an Operating point driven by its measured CSS + f80. Throw and speed are the
 // HP500 nominal constants (not published per survey); the feed is reconstructed from f80 via Rosin-Rammler; the
 // ore hardness/Wi come from the itabirite blend. `calibrated: true` switches the engine to the Table-5 fit.
 export type Source = 'synthetic' | 'real';
@@ -28,7 +28,7 @@ const opOfSurvey = (s: RealSurvey): Operating => ({
   calibrated: true,
 });
 
-// Per-machine reference REGIME (mid-of-envelope), applied when the user switches machine so the operating
+// Per-machine reference regime (mid-of-envelope), applied when the user switches machine so the operating
 // point stays physically sensible (a gyratory never sits at a 32 mm CSS). Only the machine-dependent geometry /
 // speed / feed-size snap; the ore properties (feedM grading, oreAxb hardness) are carried over unchanged.
 const MACHINE_REF: Record<Machine, Pick<Operating, 'cssMm' | 'throwMm' | 'speedRpm' | 'feedX63Mm'>> = {

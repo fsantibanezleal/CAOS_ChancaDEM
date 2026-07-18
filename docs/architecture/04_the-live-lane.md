@@ -1,7 +1,7 @@
 # 04, The live lane (client-side)
 
 ChancaDEM's live lane is a **pure-TypeScript physics engine + onnxruntime-web**, not Pyodide. The archetype permits
-either ("Pyodide + lightweight wheels, OR a small TS engine"), ChancaDEM's engine is the SAME physics the offline
+either ("Pyodide + lightweight wheels, or a small TS engine"), ChancaDEM's engine is the same physics the offline
 sweep uses, so the live lane is faithful, not a toy surrogate.
 
 ## The physics engine (`frontend/src/physics/`)
@@ -25,8 +25,8 @@ ort.env.wasm.numThreads = 1;   // Pages has no COOP/COEP for threaded WASM
 * `psdAE(x14)` → reconstruction (its error = the operating-anomaly / OOD score).
 
 The 11-D input one-hot order and the z-scoring are read from the committed `scaler.json` (and `ae_scaler.json`), the
-SAME encoding `feature_extraction.py` produces offline, so the in-browser surrogate matches the held-out evaluation
-byte-for-byte. The onnxruntime-web npm version and the `wasmPaths` CDN are pinned to the SAME version (1.27).
+same encoding `feature_extraction.py` produces offline, so the in-browser surrogate matches the held-out evaluation
+byte-for-byte. The onnxruntime-web npm version and the `wasmPaths` CDN are pinned to the same version (1.27).
 
 ## Live-vs-offline parity (the thing to guard)
 

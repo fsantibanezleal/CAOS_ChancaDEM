@@ -4,9 +4,9 @@ import { anomalyScore, type AnomalyOut } from '../physics/surrogate';
 import { Gauge } from './Gauge';
 import type { CrusherResult } from '../physics/types';
 
-// Operating-anomaly / out-of-distribution view: the denoising autoencoder runs LIVE on the current product-
+// Operating-anomaly / out-of-distribution view: the denoising autoencoder runs live on the current product-
 // gradation signature; its reconstruction error is the anomaly score. High score ⇒ abnormal gradation/power
-// regime OR a query off the surrogate's training manifold (so "the surrogate is extrapolating, distrust it").
+// regime or a query off the surrogate's training manifold (so "the surrogate is extrapolating, distrust it").
 export function AnomalyView({ result }: { result: CrusherResult }) {
   const es = useShellLang() === 'es';
   const [a, setA] = useState<AnomalyOut | null>(null);
@@ -26,7 +26,7 @@ export function AnomalyView({ result }: { result: CrusherResult }) {
 
   return (
     <div>
-      <div className="tz-panel-sub">{es ? 'El autoencoder denoising corre EN VIVO. Error de reconstrucción = score de anomalía / fuera-de-distribución.' : 'The denoising autoencoder runs LIVE. Reconstruction error = anomaly / out-of-distribution score.'}</div>
+      <div className="tz-panel-sub">{es ? 'El autoencoder denoising se ejecuta en vivo. Error de reconstrucción = score de anomalía / fuera-de-distribución.' : 'The denoising autoencoder runs live. Reconstruction error = anomaly / out-of-distribution score.'}</div>
       {err ? <p className="tz-note">{es ? 'No se pudo cargar el autoencoder ONNX.' : 'Autoencoder ONNX failed to load.'}</p> : !a ? <p className="tz-panel-sub">…</p> : (
         <div style={{ marginTop: '0.5rem' }}>
           <Gauge title={es ? 'Error de reconstrucción (anomalía)' : 'Reconstruction error (anomaly)'} value={a.score} min={0} max={Math.max(a.threshold * 2.2, a.score * 1.1)}
@@ -38,7 +38,7 @@ export function AnomalyView({ result }: { result: CrusherResult }) {
             <span className="tz-panel-sub" style={{ fontFamily: 'var(--font-mono)' }}>{es ? 'umbral p99' : 'p99 threshold'} {a.threshold.toFixed(3)} · {(a.ratio).toFixed(2)}×</span>
           </div>
           <p className="tz-panel-sub" style={{ marginTop: '0.5rem' }}>{a.isAnomaly
-            ? (es ? 'Esta operación produce una firma de gradación/potencia poco frecuente en el entrenamiento, el surrogate puede estar extrapolando; confía más en el motor físico.' : 'This operating point yields a gradation/power signature rare in training, the surrogate may be extrapolating; trust the physics engine more here.')
+            ? (es ? 'Esta operación produce una firma de gradación/potencia poco frecuente en el entrenamiento, el surrogate puede estar extrapolando; el motor físico es la referencia más confiable aquí.' : 'This operating point yields a gradation/power signature rare in training, the surrogate may be extrapolating; the physics engine is the more reliable reference here.')
             : (es ? 'Firma dentro de la distribución de entrenamiento, el surrogate es confiable aquí.' : 'Signature within the training distribution, the surrogate is reliable here.')}</p>
         </div>
       )}

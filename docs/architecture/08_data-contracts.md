@@ -9,7 +9,7 @@ operating row iff it satisfies the schema (`machine ∈ {cone-sec, cone-tert, co
 positive numeric css/throw/speed/feed/m/axb), **rejects** with a reason otherwise (bad machine, non-numeric,
 `cssMm > 2.5× feedX63Mm` = CSS wider than the feed top), and **flags** out-of-machine-envelope or pass-through rows
 (`cssMm ≥ feedX63Mm`). A `validate_psd` guard checks a bring-your-own feed PSD (descending sieve edges, monotone
-passing). A committed `data/examples/operating.csv` PASSES Contract 1 (a clone-time test asserts it).
+passing). A committed `data/examples/operating.csv` passes Contract 1 (a clone-time test asserts it).
 
 ## Contract 2, artifact (pipeline → web)
 

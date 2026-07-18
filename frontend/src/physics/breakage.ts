@@ -1,30 +1,30 @@
-// The breakage (appearance) function B: how a particle that IS broken distributes its mass over finer sizes.
+// The breakage (appearance) function B: how a particle that is broken distributes its mass over finer sizes.
 // Two cited models are composed:
 //
-//  1. ENERGY → FINENESS (JKMRC drop-weight, Narayanan & Whiten 1988): t10 = A·(1 − exp(−b·Ecs)), where t10 is
+//  1. Energy to fineness (JKMRC drop-weight, Narayanan & Whiten 1988): t10 = A·(1 − exp(−b·Ecs)), where t10 is
 //     the % of progeny passing 1/10 of the parent size, Ecs the specific comminution energy [kWh/t], and A,b
 //     the ore-competence parameters (their product A·b is the standard single-number hardness index).
 //
-//  2. PROGENY SHAPE (Austin, Klimpel & Luckie 1984, "Process Engineering of Size Reduction"): the cumulative
+//  2. Progeny shape (Austin, Klimpel & Luckie 1984, "Process Engineering of Size Reduction"): the cumulative
 //     breakage distribution B(u) = Φ·u^γ + (1−Φ)·u^β for relative size u = x/y ∈ (0,1], normalized B(1)=1.
 //     Φ is fixed by t10 (more energy → finer progeny → higher Φ), γ,β set the fines/coarse slopes.
 //
-// The matrix B[i][j] (mass fraction of broken class-j material reporting to finer class i) is built STRICTLY
+// The matrix B[i][j] (mass fraction of broken class-j material reporting to finer class i) is built strictly
 // lower-triangular (progeny is strictly finer than the parent), so B·C has a zero diagonal ⇒ (I − B·C) has a
 // unit diagonal ⇒ det = 1 ⇒ the Whiten solve is always non-singular (manifest §topRisks: factor-order +
 // conditioning). Each column is renormalized to exactly 1 so broken mass is conserved.
 
-// Austin slopes. γ is chosen so the appearance function can REPRESENT the full t10 range it is asked to pass
+// Austin slopes. γ is chosen so the appearance function can represent the full t10 range it is asked to pass
 // through: at the t10 anchor u=1/10, the maximum reachable value (φ=1) is 0.1^γ, so γ=0.35 ⇒ max t10 ≈ 0.447,
 // comfortably above the realistic crusher t10 band (10–40%). With γ=0.62 the cap was ~0.24, which silently
 // clamped φ and made the displayed t10 disagree with the matrix. β is the coarse-end slope.
 const GAMMA = 0.35;   // Austin fines-end slope (max representable t10 = 0.1^γ ≈ 0.447)
 const BETA = 4.2;     // Austin coarse-end slope (illustrative, within 3–6)
 
-/** Specific comminution energy Ecs [kWh/t] applied per nip, a didactic function of the machine DESIGN stroke and
+/** Specific comminution energy Ecs [kWh/t] applied per nip, a didactic function of the machine design stroke and
  *  the gyration rate. Faster gyration = more nips per unit time = more energy delivered per tonne. It is driven by
- *  the design throw (a per-machine constant, refThrowMm), NOT the live throw slider: increasing the live throw
- *  OPENS the chamber (larger OSS), so its effect is a COARSER product via the classification window (K2), not a
+ *  the design throw (a per-machine constant, refThrowMm), not the live throw slider: increasing the live throw
+ *  opens the chamber (larger OSS), so its effect is a coarser product via the classification window (K2), not a
  *  finer product via more energy. Scaled to the realistic ~0.3–2.5 kWh/t band, illustrative, not a measured plant
  *  energy. */
 export function specificEnergy(speedRpm: number, refThrowMm: number, speedRef = 350): number {
@@ -39,7 +39,7 @@ export function t10Of(ecsKwhT: number, oreAxb: number, A = 60): number {
   return Math.max(0, Math.min(0.44, (A * (1 - Math.exp(-b * ecsKwhT))) / 100));
 }
 
-/** HP500 secondary-cone t10 [fraction 0..1] CALIBRATED to the Minas Rio surveys (Rocha et al. 2024, Table 5):
+/** HP500 secondary-cone t10 [fraction 0..1] calibrated to the Minas Rio surveys (Rocha et al. 2024, Table 5):
  *  t10(%) = 64 - 0.12·CSS - 0.23·f80 (sizes in mm). The itabirite surveys ran a high 20-50% t10 band, so the
  *  value is capped at the Austin appearance function's max representable t10 (0.1^γ ≈ 0.447) before it feeds the
  *  breakage matrix, exactly as the synthetic t10Of does, keeping the displayed t10 consistent with the matrix. */

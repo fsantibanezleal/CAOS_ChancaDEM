@@ -7,22 +7,22 @@
 //   C(d) = 1 − ((K2 − d)/(K2 − K1))^K3         for K1 < d < K2
 //   C(d) = 1                                   for d ≥ K2   (too large to escape → always broken)
 //
-// K1 is LINEAR in the closed-side setting (CSS): a tighter setting captures smaller particles. K2 (the size above
-// which a particle is always broken) is the OPEN-side capture threshold, so it tracks OSS = CSS + throw: a larger
+// K1 is linear in the closed-side setting (CSS): a tighter setting captures smaller particles. K2 (the size above
+// which a particle is always broken) is the open-side capture threshold, so it tracks OSS = CSS + throw: a larger
 // eccentric throw opens the chamber wider, so larger particles escape during the open phase and the product is
-// COARSER at fixed CSS (Evertsson 1999, DOI 10.1016/S0892-6875(99)00136-3; Andersen & Napier-Munn 1988). This is
-// the faithful channel for throw: it moves the capture window, NOT the per-nip energy (routing throw into Ecs
+// coarser at fixed CSS (Evertsson 1999, DOI 10.1016/S0892-6875(99)00136-3; Andersen & Napier-Munn 1988). This is
+// the faithful channel for throw: it moves the capture window, not the per-nip energy (routing throw into Ecs
 // would wrongly make more throw = finer). The exact a0+a1·CSS slopes are machine-specific and require the
 // open-access industrial-calibration data (Duarte et al. 2021, DOI 10.3390/min11111256) to fix; the
 // literature-typical ranges used here are labelled provisional / illustrative in the UI and methodology, they
-// reproduce the correct TRENDS (CSS↓ ⇒ finer; throw↑ ⇒ coarser), not a specific plant's absolute numbers.
+// reproduce the correct trends (CSS↓ ⇒ finer; throw↑ ⇒ coarser), not a specific plant's absolute numbers.
 
 import type { Classification, Machine } from './types';
 import { REF_THROW_MM } from './machines';
 
 interface KModel { k1a: number; k1b: number; k2a: number; k2b: number; k3: number; }
 
-// Fraction of the throw deviation (from the machine design throw) added to the OPEN-side capture threshold K2,
+// Fraction of the throw deviation (from the machine design throw) added to the open-side capture threshold K2,
 // as a multiple of the K2-vs-CSS slope. 0.5 mirrors the mean-gap convention used for capacity (CSS + throw/2):
 // K2 shifts up half as fast per mm of throw as per mm of CSS. Centered on the design throw so the reference
 // cases are unchanged; throw above design coarsens, below design fines.
@@ -38,8 +38,8 @@ const KMODEL: Record<Machine, KModel> = {
   'jaw':             { k1a: 2.0, k1b: 0.95, k2a: 20.0, k2b: 2.30, k3: 2.1 },
 };
 
-// HP500 secondary-cone classification CALIBRATED to the 10 Minas Rio surveys (Rocha et al. 2024, Table 5).
-// Unlike the provisional per-machine model above, the published fit is linear in BOTH the CSS and the feed f80:
+// HP500 secondary-cone classification calibrated to the 10 Minas Rio surveys (Rocha et al. 2024, Table 5).
+// Unlike the provisional per-machine model above, the published fit is linear in both the CSS and the feed f80:
 //   K1 = 0.23·CSS + 0.30·f80   [mm]   (escape threshold)
 //   K2 = 12.0 + 0.55·CSS + 0.40·f80   [mm]   (full-capture threshold)
 //   K3 = 2.3   (held constant)
@@ -50,9 +50,9 @@ function hp500Params(cssMm: number, f80Mm: number): Classification {
   return { k1, k2: Math.max(k2, k1 * 1.05), k3: 2.3 };
 }
 
-/** Build K1,K2,K3 from machine + CSS + throw. Synthetic path: K1 linear in CSS; K2 linear in CSS AND throw
+/** Build K1,K2,K3 from machine + CSS + throw. Synthetic path: K1 linear in CSS; K2 linear in CSS and throw
  *  (OSS-ward, so throw↑ ⇒ coarser), centered on the machine design throw so the reference behavior is preserved.
- *  Calibrated path (opts.calibrated, cone-sec, f80 supplied): the HP500 fit, linear in CSS AND f80 (Table 5); it
+ *  Calibrated path (opts.calibrated, cone-sec, f80 supplied): the HP500 fit, linear in CSS and f80 (Table 5); it
  *  is throw-independent because Rocha et al. did not vary throw, so throw stays out of the Real lane by design.
  *  Synthetic behavior is unchanged at the design throw when no throw / calibration is supplied. */
 export function classificationParams(machine: Machine, cssMm: number, opts?: { f80Mm?: number; calibrated?: boolean; throwMm?: number }): Classification {

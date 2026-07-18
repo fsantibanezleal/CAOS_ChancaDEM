@@ -4,7 +4,7 @@ import { recommendCss } from '../physics/surrogate';
 import { optimalSpeed } from '../physics/capacity';
 import type { CrusherResult, Operating } from '../physics/types';
 
-// The decision / recommendation layer (didactic what-if, NOT a plant setpoint controller). Given a target
+// The decision / recommendation layer (didactic what-if, not a plant setpoint controller). Given a target
 // product P80 it recommends a CSS (inverse via bisection on the monotone engine); it diagnoses the binding
 // constraint (capacity / power / nip); and it gives a RAG verdict on the operating point, all with honest
 // framing, no overconfident single number.
