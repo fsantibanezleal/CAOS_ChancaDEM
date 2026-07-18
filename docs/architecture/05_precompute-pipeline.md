@@ -1,7 +1,7 @@
 # 05, The staged precompute pipeline (two-language)
 
 `data-pipeline/chancalab/stages/`, six named, seeded, typed stages. The offline lane is **two-language**: a Node
-sweep generates the labels by running the SAME TypeScript engine (no Python re-port, the lesson from the sibling
+sweep generates the labels by running the same TypeScript engine (no Python re-port, the lesson from the sibling
 products is that a re-port diverges from the live engine), then Python fits the ONNX models.
 
 | Stage | What it does | Deps | Skippable? |
@@ -20,6 +20,6 @@ over the committed `case-results.json`; `--retrain` runs the Node sweep + the he
 
 ## The labels come from the engine, not a plant
 
-The sweep is a Latin-hypercube over each machine's REAL operating envelope (a gyratory never runs a 6 mm CSS), each
+The sweep is a Latin-hypercube over each machine's real operating envelope (a gyratory never runs a 6 mm CSS), each
 point evaluated by the live TS engine, so the surrogate learns each machine's true regime, and honestly emulates the
-calibrated physics, NOT a real plant. Held-out = an independent 2nd LHS draw (seed 67890), not a row-split.
+calibrated physics, not a real plant. Held-out = an independent 2nd LHS draw (seed 67890), not a row-split.

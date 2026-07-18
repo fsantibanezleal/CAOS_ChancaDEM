@@ -1,7 +1,7 @@
 # Method, CrusherCal, calibration + held-out (LOO) validation + uncertainty
 
 **What this card is:** the protocol behind the "physics is real" claim. The engine is calibrated to open
-industrial data, and that calibration is validated OUT OF SAMPLE (leave-one-survey-out) with negative controls
+industrial data, and that calibration is validated out of sample (leave-one-survey-out) with negative controls
 and a calibrated uncertainty band. Every number is computed offline (`data-pipeline/chancalab/hp500/loo.py`,
 numpy-only, seeded) from the committed backbone bridge and surfaced in the Benchmark page. None is asserted.
 
@@ -16,7 +16,7 @@ K2 = 12 + 0.55·CSS + 0.40·f80
 K3 = 2.3
 t10[%] = 64 - 0.12·CSS - 0.23·f80        (capped at the Austin appearance max, 0.1^γ ≈ 0.447)
 QT ≈ 647 t/h                              (capacity base, so the curve overlays the measured 813-1639 t/h band)
-Pc = 1.30·Pd + 110 kW                     (the paper's current-based power FORM; see the honest finding below)
+Pc = 1.30·Pd + 110 kW                     (the paper's current-based power form; see the honest finding below)
 ```
 
 Provenance: Rocha, Campos, Silva & Tavares (2024), *Fit-for-Purpose Model of HP500 Cone Crusher in Size Reduction
@@ -25,7 +25,7 @@ surveys; Table 5 = the fit; Table 1 = the ore drop-weight A,b and Bond Wi.
 
 ## The held-out validation (leave-one-survey-out)
 
-For the two MEASURED targets t/h and kW (P80 is a model output, reported as self-consistency only), for each
+For the two measured targets t/h and kW (P80 is a model output, reported as self-consistency only), for each
 survey i we predict from the other 9, refitting the backbone's global scalars per fold. Three models on identical
 folds:
 
@@ -35,17 +35,17 @@ folds:
   clipped to ±20% of the backbone value (a physical bound, not a free-form fit), added on top of M0.
 - **M2, free-form.** An unconstrained OLS on `[CSS, f80]` predicting the raw target, the overfit strawman.
 
-Reported for each: MAPE, RMSE, R², max deviation, in STRICT folds and in a LEAKY variant (fit on all 10) so the
+Reported for each: MAPE, RMSE, R², max deviation, in strict folds and in a leaky variant (fit on all 10) so the
 optimism gap is visible.
 
 ## Negative controls (all must pass, or the result is void)
 
-1. **Label-shuffle.** Train M1 on permuted residual targets; it must NOT beat M0. If it did, there is leakage.
+1. **Label-shuffle.** Train M1 on permuted residual targets; it must not beat M0. If it did, there is leakage.
 2. **Constant-mean.** M0 must beat predicting the survey mean to claim any skill.
 3. **Leaky vs strict fold.** The free-form models must look better leaky than strict (the overfitting the LOO
    exposes); the calibrated backbone must be stable across both.
 4. **Envelope gate.** Implausible inputs (f80 < CSS, CSS ≤ 0, feed ≤ 0) or points outside the calibrated support
-   (CSS 38-55 mm, f80 47-140 mm) are FLAGGED, never answered with a confident number (`physics/envelope.ts`).
+   (CSS 38-55 mm, f80 47-140 mm) are flagged, never answered with a confident number (`physics/envelope.ts`).
 
 ## Uncertainty (UQ)
 
@@ -63,13 +63,13 @@ is shown on the App's real-lane t/h and kW gauges.
   survey mean (~24%). See the power-model card for why.
 - **M1 residual, a pre-registered null.** The bounded residual does not beat the backbone out-of-sample (t/h ~13%
   vs ~12%; kW marginal), and its large leaky-vs-strict gap confirms overfitting at n=10. We ship the backbone
-  with empirical bands, NOT an overfit residual, and say so in-app.
+  with empirical bands, not an overfit residual, and say so in-app.
 
-## What this IS and IS NOT
+## What this is and is not
 
-- **IS:** a held-out (LOO), uncertainty-quantified recalibration of an open industrial cone model, delivered live
+- **Is:** a held-out (LOO), uncertainty-quantified recalibration of an open industrial cone model, delivered live
   in the browser, a validation + UQ + delivery combination absent from the DEM / phenomenological SOTA.
-- **IS NOT:** a claim of lower error than the DEM or the paper's in-sample fit. The novelty is methodological.
+- **Is not:** a claim of lower error than the DEM or the paper's in-sample fit. The novelty is methodological.
 
 ## Reproduce
 

@@ -1,6 +1,6 @@
-/* Trizar, app styles on top of the shared design-system tokens. The shell does NOT ship `.chip` or `.gauge`;
+/* Trizar, app styles on top of the shared design-system tokens. The shell does not ship `.chip` or `.gauge`;
    they are ported here from the validated RotorVitals/TailWatch visual language (pill chip with a filled-accent
-   active state, value-banded gauge, sticky control sidebar). Light AND dark via the shell tokens. */
+   active state, value-banded gauge, sticky control sidebar). Light and dark via the shell tokens. */
 
 /* ---- validated pill chip ---- */
 .chip { background: var(--color-surface); border: 1px solid var(--color-border); color: var(--color-fg-subtle); border-radius: 999px; padding: 0.3rem 0.72rem; font-size: 0.8rem; cursor: pointer; transition: background .12s, color .12s, border-color .12s; }

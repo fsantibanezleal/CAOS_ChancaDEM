@@ -1,4 +1,4 @@
-// The learned tier's TypeScript side: it reproduces train.py's feature encoding BYTE-FOR-BYTE (the frozen
+// The learned tier's TypeScript side: it reproduces train.py's feature encoding byte-for-byte (the frozen
 // scaler.json / ae_scaler.json contract), runs the ONNX models via onnxruntime-web, and inverse-transforms the
 // outputs. Two products: (1) the surrogate prediction (instant emulation of the physics engine), (2) the
 // autoencoder anomaly / out-of-distribution score. Plus the inverse "target P80 → recommended CSS" via
@@ -8,7 +8,7 @@ import { runSurrogate, runAutoencoder } from '../lib/ort';
 import { evaluate } from './engine';
 import type { Operating, CrusherResult, Machine } from './types';
 
-// IDENTICAL order to train.py MACHINES / scaler.json inputOrder, the one-hot index must match byte-for-byte.
+// Identical order to train.py MACHINES / scaler.json inputOrder, the one-hot index must match byte-for-byte.
 const MACHINES: Machine[] = ['cone-sec', 'cone-tert', 'jaw', 'cone-short-head', 'gyratory'];
 const CONT: (keyof Operating)[] = ['cssMm', 'throwMm', 'speedRpm', 'feedX63Mm', 'feedM', 'oreAxb'];
 const OUTS = ['p80', 'p50', 'p20', 'pass1', 'pass4', 'pass8', 'pass16', 'pass32', 'tph', 'kW'] as const;
@@ -71,7 +71,7 @@ function aeFeats(r: CrusherResult): number[] {
 export interface AnomalyOut { score: number; threshold: number; isAnomaly: boolean; ratio: number; }
 
 /** Autoencoder reconstruction-error anomaly score for the current operating point. score > threshold ⇒ the
- *  gradation/power regime is abnormal OR the query is off the surrogate's training manifold (extrapolation). */
+ *  gradation/power regime is abnormal or the query is off the surrogate's training manifold (extrapolation). */
 export async function anomalyScore(r: CrusherResult): Promise<AnomalyOut> {
   await loadLearned();
   const f = aeFeats(r);

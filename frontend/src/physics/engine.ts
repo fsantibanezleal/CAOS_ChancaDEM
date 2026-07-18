@@ -1,6 +1,6 @@
 // Top-level live engine: an Operating point → a full CrusherResult. This is the single source of physics truth
-// the whole app reads, AND the ground-truth the offline LHS sweep samples to train the ONNX surrogate (so the
-// surrogate honestly emulates THIS engine). Pure TypeScript, sub-millisecond, no Pyodide, no backend.
+// the whole app reads, and the ground-truth the offline LHS sweep samples to train the ONNX surrogate (so the
+// surrogate honestly emulates this engine). Pure TypeScript, sub-millisecond, no Pyodide, no backend.
 
 import { makeGrid, midSizes, toPSD, sizeAtPassing, passingAtSize } from './sieve';
 import { makeFeed } from './feed';
@@ -28,12 +28,12 @@ export function evaluate(op: Operating): CrusherResult {
   const f80 = sizeAtPassing(feed, 0.8);
 
   // classification C(d). K2 (open-side capture) tracks OSS = CSS + throw, so a larger throw coarsens the product
-  // (Evertsson/Andersen). On the Real lane (calibrated cone-sec) the HP500 fit is linear in CSS AND f80 and is
+  // (Evertsson/Andersen). On the Real lane (calibrated cone-sec) the HP500 fit is linear in CSS and f80 and is
   // throw-independent (Rocha et al. did not vary throw).
   const cparams = classificationParams(op.machine, op.cssMm, { f80Mm: f80, calibrated: op.calibrated, throwMm: op.throwMm });
   const c = MID.map((d) => classify(d, cparams));
 
-  // breakage B from energy → t10 → Austin Φ. The per-nip energy uses the machine DESIGN throw (throw acts on the
+  // breakage B from energy → t10 → Austin Φ. The per-nip energy uses the machine design throw (throw acts on the
   // product through the classification window above, not through Ecs). Calibrated: t10 comes straight from the
   // HP500 fit (Table 5), not from the illustrative energy→A·b path.
   const ecs = specificEnergy(op.speedRpm, REF_THROW_MM[op.machine]);

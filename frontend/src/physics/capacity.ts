@@ -1,13 +1,13 @@
 // Capacity, power and nip geometry, the scalar performance envelope.
 //
-// CAPACITY (Evertsson flow model, reduced form): throughput is unimodal in eccentric speed. At low speed the
+// Capacity (Evertsson flow model, reduced form): throughput is unimodal in eccentric speed. At low speed the
 // chamber discharges slowly; past an optimum the gyrating head obstructs free-fall faster than gravity can
-// clear material, so capacity FALLS, the well-known capacity hump. We use Q = Q_ref · openFactor · s·e^{1−s}
+// clear material, so capacity falls, the well-known capacity hump. We use Q = Q_ref · openFactor · s·e^{1−s}
 // with s = speed/speed_opt (peaks at s=1), openFactor ∝ effective discharge opening (CSS + throw/2). This is a
 // reduced parametric form of Evertsson (2000) "Cone Crusher Performance"; absolute numbers are illustrative
 // per-machine references, not a specific plant's curve.
 //
-// POWER (Bond 1952): W = 10·Wi·(1/√P80 − 1/√F80) [kWh/t] with sizes in micrometres; draw [kW] = W · Q [t/h].
+// Power (Bond 1952): W = 10·Wi·(1/√P80 − 1/√F80) [kWh/t] with sizes in micrometres; draw [kW] = W · Q [t/h].
 // Morrell's size-specific energy (Mic) is documented on /methodology as the SOTA alternative.
 
 import type { Machine } from './types';
@@ -23,7 +23,7 @@ const CAP: Record<Machine, CapModel> = {
   'jaw':       { qRef: 700, speedOpt: 300, refGapMm: 110 },
 };
 
-// HP500 secondary cone CALIBRATED capacity base (Rocha et al. 2024, Table 4): the throughput model is anchored at
+// HP500 secondary cone calibrated capacity base (Rocha et al. 2024, Table 4): the throughput model is anchored at
 // QT ≈ 647 t/h so the modeled curve sits within the measured 813-1639 t/h band of the 10 surveys, instead of the
 // ~3x-low synthetic cone-sec reference (qRef 520). Used only on the Real-sample lane.
 const HP500_QREF = 647;

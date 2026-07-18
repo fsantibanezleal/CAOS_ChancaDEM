@@ -2,7 +2,7 @@
 
 `data-pipeline/chancalab/cases/circuit_cases.py` defines 17 cases across 4 categories spanning the whole comminution
 circuit. The App shows **one selected case**; Experiments/Benchmark show **cross-case summaries by category**. Every
-result is a calibrated-**physics-model** output (the Whiten engine), NOT a real plant.
+result is a calibrated-**physics-model** output (the Whiten engine), not a real plant.
 
 | Category | Case ids | What they exercise |
 |---|---|---|
@@ -11,11 +11,11 @@ result is a calibrated-**physics-model** output (the Whiten engine), NOT a real 
 | **tertiary (cone + short-head)** | T01, T02, H01, H02 | fine feed, tight settings, fast; short-head = finest product, smallest chamber |
 | **controls** | CP1, CI1, CK1 | CP1 pass-through (negative), CI1 CSS>feed-top (invalid), CK1 calibration anchor |
 
-## The controls (must NOT render silent garbage)
+## The controls (must not render silent garbage)
 
 * **CP1 (negative / pass-through):** CSS (160 mm) wider than F80, the engine must show **≈zero reduction** and flag
   the pass-through regime, not a pretty plot.
-* **CI1 (invalid):** CSS (280 mm) wider than the feed top, the engine must **FLAG invalidity** (conditioning /
+* **CI1 (invalid):** CSS (280 mm) wider than the feed top, the engine must **flag invalidity** (conditioning /
   mass-closure / non-negativity guard). Contract 1 also rejects it at ingestion (`cssMm > 2.5× feedX63Mm`).
 * **CK1 (calibration):** the operating point chosen as the anchor for absolute-number calibration against published
   industrial cone data (**Duarte et al. 2021**, DOI 10.3390/min11111256); the calibration fit itself is pending.
@@ -23,7 +23,7 @@ result is a calibrated-**physics-model** output (the Whiten engine), NOT a real 
 
 ## Honesty / roadmap
 
-* The physics engine is the source of truth and the **surrogate emulates IT, not a real plant**. The held-out
+* The physics engine is the source of truth and the **surrogate emulates it, not a real plant**. The held-out
   surrogate metrics are vs an independent 2nd LHS draw of the engine.
 * The **3D chamber is a kinematic animation** (honestly labelled); the offline **2-D DEM tracer** (`stages/dem.py`)
   is the documented next increment that upgrades the particle cloud.
