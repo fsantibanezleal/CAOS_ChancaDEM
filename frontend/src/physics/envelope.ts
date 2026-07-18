@@ -57,7 +57,7 @@ export function envelopeText(code: EnvelopeCode, es: boolean): string {
       es: 'El CSS es mayor que el F80 del alimento: nada se atrapa (paso directo). La lectura no es significativa.',
     },
     css_nonpositive: { en: 'CSS must be positive.', es: 'El CSS debe ser positivo.' },
-    feed_nonpositive: { en: 'Feed size must be positive.', es: 'El tamano del alimento debe ser positivo.' },
+    feed_nonpositive: { en: 'Feed size must be positive.', es: 'El tamaño del alimento debe ser positivo.' },
     css_outside_calibrated: {
       en: `CSS outside the calibrated HP500 support [${HP500_ENVELOPE.cssMm[0]}, ${HP500_ENVELOPE.cssMm[1]}] mm: the Table-5 fit is extrapolating.`,
       es: `CSS fuera del soporte calibrado HP500 [${HP500_ENVELOPE.cssMm[0]}, ${HP500_ENVELOPE.cssMm[1]}] mm: el ajuste (Tabla 5) esta extrapolando.`,
