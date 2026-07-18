@@ -20,9 +20,9 @@ import { OperatingMap } from '../viz/OperatingMap';
 import { MassBalance } from '../viz/MassBalance';
 import { DecisionPanel } from '../viz/DecisionPanel';
 
-// The App workbench. A FIRST-LEVEL Source selector (Synthetic | Real sample) sits at the top of the sidebar.
+// The App workbench. A first-level Source selector (Synthetic | Real sample) sits at the top of the sidebar.
 // Synthetic: a case preset + free sliders drive the live pure-TS engine + the two ONNX models. Real sample: the
-// sliders disable, a survey picker (#1..#10) appears, and the SAME engine runs on a real HP500 industrial survey
+// sliders disable, a survey picker (#1..#10) appears, and the same engine runs on a real HP500 industrial survey
 // (measured CSS + f80), calibrated to the Rocha et al. 2024 fit. Every Real tab is badged by provenance.
 const MACHINES: { id: Machine; en: string; es: string }[] = [
   { id: 'cone-sec', en: 'Cone · sec', es: 'Cono · sec' },
@@ -90,7 +90,7 @@ export default function Tool() {
     <section className="page-body tz-layout">
       {/* ---- control sidebar ---- */}
       <aside className="tz-controls">
-        {/* FIRST-LEVEL source selector: synthetic simulator vs a real industrial survey */}
+        {/* First-level source selector: synthetic simulator vs a real industrial survey */}
         <div className="tz-ctl">
           <span>{es ? 'Fuente' : 'Source'}</span>
           <div className="tz-chips">
@@ -98,7 +98,7 @@ export default function Tool() {
             <button className={`chip ${real ? 'on' : ''}`} onClick={() => setSource('real')}>{es ? 'Muestra real' : 'Real sample'}</button>
           </div>
           <span className="tz-source-note">{real
-            ? (es ? 'Encuesta industrial real HP500 (Minas Rio). Los deslizadores se fijan a la encuesta; elige cuál dato.' : 'Real HP500 industrial survey (Minas Rio). The sliders are fixed by the survey; you pick which datum.')
+            ? (es ? 'Encuesta industrial real HP500 (Minas Rio). Los deslizadores se fijan a la encuesta; el selector elige qué dato.' : 'Real HP500 industrial survey (Minas Rio). The sliders are fixed by the survey; the selector picks which datum.')
             : (es ? 'Simulador sintético con perillas libres.' : 'Synthetic simulator with free knobs.')}</span>
         </div>
 
@@ -171,7 +171,7 @@ export default function Tool() {
             ? 'Muestra real: encuesta industrial HP500 (Rocha et al., Minerals 2024, 14, 919, CC BY, Minas Rio). CSS, f80, t/h y kW son medidos; el producto, t10 y las curvas provienen del ajuste Andersen-Whiten calibrado a estas mismas encuestas (Tabla 5). Salvedades: las curvas PSD completas son solo figuras en el paper (el alimento se reconstruye desde f80) y la potencia es la estimación del paper por corriente eléctrica.'
             : 'Real sample: HP500 industrial survey (Rocha et al., Minerals 2024, 14, 919, CC BY, Minas Rio). CSS, f80, t/h and kW are measured; the product, t10 and curves come from the Andersen-Whiten fit calibrated to these very surveys (Table 5). Caveats: the full feed/product PSD curves are figure-only in the paper (feed is reconstructed from f80) and power is the paper current-based estimate.')
           : (es
-            ? 'Motor de Whiten + Evertsson + Bond en TypeScript puro, en vivo; el surrogate y el autoencoder corren en ONNX en el navegador. Constantes ilustrativas (reproducen tendencias) hasta calibrar con datos industriales abiertos.'
+            ? 'Motor de Whiten + Evertsson + Bond en TypeScript puro, en vivo; el surrogate y el autoencoder se ejecutan en ONNX en el navegador. Constantes ilustrativas (reproducen tendencias) hasta calibrar con datos industriales abiertos.'
             : 'Live pure-TypeScript Whiten + Evertsson + Bond engine; the surrogate and autoencoder run in ONNX in the browser. Constants are illustrative (they reproduce trends) pending calibration to open industrial data.')}</p>
       </div>
     </section>

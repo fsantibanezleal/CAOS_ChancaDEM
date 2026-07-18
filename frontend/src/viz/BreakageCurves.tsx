@@ -7,7 +7,7 @@ import { REF_THROW_MM } from '../physics/machines';
 import type { Operating } from '../physics/types';
 
 // Breakage / appearance curves: the JKMRC t10 vs specific-energy curve (with the current operating point) and
-// the t-family (tn vs 1/n) that fills the breakage matrix B, showing B is DERIVED from the cited A,b, never
+// the t-family (tn vs 1/n) that fills the breakage matrix B, showing B is derived from the cited A,b, never
 // hand-tuned. Reacts to speed (→ Ecs, per-nip energy at the design stroke) and ore A·b; the live throw acts on the
 // product through the classification window (K2/OSS), not through Ecs. On the Real lane the t10 comes from the
 // HP500 fit (Table 5, linear in CSS and f80), so the marked point reflects the calibrated appearance, not the A·b path.

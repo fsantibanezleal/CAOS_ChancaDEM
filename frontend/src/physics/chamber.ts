@@ -1,29 +1,29 @@
-// Parametric crusher chamber geometry, REBUILT to real liner anatomy (crusher-correction-manifest §1).
+// Parametric crusher chamber geometry, rebuilt to real liner anatomy (crusher-correction-manifest §1).
 // Prior build was wrong (a mining engineer flagged it): it ended both liners in the same lower zone and set the
-// gap by a single radial subtraction, and the camera auto-rotated so the CONCAVE looked like it spun. Reality
-// (cone/gyratory): the CONCAVE (bowl liner) is FIXED; the MANTLE (head) is a convex ogive whose base extends
-// BELOW the concave lower lip and whose wall THICKENS DOWNWARD, exactly what lets you RAISE the mantle
+// gap by a single radial subtraction, and the camera auto-rotated so the concave looked like it spun. Reality
+// (cone/gyratory): the concave (bowl liner) is fixed; the mantle (head) is a convex ogive whose base extends
+// below the concave lower lip and whose wall thickens downward, exactly what lets the mantle be raised
 // (hydroset) to close the setting. CSS = the true minimum gap over a gyration near the discharge, set by the
-// mantle's vertical position (NOT a radial scale, NOT the tan-difference law). The jaw is a planar two-plate
-// mechanism, NOT a surface of revolution. Lengths in mm. Qualitative-calibrated (manifest §1.3), never printed
+// mantle's vertical position (not a radial scale, not the tan-difference law). The jaw is a planar two-plate
+// mechanism, not a surface of revolution. Lengths in mm. Qualitative-calibrated (manifest §1.3), never printed
 // as measured liner angles.
 
 import type { Machine } from './types';
 
 export interface ChamberParams {
   zTop: number;        // chamber height (discharge z=0 → feed) [mm]
-  zPz: number;         // top of the parallel zone [mm] (short for standard, LONG for short-head, ≈0 gyratory)
+  zPz: number;         // top of the parallel zone [mm] (short for standard, long for short-head, ≈0 gyratory)
   zRed: number;        // top of the converging (reduction) zone; feed flare above
   rDis: number;        // concave radius at the discharge [mm]
   alphaC: number;      // concave half-angle from vertical in the converging zone [rad]
   alphaFlare: number;  // feed-flare half-angle (steeper opening) [rad]
   alphaM: number;      // mantle head half-angle [rad] (alphaM < alphaC ⇒ gap widens upward)
-  overlap: number;     // how far the mantle base sits BELOW the concave discharge lip [mm]
+  overlap: number;     // how far the mantle base sits below the concave discharge lip [mm]
   isRevolution: boolean; // false for jaw (planar mechanism)
 }
 
-// Per-machine params, calibrated to QUALITATIVE facts (manifest §1.3): standard = SHORT parallel zone;
-// short-head (tertiary) = LONG parallel zone + smaller chamber + STEEPER head; gyratory = near-vertical concave,
+// Per-machine params, calibrated to qualitative facts (manifest §1.3): standard = short parallel zone;
+// short-head (tertiary) = long parallel zone + smaller chamber + steeper head; gyratory = near-vertical concave,
 // ~no parallel zone, tall, stacked rings; jaw = planar. Never printed as measured angles.
 const GEOM: Record<Machine, ChamberParams> = {
   'cone-sec':        { zTop: 950, zPz: 110, zRed: 620, rDis: 360, alphaC: 0.27, alphaFlare: 0.72, alphaM: 0.12, overlap: 90, isRevolution: true },
@@ -41,7 +41,7 @@ export interface ChamberProfile {
   ossMm: number;
 }
 
-/** CONCAVE: parallel zone → converging (αc) → feed flare (steeper). FIXED; does not move with CSS. */
+/** Concave: parallel zone → converging (αc) → feed flare (steeper). Fixed; does not move with CSS. */
 function rConcaveAt(z: number, P: ChamberParams): number {
   if (z <= P.zPz) return P.rDis;
   if (z <= P.zRed) return P.rDis + (z - P.zPz) * Math.tan(P.alphaC);
@@ -49,7 +49,7 @@ function rConcaveAt(z: number, P: ChamberParams): number {
   return rRed + (z - P.zRed) * Math.tan(P.alphaFlare);
 }
 
-/** MANTLE (convex ogive): base extends BELOW the concave (overlap); parallel-zone flank runs parallel to the
+/** Mantle (convex ogive): base extends below the concave (overlap); parallel-zone flank runs parallel to the
  *  concave so the gap there ≈ css; the crushing cone diverges upward (αc−αm). Wall thickens downward. */
 function rMantleClosedAt(z: number, P: ChamberParams, css: number): number {
   if (z < -P.overlap) return 0;
@@ -94,8 +94,8 @@ export function profilePolylines(p: ChamberProfile, n = 56): { concave: [number,
 export function machineGeom(machine: Machine): ChamberParams { return GEOM[machine]; }
 
 // ---------------------------------------------------------------------------------------------------------------
-// JAW: a PLANAR two-plate mechanism (NOT a surface of revolution). A near-vertical FIXED jaw and an inclined
-// SWING jaw form a V-shaped chamber that converges downward; feed enters at the wide GAPE (top) and the product
+// Jaw: a planar two-plate mechanism (not a surface of revolution). A near-vertical fixed jaw and an inclined
+// swing jaw form a V-shaped chamber that converges downward; feed enters at the wide gape (top) and the product
 // exits at the CSS (bottom). Modern single-toggle / overhead-eccentric type: the swing motion is largest at the
 // discharge and decays to ~0 at the suspension point near the top (Gauldie 1953; Wills & Finch, Mineral
 // Processing Technology, ch. on crushers). The gap at the discharge oscillates between CSS (closed) and OSS =
@@ -118,7 +118,7 @@ export function jawProfile(machine: Machine, cssMm: number, throwMm: number): Ja
   const xSwing = (z: number, openFrac: number) => {
     const gapClosed = cssMm + z * Math.tan(nip);          // closed-side opening at height z
     const open = throwMm * (1 - Math.min(1, z / P.zTop)); // throw: max at discharge, 0 at the top pivot
-    return xFixed(z) - (gapClosed + open * openFrac);     // swing face sits to the LEFT of the fixed face
+    return xFixed(z) - (gapClosed + open * openFrac);     // swing face sits to the left of the fixed face
   };
   const gapeMm = cssMm + P.zTop * Math.tan(nip);
   const nipDeg = (nip + betaF) * 180 / Math.PI;

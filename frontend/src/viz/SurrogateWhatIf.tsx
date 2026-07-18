@@ -4,7 +4,7 @@ import { surrogatePredict, type SurOut, learnedMetrics, loadLearned, type Metric
 import type { CrusherResult, Operating } from '../physics/types';
 
 // Live surrogate what-if: the ONNX MLP runs in-browser on the current operating point and predicts the product
-// in a single forward pass. We show it next to the exact engine values, the surrogate's job is to EMULATE the
+// in a single forward pass. We show it next to the exact engine values, the surrogate's job is to emulate the
 // physics instantly, so a small gap here is the honest measure of the learned model (it is benchmarked against
 // the physics it emulates, not a real plant).
 export function SurrogateWhatIf({ op, result }: { op: Operating; result: CrusherResult }) {
@@ -29,7 +29,7 @@ export function SurrogateWhatIf({ op, result }: { op: Operating; result: Crusher
 
   return (
     <div>
-      <div className="tz-panel-sub">{es ? 'El surrogate ONNX corre EN VIVO en el navegador. Comparado con el motor físico exacto:' : 'The ONNX surrogate runs LIVE in the browser. Compared with the exact physics engine:'}</div>
+      <div className="tz-panel-sub">{es ? 'El surrogate ONNX se ejecuta en vivo en el navegador. Comparado con el motor físico exacto:' : 'The ONNX surrogate runs live in the browser. Compared with the exact physics engine:'}</div>
       {err ? <p className="tz-note">{es ? 'No se pudo cargar el modelo ONNX' : 'ONNX model failed to load'}: {err}</p> : (
         <table className="tz-table" style={{ marginTop: '0.4rem' }}>
           <thead><tr><th>{es ? 'Salida' : 'Output'}</th><th className="num">{es ? 'Motor (física)' : 'Engine (physics)'}</th><th className="num">{es ? 'Surrogate (ONNX)' : 'Surrogate (ONNX)'}</th><th className="num">Δ</th></tr></thead>

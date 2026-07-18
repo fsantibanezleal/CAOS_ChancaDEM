@@ -1,6 +1,6 @@
 // Live in-browser inference of the two learned models (onnxruntime-web). The surrogate emulates the live
 // physics engine; the autoencoder scores operating-anomaly / surrogate-extrapolation. The npm package
-// (onnxruntime-web ^1.27.0) and the CDN wasmPaths are pinned to the SAME version, a version skew is the
+// (onnxruntime-web ^1.27.0) and the CDN wasmPaths are pinned to the same version, a version skew is the
 // classic "Session already started" / load-failure trap. WASM EP, single-threaded (GitHub Pages has no
 // COOP/COEP for threaded WASM).
 import * as ort from 'onnxruntime-web';
