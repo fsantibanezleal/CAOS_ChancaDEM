@@ -37,7 +37,7 @@ export default function Introduction() {
 
       <h3>{es ? 'Alcance honesto' : 'Honest scope'}</h3>
       <p>{es
-        ? 'Esto es un sandbox didáctico de conminución, no un sistema de control de planta. El DEM industrial (millones de partículas, ~4 h de cómputo por segundo de operación) es imposible en el navegador; la vista 3D actual es una animación cinemática, no resuelve partículas, y el replay de trazas DEM pre-horneadas offline es el siguiente incremento documentado. Las constantes son ilustrativas (reproducen tendencias) hasta calibrar con datos industriales abiertos; los números sintéticos se rotulan como tales.'
+        ? 'Esto es un sandbox didáctico de conminución, no un sistema de control de planta. El DEM industrial (millones de partículas, ~4 h de cómputo por segundo de operación) es imposible en el navegador; la vista 3D actual es una animación cinemática, no resuelve partículas, y el replay de trazas DEM pre-precalculadas offline es el siguiente incremento documentado. Las constantes son ilustrativas (reproducen tendencias) hasta calibrar con datos industriales abiertos; los números sintéticos se rotulan como tales.'
         : 'This is a didactic comminution sandbox, not a plant control system. Industrial DEM (millions of particles, ~4 h of compute per second of operation) is impossible in a browser; today\'s 3D view is a kinematic animation, it does not solve particles, and replaying offline pre-baked DEM traces is the documented next increment. Constants are illustrative (they reproduce trends) pending calibration to open industrial data; synthetic numbers are labelled as such.'}</p>
 
       <p className="tz-note">{es
