@@ -3,6 +3,12 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/fsantibanezleal/CAOS_ChancaDEM/ci.yml?branch=main&label=CI)](https://github.com/fsantibanezleal/CAOS_ChancaDEM/actions)
 [![License](https://img.shields.io/github/license/fsantibanezleal/CAOS_ChancaDEM)](LICENSE)
 [![Live demo](https://img.shields.io/badge/demo-live-2ea44f)](https://chancadem.fasl-work.com)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.21518356-blue)](https://doi.org/10.5281/zenodo.21518356)
+
+Technical report (CC-BY-4.0): *"ChancaDEM: A Crusher-Comminution Studio Coupling Whiten, Evertsson and Bond, with
+a Physics-Faithful Learned Surrogate"*, concept DOI [10.5281/zenodo.21518356](https://doi.org/10.5281/zenodo.21518356)
+(source in [`manuscripts/comminution-studio/`](manuscripts/comminution-studio/)). Couples the 3 cited models + a
+learned surrogate faithful to R2 0.980-0.998 with physical monotonicity preserved.
 
 > Set the machine, eccentric speed, throw, closed-side-setting (CSS) and feed size distribution on a cone, jaw or
 > gyratory crusher and watch the product gradation, throughput and power form, and understand *why*. A didactic
