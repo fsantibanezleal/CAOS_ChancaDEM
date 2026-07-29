@@ -1,0 +1,243 @@
+\documentclass[journal]{IEEEtran}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{url}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{orcidlink}
+\usepackage{balance}
+
+\graphicspath{{../figures/}}
+
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\bottomfraction}{0.75}
+\renewcommand{\textfraction}{0.08}
+\renewcommand{\floatpagefraction}{0.80}
+
+\begin{document}
+
+\title{ChancaDEM: A Crusher-Comminution Studio Coupling\\ Whiten, Evertsson and Bond, with a\\ Physics-Faithful Learned Surrogate}
+
+\author{Felipe~Santiba\~nez-Leal~\orcidlink{0000-0002-0150-3246}%
+\thanks{F. Santiba\~nez-Leal is with the CAOS open-research programme, Santiago, Chile
+(e-mail: fsantibanez@gmail.com; ORCID 0000-0002-0150-3246).}%
+\thanks{Technical report, 2026. Interactive studio and reproducible pipeline (MIT) at
+\url{https://github.com/fsantibanezleal/CAOS_ChancaDEM}; live at \url{https://chancadem.fasl-work.com}.}}
+
+\markboth{Technical Report, 2026}%
+{Santiba\~nez-Leal: A crusher-comminution studio with a physics-faithful learned surrogate}
+
+\maketitle
+
+\begin{abstract}
+A rock crusher's product size distribution, throughput and power are governed by well-established comminution
+models, but those models are scattered across the literature and rarely coupled in one runnable, honest tool.
+ChancaDEM is an interactive studio that couples three cited models, a Whiten classification-breakage population
+balance for the product gradation, an Evertsson flow-capacity model for the throughput hump, and Bond's law for
+the power, and lets a user set the machine (cone, jaw or gyratory), eccentric speed, throw, closed-side setting
+and feed, and see the product form and understand why. On top of the physics engine, a learned surrogate
+accelerates it: a multilayer-perceptron trained on the population-balance engine reproduces every output, the
+size percentiles, the passing fractions, the throughput and the power, at a coefficient of determination between
+$0.980$ and $0.998$ and a mean absolute percentage error of $2.7\%$ to $10.3\%$, on a leakage-safe independent
+Latin-hypercube test draw, and, importantly, it preserves the physical monotonicity of product size against
+closed-side setting rather than merely fitting the numbers. Over seventeen cases the studio reproduces the
+textbook comminution behaviour, coarse high-throughput gyratory products through to fine cone products, and the
+classical trade that a finer product costs more specific energy. We are explicit about scope: the studio couples
+\emph{calibrated models}, not a plant, the surrogate emulates the \emph{engine} and not a real operation, and the
+three-dimensional chamber view is a kinematic animation, \emph{not} a discrete-element solve (industrial DEM is
+infeasible in a browser, and replaying pre-baked DEM traces is the documented next step). Every number and figure
+regenerates from the committed artifacts.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Comminution, crushing, population balance, Whiten model, Bond's law, cone crusher, surrogate model, machine
+learning, mineral processing, reproducibility.
+\end{IEEEkeywords}
+
+\section{Introduction}
+
+\IEEEPARstart{C}{omminution}, crushing and grinding ore to liberate its minerals, is the largest energy consumer
+in a mine, and predicting how a crusher turns a feed into a product is a mature modelling problem~\cite{king}. The
+product size distribution follows from a classification-breakage population balance in the tradition of
+Whiten~\cite{whiten}, with the breakage described by the JKMRC energy-fineness ($t_{10}$) relation and an
+appearance function~\cite{napier}; the throughput follows from the machine's flow capacity, modelled for cone
+crushers by Evertsson~\cite{evertsson,quist}; and the power follows from Bond's third theory~\cite{bond}. Each of
+these is standard, but a student or an engineer wanting to see how they interact, how eccentric speed, throw and
+closed-side setting jointly shape the product, gradation, throughput and power, has to assemble them from
+scattered sources. ChancaDEM assembles them into one runnable, honest studio and adds a learned surrogate that
+makes the coupled engine instant.
+
+The report describes that studio and, in particular, measures how faithfully the learned surrogate reproduces the
+physics engine. Faithfulness is not just goodness-of-fit: a surrogate that fits the training numbers but violates
+the monotonic dependence of product size on closed-side setting would be worse than useless in a teaching or
+what-if tool, because it would teach the wrong physics. So the surrogate is checked both on accuracy, against a
+leakage-safe held-out design, and on physical consistency. The contribution is the honest, coupled,
+surrogate-accelerated comminution studio, with the accuracy and the consistency of each part reported, and with
+an explicit statement of what the tool is (a coupling of calibrated models) and is not (a plant, or a
+discrete-element solve, despite the name).
+
+\section{The Coupled Comminution Engine}\label{sec:physics}
+
+The engine couples three models, all evaluated in closed form so the whole thing runs live. The \textbf{product
+gradation} comes from the Whiten classification-breakage population balance~\cite{whiten}: for a feed vector
+$\mathbf f$ (mass in size classes), a classification (selection) matrix $\mathbf C$ giving the probability a
+particle in each class is broken, and a breakage matrix $\mathbf B$ giving the daughter-size distribution, the
+product is
+\begin{equation}
+\mathbf p \;=\; (\mathbf I - \mathbf C)\,(\mathbf I - \mathbf B\,\mathbf C)^{-1}\,\mathbf f .
+\end{equation}
+The breakage matrix $\mathbf B$ is built from the JKMRC $t_{10}$ energy-fineness curve (how much fine material a
+given breakage energy produces) and an appearance function~\cite{napier}, so the gradation responds physically to
+the machine setting. The \textbf{throughput} follows the Evertsson flow-capacity model~\cite{evertsson,quist},
+which produces the characteristic unimodal capacity hump against eccentric speed (too slow starves the chamber,
+too fast chokes it). The \textbf{power} follows Bond's third theory of comminution~\cite{bond}, the specific
+energy scaling with the difference of the inverse square roots of product and feed sizes. The three are coupled:
+the same setting that shifts the gradation shifts the capacity and the power, so the studio shows the real
+trade-offs a crusher operator faces, not three independent dials.
+
+\section{The Crusher Response}\label{sec:response}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.99\columnwidth]{fig-physics.pdf}
+\caption{The coupled engine's response over seventeen cases. \textbf{(a)} Product size distributions (cumulative
+percent passing against sieve size) for a gyratory, a jaw and a cone case: the gyratory delivers a coarse
+high-tonnage product, the jaw an intermediate one, and the cone a fine product, exactly the size-reduction ladder
+of a crushing circuit. \textbf{(b)} Specific comminution energy against product $P_{80}$ across all cases,
+coloured by machine: the finer the product, the more energy per tonne, the classical Bond trade, spanning from
+about $0.4$~kWh/t for the coarse gyratory products to $1.3$~kWh/t for the fine cone products.}
+\label{fig:physics}
+\end{figure}
+
+Figure~\ref{fig:physics} shows that the coupled engine reproduces textbook comminution behaviour across
+seventeen cases spanning the three machine types. The product size distributions (Fig.~\ref{fig:physics}a) form
+the size-reduction ladder of a real circuit: the gyratory crusher produces a coarse product ($P_{80}$ around
+$150$~mm) at high throughput (thousands of tonnes per hour), the jaw an intermediate product, and the cone a fine
+product ($P_{80}$ under $30$~mm) at lower throughput. The specific-energy relationship (Fig.~\ref{fig:physics}b)
+is the classical Bond trade made visible: across the cases, finer products cost more energy per tonne, from about
+$0.4$~kWh/t for the coarse gyratory duty to $1.3$~kWh/t for the fine cone duty, with the machine types occupying
+their expected bands. None of this is surprising, and that is the point: a studio that couples the cited models
+should reproduce the behaviour the models are known to produce, and it does, which is what licenses using it to
+teach and to explore.
+
+\section{The Learned Surrogate}\label{sec:surrogate}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.99\columnwidth]{fig-surrogate.pdf}
+\caption{The learned surrogate against the population-balance engine, per output, on a leakage-safe held-out
+Latin-hypercube draw (an independent second sampling, not a row split of the training set). The coefficient of
+determination (bars) is between $0.980$ and $0.998$ for every output, the product size percentiles, the passing
+fractions, the throughput and the power; the mean absolute percentage error (line) is $2.7\%$ to $10.3\%$, worst
+on the fine $P_{20}$ tail, as expected. The surrogate also preserves the monotone dependence of $P_{80}$ on
+closed-side setting, so it is physically faithful, not just numerically close.}
+\label{fig:surrogate}
+\end{figure}
+
+The physics engine is cheap but not instant, and for live what-if exploration the studio runs a learned
+surrogate, a multilayer perceptron trained on the population-balance engine to map machine settings and feed to
+all ten outputs. Figure~\ref{fig:surrogate} and Table~\ref{tab:surrogate} report its accuracy on a leakage-safe
+test set: the held-out data are an independent second Latin-hypercube draw (a different seed), not a random split
+of the training rows, so there is no near-duplicate leakage between train and test. On that honest test the
+surrogate reproduces every output at a coefficient of determination between $0.980$ (the power) and $0.998$ (the
+throughput and the coarse passing fractions), with a mean absolute percentage error from $2.7\%$ to $10.3\%$; the
+error is largest on $P_{20}$, the fine tail of the product, which is intrinsically the hardest quantity to
+predict. Crucially, the surrogate is checked for \emph{physical consistency}, not just fit: it preserves the
+monotone increase of product $P_{80}$ with closed-side setting, so it will not teach a user the wrong direction
+of a control. A surrogate that is both accurate to a few percent and monotone in the right variables is a faithful
+accelerator of the engine, and reporting the consistency check alongside the error is what makes it trustworthy.
+
+\begin{table}[!t]
+\centering
+\caption{Surrogate accuracy per output against the population-balance engine (leakage-safe held-out draw,
+$n_{\text{test}}=2196$). All outputs $R^2\ge0.980$; the fine $P_{20}$ tail has the largest percentage error.}
+\label{tab:surrogate}
+\footnotesize
+\begin{tabular}{@{}l r r@{}}
+\toprule
+Output & $R^2$ & MAPE (\%) \\
+\midrule
+$P_{80}$ (product 80\% size) & $0.995$ & $4.5$ \\
+$P_{50}$                     & $0.995$ & $5.0$ \\
+$P_{20}$                     & $0.983$ & $10.3$ \\
+\% passing 32 mm             & $0.997$ & $2.7$ \\
+\% passing 16 mm             & $0.995$ & $5.1$ \\
+\% passing 4 mm              & $0.992$ & $6.6$ \\
+throughput (tph)             & $0.998$ & $7.6$ \\
+power (kW)                   & $0.980$ & $6.4$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Discussion and Scope}\label{sec:discuss}
+
+ChancaDEM is a coupling of established comminution models made interactive, and a demonstration that a learned
+surrogate can accelerate such a coupling faithfully, to a few percent and with the physics monotonicity intact.
+The value for a learner or an engineer is seeing the three models interact, that the setting which finens the
+product also moves the capacity hump and raises the power, in one place and in real time, and the surrogate makes
+that exploration instant. The scope is stated plainly, including where the name overpromises. The studio couples
+\emph{calibrated models}, not a real plant; the parameters are physically reasonable but are not fitted to a
+specific crusher, so the numbers are the models' behaviour, not a prediction for a given machine. The surrogate
+emulates the cheap physics \emph{engine}, not a plant, and its accuracy is against that engine. And, despite the
+name, the three-dimensional chamber view is a \emph{kinematic animation}, geometry and motion driving the
+engine's gradation, and \emph{not} a discrete-element-method solve; industrial DEM of a crushing chamber is
+infeasible in a browser, and the documented next increment is to replay offline pre-baked DEM traces, not to solve
+DEM live. A companion denoising-autoencoder anomaly score flags when the surrogate is asked to extrapolate outside
+its training envelope, so a user is warned rather than silently misled. None of this is hidden; the studio states
+the same on its methodology pages.
+
+\section{Conclusion}
+
+ChancaDEM couples the Whiten population balance, the Evertsson capacity model and Bond's power law into one
+runnable crusher-comminution studio, reproduces the textbook size-reduction ladder and energy-size trade across
+seventeen cases, and accelerates the coupled engine with a learned surrogate that is faithful, coefficient of
+determination $0.980$ to $0.998$, error a few percent, and monotone in the right variables. The honest scoping,
+calibrated models rather than a plant, a surrogate of the engine rather than of reality, and a kinematic
+animation rather than a discrete-element solve, is the report's discipline, and the reproducible coupling and the
+consistency-checked surrogate are its contribution.
+
+\appendices
+\section{Reproduction}\label{app:repro}
+
+The committed artifacts under \texttt{data/derived/} carry the seventeen cases' engine outputs
+(\texttt{case-results.json}: gradation, throughput, power, specific energy per case), the surrogate metrics
+(\texttt{surrogate\_metrics.json}: per-output $R^2$ and MAPE on the held-out Latin-hypercube draw, and the
+$P_{80}$-monotonicity flag), and the anomaly-detector scaler and threshold. The figure scripts under
+\texttt{manuscripts/comminution-studio/figures/} read those artifacts. The physics engine and the surrogate are
+deterministic given their inputs, so re-running reproduces Table~\ref{tab:surrogate} and
+Figs.~\ref{fig:physics}--\ref{fig:surrogate}.
+
+\balance
+
+\begin{thebibliography}{00}
+
+\bibitem{whiten} W.~J. Whiten, ``The simulation of crushing plants with models developed using multiple spline
+regression,'' \emph{Journal of the South African Institute of Mining and Metallurgy}, vol.~72, pp.~257--264,
+1972.
+
+\bibitem{napier} T.~J. Napier-Munn, S.~Morrell, R.~D. Morrison, and T.~Kojovic, \emph{Mineral Comminution
+Circuits: Their Operation and Optimisation}. Brisbane: Julius Kruttschnitt Mineral Research Centre, 1996.
+
+\bibitem{bond} F.~C. Bond, ``The third theory of comminution,'' \emph{Transactions of the American Institute of
+Mining, Metallurgical and Petroleum Engineers}, vol.~193, pp.~484--494, 1952.
+
+\bibitem{evertsson} C.~M. Evertsson, \emph{Cone Crusher Performance}, Ph.D. dissertation, Chalmers University of
+Technology, G\"oteborg, Sweden, 2000.
+
+\bibitem{quist} J.~Quist and C.~M. Evertsson, ``Cone crusher modelling and simulation using DEM,'' \emph{Minerals
+Engineering}, vol.~85, pp.~92--105, 2016. doi:10.1016/j.mineng.2015.11.004.
+
+\bibitem{hulthen} E.~Hulth\'en and C.~M. Evertsson, ``Algorithm for dynamic cone crusher control,''
+\emph{Minerals Engineering}, vol.~22, no.~3, pp.~296--303, 2009. doi:10.1016/j.mineng.2008.08.007.
+
+\bibitem{king} R.~P. King, \emph{Modeling and Simulation of Mineral Processing Systems}. Oxford:
+Butterworth-Heinemann, 2001. doi:10.1016/C2009-0-26303-3.
+
+\end{thebibliography}
+
+\end{document}
