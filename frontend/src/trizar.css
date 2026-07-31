@@ -18,9 +18,9 @@
 .gauge-scale .gauge-val { color: var(--color-fg); font-weight: 700; font-family: var(--font-mono); }
 
 /* ---- workbench layout: 320px control sidebar + reactive main ---- */
-.tz-layout { display: grid; grid-template-columns: 330px 1fr; gap: 1.5rem; align-items: start; }
+.tz-layout { display: grid; grid-template-columns: 330px 1fr; gap: 1.5rem; align-items: stretch; }
 @media (max-width: 920px) { .tz-layout { grid-template-columns: 1fr; } }
-.tz-controls { display: flex; flex-direction: column; gap: 0.8rem; position: sticky; top: 0.5rem; }
+.tz-controls { display: flex; flex-direction: column; gap: 0.8rem; }
 .tz-ctl { display: flex; flex-direction: column; gap: 0.28rem; font-size: 0.82rem; color: var(--color-fg-subtle); }
 .tz-ctl .range { width: 100%; }
 .tz-ctl-row { display: flex; justify-content: space-between; align-items: baseline; }
@@ -158,3 +158,152 @@ html, body { overflow-x: hidden; }
 .tz-focus-enter:hover { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
 .tz-focus-enter-t { display: block; font-size: 0.86rem; font-weight: 700; color: var(--color-accent); }
 .tz-focus-enter-d { display: block; font-size: 0.72rem; color: var(--color-fg-subtle); margin-top: 0.15rem; line-height: 1.4; }
+
+/* =============================================================================================
+   ADR-0071 LAYOUT REDO (2026-07-31). The floor was applied to the SHELL but never to the inner
+   containers, which is worse than not applying it at all: `.app-shell` got `height:100dvh;
+   overflow:hidden` while `.tz-layout` stayed `display:grid` with `align-items:start`, so both
+   columns sized to their CONTENT. Measured on production: columns 960px tall inside a 773px row,
+   document scrollHeight 1033 against a 900px viewport, and TEN controls clipped with nothing to
+   scroll: speed, rock size, Fracture on, Reset view, apply, Target P80 and the Mass balance tab.
+
+   "No scrollbar" was being read as "everything fits". It meant the page was hiding what did not.
+   ============================================================================================= */
+
+/* Rows must be sized by the ROW, not by the content. `1fr` + stretch is the whole fix for the
+   overflow; everything below is making each column able to live inside its share. */
+.page-body.tz-layout { grid-template-rows: minmax(0, 1fr); align-items: stretch; overflow: hidden; }
+.page-body.tz-layout > * { min-height: 0; }
+
+/* The rail scrolls ITSELF. A navigation panel taller than its share must carry its own scroll, or
+   its lower half is unreachable (ADR-0071 rule 3). */
+.tz-controls { min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 6px; }
+
+/* The instrument column: chrome keeps its natural height, the tab panel takes the slack. */
+.tz-main { min-height: 0; }
+.tz-main > .tz-kpis, .tz-main > .tz-envelope-warn, .tz-main > .tz-note { flex: 0 0 auto; }
+.tz-main > .tz-tabs { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+
+/* ONE row of tabs with hover submenus (ADR-0071 rules 4+5). Eleven flat siblings wrapped onto a
+   second row, and every extra row is vertical space taken off the instrument on every render. */
+.tz-tabrow { display: flex; flex-wrap: nowrap; gap: 0.3rem; align-items: center; min-width: 0;
+  max-width: 100%; overflow: visible; flex: 0 0 auto;
+  border-bottom: 1px solid var(--color-border); padding-bottom: 0.45rem; margin-bottom: 0.7rem; }
+.tz-tabwrap { position: relative; flex: 0 0 auto; }
+.tz-tab { white-space: nowrap; cursor: pointer; font-size: 0.88rem; font-weight: 600;
+  padding: 0.42rem 0.85rem; border-radius: 8px; border: 1px solid transparent;
+  background: transparent; color: var(--color-fg-subtle); }
+.tz-tab:hover { color: var(--color-accent); }
+.tz-tab.on { color: var(--color-bg); background: var(--color-accent); border-color: var(--color-accent); }
+.tz-caret { margin-left: 0.4rem; font-size: 0.62rem; opacity: 0.75; }
+.tz-tabmenu { position: absolute; top: 100%; left: 0; z-index: 60; min-width: 190px;
+  display: flex; flex-direction: column; gap: 0.15rem; padding: 0.5rem 0.3rem 0.3rem; margin: 0;
+  background: var(--color-surface); border: 1px solid var(--color-border); border-radius: 0 9px 9px 9px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.28); }
+.tz-tabmenu button { text-align: left; white-space: nowrap; cursor: pointer; font-size: 0.82rem;
+  padding: 0.34rem 0.55rem; border-radius: 6px; border: none; background: transparent; color: var(--color-fg-subtle); }
+.tz-tabmenu button:hover { background: color-mix(in srgb, var(--color-accent) 14%, transparent); color: var(--color-accent); }
+.tz-tabmenu button.on { color: var(--color-accent); font-weight: 700; }
+.tz-tabpanel { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: 4px; }
+
+/* ADR-0070 entry. Without a visible control the focus route is an orphan that ships and nobody reaches. */
+.tz-focus-enter { display: block; text-decoration: none; border: 1px solid var(--color-accent);
+  border-radius: 10px; padding: 0.55rem 0.75rem; margin-bottom: 0.2rem;
+  background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+.tz-focus-enter:hover { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+.tz-focus-enter-t { display: block; font-size: 0.86rem; font-weight: 700; color: var(--color-accent); }
+.tz-focus-enter-d { display: block; font-size: 0.72rem; color: var(--color-fg-subtle); margin-top: 0.15rem; line-height: 1.4; }
+
+/* =============================================================================================
+   ADR-0070 FOCUS VIEW. Fixed full-viewport two-column grid: the stage owns at least 80% and the
+   rail is the only chrome. Nothing here may scroll the page; the rail scrolls itself.
+   ============================================================================================= */
+.tzf { position: fixed; inset: 0; display: grid; grid-template-columns: 1fr 320px;
+  background: var(--color-bg); color: var(--color-fg); overflow: hidden; }
+@media (max-width: 900px) { .tzf { grid-template-columns: 1fr; grid-template-rows: 1fr auto; } }
+
+.tzf-stage { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+/* `.tz-canvas-wrap` is the component root and holds [canvas div, banner, controls]. It must be a flex
+   COLUMN, or `flex: 1` on the canvas div has no column to fill: it collapses to zero height and the whole
+   chrome piles up at the top over the HUD, which is exactly what shipped on the first attempt. */
+.tzf-stage > .tz-canvas-wrap { position: absolute; inset: 0; display: flex; flex-direction: column;
+  min-height: 0; }
+.tzf-stage > .tz-canvas-wrap > div:first-child { flex: 1 1 auto; min-height: 0; }
+/* The component's own chrome sits at the BOTTOM of the stage, out of the HUD's column. */
+.tzf-stage > .tz-canvas-wrap > .tz-precomp-banner,
+.tzf-stage > .tz-canvas-wrap > .tz-viz-controls { flex: 0 0 auto; position: relative; z-index: 4;
+  margin: 0 76px 0 128px; background: color-mix(in srgb, var(--color-surface) 92%, transparent); }
+.tzf-stage > .tz-canvas-wrap > .tz-viz-controls { margin-bottom: 10px; }
+.tzf-stage canvas { width: 100%; height: 100%; display: block; }
+
+.tzf-badge { position: absolute; left: 16px; bottom: 104px; max-width: 46ch; z-index: 5;
+  padding: 0.6rem 0.75rem; border-radius: 10px; border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-accent);
+  background: color-mix(in srgb, var(--color-surface) 92%, transparent); }
+.tzf-badge-t { font-weight: 700; font-size: 0.92rem; color: var(--color-accent); }
+.tzf-badge-d { font-size: 0.76rem; line-height: 1.45; color: var(--color-fg-subtle); margin-top: 0.2rem; }
+
+/* KPIs as a HUD column over the stage, not a row of cards stealing height from it. */
+.tzf-hud { position: absolute; top: 14px; left: 16px; z-index: 5; display: flex; flex-direction: column;
+  gap: 0.45rem; }
+.tzf-hud-item { min-width: 92px; padding: 0.3rem 0.55rem; border-radius: 8px;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 88%, transparent); }
+.tzf-hud-v { font-family: var(--font-mono, ui-monospace, monospace); font-size: 1.05rem; font-weight: 700; }
+.tzf-hud-v.accent { color: var(--color-accent); }
+.tzf-hud-v.blue { color: var(--color-info, #4a9eff); }
+.tzf-hud-l { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--color-fg-subtle); }
+
+.tzf-exit { position: absolute; top: 14px; right: 16px; z-index: 6; text-decoration: none;
+  font-size: 0.78rem; font-weight: 600; padding: 0.35rem 0.7rem; border-radius: 8px;
+  border: 1px solid var(--color-border); background: var(--color-surface); color: var(--color-fg); }
+.tzf-exit:hover { border-color: var(--color-accent); color: var(--color-accent); }
+
+.tzf-rail { min-height: 0; overflow-y: auto; border-left: 1px solid var(--color-border);
+  padding: 0.9rem 0.9rem 1.2rem; display: flex; flex-direction: column; gap: 0.7rem;
+  background: var(--color-surface); }
+.tzf-rail-h { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; }
+.tzf-title { font-size: 1rem; font-weight: 700; line-height: 1.25; }
+.tzf-sub { font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.7rem; color: var(--color-fg-subtle); }
+
+.tzf-seg { display: flex; gap: 0.3rem; }
+.tzf-seg button { flex: 1 1 0; cursor: pointer; font-size: 0.76rem; font-weight: 600; padding: 0.36rem 0.4rem;
+  border-radius: 8px; border: 1px solid var(--color-border); background: transparent; color: var(--color-fg-subtle); }
+.tzf-seg button.on { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-bg); }
+
+.tzf-ctl { display: flex; flex-direction: column; gap: 0.2rem; }
+.tzf-ctl-l { display: flex; justify-content: space-between; font-size: 0.74rem; color: var(--color-fg-subtle); }
+.tzf-ctl-l b { font-family: var(--font-mono, ui-monospace, monospace); color: var(--color-fg); }
+.tzf-ctl input[type="range"] { width: 100%; }
+
+.tzf-note { font-size: 0.7rem; line-height: 1.5; color: var(--color-fg-subtle);
+  border-top: 1px solid var(--color-border); padding-top: 0.6rem; }
+
+.tzf-cases { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: auto; padding-top: 0.6rem; }
+.tzf-cases a { text-decoration: none; font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.68rem; padding: 0.22rem 0.45rem; border-radius: 6px;
+  border: 1px solid var(--color-border); color: var(--color-fg-subtle); }
+.tzf-cases a.on { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-bg); }
+
+/* The rail shows ONE section at a time (ADR-0071 rule 3). Measured: 1036px of stacked control cards in a
+   741px rail, so 295px sat below the fold and the user scrolled a navigation panel before touching
+   anything. Splitting by what the user is doing (setting the machine up vs operating it) makes each
+   section fit its share, which is what "sized container" means. */
+.tz-railseg { display: flex; gap: 0.3rem; flex: 0 0 auto; }
+.tz-railseg button { flex: 1 1 0; cursor: pointer; font-size: 0.78rem; font-weight: 700;
+  padding: 0.38rem 0.4rem; border-radius: 8px; border: 1px solid var(--color-border);
+  background: transparent; color: var(--color-fg-subtle); }
+.tz-railseg button.on { background: var(--color-accent); border-color: var(--color-accent); color: var(--color-bg); }
+.tz-railsec { display: flex; flex-direction: column; gap: 0.8rem; min-height: 0; }
+.tz-railsec.hide { display: none; }
+
+/* Machine as a select. Matches the Case control above it: one exclusive choice, one row. */
+.tz-select { width: 100%; padding: 0.4rem 0.5rem; border-radius: 8px; font-size: 0.82rem;
+  border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-fg); }
+.tz-select:disabled { opacity: 0.55; }
+
+/* THE INSTRUMENT FILLS THE PANEL (ADR-0071 rule 6). The chamber sat in a fixed 620px box inside a
+   555px panel with white margin all around it: the container was given a size and the content ignored
+   it. The canvas takes the slack; the caption and banner keep their natural height. */
+.tz-tabpanel { display: flex; flex-direction: column; }
+.tz-tabpanel > * { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
