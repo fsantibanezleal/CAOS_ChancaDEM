@@ -43,7 +43,13 @@ function fitCamera(cam: THREE.PerspectiveCamera, controls: OrbitControls, box: T
   const center = box.getCenter(new THREE.Vector3());
   const size = box.getSize(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z) || 1000;
-  const dist = (maxDim / 2) / Math.tan((cam.fov * Math.PI) / 360) * 1.65;
+  // Fit to whichever FOV half-angle is the binding constraint. Using the VERTICAL fov alone on a wide
+  // panel (1206x480 here) pushes the camera far enough back for a square viewport and leaves the chamber
+  // a small object in a field of white. 1.65 was compounding that with a large margin; 1.12 frames it
+  // with room to orbit and no clipping.
+  const vFov = (cam.fov * Math.PI) / 360;
+  const hFov = Math.atan(Math.tan(vFov) * cam.aspect);
+  const dist = (maxDim / 2) / Math.tan(Math.min(vFov, hFov)) * 1.12;
   controls.target.copy(center);
   cam.position.set(center.x + dist * 0.72, center.y + dist * 0.4, center.z + dist * 0.72);
   cam.near = Math.max(1, dist / 200); cam.far = dist * 12; cam.updateProjectionMatrix();
@@ -237,8 +243,13 @@ export function Chamber3D({ op, p80, f80, height = 620 }: { op: Operating; p80: 
 
   return (
     <div className="tz-canvas-wrap">
-      {/* Responsive: fill the available workbench height (the bottom controls are compact), not a fixed box. */}
-      <div ref={ref} style={{ width: '100%', height: 'clamp(460px, 74vh, 900px)' }} />
+      {/* height = 0 means FILL THE PARENT. The clamp below is a VIEWPORT-relative size, so it ignored the
+          panel it was placed in: 74vh is 666px on a 900px screen, forced into a 555px tab panel, which is
+          how the page came to overflow its own shell. A container is given a size and the content fills
+          it; asking the viewport how tall to be, from inside a box, cannot work. */}
+      <div ref={ref} style={height > 0
+        ? { width: '100%', height: 'clamp(460px, 74vh, 900px)' }
+        : { width: '100%', flex: '1 1 auto', minHeight: 0 }} />
       <div className="tz-precomp-banner">
         <button type="button" className="btn" onClick={() => (viz.playing ? viz.pause() : viz.play())}>{viz.playing ? 'Pause' : 'Play'}</button>
         <span>Kinematic chamber, drag to orbit, rocks coloured by size</span>

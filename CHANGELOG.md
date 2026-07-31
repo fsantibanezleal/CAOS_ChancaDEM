@@ -4,6 +4,49 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [0.09.000] · 2026-07-31
+
+### Fixed - the layout was clipping content with no way to reach it
+
+Measured on production at 1600x900: `.app-shell` was 900px tall with `overflow: hidden` while its content
+was **1033px**, and both grid columns were **960px tall inside a 773px row**. TEN controls were clipped
+and unreachable: speed, rock size, Fracture on, Reset view, apply, Target P80 and the Mass balance tab.
+
+The ADR-0071 floor had been applied to the SHELL but never to the inner containers, which is worse than
+not applying it: `.tz-layout` stayed `display: grid` with `align-items: start`, so both columns sized to
+their CONTENT and the shell's `overflow: hidden` then hid whatever did not fit. "No scrollbar" was being
+read as "everything fits". It meant the page was hiding what did not.
+
+- Grid rows are `minmax(0, 1fr)` with `align-items: stretch`, so the columns are sized by the ROW.
+- `Chamber3D` no longer sizes itself with `clamp(460px, 74vh, 900px)`. A viewport-relative height ignores
+  the panel it is placed in: 74vh is 666px on a 900px screen, forced into a 555px tab panel. It now fills
+  its parent when asked to.
+- Every container fits exactly: shell 900/900, rail 741/741, tab panel 555/555. **0 unreachable elements.**
+
+### Changed - tabs regularized per ADR-0071, and the rail is sectioned
+
+- Eleven flat tabs wrapped onto a second row. They are now FIVE groups on ONE 45px row (Chamber, Product,
+  Performance, Balance, Learned), with the sub-views revealed on hover from the same tab.
+- The rail held 1036px of stacked cards in 741px, so a NAVIGATION panel had to be scrolled before anything
+  could be touched. Split into Setup and Operate; each fits.
+- Machine is a dropdown, not five wrapping chips, matching the Case control above it.
+- The camera fits on whichever FOV half-angle binds. Using the vertical FOV alone on a 1206x480 panel left
+  the chamber a small object in a field of white.
+
+### Added - ADR-0070 focus mode
+
+A full-viewport view of the SELECTED crusher: stage at 80% of the viewport, the operating state named in
+one plain sentence, KPIs as a HUD rather than cards, and a visible return. Reachable from a control in the
+App rail, carrying the selected machine, so it is not an orphan route.
+
+### Verification
+
+`_tz-gate.mjs` 10/10 and `_reach.mjs`, both driving the browser: one tab row, hover menus, every rail and
+tab control hit-tested with `elementFromPoint`, focus stage share, and zero clipped-and-unreachable
+elements. The first focus attempt shipped a stage where the canvas collapsed to zero height and the chrome
+piled over the HUD, because the component root was not a flex column; that is what looking at the render
+caught and a passing route test would not have.
+
 ## [0.08.001] · 2026-07-30
 
 ### Fixed
