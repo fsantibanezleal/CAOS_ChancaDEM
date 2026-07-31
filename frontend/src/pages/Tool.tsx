@@ -1,5 +1,6 @@
-import { useEffect, useState, type ReactNode } from 'react';
-import { Tabs, useShellLang } from '@fasl-work/caos-app-shell';
+import { useRef, useEffect, useState, type ReactNode } from 'react';
+import { Link } from 'react-router-dom';
+import { useShellLang } from '@fasl-work/caos-app-shell';
 import { useWorkbench } from '../state/store';
 import { CASES } from '../data/cases';
 import { HP500_SURVEYS, HP500_SOURCE } from '../data/real/hp500-minasrio';
@@ -24,6 +25,19 @@ import { DecisionPanel } from '../viz/DecisionPanel';
 // Synthetic: a case preset + free sliders drive the live pure-TS engine + the two ONNX models. Real sample: the
 // sliders disable, a survey picker (#1..#10) appears, and the same engine runs on a real HP500 industrial survey
 // (measured CSS + f80), calibrated to the Rocha et al. 2024 fit. Every Real tab is badged by provenance.
+
+/** ADR-0071 rules 4+5. Eleven flat sibling tabs is a list, not an architecture: the user reads every
+ *  label to find one view, and measured on the deployed app they wrapped onto a SECOND row, permanently
+ *  taking vertical space from the instrument. Grouped by the question being asked; the sub-views are
+ *  revealed from the same tab. */
+const TAB_GROUPS: { id: string; en: string; es: string; members: string[] }[] = [
+  { id: 'chamber',  en: 'Chamber',     es: 'Camara',      members: ['chamber3d', 'slice', 'nip'] },
+  { id: 'product',  en: 'Product',     es: 'Producto',    members: ['psd', 'breakage'] },
+  { id: 'perf',     en: 'Performance', es: 'Desempeno',   members: ['kpi', 'capacity', 'map'] },
+  { id: 'balance',  en: 'Balance',     es: 'Balance',     members: ['mass'] },
+  { id: 'learned',  en: 'Learned',     es: 'Aprendido',   members: ['whatif', 'anomaly'] },
+];
+
 const MACHINES: { id: Machine; en: string; es: string }[] = [
   { id: 'cone-sec', en: 'Cone · sec', es: 'Cono · sec' },
   { id: 'cone-tert', en: 'Cone · tert', es: 'Cono · terc' },
@@ -73,7 +87,7 @@ export default function Tool() {
     : node;
 
   const tabs = [
-    { id: 'chamber3d', label: es ? 'Cámara 3D' : '3D chamber', content: wrap(['struct'], <Chamber3D op={op} p80={r.p80} f80={r.f80} />) },
+    { id: 'chamber3d', label: es ? 'Cámara 3D' : '3D chamber', content: wrap(['struct'], <Chamber3D op={op} p80={r.p80} f80={r.f80} height={0} />) },
     { id: 'slice', label: es ? 'Corte 2D + nip' : '2D slice + nip', content: wrap(['struct'], <ChamberSlice op={op} />) },
     { id: 'psd', label: es ? 'Gradación' : 'Gradation', content: wrap(['real', 'calib'], <PsdChart feed={r.feed} product={r.product} f80={r.f80} p80={r.p80} height={300} />) },
     { id: 'kpi', label: es ? 'Indicadores' : 'Gauges', content: wrap(['real'], <GaugesPanel r={r} es={es} survey={survey} />) },
@@ -86,10 +100,41 @@ export default function Tool() {
     { id: 'mass', label: es ? 'Balance de masa' : 'Mass balance', content: wrap(['real'], <MassBalance op={op} result={r} />) },
   ];
 
+  const [activeTab, setActiveTab] = useState('chamber3d');
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
+  // The rail shows ONE section at a time. Measured at 1600x900 the rail is 741px tall while its stacked
+  // cards were 1036px, so 295px of controls sat below the fold and a user had to scroll a NAVIGATION panel
+  // before touching anything. A container that cannot show its own controls is not sized, it is truncated.
+  const [railSection, setRailSection] = useState<'setup' | 'operate'>('setup');
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // The tab set changes with the SOURCE (real vs synthetic), so a selected view can disappear.
+  useEffect(() => {
+    if (tabs.length && !tabs.some((x) => x.id === activeTab)) setActiveTab(tabs[0].id);
+  }, [tabs.length, activeTab]);
+
   return (
     <section className="page-body tz-layout">
       {/* ---- control sidebar ---- */}
       <aside className="tz-controls">
+        {/* ADR-0070 entry: without a visible control the focus route is an orphan that passes route
+            tests and no user ever reaches. It carries the SELECTED machine. */}
+        <Link className="tz-focus-enter" to={`/focus/${op.machine}`}>
+          <span className="tz-focus-enter-t">{es ? 'Modo enfoque' : 'Focus mode'}</span>
+          <span className="tz-focus-enter-d">
+            {es ? 'Abrir esta camara a pantalla completa' : 'Open this chamber full screen'}
+          </span>
+        </Link>
+
+        <div className="tz-railseg" role="tablist" aria-label={es ? 'seccion' : 'section'}>
+          <button role="tab" aria-selected={railSection === 'setup'}
+                  className={railSection === 'setup' ? 'on' : ''}
+                  onClick={() => setRailSection('setup')}>{es ? 'Montaje' : 'Setup'}</button>
+          <button role="tab" aria-selected={railSection === 'operate'}
+                  className={railSection === 'operate' ? 'on' : ''}
+                  onClick={() => setRailSection('operate')}>{es ? 'Operacion' : 'Operate'}</button>
+        </div>
+        <div className={`tz-railsec ${railSection === 'setup' ? '' : 'hide'}`}>
         {/* First-level source selector: synthetic simulator vs a real industrial survey */}
         <div className="tz-ctl">
           <span>{es ? 'Fuente' : 'Source'}</span>
@@ -122,11 +167,17 @@ export default function Tool() {
 
         <div className={`tz-ctl ${real ? 'is-disabled' : ''}`}>
           <span>{es ? 'Máquina' : 'Machine'}</span>
-          <div className="tz-chips">{MACHINES.map((m) => (
-            <button key={m.id} className={`chip ${op.machine === m.id ? 'on' : ''}`} disabled={real} onClick={() => patch({ machine: m.id })}>{es ? m.es : m.en}</button>
-          ))}</div>
+          {/* A dropdown, not a list of chips. A five-item list wrapped onto two rows and cost the rail
+              height for no gain; the machine is a single exclusive choice, which is what a select is. */}
+          <select className="tz-select" value={op.machine} disabled={real}
+                  aria-label={es ? 'maquina' : 'machine'}
+                  onChange={(e) => patch({ machine: e.target.value as typeof op.machine })}>
+            {MACHINES.map((m) => <option key={m.id} value={m.id}>{es ? m.es : m.en}</option>)}
+          </select>
         </div>
 
+        </div>
+        <div className={`tz-railsec ${railSection === 'operate' ? '' : 'hide'}`}>
         <Slider label="CSS" unit=" mm" value={op.cssMm} min={4} max={260} step={1} disabled={real} onChange={(v) => patch({ cssMm: v })} />
         <Slider label={es ? 'Carrera' : 'Throw'} unit=" mm" value={op.throwMm} min={8} max={50} step={1} disabled={real} onChange={(v) => patch({ throwMm: v })} />
         <Slider label={es ? 'Velocidad' : 'Speed'} unit=" rpm" value={op.speedRpm} min={100} max={600} step={5} disabled={real} onChange={(v) => patch({ speedRpm: v })} />
@@ -138,6 +189,7 @@ export default function Tool() {
           zones={[{ from: 1, to: 12, color: 'color-mix(in oklab, #3fb950 45%, transparent)' }, { from: 12, to: Math.max(40, r.f80), color: 'color-mix(in oklab, #d29922 45%, transparent)' }]} />
 
         {!real && <DecisionPanel op={op} result={r} onApplyCss={(css) => patch({ cssMm: css })} />}
+        </div>
       </aside>
 
       {/* ---- reactive main ---- */}
@@ -165,7 +217,45 @@ export default function Tool() {
             <ul>{(r.envelopeCodes as EnvelopeCode[]).map((c) => <li key={c}>{envelopeText(c, es)}</li>)}</ul>
           </div>
         )}
-        <Tabs tabs={tabs} ariaLabel={es ? 'vistas' : 'views'} />
+        <div className="tz-tabs">
+          <div className="tz-tabrow" role="tablist" aria-label={es ? 'vistas' : 'views'}>
+            {TAB_GROUPS.filter((g) => tabs.some((x) => g.members.includes(x.id))).map((g) => {
+              const mine = tabs.filter((x) => g.members.includes(x.id));
+              const activeHere = mine.some((x) => x.id === activeTab);
+              const shown = activeHere ? mine.find((x) => x.id === activeTab)! : mine[0];
+              const multi = mine.length > 1;
+              return (
+                <div key={g.id} className="tz-tabwrap"
+                     onPointerEnter={() => { if (multi) { if (closeTimer.current) clearTimeout(closeTimer.current); setOpenMenu(g.id); } }}
+                     onPointerLeave={() => {
+                       if (closeTimer.current) clearTimeout(closeTimer.current);
+                       closeTimer.current = setTimeout(() => setOpenMenu((m) => (m === g.id ? null : m)), 240);
+                     }}>
+                  <button role="tab" aria-selected={activeHere}
+                          className={`tz-tab ${activeHere ? 'on' : ''}`}
+                          onClick={() => {
+                            if (!multi) { setActiveTab(mine[0].id); setOpenMenu(null); return; }
+                            setOpenMenu(openMenu === g.id ? null : g.id);
+                            if (!activeHere) setActiveTab(shown.id);
+                          }}>
+                    {activeHere ? shown.label : (es ? g.es : g.en)}{multi ? <span className="tz-caret">v</span> : null}
+                  </button>
+                  {multi && openMenu === g.id && (
+                    <div className="tz-tabmenu" role="menu">
+                      {mine.map((x) => (
+                        <button key={x.id} role="menuitem" className={x.id === activeTab ? 'on' : ''}
+                                onClick={() => { setActiveTab(x.id); setOpenMenu(null); }}>{x.label}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <div className="tz-tabpanel">
+            {(tabs.find((x) => x.id === activeTab) ?? tabs[0])?.content}
+          </div>
+        </div>
         <p className="tz-note">{real
           ? (es
             ? 'Muestra real: encuesta industrial HP500 (Rocha et al., Minerals 2024, 14, 919, CC BY, Minas Rio). CSS, f80, t/h y kW son medidos; el producto, t10 y las curvas provienen del ajuste Andersen-Whiten calibrado a estas mismas encuestas (Tabla 5). Salvedades: las curvas PSD completas son solo figuras en el paper (el alimento se reconstruye desde f80) y la potencia es la estimación del paper por corriente eléctrica.'

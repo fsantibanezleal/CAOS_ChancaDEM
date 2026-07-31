@@ -19,6 +19,7 @@ import Introduction from './pages/Introduction';
 import Methodology from './pages/Methodology';
 import Implementation from './pages/Implementation';
 import Experiments from './pages/Experiments';
+import Focus from './pages/Focus';
 import Benchmark from './pages/Benchmark';
 
 applyTheme(readTheme());
@@ -42,6 +43,11 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <CitationsProvider items={CITATIONS}>
+        <Routes>
+          {/* ADR-0070: the focus view renders OUTSIDE the shell. The header and footer are exactly the
+              chrome a focus view exists to escape, so it cannot be a child of AppShell. */}
+          <Route path="/focus/:machineId" element={<Focus />} />
+          <Route path="*" element={
         <AppShell config={config}>
           <Routes>
             <Route path="/" element={<Tool />} />
@@ -53,6 +59,8 @@ createRoot(document.getElementById('root')!).render(
             <Route path="*" element={<Tool />} />
           </Routes>
         </AppShell>
+          } />
+        </Routes>
       </CitationsProvider>
     </BrowserRouter>
   </StrictMode>,
