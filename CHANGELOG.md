@@ -4,6 +4,16 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [0.09.001] · 2026-07-31
+
+### Fixed
+- Focus deep links answered **HTTP 404**. GitHub Pages serves `404.html` for an unknown path, so
+  `/focus/gyratory` LOADED through the SPA fallback while reporting 404. ADR-0070 requires the focus route
+  to be shareable, and a shared link that reports 404 is a real gap: link checkers, chat unfurls and
+  anything reading the status code see a broken URL. `prerender-focus.mjs` now materializes a real
+  `index.html` per machine at build time, parsing the ids from `physics/types.ts` so a new crusher gets a
+  shareable URL for free.
+
 ## [0.09.000] · 2026-07-31
 
 ### Fixed - the layout was clipping content with no way to reach it
