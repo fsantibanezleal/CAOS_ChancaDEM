@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from chancalab.hp500 import loo
+from pipeline.hp500 import loo
 
 ROOT = Path(__file__).resolve().parents[1]
 BACKBONE = ROOT / "data" / "derived" / "hp500" / "backbone.json"

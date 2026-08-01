@@ -13,5 +13,5 @@ pass the tests **without torch or Node** (the surrogate/AE ONNX + the engine's `
 
 ## Usage
 
-`python -m chancalab.pipeline all` (numpy-only) rebuilds every per-case trace + manifest from `case-results.json` +
+`python data-pipeline/run.py all` (numpy-only) rebuilds every per-case trace + manifest from `case-results.json` +
 `surrogate_metrics.json`.
