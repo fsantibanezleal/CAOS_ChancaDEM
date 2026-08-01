@@ -1,13 +1,13 @@
 // Bridge the SAME live TypeScript engine the browser runs onto the 10 real HP500 / Minas Rio surveys and write
 // data/derived/hp500/backbone.json, the committed per-survey backbone outputs the Python CrusherCal LOO validator
-// (chancalab.hp500.loo) reads. This keeps the TypeScript engine the SINGLE source of physics truth: the backbone
+// (pipeline.hp500.loo) reads. This keeps the TypeScript engine the SINGLE source of physics truth: the backbone
 // predictions the held-out validation grades are exactly what the app computes live, never a Python re-derivation.
 //
 // For every survey we emit the calibrated backbone {p80, tph, bond_pd, calibrated_kw} AND the bare-Bond draw
 // (the raw Bond net comminution power, no plant recalibration) so the benchmark can show, honestly, how far each
 // power estimate sits from the MEASURED kW. No metric is asserted here; the numbers speak for themselves downstream.
 //
-//   node --import tsx data-pipeline/chancalab/sweep/bake_hp500.mjs
+//   node --import tsx data-pipeline/pipeline/sweep/bake_hp500.mjs
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
