@@ -1,6 +1,6 @@
 # Cases, taxonomy & coverage matrix
 
-`data-pipeline/chancalab/cases/circuit_cases.py` defines 17 cases across 4 categories spanning the whole comminution
+`data-pipeline/pipeline/cases/circuit_cases.py` defines 17 cases across 4 categories spanning the whole comminution
 circuit. The App shows **one selected case**; Experiments/Benchmark show **cross-case summaries by category**. Every
 result is a calibrated-**physics-model** output (the Whiten engine), not a real plant.
 

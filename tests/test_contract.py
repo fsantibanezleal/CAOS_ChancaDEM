@@ -1,6 +1,6 @@
 """CONTRACT 1 (ingestion) tests: good operating points validate; physically-invalid rows are rejected with a
 reason; out-of-envelope / pass-through rows are flagged."""
-from chancalab.io.contract import validate_psd, validate_records
+from pipeline.io.contract import validate_psd, validate_records
 
 
 def test_good_record_accepted():
@@ -46,7 +46,7 @@ def test_psd_guard():
 def test_committed_example_passes_contract():
     from pathlib import Path
 
-    from chancalab.io.formats import read_csv_rows
+    from pipeline.io.formats import read_csv_rows
 
     csv = Path(__file__).resolve().parents[1] / "data" / "examples" / "operating.csv"
     rep = validate_records(read_csv_rows(csv))

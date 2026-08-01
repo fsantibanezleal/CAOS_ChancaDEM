@@ -8,7 +8,7 @@ A row needs: `machine ∈ {cone-sec, cone-tert, cone-short-head, gyratory, jaw}`
 `feedX63Mm`, `feedM`, `oreAxb` (and optional `oreWi`). See `data/examples/operating.csv` for passing rows.
 
 ```python
-from chancalab.io.contract import validate_records, validate_psd
+from pipeline.io.contract import validate_records, validate_psd
 rep = validate_records([{ "case_id": "mine", "machine": "cone-sec", "cssMm": 28, "throwMm": 30,
                           "speedRpm": 360, "feedX63Mm": 95, "feedM": 1.2, "oreAxb": 50 }])
 print(rep.summary())   # accepted / rejected (with reason) / flagged

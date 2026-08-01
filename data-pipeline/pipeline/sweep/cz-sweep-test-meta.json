@@ -1,0 +1,35 @@
+{
+  "nTotal": 2400,
+  "nValid": 2196,
+  "nInvalid": 204,
+  "nPerMachine": 480,
+  "machines": [
+    "cone-sec",
+    "cone-tert",
+    "jaw",
+    "cone-short-head",
+    "gyratory"
+  ],
+  "seed": 67890,
+  "inputs": [
+    "machine(one-hot×5)",
+    "cssMm",
+    "throwMm",
+    "speedRpm",
+    "feedX63Mm",
+    "feedM",
+    "oreAxb"
+  ],
+  "outputs": [
+    "p80",
+    "p50",
+    "p20",
+    "pass1",
+    "pass4",
+    "pass8",
+    "pass16",
+    "pass32",
+    "tph",
+    "kW"
+  ]
+}
