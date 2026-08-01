@@ -1,4 +1,4 @@
-"""chancalab, the offline+live engine for ChancaDEM (instantiated from the CAOS product-repo archetype, ADR-0057).
+"""pipeline, the offline+live engine for ChancaDEM (instantiated from the CAOS product-repo archetype, ADR-0057).
 
 The CORE is real and SOTA-pinned: a pure-TypeScript Whiten population-balance + Evertsson capacity + Bond power
 engine runs live in the browser; a surrogate MLP (emulating that engine) and a denoising autoencoder (operating

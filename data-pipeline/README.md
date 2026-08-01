@@ -1,10 +1,10 @@
-# data-pipeline/, the offline engine (`chancalab`)
+# data-pipeline/, the offline engine (`pipeline`)
 
 The staged, seeded, contract-bounded offline pipeline for ChancaDEM (ADR-0057). Install editable from the repo root
-(`pip install -e .`); run with `python -m chancalab.pipeline`.
+(`pip install -e .`); run with `python data-pipeline/run.py`.
 
 ```
-chancalab/
+pipeline/
 ├─ __init__.py            # __version__ = "0.03.000"
 ├─ pipeline.py            # orchestrator + CLI (light replay by default; --retrain runs the heavy two-language lane)
 ├─ registry.py            # cases grouped by CATEGORY (primary / secondary / tertiary / controls)
@@ -19,7 +19,7 @@ chancalab/
 
 **Two lanes:**
 
-* **Default (light, numpy-only)**, `python -m chancalab.pipeline all` rebuilds every per-case replay trace +
+* **Default (light, numpy-only)**, `python data-pipeline/run.py all` rebuilds every per-case replay trace +
   manifest from the committed `case-results.json` + `surrogate_metrics.json`. No torch, no Node, a clone replays.
 * **Heavy (`--retrain`)**, `pipeline all --retrain` runs the **Node sweep** of the TS Whiten engine
   (`sweep/gen_sweep.mjs`, no Python re-port) → torch trains the surrogate + AE → exports ONNX + metrics, then

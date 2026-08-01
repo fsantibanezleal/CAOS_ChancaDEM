@@ -37,7 +37,7 @@ Instantiated from the CAOS product-repo archetype (ADR-0057): a heavy **offline 
 by two data contracts. See [`STRUCTURE.md`](STRUCTURE.md) and the [`docs/`](docs/README.md) wiki.
 
 ```
-OFFLINE  data-pipeline/chancalab/ (Node sweep + torch)   LIVE  frontend/src/ (browser, TypeScript)
+OFFLINE  data-pipeline/pipeline/ (Node sweep + torch)   LIVE  frontend/src/ (browser, TypeScript)
   sweep/gen_sweep.mjs  LHS over the TS engine               physics/  Whiten + Evertsson + Bond engine (<1 ms)
   stages/train.py      surrogate MLP + denoising AE         lib/ort.ts onnxruntime-web (surrogate + AE)
   stages/evaluate.py   held-out R²/MAPE + P80-monotone gate viz/      three.js + uPlot, zustand store
@@ -56,7 +56,7 @@ without torch or Node. Heavy work (the Node sweep of the TS engine + torch train
 
 ```bash
 ./scripts/setup.sh            # venvs + light deps + editable pkg (numpy+ruff+pytest)   [.ps1 on Windows]
-./scripts/precompute.sh       # python -m chancalab.pipeline all  (rebuild the replay layer, numpy-only)
+./scripts/precompute.sh       # python data-pipeline/run.py all  (rebuild the replay layer, numpy-only)
 .venv-pipeline/bin/python -m pytest    # 9 passed     ·     ./scripts/smoke.sh   # CONTRACT 2 OK
 ./scripts/dev.sh              # cd frontend && npm install && npm run dev (vite + live TS engine + ONNX)
 cd frontend && npm run build  # tsc --noEmit && vite build (+ copy-data overlay + SPA 404.html)
