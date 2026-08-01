@@ -8,7 +8,7 @@ are committed under `data/derived/`.
 ./scripts/setup.sh            #  (PowerShell:  ./scripts/setup.ps1)
 
 # 2) rebuild the per-case replay traces + manifests from the committed artifacts (numpy-only)
-./scripts/precompute.sh       #  -> python -m chancalab.pipeline all
+./scripts/precompute.sh       #  -> python data-pipeline/run.py all
 
 # 3) tests + the Contract-2 disk check
 .venv-pipeline/bin/python -m pytest        # 9 passed

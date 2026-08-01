@@ -1,6 +1,6 @@
 # 05, The staged precompute pipeline (two-language)
 
-`data-pipeline/chancalab/stages/`, six named, seeded, typed stages. The offline lane is **two-language**: a Node
+`data-pipeline/pipeline/stages/`, six named, seeded, typed stages. The offline lane is **two-language**: a Node
 sweep generates the labels by running the same TypeScript engine (no Python re-port, the lesson from the sibling
 products is that a re-port diverges from the live engine), then Python fits the ONNX models.
 
