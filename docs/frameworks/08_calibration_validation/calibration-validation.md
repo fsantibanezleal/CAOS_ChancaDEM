@@ -2,7 +2,7 @@
 
 **What this card is:** the protocol behind the "physics is real" claim. The engine is calibrated to open
 industrial data, and that calibration is validated out of sample (leave-one-survey-out) with negative controls
-and a calibrated uncertainty band. Every number is computed offline (`data-pipeline/chancalab/hp500/loo.py`,
+and a calibrated uncertainty band. Every number is computed offline (`data-pipeline/pipeline/hp500/loo.py`,
 numpy-only, seeded) from the committed backbone bridge and surfaced in the Benchmark page. None is asserted.
 
 ## The calibration (Rocha et al. 2024, Table 5)
@@ -74,9 +74,9 @@ is shown on the App's real-lane t/h and kW gauges.
 ## Reproduce
 
 ```
-node --import tsx data-pipeline/chancalab/sweep/bake_hp500.mjs   # bridge the TS engine -> backbone.json
-python -m chancalab.hp500.loo                                    # -> data/derived/hp500/loo.json
-python -m chancalab.pipeline all                                 # rebuilds loo.json from the committed backbone
+node --import tsx data-pipeline/pipeline/sweep/bake_hp500.mjs   # bridge the TS engine -> backbone.json
+python -m pipeline.hp500.loo                                    # -> data/derived/hp500/loo.json
+python data-pipeline/run.py all                                 # rebuilds loo.json from the committed backbone
 pytest tests/test_hp500_loo.py                                   # invariants + negative-control behaviour
 ```
 
