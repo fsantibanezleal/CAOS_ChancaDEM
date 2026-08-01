@@ -4,6 +4,25 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [0.09.002] · 2026-07-31
+
+### Fixed - the docs routes were clipping content with no way to reach it
+
+The ADR-0071 UI floor put `height: 100dvh; overflow: hidden` on the WHOLE shell. That is correct for the
+workbench route, where the instrument should own the viewport, and wrong for the prose routes, which are
+legitimately taller than the screen: `overflow: hidden` deleted the overflow instead of scrolling it, and no
+inner scroller existed to recover it. Measured on production at 1600x900: /experiments hid 255px and /benchmark hid 3700px. No user gesture reached
+that content - mouse wheel and the End key both left `scrollY` at 0.
+
+ADR-0071 rule 1 says scrolling belongs INSIDE the container that owns long content. The floor had implemented
+the "not on the document" half and skipped the "inside the container" half.
+
+`main.page:has(> .page-body:not(.<app-layout>)) { overflow-y: auto; min-height: 0 }` gives the prose routes
+their own scroll while leaving the workbench route locked. Fixed at source in
+`tools/ui-floor/apply_ui_floor.py` (now v2) so it cannot be reapplied wrong, and the reachability gate now
+sweeps EVERY route: its previous single-route check passed because the two document-scroll equalities it
+asserted are TRUE BECAUSE the shell clips. A page that hides what did not fit satisfies them.
+
 ## [0.09.001] · 2026-07-31
 
 ### Fixed
