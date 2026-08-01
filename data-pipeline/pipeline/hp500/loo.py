@@ -21,7 +21,7 @@ HONESTY. n = 10 is tiny. The pre-registered expectation is that M1 gives margina
 that is an acceptable, reported outcome. The value is the VALIDATION + UQ, not a lower error than the paper's
 in-sample fit. Every number below is computed from the real surveys; none is asserted or hand-set.
 
-Run:  python -m chancalab.hp500.loo        # rebuild data/derived/hp500/loo.json from the committed backbone.json
+Run:  python -m pipeline.hp500.loo        # rebuild data/derived/hp500/loo.json from the committed backbone.json
 """
 from __future__ import annotations
 
@@ -259,7 +259,7 @@ def run(backbone: dict, seed: int = SEED) -> dict:
 def main() -> int:
     if not BACKBONE.exists():
         raise SystemExit(f"missing {BACKBONE}. Bake it first: "
-                         f"node --import tsx data-pipeline/chancalab/sweep/bake_hp500.mjs")
+                         f"node --import tsx data-pipeline/pipeline/sweep/bake_hp500.mjs")
     backbone = json.loads(BACKBONE.read_text(encoding="utf-8"))
     res = run(backbone)
     OUT.write_text(json.dumps(res, indent=2) + "\n", encoding="utf-8")

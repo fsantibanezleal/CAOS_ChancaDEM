@@ -4,9 +4,9 @@ writes the manifest + a flat index (CONTRACT 2). The committed ONNX + metrics + 
 real outputs, so the DEFAULT path is light (numpy/stdlib, no torch/node) and deterministic. `--retrain` first
 regenerates those artifacts (Node sweep of the TS engine -> torch train) and re-bakes case-results.
 
-    python -m chancalab.pipeline                # rebuild all replay traces + manifests from committed artifacts
-    python -m chancalab.pipeline S01            # one case
-    python -m chancalab.pipeline all --retrain  # node sweep + torch train, then rebuild
+    python data-pipeline/run.py                # rebuild all replay traces + manifests from committed artifacts
+    python data-pipeline/run.py S01            # one case
+    python data-pipeline/run.py all --retrain  # node sweep + torch train, then rebuild
 """
 from __future__ import annotations
 
@@ -113,7 +113,7 @@ def run_all(seed: int = 42) -> list[dict]:
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(prog="chancalab.pipeline")
+    ap = argparse.ArgumentParser(prog="pipeline.pipeline")
     ap.add_argument("case", nargs="?", default="all", help="a case id, or 'all'")
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--retrain", action="store_true",

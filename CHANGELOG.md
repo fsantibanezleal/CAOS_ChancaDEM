@@ -80,7 +80,7 @@ caught and a passing route test would not have.
 
 ### Fixed
 - **Version coherence.** `conventions/versioning.md` requires `VERSION`, the manifests, the CHANGELOG and
-  the git tag to move together on every release; they had drifted apart here (VERSION 0.06.000, frontend 0.8.0 and chancalab 0.6.0 all disagreeing, with the latest tag at v0.08.000). A line-wide sweep on
+  the git tag to move together on every release; they had drifted apart here (VERSION 0.06.000, frontend 0.8.0 and pipeline 0.6.0 all disagreeing, with the latest tag at v0.08.000). A line-wide sweep on
   2026-07-30 found 79 tags across 9 CAOS repos pointing at commits that declare a different version, the
   result of releases being tagged and deployed without a bump. The user-visible cost is that the app footer
   reads its version from a manifest, so a deployed app reported a version older than the release it was
@@ -164,15 +164,15 @@ caught and a passing route test would not have.
   The novel-beyond-SOTA contribution is methodological, held-out (LOO) parity + calibrated uncertainty on OPEN
   industrial data, running live in the browser. It is NOT a claim of lower error than the DEM / phenomenological
   SOTA, and every number is computed from the 10 real Rocha et al. 2024 surveys (none asserted).
-  - New offline validator `data-pipeline/chancalab/hp500/loo.py` (numpy-only, deterministic, seeded) grades three
+  - New offline validator `data-pipeline/pipeline/hp500/loo.py` (numpy-only, deterministic, seeded) grades three
     models on identical LOO folds for the measured targets t/h and kW (P80 is a model output, reported as
     self-consistency): M0 calibrated backbone (global scalars refit per fold), M1 backbone + bounded ridge
     residual (the CrusherCal proposal), M2 free-form OLS (the overfit strawman). Strict AND leaky folds expose the
     optimism gap; negative controls (label-shuffle, constant-mean) and an 80% predictive-interval coverage check
     are included. Traces committed to `data/derived/hp500/loo.json`.
-  - New Node bridge `data-pipeline/chancalab/sweep/bake_hp500.mjs` runs the SAME live TypeScript engine on the 10
+  - New Node bridge `data-pipeline/pipeline/sweep/bake_hp500.mjs` runs the SAME live TypeScript engine on the 10
     surveys and writes `data/derived/hp500/backbone.json` (the physics stays the single source of truth). Wired
-    into `chancalab.pipeline` (light lane rebuilds the LOO from the committed backbone; `--retrain` re-bridges).
+    into `pipeline.pipeline` (light lane rebuilds the LOO from the committed backbone; `--retrain` re-bridges).
   - Tests `tests/test_hp500_loo.py`: determinism, the label-shuffle control not beating the backbone, the t/h
     backbone beating the constant-mean baseline, and the leaky-vs-strict overfitting gap being exposed.
 - **Benchmark: real power-parity + LOO parity panels (live).** New `PowerParity` and `LooParity` views read the
@@ -275,12 +275,12 @@ Refactor onto the CAOS product-repo archetype (ADR-0057), the science core is un
 contract-bounded, staged offline pipeline + a frontend SPA.
 
 ### Changed
-- **`tools/` → `data-pipeline/chancalab/`**, the sweep (`sweep/gen_sweep.mjs`, the SAME TS engine, no Python
+- **`tools/` → `data-pipeline/pipeline/`**, the sweep (`sweep/gen_sweep.mjs`, the SAME TS engine, no Python
   re-port), the surrogate + denoising-AE training, and the offline 2-D DEM tracer split into the six named stages +
   `model/`. Bodies unchanged.
 - **`src/` → `frontend/src/`**; `public/*.onnx` + scalers + metrics → **`data/derived/`** (the canonical artifact
   home). `frontend/copy-data.mjs` overlays them back into `public/` at build (the SPA's fetch paths are unchanged).
-- The default pipeline is **numpy-only**: `python -m chancalab.pipeline all` rebuilds every per-case replay trace +
+- The default pipeline is **numpy-only**: `python data-pipeline/run.py all` rebuilds every per-case replay trace +
   manifest from the committed `case-results.json` (the 17 cases baked by the TS engine) + `surrogate_metrics.json`.
   `--retrain` regenerates everything (Node sweep → torch train → ONNX → re-bake).
 

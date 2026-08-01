@@ -4,7 +4,7 @@ The full schemas live in [`../../data/README.md`](../../data/README.md); this is
 
 ## Contract 1, ingestion (operating point + feed PSD → pipeline)
 
-`data-pipeline/chancalab/io/contract.py`. The *bring-your-own-operating-point* gate. `validate_records` accepts an
+`data-pipeline/pipeline/io/contract.py`. The *bring-your-own-operating-point* gate. `validate_records` accepts an
 operating row iff it satisfies the schema (`machine ∈ {cone-sec, cone-tert, cone-short-head, gyratory, jaw}`,
 positive numeric css/throw/speed/feed/m/axb), **rejects** with a reason otherwise (bad machine, non-numeric,
 `cssMm > 2.5× feedX63Mm` = CSS wider than the feed top), and **flags** out-of-machine-envelope or pass-through rows
@@ -13,7 +13,7 @@ passing). A committed `data/examples/operating.csv` passes Contract 1 (a clone-t
 
 ## Contract 2, artifact (pipeline → web)
 
-`data-pipeline/chancalab/core/{trace.py, manifest.py}`. Each case writes a compact `data/derived/<case>/trace.json`
+`data-pipeline/pipeline/core/{trace.py, manifest.py}`. Each case writes a compact `data/derived/<case>/trace.json`
 (`chancadem.trace/v1`) + a manifest `data/derived/manifests/<case>.json` (`chancadem.manifest/v2`) recording the
 category/stage, seed, engine+version, the shared ONNX, the trace byte size, the lane/gate verdict, the Contract-1
 flags, and the case metrics; a flat `index.json` inventories all cases.
