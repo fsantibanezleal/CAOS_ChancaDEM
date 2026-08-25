@@ -4,6 +4,17 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [0.09.003] · 2026-08-25
+
+### Fixed
+
+- Give the content routes real files, so a shared link answers 200
+- Cap the App-route notes and the caption blocks the paragraph rule could not reach
+- Cap the reading measure on the content routes
+- fix: remove the last lab-name residue from scripts and docs
+- fix(guards): untrack the sweep .jsonl outputs
+- refactor: a product declares no package of its own
+
 ## [0.09.002] · 2026-07-31
 
 ### Fixed - the docs routes were clipping content with no way to reach it
