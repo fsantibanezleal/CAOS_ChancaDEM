@@ -2,8 +2,9 @@
 """Regenerate the figures for the ChancaDEM comminution-studio report from the COMMITTED artifacts. Two figures:
 
   fig-physics.pdf   - (a) product size distributions (cumulative % passing vs sieve size) for a gyratory, a jaw
-                      and a cone case; (b) the specific comminution energy vs the P80 across the seventeen cases,
-                      the classical finer-product-costs-more-energy trade.
+                      and a cone case; (b) the Bond specific energy W vs the P80 across the seventeen cases,
+                      coloured by machine type. W is the engine's Bond power draw divided by the throughput
+                      (capacity.ts bondPower returns W * Q; no case uses the calibrated power path).
   fig-surrogate.pdf - the learned surrogate's per-output accuracy against the population-balance engine
                       (coefficient of determination and mean absolute percentage error), on a leakage-safe
                       held-out Latin-hypercube draw.
@@ -24,11 +25,25 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 DATA = HERE.parent / "data"
+ROOT = HERE.parents[2]
+DER = ROOT / "data" / "derived"
 
 INK = "#1a1a2e"
 GRID = "#d8d8e0"
 MCOL = {"G": "#1b6ca8", "J": "#e07a3f", "S": "#3fa34d"}
 MNAME = {"G": "gyratory", "J": "jaw", "S": "cone"}
+# machine type (the `operating.machine` of each case trace) -> colour and legend label, for panel (b)
+MACH = {
+    "gyratory": ("#1b6ca8", "gyratory"),
+    "jaw": ("#e07a3f", "jaw"),
+    "cone-sec": ("#3fa34d", "cone (secondary)"),
+    "cone-tert": ("#7b4fa0", "cone (tertiary)"),
+    "cone-short-head": ("#b23a48", "cone (short-head)"),
+}
+
+
+def _operating(case_id):
+    return json.loads((DER / case_id / "trace.json").read_text(encoding="utf-8"))["operating"]
 
 plt.rcParams.update({
     "font.family": "serif", "font.size": 9.4, "axes.edgecolor": INK,
@@ -72,15 +87,17 @@ def fig_physics():
     for s in ("top", "right"):
         a1.spines[s].set_visible(False)
 
-    # (b) specific energy vs P80 across the cases
+    # (b) Bond specific energy vs P80 across the cases. The engine's power is the Bond draw P = W * Q
+    # (capacity.ts bondPower) unless the calibrated path is on, so W = P / Q for every case plotted here.
     for c in cases:
-        m = c["id"][0]
-        a2.scatter(c["p80"], c.get("ecs", np.nan), s=34, color=MCOL.get(m, "#999"),
-                   edgecolor=INK, linewidth=0.4, zorder=3)
-    for m, col in MCOL.items():
-        a2.scatter([], [], s=34, color=col, edgecolor=INK, label=MNAME[m])
-    a2.set_xlabel("product $P_{80}$ (mm)"); a2.set_ylabel("specific energy (kWh/t)")
-    a2.set_title("(b) finer product costs more energy", fontsize=8.8)
+        op = _operating(c["id"])
+        assert not op.get("calibrated"), f"{c['id']}: calibrated power path, P / Q is not the Bond W"
+        w = c["kW"] / c["tph"] if c["tph"] else np.nan
+        a2.scatter(c["p80"], w, s=34, color=MACH[op["machine"]][0], edgecolor=INK, linewidth=0.4, zorder=3)
+    for col, lab in MACH.values():
+        a2.scatter([], [], s=34, color=col, edgecolor=INK, label=lab)
+    a2.set_xlabel("product $P_{80}$ (mm)"); a2.set_ylabel("Bond specific energy $W$ (kWh/t)")
+    a2.set_title("(b) Bond specific energy vs product size", fontsize=8.8)
     a2.grid(True, color=GRID, linewidth=0.7)
     a2.set_axisbelow(True)
     a2.legend(fontsize=7.4, frameon=True, facecolor="white", edgecolor=GRID, loc="upper right")
