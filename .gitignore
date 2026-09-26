@@ -1,6 +1,6 @@
 # Minimal-but-complete ignore for an instantiated product repo (ADR-0057).
 
-# --- Python virtualenvs (ANY name, ANY depth) — NEVER committed; recreate via scripts/setup ---
+# --- Python virtualenvs (ANY name, ANY depth): NEVER committed; recreate via scripts/setup ---
 .venv/
 .venv*
 **/.venv*
@@ -34,20 +34,20 @@ frontend/public/ae_threshold.json
 frontend/public/surrogate_metrics.json
 *.tsbuildinfo
 
-# --- the offline sweep datasets (the surrogate's training labels) — regenerable, never committed ---
+# --- the offline sweep datasets (the surrogate's training labels): regenerable, never committed ---
 data-pipeline/pipeline/sweep/*.jsonl
 data-pipeline/pipeline/sweep/*-meta.json
-# raw offline DEM solver exports — NEVER a web payload
+# raw offline DEM solver exports: NEVER a web payload
 data/raw/
 **/*.vtk
 **/*.vtu
 
-# --- Secrets / env (public repo — only .env.example is committed) ---
+# --- Secrets / env (public repo: only .env.example is committed) ---
 .env
 .env.*
 !.env.example
 
-# --- Raw / heavy data — commit ONLY the compact derived artifacts under data/derived/ ---
+# --- Raw / heavy data: commit ONLY the compact derived artifacts under data/derived/ ---
 *.parquet
 *.h5
 *.hdf5
