@@ -241,7 +241,6 @@
         "lane",
         "pure_python",
         "wheels",
-        "run_ms",
         "trace_bytes",
         "run_ms_budget",
         "trace_bytes_budget",
@@ -263,11 +262,6 @@
             "type": "string"
           }
         },
-        "run_ms": {
-          "type": "number",
-          "minimum": 0,
-          "description": "The measured engine cost: the median of several warmed runs of the Python engine at this operating point, ms."
-        },
         "trace_bytes": {
           "type": "integer",
           "minimum": 1
@@ -286,7 +280,8 @@
             "type": "string"
           }
         }
-      }
+      },
+      "description": "The measured lane verdict of data-pipeline/pipeline/core/gate.py classify_lane: the engine run is timed in the bake (the median of several warmed runs) and judged against run_ms_budget, but the measured time is not stored, so the manifest stays a pure function of (params, seed)."
     },
     "flags": {
       "type": "array",

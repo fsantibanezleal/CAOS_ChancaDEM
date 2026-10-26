@@ -235,13 +235,12 @@ export interface components {
             };
             /** @enum {unknown} */
             lane: "live" | "precompute";
+            /** @description The measured lane verdict of data-pipeline/pipeline/core/gate.py classify_lane: the engine run is timed in the bake (the median of several warmed runs) and judged against run_ms_budget, but the measured time is not stored, so the manifest stays a pure function of (params, seed). */
             gate: {
                 /** @enum {unknown} */
                 lane: "live" | "precompute";
                 pure_python: boolean;
                 wheels: string[];
-                /** @description The measured engine cost: the median of several warmed runs of the Python engine at this operating point, ms. */
-                run_ms: number;
                 trace_bytes: number;
                 run_ms_budget: number;
                 trace_bytes_budget: number;
