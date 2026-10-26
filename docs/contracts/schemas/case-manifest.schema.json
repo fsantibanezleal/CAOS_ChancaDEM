@@ -5,132 +5,394 @@
   "description": "Contract 2 (artifact), catalog row case-manifest 1.0.0: the authoritative record of one baked crushing case, written by data-pipeline/pipeline/core/manifest.py build_case_manifest to data/derived/manifests/<case>.json. A pure function of (params, seed): no wall-clock time. Rules the schema cannot state, checked by scripts/check_artifacts.py and the producer test: artifact.bytes equals the size of the file at artifact.path; lane equals gate.lane; measured is present exactly when real_or_synthetic is real; every metric named in expect is a key of metrics and lies inside its range.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "case_id", "title", "category", "stage", "control", "real_or_synthetic", "expected_band", "context", "engine", "params", "seed", "artifact", "lane", "gate", "flags", "metrics", "models", "expect", "source"],
+  "required": [
+    "schema",
+    "case_id",
+    "title",
+    "category",
+    "stage",
+    "control",
+    "real_or_synthetic",
+    "expected_band",
+    "context",
+    "engine",
+    "params",
+    "seed",
+    "artifact",
+    "lane",
+    "gate",
+    "flags",
+    "metrics",
+    "models",
+    "expect",
+    "source"
+  ],
   "properties": {
-    "schema": {"const": "chancadem.manifest/v1"},
-    "case_id": {"type": "string", "minLength": 1},
-    "title": {"$ref": "#/$defs/text"},
-    "category": {"$ref": "#/$defs/text"},
-    "stage": {"enum": ["primary", "secondary", "tertiary", "control"], "description": "The circuit stage the case belongs to."},
-    "control": {"enum": [null, "negative", "invalid", "calibration"], "description": "For a control case, what it controls; null otherwise."},
-    "real_or_synthetic": {"enum": ["real", "synthetic"]},
-    "expected_band": {"$ref": "#/$defs/text", "description": "What a crushing engineer should see, in words; expect states the same in numbers."},
+    "schema": {
+      "const": "chancadem.manifest/v1"
+    },
+    "case_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "title": {
+      "$ref": "#/$defs/text"
+    },
+    "category": {
+      "$ref": "#/$defs/text"
+    },
+    "stage": {
+      "enum": [
+        "primary",
+        "secondary",
+        "tertiary",
+        "control"
+      ],
+      "description": "The circuit stage the case belongs to."
+    },
+    "control": {
+      "enum": [
+        null,
+        "negative",
+        "invalid",
+        "calibration"
+      ],
+      "description": "For a control case, what it controls; null otherwise."
+    },
+    "real_or_synthetic": {
+      "enum": [
+        "real",
+        "synthetic"
+      ]
+    },
+    "expected_band": {
+      "$ref": "#/$defs/text",
+      "description": "What a crushing engineer should see, in words; expect states the same in numbers."
+    },
     "context": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["problem", "variables", "reading"],
+      "required": [
+        "problem",
+        "variables",
+        "reading"
+      ],
       "description": "The case write-up shown in the workbench Context: the question, the variables that matter and how to read the views.",
       "properties": {
-        "problem": {"$ref": "#/$defs/text"},
-        "variables": {"$ref": "#/$defs/text"},
-        "reading": {"$ref": "#/$defs/text"}
+        "problem": {
+          "$ref": "#/$defs/text"
+        },
+        "variables": {
+          "$ref": "#/$defs/text"
+        },
+        "reading": {
+          "$ref": "#/$defs/text"
+        }
       }
     },
     "engine": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["package", "version", "model"],
+      "required": [
+        "package",
+        "version",
+        "model"
+      ],
       "properties": {
-        "package": {"const": "pipeline.model.crusher"},
-        "version": {"$ref": "#/$defs/version"},
-        "model": {"type": "string", "minLength": 1}
+        "package": {
+          "const": "pipeline.model.crusher"
+        },
+        "version": {
+          "$ref": "#/$defs/version"
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        }
       }
     },
     "params": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["machine", "css_mm", "throw_mm", "speed_rpm", "feed_x63_mm", "feed_m", "ore_axb", "ore_wi", "calibrated"],
+      "required": [
+        "machine",
+        "css_mm",
+        "throw_mm",
+        "speed_rpm",
+        "feed_x63_mm",
+        "feed_m",
+        "ore_axb",
+        "ore_wi",
+        "calibrated"
+      ],
       "description": "The operating point the case was baked at (contract 1 accepted it); calibrated is true only on the HP500 surveys.",
       "properties": {
-        "machine": {"enum": ["cone-sec", "cone-tert", "cone-short-head", "gyratory", "jaw"]},
-        "css_mm": {"type": "number"},
-        "throw_mm": {"type": "number"},
-        "speed_rpm": {"type": "number"},
-        "feed_x63_mm": {"type": "number"},
-        "feed_m": {"type": "number"},
-        "ore_axb": {"type": "number"},
-        "ore_wi": {"type": "number"},
-        "calibrated": {"type": "boolean"}
+        "machine": {
+          "enum": [
+            "cone-sec",
+            "cone-tert",
+            "cone-short-head",
+            "gyratory",
+            "jaw"
+          ]
+        },
+        "css_mm": {
+          "type": "number"
+        },
+        "throw_mm": {
+          "type": "number"
+        },
+        "speed_rpm": {
+          "type": "number"
+        },
+        "feed_x63_mm": {
+          "type": "number"
+        },
+        "feed_m": {
+          "type": "number"
+        },
+        "ore_axb": {
+          "type": "number"
+        },
+        "ore_wi": {
+          "type": "number"
+        },
+        "calibrated": {
+          "type": "boolean"
+        }
       }
     },
     "measured": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["survey", "f80_mm", "css_mm", "feed_tph", "power_kw"],
+      "required": [
+        "survey",
+        "f80_mm",
+        "css_mm",
+        "feed_tph",
+        "power_kw"
+      ],
       "description": "Only on a real case: the survey row exactly as contract hp500-survey accepted it.",
       "properties": {
-        "survey": {"type": "integer", "minimum": 1},
-        "f80_mm": {"type": "number"},
-        "css_mm": {"type": "number"},
-        "feed_tph": {"type": "number"},
-        "power_kw": {"type": "number"}
+        "survey": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "f80_mm": {
+          "type": "number"
+        },
+        "css_mm": {
+          "type": "number"
+        },
+        "feed_tph": {
+          "type": "number"
+        },
+        "power_kw": {
+          "type": "number"
+        }
       }
     },
-    "seed": {"type": "integer"},
+    "seed": {
+      "type": "integer"
+    },
     "artifact": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["path", "format", "trace_schema", "bytes", "sha256"],
+      "required": [
+        "path",
+        "format",
+        "trace_schema",
+        "bytes",
+        "sha256"
+      ],
       "properties": {
-        "path": {"type": "string", "pattern": "^(?!/)(?!.*\\.\\.)[^\\\\]+\\.json$", "description": "Relative to data/derived; no leading slash, no '..', no backslash."},
-        "format": {"const": "json"},
-        "trace_schema": {"const": "chancadem.trace/v1"},
-        "bytes": {"type": "integer", "minimum": 1},
-        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "SHA-256 of the trace file bytes as committed."}
+        "path": {
+          "type": "string",
+          "pattern": "^(?!/)(?!.*\\.\\.)[^\\\\]+\\.json$",
+          "description": "Relative to data/derived; no leading slash, no '..', no backslash."
+        },
+        "format": {
+          "const": "json"
+        },
+        "trace_schema": {
+          "const": "chancadem.trace/v1"
+        },
+        "bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$",
+          "description": "SHA-256 of the trace file bytes as committed."
+        }
       }
     },
-    "lane": {"enum": ["live", "precompute"]},
+    "lane": {
+      "enum": [
+        "live",
+        "precompute"
+      ]
+    },
     "gate": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["lane", "pure_python", "wheels", "run_ms", "trace_bytes", "run_ms_budget", "trace_bytes_budget", "reasons"],
+      "required": [
+        "lane",
+        "pure_python",
+        "wheels",
+        "run_ms",
+        "trace_bytes",
+        "run_ms_budget",
+        "trace_bytes_budget",
+        "reasons"
+      ],
       "properties": {
-        "lane": {"enum": ["live", "precompute"]},
-        "pure_python": {"type": "boolean"},
-        "wheels": {"type": "array", "items": {"type": "string"}},
-        "run_ms": {"type": "number", "minimum": 0, "description": "The measured engine cost: the median of several warmed runs of the Python engine at this operating point, ms."},
-        "trace_bytes": {"type": "integer", "minimum": 1},
-        "run_ms_budget": {"type": "number", "exclusiveMinimum": 0},
-        "trace_bytes_budget": {"type": "integer", "minimum": 1},
-        "reasons": {"type": "array", "items": {"type": "string"}}
+        "lane": {
+          "enum": [
+            "live",
+            "precompute"
+          ]
+        },
+        "pure_python": {
+          "type": "boolean"
+        },
+        "wheels": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "run_ms": {
+          "type": "number",
+          "minimum": 0,
+          "description": "The measured engine cost: the median of several warmed runs of the Python engine at this operating point, ms."
+        },
+        "trace_bytes": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "run_ms_budget": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "trace_bytes_budget": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
       }
     },
     "flags": {
       "type": "array",
-      "description": "The engine's flags and envelope codes for this case, in the engine's order (pass-through, invalid, out of the calibrated envelope).",
-      "items": {"type": "string", "minLength": 1}
+      "description": "Stable codes of the engine's flags and envelope codes for this case, in the engine's order: css_ge_feed_top (nothing is gripped), pass_through (CSS at or above F80), negligible_reduction (reduction ratio near 1), ill_conditioned (the solve's conditioning guard), and the envelope codes css_nonpositive, feed_nonpositive, f80_lt_css, css_outside_calibrated, f80_outside_calibrated. The web maps each code to its bilingual text.",
+      "items": {
+        "enum": [
+          "css_ge_feed_top",
+          "pass_through",
+          "negligible_reduction",
+          "ill_conditioned",
+          "css_nonpositive",
+          "feed_nonpositive",
+          "f80_lt_css",
+          "css_outside_calibrated",
+          "f80_outside_calibrated"
+        ]
+      },
+      "uniqueItems": true
     },
     "metrics": {
       "type": "object",
       "description": "The case's result scalars (p80_mm, p50_mm, p20_mm, f80_mm, reduction_ratio, throughput_tph, power_kw, specific_energy_kwh_t) and, on a real case, the model error against the survey (throughput_err_pct, power_err_pct).",
-      "additionalProperties": {"type": "number"},
-      "required": ["p80_mm", "p50_mm", "p20_mm", "f80_mm", "reduction_ratio", "throughput_tph", "power_kw", "specific_energy_kwh_t"]
+      "additionalProperties": {
+        "type": "number"
+      },
+      "required": [
+        "p80_mm",
+        "p50_mm",
+        "p20_mm",
+        "f80_mm",
+        "reduction_ratio",
+        "throughput_tph",
+        "power_kw",
+        "specific_energy_kwh_t"
+      ]
     },
     "models": {
       "type": "object",
       "description": "Per model slot (catalog row id), what answers in this bake: the released ONNX model (real) or the slot's baseline.",
-      "propertyNames": {"pattern": "^[a-z0-9][a-z0-9-]*$"},
-      "additionalProperties": {"enum": ["real", "baseline"]}
+      "propertyNames": {
+        "pattern": "^[a-z0-9][a-z0-9-]*$"
+      },
+      "additionalProperties": {
+        "enum": [
+          "real",
+          "baseline"
+        ]
+      }
     },
     "expect": {
       "type": "object",
       "description": "The checked expectation of the case: [low, high] per result metric; the bake fails outside it.",
       "minProperties": 1,
-      "additionalProperties": {"type": "array", "prefixItems": [{"type": "number"}, {"type": "number"}], "minItems": 2, "maxItems": 2}
+      "additionalProperties": {
+        "type": "array",
+        "prefixItems": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "minItems": 2,
+        "maxItems": 2
+      }
     },
     "source": {
       "description": "Where the case comes from: the authored circuit matrix, or the publication of a measured survey.",
       "oneOf": [
-        {"type": "object", "additionalProperties": false, "required": ["kind"], "properties": {"kind": {"const": "authored"}}},
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["kind", "citation", "doi", "license"],
+          "required": [
+            "kind"
+          ],
           "properties": {
-            "kind": {"const": "publication"},
-            "citation": {"type": "string", "minLength": 1},
-            "doi": {"type": "string", "pattern": "^10\\.[0-9]{4,9}/\\S+$"},
-            "license": {"const": "CC BY 4.0"}
+            "kind": {
+              "const": "authored"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "kind",
+            "citation",
+            "doi",
+            "license"
+          ],
+          "properties": {
+            "kind": {
+              "const": "publication"
+            },
+            "citation": {
+              "type": "string",
+              "minLength": 1
+            },
+            "doi": {
+              "type": "string",
+              "pattern": "^10\\.[0-9]{4,9}/\\S+$"
+            },
+            "license": {
+              "const": "CC BY 4.0"
+            }
           }
         }
       ]
@@ -141,9 +403,25 @@
       "type": "object",
       "description": "Every reader-facing string is bilingual at the source.",
       "additionalProperties": false,
-      "required": ["en", "es"],
-      "properties": {"en": {"type": "string", "minLength": 1}, "es": {"type": "string", "minLength": 1}}
+      "required": [
+        "en",
+        "es"
+      ],
+      "properties": {
+        "en": {
+          "type": "string",
+          "minLength": 1
+        },
+        "es": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
     },
-    "version": {"type": "string", "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$", "description": "The product version format X.XX.XXX."}
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$",
+      "description": "The product version format X.XX.XXX."
+    }
   }
 }

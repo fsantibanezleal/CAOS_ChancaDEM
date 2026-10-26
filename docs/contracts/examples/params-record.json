@@ -1,1 +1,1 @@
-{"case_id":"EX02_epidemic","beta":0.55,"gamma":0.2,"N":100000.0,"I0":50.0,"days":160}
+{"case_id": "S01", "machine": "cone-sec", "css_mm": 32, "throw_mm": 30, "speed_rpm": 360, "feed_x63_mm": 90, "feed_m": 1.2, "ore_axb": 55, "ore_wi": 14}

@@ -114,29 +114,38 @@ export interface components {
     schemas: {
         /**
          * ParamsRecord
-         * @description Contract 1 (ingestion), catalog row params-record 1.0.0: one operating point as accepted by data-pipeline/pipeline/io/contract.py validate_rows. The raw source is a table (CSV) with the columns case_id, beta, gamma, N, I0 and an optional days; values arrive as text and are parsed, never coerced: a row that fails a rule below is rejected with a reason, and a row with R0 = beta / gamma above 20 is accepted and flagged. Cross-field rule the schema cannot state: I0 <= N. EXAMPLE domain: an SIR epidemic; a product replaces the fields.
+         * @description Contract 1 (ingestion), catalog row params-record 1.0.0: one crusher operating point as accepted by data-pipeline/pipeline/io/contract.py validate_rows from the table data/examples/params.csv (columns case_id, machine, css_mm, throw_mm, speed_rpm, feed_x63_mm, feed_m, ore_axb, ore_wi). Values arrive as text and are parsed, never coerced: a row that fails a rule below is rejected with a reason. A physically meaningful but unusual row is accepted and flagged with the engine's own codes: a closed-side setting at or above the feed's 80 percent passing size (pass-through), or at or above the feed top size of 256 mm (invalid control); the bounds below are wide on purpose so the negative and invalid control cases are accepted, flagged and baked, never dropped. Sizes in millimetres, speed in revolutions per minute, the Bond work index in kWh per tonne.
          */
         ParamsRecord: {
-            /** @description The case identifier. */
+            /** @description The case identifier, for example S01 or HP500-01. */
             case_id: string;
-            /** @description Effective contact rate, 1/day. */
-            beta: number;
-            /** @description Recovery rate, 1/day. */
-            gamma: number;
-            /** @description Population, individuals. */
-            N: number;
-            /** @description Initial infected, individuals; at most N. */
-            I0: number;
-            /** @description Horizon in days; 160 when the source leaves it empty. */
-            days: number;
+            /**
+             * @description The crusher kind; the engine's per-machine constants follow it.
+             * @enum {unknown}
+             */
+            machine: "cone-sec" | "cone-tert" | "cone-short-head" | "gyratory" | "jaw";
+            /** @description Closed-side setting, the narrowest gap between the mantle and the concave (or the jaws), mm. */
+            css_mm: number;
+            /** @description Eccentric throw, the open-side setting minus the closed-side setting, mm. */
+            throw_mm: number;
+            /** @description Eccentric (gyration) speed, revolutions per minute. */
+            speed_rpm: number;
+            /** @description Rosin-Rammler characteristic size of the feed (63.2 percent passing), mm. */
+            feed_x63_mm: number;
+            /** @description Rosin-Rammler uniformity exponent of the feed, dimensionless. */
+            feed_m: number;
+            /** @description JKMRC drop-weight ore competence A times b, dimensionless; lower is harder. */
+            ore_axb: number;
+            /** @description Bond work index of the ore, kWh per tonne. */
+            ore_wi: number;
         };
         /**
          * CaseIndex
-         * @description Contract 2 (artifact), catalog row case-index 2.0.0: the flat inventory of every baked case, written by data-pipeline/pipeline/core/manifest.py build_index to data/derived/manifests/index.json. Rules the schema cannot state, checked by the producer and consumer tests: n_cases equals the number of entries, default_case is one of their case_id values, and the entries are sorted by case_id.
+         * @description Contract 2 (artifact), catalog row case-index 1.0.0: the flat inventory of every baked case, written by data-pipeline/pipeline/core/manifest.py build_index to data/derived/manifests/index.json. Rules the schema cannot state, checked by the producer and consumer tests: n_cases equals the number of entries, default_case is one of their case_id values, the entries are sorted by case_id, and every path in files exists under data/derived.
          */
         CaseIndex: {
             /** @constant */
-            schema: "example.index/v2";
+            schema: "chancadem.index/v1";
             /** @description The product version that baked the index; older than VERSION means the bake is stale. */
             engine_version: components["schemas"]["version"];
             n_cases: number;
@@ -145,33 +154,72 @@ export interface components {
                 case_id: string;
                 title: components["schemas"]["text"];
                 category: components["schemas"]["text"];
+                /**
+                 * @description real: one of the measured HP500 surveys; synthetic: a circuit case of the engine.
+                 * @enum {unknown}
+                 */
+                real_or_synthetic: "real" | "synthetic";
                 manifest_path: string;
             }[];
+            /** @description The further committed files the site serves (the model files, the HP500 validation documents, the model metrics), relative to data/derived; frontend/scripts/declared.mjs copies them with the cases. */
+            files: string[];
         };
         /**
          * CaseManifest
-         * @description Contract 2 (artifact), catalog row case-manifest 4.0.0: the authoritative record of one baked case, written by data-pipeline/pipeline/core/manifest.py build_case_manifest to data/derived/manifests/<case>.json. A pure function of (params, seed): no wall-clock time. Rules the schema cannot state, checked by scripts/check_artifacts.py: artifact.bytes equals the size of the file at artifact.path, and lane equals gate.lane.
+         * @description Contract 2 (artifact), catalog row case-manifest 1.0.0: the authoritative record of one baked crushing case, written by data-pipeline/pipeline/core/manifest.py build_case_manifest to data/derived/manifests/<case>.json. A pure function of (params, seed): no wall-clock time. Rules the schema cannot state, checked by scripts/check_artifacts.py and the producer test: artifact.bytes equals the size of the file at artifact.path; lane equals gate.lane; measured is present exactly when real_or_synthetic is real; every metric named in expect is a key of metrics and lies inside its range.
          */
         CaseManifest: {
             /** @constant */
-            schema: "example.manifest/v4";
+            schema: "chancadem.manifest/v1";
             case_id: string;
             title: components["schemas"]["text"];
             category: components["schemas"]["text"];
+            /**
+             * @description The circuit stage the case belongs to.
+             * @enum {unknown}
+             */
+            stage: "primary" | "secondary" | "tertiary" | "control";
+            /**
+             * @description For a control case, what it controls; null otherwise.
+             * @enum {unknown}
+             */
+            control: null | "negative" | "invalid" | "calibration";
             /** @enum {unknown} */
             real_or_synthetic: "real" | "synthetic";
+            /** @description What a crushing engineer should see, in words; expect states the same in numbers. */
             expected_band: components["schemas"]["text"];
+            /** @description The case write-up shown in the workbench Context: the question, the variables that matter and how to read the views. */
+            context: {
+                problem: components["schemas"]["text"];
+                variables: components["schemas"]["text"];
+                reading: components["schemas"]["text"];
+            };
             engine: {
-                package: string;
+                /** @constant */
+                package: "pipeline.model.crusher";
                 version: components["schemas"]["version"];
                 model: string;
             };
+            /** @description The operating point the case was baked at (contract 1 accepted it); calibrated is true only on the HP500 surveys. */
             params: {
-                beta: number;
-                gamma: number;
-                N: number;
-                I0: number;
-                days: number;
+                /** @enum {unknown} */
+                machine: "cone-sec" | "cone-tert" | "cone-short-head" | "gyratory" | "jaw";
+                css_mm: number;
+                throw_mm: number;
+                speed_rpm: number;
+                feed_x63_mm: number;
+                feed_m: number;
+                ore_axb: number;
+                ore_wi: number;
+                calibrated: boolean;
+            };
+            /** @description Only on a real case: the survey row exactly as contract hp500-survey accepted it. */
+            measured?: {
+                survey: number;
+                f80_mm: number;
+                css_mm: number;
+                feed_tph: number;
+                power_kw: number;
             };
             seed: number;
             artifact: {
@@ -180,8 +228,10 @@ export interface components {
                 /** @constant */
                 format: "json";
                 /** @constant */
-                trace_schema: "example.trace/v1";
+                trace_schema: "chancadem.trace/v1";
                 bytes: number;
+                /** @description SHA-256 of the trace file bytes as committed. */
+                sha256: string;
             };
             /** @enum {unknown} */
             lane: "live" | "precompute";
@@ -190,75 +240,163 @@ export interface components {
                 lane: "live" | "precompute";
                 pure_python: boolean;
                 wheels: string[];
+                /** @description The measured engine cost: the median of several warmed runs of the Python engine at this operating point, ms. */
+                run_ms: number;
                 trace_bytes: number;
                 run_ms_budget: number;
                 trace_bytes_budget: number;
                 reasons: string[];
             };
-            /** @description The rows contract 1 accepted with a flag. */
-            flags: {
-                [key: string]: string;
-            }[];
-            /** @description Evaluation metrics of this bake (the surrogate model slot's held-out error, among others). */
+            /** @description Stable codes of the engine's flags and envelope codes for this case, in the engine's order: css_ge_feed_top (nothing is gripped), pass_through (CSS at or above F80), negligible_reduction (reduction ratio near 1), ill_conditioned (the solve's conditioning guard), and the envelope codes css_nonpositive, feed_nonpositive, f80_lt_css, css_outside_calibrated, f80_outside_calibrated. The web maps each code to its bilingual text. */
+            flags: ("css_ge_feed_top" | "pass_through" | "negligible_reduction" | "ill_conditioned" | "css_nonpositive" | "feed_nonpositive" | "f80_lt_css" | "css_outside_calibrated" | "f80_outside_calibrated")[];
+            /** @description The case's result scalars (p80_mm, p50_mm, p20_mm, f80_mm, reduction_ratio, throughput_tph, power_kw, specific_energy_kwh_t) and, on a real case, the model error against the survey (throughput_err_pct, power_err_pct). */
             metrics: {
                 [key: string]: number;
             };
-            /** @description Per model slot (catalog row id), what produced this bake's metrics: the released bundle (real) or the slot's baseline. */
+            /** @description Per model slot (catalog row id), what answers in this bake: the released ONNX model (real) or the slot's baseline. */
             models: {
                 [key: string]: "real" | "baseline";
             };
-            /** @description The checked expectation of the case: [low, high] per result metric. */
+            /** @description The checked expectation of the case: [low, high] per result metric; the bake fails outside it. */
             expect: {
                 [key: string]: [
                     number,
                     number
                 ];
             };
+            /** @description Where the case comes from: the authored circuit matrix, or the publication of a measured survey. */
+            source: {
+                /** @constant */
+                kind: "authored";
+            } | {
+                /** @constant */
+                kind: "publication";
+                citation: string;
+                doi: string;
+                /** @constant */
+                license: "CC BY 4.0";
+            };
         };
         /**
          * Trace
-         * @description Contract 2 (artifact), catalog row trace 1.0.0: the compact replay artifact of one case, written by data-pipeline/pipeline/core/trace.py to data/derived/<case>/trace.json. The trajectory is decimated to at most 200 points; t, S, I and R have the same length (a rule the schema cannot state; the producer test checks it).
+         * @description Contract 2 (artifact), catalog row trace 1.0.0: the replay artifact of one crushing case, written by data-pipeline/pipeline/core/trace.py to data/derived/<case>/trace.json. It holds what the Python engine computed at the case's operating point: the feed and product gradations on the engine's sieve grid, the result scalars, two one-dimensional sweeps around the point (the capacity against eccentric speed, and the product size and capacity against the closed-side setting) and the classification and appearance curves. The web replays it and holds the live TypeScript engine to it. Rules the schema cannot state, checked by the producer test: sieve_mm is strictly descending and has one more value than mid_mm; feed_passing and product_passing have the length of sieve_mm, lie in [0, 1] and do not increase along the grid; each sweep's arrays have the same length; summary equals the case manifest's metrics.
          */
         Trace: {
             /** @constant */
-            schema: "example.trace/v1";
+            schema: "chancadem.trace/v1";
             case_id: string;
-            /** @description Time, days. */
-            t: components["schemas"]["series"];
-            /** @description Susceptible, individuals. */
-            S: components["schemas"]["series"];
-            /** @description Infected, individuals. */
-            I: components["schemas"]["series"];
-            /** @description Recovered, individuals. */
-            R: components["schemas"]["series"];
+            /** @description Sieve aperture edges, coarse to fine, mm (the engine grid: 256 mm, square-root-of-two series, 29 edges). */
+            sieve_mm: components["schemas"]["series"];
+            /** @description Geometric mid-size of each size class, mm. */
+            mid_mm: components["schemas"]["series"];
+            /** @description Feed cumulative fraction passing at each edge. */
+            feed_passing: components["schemas"]["fractions"];
+            /** @description Product cumulative fraction passing at each edge. */
+            product_passing: components["schemas"]["fractions"];
+            /** @description Feed mass fraction in each class (sums to 1). */
+            feed_mass: components["schemas"]["fractions"];
+            /** @description Product mass fraction in each class (sums to 1 within the mass-closure tolerance). */
+            product_mass: components["schemas"]["fractions"];
+            /** @description Whiten classification function C(d) at each class mid-size: the probability a particle of that size is selected for breakage. */
+            classification: components["schemas"]["fractions"];
+            /** @description The t10 of the breakage appearance function used, percent passing one tenth of the parent size. */
+            appearance_t10: number;
             summary: {
-                /** @description Largest infected count, individuals. */
-                peak_I: number;
-                /** @description Time of the peak, days. */
-                t_peak: number;
-                /** @description Share of the population ever infected. */
-                attack_rate: number;
+                f80_mm: number;
+                p80_mm: number;
+                p50_mm: number;
+                p20_mm: number;
+                /** @description F80 over P80. */
+                reduction_ratio: number;
+                /** @description Product fraction passing at 1, 4, 8, 16 and 32 mm. */
+                pct_passing: {
+                    [key: string]: number;
+                };
+                throughput_tph: number;
+                power_kw: number;
+                specific_energy_kwh_t: number;
+                /** @description Open-side setting, the closed-side setting plus the throw, mm. */
+                oss_mm: number;
+                nip_angle_deg: number;
+                nip_limit_deg: number;
+                /** @enum {unknown} */
+                regime: "choke" | "trickle" | "pass-through" | "invalid";
+                valid: boolean;
+                out_of_envelope: boolean;
+                implausible: boolean;
+                mass_closure: number;
+                /** @description Conditioning proxy of (I - B C); the string Infinity when the solve is singular. */
+                cond_estimate: number | string;
+            };
+            /** @description The capacity hump: the engine at the case's point with only the eccentric speed varied over the machine's range. */
+            speed_sweep: {
+                speed_rpm: components["schemas"]["series"];
+                throughput_tph: components["schemas"]["series"];
+                power_kw: components["schemas"]["series"];
+            };
+            /** @description The setting trade-off: the engine at the case's point with only the closed-side setting varied. */
+            css_sweep: {
+                css_mm: components["schemas"]["series"];
+                p80_mm: components["schemas"]["series"];
+                throughput_tph: components["schemas"]["series"];
+                power_kw: components["schemas"]["series"];
             };
         };
         /**
          * SurrogateModel
-         * @description Model slot, catalog row surrogate-model 1.0.0: the released surrogate bundle models/surrogate.json written by data-pipeline/pipeline/stages/train.py and read by stages/evaluate.py. Slot input: r0 = beta / gamma (dimensionless, > 0). Slot output: the peak infected fraction peak_I / N, in [0, 1] (the predictor clamps). When no valid bundle exists the baseline data-pipeline/pipeline/model/baseline.py answers: 1 - (1 + ln r0) / r0 for r0 > 1, else 0 (the SIR peak with S0 = 1 and I0 near 0). EXAMPLE: a real product's bundle is its exported model (ONNX, say) plus a card like this one.
+         * @description Model slot, catalog row surrogate-model 1.0.0: the inference contract of the surrogate MLP that emulates the crusher engine, written by data-pipeline/pipeline/stages/train.py to data/derived/models/surrogate.json beside the ONNX graphs data/derived/models/surrogate.onnx (float32) and data/derived/models/surrogate.int8.onnx (dynamically quantised). The input is 11 values: a one-hot of the machine in machine_order, then the continuous inputs in input_order standardised as (value - in_mean) / in_std. The graph's input is named x with shape [1, 11]; its output y has shape [1, 10], standardised: value = y * out_std + out_mean, then 10 ** value where out_log is true, in output_order. Trained on an LHS sweep of the canonical Python engine (pipeline.model.crusher); the held-out metrics are the model-metrics row. The engine itself is the slot's baseline: it answers every query exactly, at a cost the surrogate avoids. Rules the schema cannot state, checked by the producer test: in_mean and in_std have the length of input_order, the out arrays the length of output_order, every std is positive, and the ONNX files named in graphs exist with the sha256 given.
          */
         SurrogateModel: {
             /** @constant */
-            kind: "linear-lstsq";
-            /**
-             * @description The design-matrix columns, in order.
-             * @constant
-             */
-            basis: [
-                "1",
-                "r0",
-                "ln(r0)",
-                "1/r0"
+            schema: "chancadem.surrogate/v1";
+            /** @description The product version whose engine produced the training labels. */
+            engine_version: string;
+            machine_order: [
+                "cone-sec",
+                "cone-tert",
+                "jaw",
+                "cone-short-head",
+                "gyratory"
             ];
-            /** @description One coefficient per basis column. */
-            coeffs: number[];
+            input_order: [
+                "css_mm",
+                "throw_mm",
+                "speed_rpm",
+                "feed_x63_mm",
+                "feed_m",
+                "ore_axb"
+            ];
+            in_mean: number[];
+            in_std: number[];
+            output_order: [
+                "p80_mm",
+                "p50_mm",
+                "p20_mm",
+                "pass_1",
+                "pass_4",
+                "pass_8",
+                "pass_16",
+                "pass_32",
+                "throughput_tph",
+                "power_kw"
+            ];
+            out_log: boolean[];
+            out_mean: number[];
+            out_std: number[];
+            graphs: {
+                float32: components["schemas"]["graph"];
+                int8: components["schemas"]["graph"];
+            };
+            /** @description The layer sizes and activations, for example 11-64-64-32-10, SiLU. */
+            architecture: string;
+            training: {
+                seed: number;
+                n_train: number;
+                n_test: number;
+                /** @description How the operating points were drawn, with the bounds per input; the test draw is independent of the training draw. */
+                sampler: string;
+                torch_version: string;
+            };
         };
         /**
          * Readiness
@@ -266,7 +404,7 @@ export interface components {
          */
         Readiness: {
             /** @constant */
-            schema: "example.readiness/v1";
+            schema: "chancadem.readiness/v1";
             product_version: components["schemas"]["version"];
             /** @description SHA-256 of docs/contracts/catalog.md (its UTF-8 bytes with CRLF normalised to LF) the document was computed from. */
             catalog_sha256: string;
@@ -297,6 +435,18 @@ export interface components {
         /** @description The product version format X.XX.XXX. */
         version: string;
         series: number[];
+        fractions: number[];
+        graph: {
+            /** @description Relative to data/derived. */
+            path: string;
+            bytes: number;
+            sha256: string;
+            opset: number;
+            /** @constant */
+            input: "x";
+            /** @constant */
+            output: "y";
+        };
         entry: {
             /** @description The catalog row id. */
             id: string;
