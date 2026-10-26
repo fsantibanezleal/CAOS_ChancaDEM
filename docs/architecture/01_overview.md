@@ -1,36 +1,32 @@
-# 01, Overview
+# Architecture, overview
 
-ChancaDEM is split into a heavy **offline engine** (`data-pipeline/pipeline/`) and a **frontend SPA**
-(`frontend/`), bound by two data contracts. The committed compact artifacts under `data/derived/` are the offline
-engine's real outputs and the SPA's replay payload.
+This repository is an instance of the CAOS product archetype (ADR-0057): the science runs offline, its results are
+committed, and a static web workbench replays them and re-runs what is light enough, live. The base (the layout,
+the two contracts, the stage names, the lanes, the guards, the shared shell) is carried by the template and the
+shell; a product reworks the core: the methods, the cases, the views and the content.
 
-```
-operating points (CONTRACT 1) ──► LHS sweep via the TS engine (sweep/gen_sweep.mjs, Node) ──► labels (jsonl)
-                                                                                                 │
-                                                          torch train (stages/train.py) ────────►├─► surrogate.onnx, psd-ae.onnx  ┐
-                                                          held-out evaluate (stages/evaluate) ──►├─► scaler/ae_scaler/ae_threshold │ data/derived/
-                                                                                                 ├─► surrogate_metrics.json        │ (committed)
-                                                  17 cases baked by the TS engine (bake_cases) ──┴─► case-results.json             ┘
-                                                                                                 │
-per-case replay (pipeline, numpy) ──(CONTRACT 2: core/manifest.py)─► data/derived/<case>/trace.json + manifests/
-                                                                                                 │
-frontend (copy-data.mjs overlays data/derived) ──► the TS engine + onnxruntime-web run LIVE in the browser
-```
+## The lanes
 
-## Packages
+| Lane | Where | What runs |
+|---|---|---|
+| Offline | `data-pipeline/`, in `.venv-pipeline` | the staged pipeline; it bakes and checks every case |
+| Replay | `data/derived/`, copied into the site | the committed artifacts, read as they are |
+| Live | `frontend/src/engine/` | a TypeScript port of the engine, re-run with the reader's values, held to the baked traces by a parity test |
+| API | `app/` | dormant; a read-only layer over `data/derived`, activated only when a product needs a server |
 
-* **`data-pipeline/pipeline/`**, the offline engine: `io/` (contracts, formats), `core/` (rng, trace, manifest,
-  gate), `model/` (surrogate, psd_ae), `stages/` (the named pipeline + the offline 2-D DEM tracer `dem.py`),
-  `cases/` + `registry.py` (the 17 cases by category), `sweep/` (the Node sweep + the case bake), `pipeline.py`
-  (orchestrator + CLI), `live.py` (dormant Pyodide).
-* **`frontend/`**, the React/Vite SPA: `src/physics/` (the TS Whiten/Evertsson/Bond engine), `src/lib/ort.ts`
-  (onnxruntime-web), `src/viz/` (the visualizations), `src/pages/` (the 6 standard pages), `src/state/store.ts`
-  (zustand), `src/lib/contract.types.ts` (the Contract-2 mirror).
-* **`app/`**, a dormant FastAPI backend (ChancaDEM is static-first).
+The [lane gate](03_the-gate.md) decides, by measurement, which cases are light enough to re-run live.
 
-## The two lanes of the pipeline
+## The flow
 
-* **Default (numpy-only):** `python data-pipeline/run.py all` rebuilds every per-case replay trace + manifest from
-  the committed `case-results.json` + `surrogate_metrics.json`, no torch, no Node. A clone replays immediately.
-* **Heavy (`--retrain`, two-language):** Node runs the LHS sweep of the TS engine → torch trains the surrogate + AE
-  → exports ONNX + metrics → re-bakes `case-results.json`. Needs the `--precompute` setup (torch) + Node 20+.
+Raw inputs, then [contract 1](08_data-contracts.md) (`io/contract.py`), then the named stages (preprocess,
+feature extraction, train, infer, evaluate, export) with every result checked against its case's expected ranges,
+then [contract 2](08_data-contracts.md) (index, manifests, traces) into `data/derived/`, committed. The web copies
+exactly the declared artifacts, reads them as JSON, and re-runs the live engine on them.
+
+## What holds it
+
+The pipeline tests run in a sandbox that fails the session if a committed artifact changes. The web's contract
+test reads every committed artifact against the web's declaration in both directions; the parity test holds the
+live engine to the bakes; the measured gate walks the built site at five sizes, in both themes and both languages.
+The design (`docs/design/SDD.md`) names the gate of every requirement, and `scripts/check_sdd.py` checks that each
+named gate exists.

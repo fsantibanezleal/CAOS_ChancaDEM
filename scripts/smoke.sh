@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Smoke: validate the CONTRACT 2 artifacts on disk (index -> manifests -> artifacts consistent). A real product
-# extends this with an HTTP/static check of the built site (canonical routes/assets return 200 + non-empty).
+# Smoke: validate the CONTRACT 2 artifacts on disk (index -> manifests -> artifacts consistent). The built site is
+# measured by `npm run gate` in frontend/, and the deployed one by scripts/check_live.py.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 PY=".venv-pipeline/bin/python"; [ -x "$PY" ] || PY=".venv-pipeline/Scripts/python.exe"

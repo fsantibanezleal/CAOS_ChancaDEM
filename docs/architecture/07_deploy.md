@@ -1,25 +1,29 @@
-# 07, Deploy (GitHub Pages, static deterministic-replay)
+# Deploy
 
-ChancaDEM is static-first (no backend at request time). `.github/workflows/deploy-pages.yml` on push to `main`:
+One deploy place per product, decided at instantiation and written in `deploy/TARGET`; this template's is GitHub
+Pages, a static site with no backend at request time (ADR-0055). `scripts/check_deploy_place.py` fails a product
+that carries the files of two places.
 
-1. installs the **light** Python lane (`requirements.txt` + editable pkg, numpy-only, **no torch/Node**) and runs
-   `python data-pipeline/run.py all` to regenerate the per-case traces + manifests from the committed artifacts;
-2. builds the SPA (`cd frontend && npm ci && npm run build`; `copy-data.mjs` overlays `data/derived/` into
-   `public/`);
-3. uploads `frontend/dist` and deploys to Pages.
+## Before a deploy
 
-CI does **not** retrain (the committed ONNX/metrics/case-results are the heavy lane's real outputs; `--retrain`
-needs torch + the Node sweep and is local-only).
+Locally: the sandboxed pipeline tests, the canonical bake when the science changed, `npm run build`, `npm test`, and
+`npm run gate`, which serves `dist/` as Pages would (no fallback) and walks every route, tab and case at five sizes,
+in both themes and both languages. A person reads its captures (written under `frontend/`, in gate-output/shots): the gate measures,
+it does not judge content.
 
-## Custom domain
+## The deploy
 
-Live at **chancadem.fasl-work.com** (custom domain → Vite `base: '/'`; `frontend/public/CNAME` carries it, copied
-into `dist/`). The domain is set once on the Pages API via
-`gh api PUT repos/fsantibanezleal/CAOS_ChancaDEM/pages -f cname=chancadem.fasl-work.com` (the CNAME file alone does
-not set the domain on Actions deploys). A SPA 404-fallback (`vite.config.ts` copies `index.html` → `404.html`) makes
-deep links resolve through the router on Pages.
+`.github/workflows/deploy-pages.yml` runs after CI succeeds on `main`, on that same commit. It checks the committed
+artifacts, builds the site with the right base path (`/` with a custom domain, `/<repository>/` without), deploys,
+and then runs `scripts/check_live.py` against the live site: `build.json` names the pushed commit, every route
+answers with the app with and without its trailing slash, a missing file answers 404, and the artifact index
+answers JSON. It never trains, rebakes or recomputes (ADR-0069, ADR-0074).
 
-## The dormant VPS path
+After the deploy, run the gate against the deployed origin: `npm run gate -- --url https://<domain>`.
 
-`deploy/{fasl-slug.service, domain.nginx}` are dormant systemd/nginx templates, used only if `app/` is ever
-activated (an ADR-0002 trigger). This solution does not require them at the moment.
+## CI
+
+`.github/workflows/ci.yml`, on `develop` and `main`: lint, the workflow files parse, contract 2, the version, the
+SDD, the deploy place; a web job (install, build, unit tests, the web baseline); and the guards (tracked secrets,
+venvs, binaries, raw data, machine paths, template residue, document paths, content standards, the CI budget).
+Every step runs under `bash -eo pipefail`.

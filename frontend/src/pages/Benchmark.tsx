@@ -1,58 +1,307 @@
-import { useEffect, useState } from 'react';
-import { Refs, useShellLang } from '@fasl-work/caos-app-shell';
-import { loadLearned, learnedMetrics, type Metrics } from '../physics/surrogate';
-import { ParityScatter } from '../viz/ParityScatter';
-import { PowerParity, LooParity } from '../viz/CrusherCalPanels';
+// What each case costs: the committed artifact against its byte budget, the surrogate's held-out error, and the
+// live engine timed in this browser against the run budget the lane gate set. Every number is read from the
+// artifacts or measured here; none is typed in.
+import { Callout, Cite, DocPage, DocSection, Knob, PlotCard, Verdict, formatNumber, useShellLang } from '@fasl-work/caos-app-shell';
+import { UPlotChart } from '@fasl-work/caos-app-shell/chart';
+import { useEffect, useMemo, useState } from 'react';
+import { loadAllCases, useArtifact, type CaseData, type Loaded } from '../api/artifacts';
+import { simulate } from '../engine/sir';
+import { P, useT } from '../content/bi';
+import { ReadinessNote } from '../readiness/ReadinessNote';
 
-// Benchmark, the honest, separable checks, the central defense against over-claiming. Two of them (power parity,
-// LOO held-out) read the committed CrusherCal trace (data/hp500/loo.json) computed offline on the 10 real HP500
-// surveys; the surrogate-vs-physics numbers load from the committed surrogate_metrics.json. No number is fabricated
-// and null results are stated as such.
-export default function Benchmark() {
-  const es = useShellLang() === 'es';
-  const [met, setMet] = useState<Metrics | null>(null);
-  useEffect(() => { loadLearned().then(() => setMet(learnedMetrics())).catch(() => {}); }, []);
+/** The classical baseline of the surrogate: the analytic peak infected share for a vanishing initial infection. */
+const baselinePeak = (r0: number) => (r0 > 1 ? 1 - (1 + Math.log(r0)) / r0 : 0);
+/** The engine's peak infected share for a reproduction number, on the example's population, recovery rate and horizon. */
+const enginePeak = (r0: number) => {
+  const run = simulate({ beta: r0 * 0.2, gamma: 0.2, N: 100000, I0: 50, days: 160 });
+  return run.peakI / 100000;
+};
 
-  const OUTS = ['p80', 'p50', 'p20', 'pass1', 'pass4', 'pass8', 'pass16', 'pass32', 'tph', 'kW'];
+interface Timing {
+  caseId: string;
+  medianMs: number;
+}
+
+/**
+ * Times the live engine on every case, after the page has rendered, outside any animation frame. A browser coarsens
+ * its clock (to 0.1 ms or more), so each sample times a batch of runs long enough to measure, and the median of seven
+ * samples is divided back to one run.
+ */
+function useTimings(cases: CaseData[] | null): Timing[] | null {
+  const [out, setOut] = useState<Timing[] | null>(null);
+  useEffect(() => {
+    if (!cases) return;
+    const id = window.setTimeout(() => {
+      setOut(
+        cases.map(({ manifest }) => {
+          let batch = 1;
+          for (;;) {
+            const t0 = performance.now();
+            for (let k = 0; k < batch; k += 1) simulate(manifest.params);
+            if (performance.now() - t0 >= 20 || batch >= 1 << 16) break;
+            batch *= 2;
+          }
+          const runs: number[] = [];
+          for (let k = 0; k < 7; k += 1) {
+            const t0 = performance.now();
+            for (let j = 0; j < batch; j += 1) simulate(manifest.params);
+            runs.push((performance.now() - t0) / batch);
+          }
+          runs.sort((a, b) => a - b);
+          return { caseId: manifest.case_id, medianMs: runs[3] };
+        }),
+      );
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [cases]);
+  return out;
+}
+
+const ARTIFACT_ROWS = ['case-index', 'case-manifest', 'trace'];
+
+/** What stands where the cases would be: loading, the error, or not available yet with the reason. */
+function Pending({ all, wait }: { all: Loaded<{ cases: unknown[] }>; wait: string }) {
+  const lang = useShellLang();
+  const t = useT();
+  if (all.state === 'unavailable') return <p className="caos-pending" data-state="unavailable">{all.reason[lang]}</p>;
+  if (all.state === 'error') return <p className="caos-pending" data-state="error">{all.error}</p>;
+  if (all.state === 'ready') {
+    return <p className="caos-pending" data-state="unavailable">{t('Not available yet: no case of this build has its artifacts.', 'Aún no disponible: ningún caso de esta versión tiene sus artefactos.')}</p>;
+  }
+  return <p className="caos-pending" data-state="loading">{wait}</p>;
+}
+
+export function Benchmark() {
+  const lang = useShellLang();
+  const t = useT();
+  const all = useArtifact((s) => loadAllCases(s), []);
+  const cases = all.state === 'ready' && all.data.cases.length ? all.data.cases : null;
+  const timings = useTimings(cases);
+  const ready = cases && timings;
+  const [liveR0, setLiveR0] = useState(2.75);
+  const live = useMemo(() => ({ engine: enginePeak(liveR0), base: baselinePeak(liveR0) }), [liveR0]);
+  const robustness = useMemo(() => {
+    const xs = Array.from({ length: 56 }, (_, k) => Math.round((0.5 + k * 0.1) * 100) / 100);
+    return { xs, engine: xs.map(enginePeak), baseline: xs.map(baselinePeak) };
+  }, []);
+  const worst = ready ? Math.max(...cases.map((c, i) => timings[i].medianMs / c.manifest.gate.run_ms_budget)) : 0;
 
   return (
-    <section className="page-body prose">
-      <h2>Benchmark</h2>
-      <p className="tz-lead">{es ? 'Comprobaciones separables y reportadas con honestidad, la defensa central contra el sobre-ajuste y la precisión hueca. Cada número proviene de una traza versionada; los resultados nulos se declaran como nulos.' : 'Separable, honestly-reported checks, the central defense against over-claiming and hollow accuracy. Every number comes from a committed trace; null results are stated as null.'}</p>
-
-      <h3>{es ? '1 · Paridad de t/h held-out (CrusherCal, leave-one-survey-out)' : '1 · Held-out t/h parity (CrusherCal, leave-one-survey-out)'}</h3>
-      <p>{es ? 'La prueba "más allá del ajuste en-muestra": para cada una de las 10 encuestas HP500 reales, se predice con las otras 9. Se comparan tres modelos en los mismos folds: M0 backbone calibrado (escalares reajustados por fold), M1 backbone + residuo acotado (la propuesta CrusherCal), M2 libre (el hombre de paja de sobreajuste). Controles: media constante y etiqueta-barajada. UQ: intervalo predictivo del 80%.' : 'The "beyond the in-sample fit" test: for each of the 10 real HP500 surveys, predict from the other 9. Three models on identical folds: M0 calibrated backbone (scalars refit per fold), M1 backbone + bounded residual (the CrusherCal proposal), M2 free-form (the overfit strawman). Controls: constant-mean and label-shuffle. UQ: an 80% predictive interval.'}</p>
-      <LooParity />
-
-      <h3>{es ? '2 · Paridad de potencia medida vs modelada (hallazgo honesto)' : '2 · Measured-vs-modeled power parity (an honest finding)'}</h3>
-      <p>{es ? 'El dossier esperaba que el modelo de potencia calibrado eliminara una sobrepredicción ~2x de Bond. Los números reales del motor sobre las 10 encuestas no respaldan esa premisa, y aquí se reporta la corrección con transparencia.' : 'The dossier expected the calibrated power model to remove a Bond ~2x overprediction. The engine\'s real numbers over the 10 surveys do not support that premise, and the correction is reported here transparently.'}</p>
-      <PowerParity />
-
-      <h3>{es ? '3 · Surrogate vs la física que emula (held-out)' : '3 · Surrogate vs the physics it emulates (held-out)'}</h3>
-      <p>{es ? 'R²/MAPE por salida del MLP ONNX contra el motor exacto de balance poblacional, en un segundo barrido Latin-hypercube independiente (otra semilla, no un split de filas). Crítico: mide acuerdo con la física barata, no con una planta real.' : 'Per-output R²/MAPE of the ONNX MLP vs the exact population-balance engine, on a second independent Latin-hypercube draw (different seed, not a row-split). Critical: it measures agreement with the cheap physics, not a real plant.'}</p>
-      {met ? (
-        <table className="tz-table" style={{ maxWidth: 620 }}>
-          <thead><tr><th>{es ? 'salida' : 'output'}</th><th className="num">R²</th><th className="num">MAPE %</th></tr></thead>
-          <tbody>{OUTS.map((k) => met.perOutput[k] && (
-            <tr key={k}><td>{k}</td><td className="num">{met.perOutput[k].r2}</td><td className="num">{met.perOutput[k].mape_pct}</td></tr>
-          ))}</tbody>
+    <DocPage wide title={{ en: 'Benchmark', es: 'Benchmark' }} lede={t('What each case costs and how well the models do, baked and live: the budgets of the live lane, the held-out error of the learned surrogate, its comparison with the analytic baseline, where that baseline degrades, and a panel that runs the engine in your browser.', 'Lo que cuesta cada caso y cuán bien lo hacen los modelos, precalculado y en vivo: los presupuestos del carril en vivo, el error reservado del sustituto aprendido, su comparación con la línea base analítica, dónde se degrada esa línea base, y un panel que corre el motor en su navegador.')}>
+      <DocSection title={{ en: 'Budgets and timings', es: 'Presupuestos y tiempos' }} noRefsReason={{ en: 'Measures this build.', es: 'Mide esta compilación.' }}>
+        <P
+          en="The pipeline's lane gate decides, per case, whether the live engine may re-run it in the browser: the engine must be light, the committed trace small, and the run fast. This page reads each budget from the manifest and measures the live engine here, as the median of seven timed batches of runs, so the verdict is about this browser on this device."
+          es="La compuerta de carril del pipeline decide, por caso, si el motor en vivo puede volver a correrlo en el navegador: el motor debe ser liviano, la traza comprometida pequeña y la corrida rápida. Esta página lee cada presupuesto desde el manifiesto y mide aquí el motor en vivo, como la mediana de siete lotes de corridas medidos, así que el veredicto es sobre este navegador en este dispositivo."
+        />
+        <ReadinessNote ids={ARTIFACT_ROWS} />
+        {all.state === 'ready' && all.data.absent.map((a) => (
+          <p key={a.caseId} className="caos-pending" data-state="unavailable">
+            {a.title[lang]}: {a.reason[lang]}
+          </p>
+        ))}
+        {ready ? (
+          <>
+            <PlotCard title={{ en: 'The live lane on this device', es: 'El carril en vivo en este dispositivo' }} lane="live" provenance="synthetic">
+              <Verdict
+                title={{ en: 'Run budget', es: 'Presupuesto de corrida' }}
+                tone={worst <= 1 ? 'good' : 'bad'}
+                verdict={
+                  worst <= 1
+                    ? { en: `Every case runs within its budget; the slowest uses ${formatNumber(worst, 'en', { percent: true, digits: 2 })} of it.`, es: `Cada caso corre dentro de su presupuesto; el más lento usa ${formatNumber(worst, 'es', { percent: true, digits: 2 })} de él.` }
+                    : { en: 'A case exceeds its run budget on this device: the live lane would be slow here.', es: 'Un caso excede su presupuesto de corrida en este dispositivo: el carril en vivo sería lento aquí.' }
+                }
+              />
+            </PlotCard>
+            <table className="caos-table" data-state="ready">
+              <thead>
+                <tr>
+                  <th>{t('Case', 'Caso')}</th>
+                  <th>{t('Lane', 'Carril')}</th>
+                  <th>{t('Trace (bytes)', 'Traza (bytes)')}</th>
+                  <th>{t('Byte budget', 'Presupuesto de bytes')}</th>
+                  <th>{t('Live run (ms)', 'Corrida en vivo (ms)')}</th>
+                  <th>{t('Run budget (ms)', 'Presupuesto de corrida (ms)')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cases.map((c, i) => (
+                  <tr key={c.manifest.case_id}>
+                    <td>{c.manifest.title[lang]}</td>
+                    <td>{c.manifest.lane === 'live' ? t('live', 'en vivo') : t('precompute', 'precálculo')}</td>
+                    <td>{formatNumber(c.manifest.artifact.bytes, lang, { decimals: 0 })}</td>
+                    <td>{formatNumber(c.manifest.gate.trace_bytes_budget, lang, { decimals: 0 })}</td>
+                    <td>{formatNumber(timings[i].medianMs, lang, { digits: 3 })}</td>
+                    <td>{formatNumber(c.manifest.gate.run_ms_budget, lang, { decimals: 0 })}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
+        ) : (
+          <Pending all={all} wait={t('Loading the artifacts and timing the live engine', 'Cargando los artefactos y midiendo el motor en vivo')} />
+        )}
+      </DocSection>
+      <DocSection title={{ en: 'The surrogate', es: 'El sustituto' }} area="results" noRefsReason={{ en: 'Measures this build.', es: 'Mide esta compilación.' }}>
+        <P
+          en="The pipeline also trains a small surrogate that predicts the peak share from the case parameters, and evaluates it on twenty held-out parameter sets drawn with a seed disjoint from training. It is there to show where a learned model sits in the pipeline; its error is reported, not hidden."
+          es="El pipeline también entrena un sustituto pequeño que predice la fracción del pico a partir de los parámetros del caso, y lo evalúa en veinte conjuntos de parámetros reservados, sorteados con una semilla disjunta del entrenamiento. Está ahí para mostrar dónde se ubica un modelo aprendido en el pipeline; su error se reporta, no se oculta."
+        />
+        <ReadinessNote ids={['surrogate-model']} />
+        {cases ? (
+          (() => {
+            const sets = [...new Set(cases.map((c) => JSON.stringify(c.manifest.metrics)))];
+            const m = cases[0].manifest.metrics;
+            return (
+              <>
+                {sets.length > 1 && (
+                  <Verdict
+                    title={{ en: 'One evaluation per bake', es: 'Una evaluación por precálculo' }}
+                    tone="bad"
+                    verdict={{ en: `The manifests carry ${sets.length} different evaluations: some were written by a different run than the release bake.`, es: `Los manifiestos traen ${sets.length} evaluaciones distintas: algunos los escribió una corrida distinta del precálculo de la versión.` }}
+                  />
+                )}
+                <table className="caos-table" data-state="ready">
+                  <thead>
+                    <tr>
+                      <th>{t('Evaluation', 'Evaluación')}</th>
+                      <th>{t('Held-out R squared', 'R cuadrado reservado')}</th>
+                      <th>{t('Held-out RMSE', 'RMSE reservado')}</th>
+                      <th>{t('Held-out sets', 'Conjuntos reservados')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>{t('This bake, all cases', 'Este precálculo, todos los casos')}</td>
+                      <td>{formatNumber(m.surrogate_peakfrac_r2 ?? null, lang, { decimals: 4 })}</td>
+                      <td>{formatNumber(m.surrogate_peakfrac_rmse ?? null, lang, { decimals: 5 })}</td>
+                      <td>{formatNumber(m.n_holdout ?? null, lang, { decimals: 0 })}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </>
+            );
+          })()
+        ) : (
+          <Pending all={all} wait={t('Loading the artifacts', 'Cargando los artefactos')} />
+        )}
+      </DocSection>
+      <DocSection title={{ en: 'Learned model and baseline', es: 'Modelo aprendido y línea base' }} area="comparison" refs={['km1927', 'hethcote2000']}>
+        <P
+          en={<>The learned surrogate has a classical competitor that needs no training: the analytic peak share of the model <Cite id="km1927" />. The table puts the peak share of each baked case beside that formula, so the gap is the baseline's error against the engine on the same five cases. The surrogate's own held-out error, measured on twenty other sets, is the first table of this page.</>}
+          es={<>El sustituto aprendido tiene un competidor clásico que no necesita entrenamiento: la fracción analítica del pico del modelo <Cite id="km1927" />. La tabla pone la fracción del pico de cada caso precalculado junto a esa fórmula, de modo que la brecha es el error de la línea base contra el motor en los mismos cinco casos. El error reservado del propio sustituto, medido en otros veinte conjuntos, es la primera tabla de esta página.</>}
+        />
+        <P
+          en={<>The two errors are not on the same sets, and the page does not pretend they are: five baked cases against twenty draws from the held-out generator. The control case starts with no infection at all, so its peak is zero and the formula, which assumes one, is wrong there by construction. For the other four the table shows how far the formula departs from the engine <Cite id="hethcote2000" />, the part a learned model can absorb and a formula cannot.</>}
+          es={<>Los dos errores no son sobre los mismos conjuntos, y la página no finge que lo sean: cinco casos precalculados contra veinte sorteos del generador reservado. El caso de control parte sin ninguna infección, así que su pico es cero y la fórmula, que supone una, se equivoca allí por construcción. En los otros cuatro la tabla muestra cuánto se aparta la fórmula del motor <Cite id="hethcote2000" />, la parte que un modelo aprendido puede absorber y una fórmula no.</>}
+        />
+        {cases ? (
+          <table className="caos-table" data-state="ready">
+            <thead>
+              <tr>
+                <th>{t('Case', 'Caso')}</th>
+                <th>R0</th>
+                <th>{t('Engine peak share', 'Fracción del pico, motor')}</th>
+                <th>{t('Analytic baseline', 'Línea base analítica')}</th>
+                <th>{t('Difference', 'Diferencia')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cases.map((c) => {
+                const r0 = c.manifest.params.beta / c.manifest.params.gamma;
+                const eng = c.trace.summary.peak_I / c.manifest.params.N;
+                const base = baselinePeak(r0);
+                return (
+                  <tr key={c.manifest.case_id}>
+                    <td>{c.manifest.title[lang]}</td>
+                    <td>{formatNumber(r0, lang, { decimals: 2 })}</td>
+                    <td>{formatNumber(eng, lang, { percent: true, decimals: 2 })}</td>
+                    <td>{formatNumber(base, lang, { percent: true, decimals: 2 })}</td>
+                    <td>{formatNumber(base - eng, lang, { percent: true, decimals: 2 })}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        ) : (
+          <Pending all={all} wait={t('Loading the artifacts', 'Cargando los artefactos')} />
+        )}
+      </DocSection>
+      <DocSection title={{ en: 'Where the baseline degrades', es: 'Dónde se degrada la línea base' }} area="robustness" refs={['vdd2002']}>
+        <P
+          en={<>The curve is the honest part of the comparison: the engine's peak share and the baseline's, for reproduction numbers from one half to six, computed in this browser. Across the whole range the baseline stays close to the engine and sits slightly below it, and the gap grows with R0, because the real starting infection and the quarter-day step matter more when the outbreak is fast <Cite id="vdd2002" />. The live panel below gives the exact difference for any value.</>}
+          es={<>La curva es la parte honesta de la comparación: la fracción del pico del motor y la de la línea base, para números reproductivos de un medio a seis, calculadas en este navegador. En todo el rango la línea base se mantiene cerca del motor y queda algo por debajo, y la brecha crece con R0, porque la infección inicial real y el paso de un cuarto de día pesan más cuando el brote es rápido <Cite id="vdd2002" />. El panel en vivo de abajo da la diferencia exacta para cualquier valor.</>}
+        />
+        <PlotCard title={{ en: 'Peak infected share against R0', es: 'Fracción de contagiados en el pico contra R0' }} lane="live" provenance="synthetic">
+          <UPlotChart
+            title={{ en: 'Peak infected share against R0', es: 'Fracción de contagiados en el pico contra R0' }}
+            height={300}
+            x={{ values: robustness.xs, label: { en: 'Basic reproduction number', es: 'Número reproductivo básico' } }}
+            y={{ label: { en: 'Peak infected share', es: 'Fracción de contagiados en el pico' }, range: [0, 0.6] }}
+            series={[
+              { label: { en: 'Engine', es: 'Motor' }, values: robustness.engine, color: '--color-accent' },
+              { label: { en: 'Analytic baseline', es: 'Línea base analítica' }, values: robustness.baseline, color: '--color-magenta' },
+            ]}
+          />
+        </PlotCard>
+      </DocSection>
+      <DocSection title={{ en: 'Try a reproduction number', es: 'Probar un número reproductivo' }} area="live" noRefsReason={{ en: 'Runs the engine of this build in the browser.', es: 'Corre el motor de esta compilación en el navegador.' }}>
+        <P
+          en="Move the slider and the engine runs in this browser with the example's population, recovery rate and horizon, while the analytic baseline answers from the formula alone. The inputs are the example's synthetic parameters, not real records, and nothing leaves the page. The difference is the error the baseline would make for that reproduction number."
+          es="Mueva el control y el motor corre en este navegador con la población, la tasa de recuperación y el horizonte del ejemplo, mientras la línea base analítica responde sólo con la fórmula. Las entradas son los parámetros sintéticos del ejemplo, no registros reales, y nada sale de la página. La diferencia es el error que cometería la línea base para ese número reproductivo."
+        />
+        <Knob id="bench-r0" label={{ en: 'Basic reproduction number R0', es: 'Número reproductivo básico R0' }} value={liveR0} min={0.5} max={6} step={0.05} onChange={setLiveR0} format={{ decimals: 2 }} />
+        <table className="caos-table" data-state="ready">
+          <thead>
+            <tr>
+              <th>{t('Engine peak share', 'Fracción del pico, motor')}</th>
+              <th>{t('Analytic baseline', 'Línea base analítica')}</th>
+              <th>{t('Difference', 'Diferencia')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{formatNumber(live.engine, lang, { percent: true, decimals: 2 })}</td>
+              <td>{formatNumber(live.base, lang, { percent: true, decimals: 2 })}</td>
+              <td>{formatNumber(live.base - live.engine, lang, { percent: true, decimals: 2 })}</td>
+            </tr>
+          </tbody>
         </table>
-      ) : <p className="tz-panel-sub">…{es ? 'cargando métricas' : 'loading metrics'}…</p>}
-      {met && <p className="tz-panel-sub">{es ? 'Entrenado con' : 'Trained on'} {met.nTrain} {es ? 'puntos, evaluado en' : 'points, evaluated on'} {met.nTest} {es ? 'puntos held-out independientes. Monotonicidad P80 vs CSS' : 'independent held-out points. P80-vs-CSS monotonicity'}: <b>{String(met.p80MonotoneVsCss)}</b>.</p>}
-      <ParityScatter />
-
-      <h3>{es ? '4 · Controles negativos + la compuerta de envolvente' : '4 · Negative controls + the envelope gate'}</h3>
-      <p>{es ? 'Cada resultado debe pasar todos, o es nulo:' : 'Every result must pass all of these, or it is void:'}</p>
-      <ul>
-        <li>{es ? <><b>Etiqueta-barajada:</b> un modelo entrenado con residuos permutados no debe superar al backbone (arriba, columna del control). Si lo hiciera, habría fuga.</> : <><b>Label-shuffle:</b> a model trained on permuted residual targets must not beat the backbone (table above, control row). If it did, there would be leakage.</>}</li>
-        <li>{es ? <><b>Media constante:</b> M0 debe superar a predecir la media de las encuestas para reclamar habilidad. Lo hace en t/h; no en kW (limitación honesta de la potencia de Bond).</> : <><b>Constant-mean:</b> M0 must beat predicting the survey mean to claim skill. It does for t/h; it does not for kW (an honest Bond-power limitation).</>}</li>
-        <li>{es ? <><b>Fold estricto vs con fuga:</b> los modelos libres se ven mejor con fuga que estrictos (la brecha expone el sobreajuste); el backbone calibrado es estable entre ambos.</> : <><b>Strict vs leaky fold:</b> the free-form models look better leaky than strict (the gap exposes overfitting); the calibrated backbone is stable across both.</>}</li>
-        <li>{es ? <><b>Compuerta de envolvente:</b> entradas implausibles (f80 &lt; CSS, CSS ≤ 0, alimento ≤ 0) o fuera del soporte calibrado HP500 (CSS 38-55 mm, f80 47-140 mm) se marcan ("fuera de la envolvente validada"), nunca se responden con un número confiado. Cableada en el motor (physics/envelope.ts).</> : <><b>Envelope gate:</b> implausible inputs (f80 &lt; CSS, CSS ≤ 0, feed ≤ 0) or points outside the calibrated HP500 support (CSS 38-55 mm, f80 47-140 mm) are flagged ("out of validated envelope"), never answered with a confident number. Wired into the engine (physics/envelope.ts).</>}</li>
-      </ul>
-
-      <h3>{es ? '5 · Honestidad' : '5 · Honesty'}</h3>
-      <p>{es ? 'La novedad de CrusherCal es metodológica: paridad held-out (LOO) + incertidumbre calibrada sobre datos industriales abiertos, ejecutándose en vivo en el navegador, una combinación ausente en el SOTA de DEM/fenomenológico (S6-S14, D1-D2). No se afirma un error menor que el DEM/paper. El resultado real at-bar es la paridad de t/h (~12% held-out); la potencia es un negativo reportado; el residuo M1 es un nulo pre-registrado. Reproducibilidad: la traza LOO es numpy-only + determinista desde el backbone.json versionado (puenteado del mismo motor TS). No se reportan números fabricados.' : 'CrusherCal\'s novelty is methodological: held-out (LOO) parity + calibrated uncertainty on open industrial data, running live in the browser, a combination absent from the DEM / phenomenological SOTA (S6-S14, D1-D2). We do not claim a lower error than the DEM / paper. The real at-bar result is the t/h parity (~12% held-out); the power is a reported negative; the M1 residual is a pre-registered null. Reproducibility: the LOO trace is numpy-only + deterministic from the committed backbone.json (bridged from the same TS engine). No fabricated numbers are reported.'}</p>
-      <Refs ids={['rocha2024', 'koh2021', 'quist2016', 'delaney2015', 'johansson2017val', 'duarte2021', 'morrell2009', 'napiermunn1996']} label="References" />
-    </section>
+      </DocSection>
+      <DocSection title={{ en: 'Where each row comes from', es: 'De dónde viene cada fila' }} area="provenance" noRefsReason={{ en: 'Describes the data of this build.', es: 'Describe los datos de esta compilación.' }}>
+        <P
+          en="Every row above is traceable to its origin. The cases are synthetic parameter sets in the registry; the difficulty of each is its reproduction number, from a sub-critical case that never grows to a fast burn that peaks in under two weeks; and the data are free to redistribute because they are generated by this repository, with no third-party records."
+          es="Cada fila de arriba se puede rastrear hasta su origen. Los casos son conjuntos sintéticos de parámetros en el registro; la dificultad de cada uno es su número reproductivo, desde un caso subcrítico que nunca crece hasta una combustión rápida que llega a su pico en menos de dos semanas; y los datos son libres de redistribuir porque los genera este repositorio, sin registros de terceros."
+        />
+        {cases ? (
+          <table className="caos-table" data-state="ready">
+            <thead>
+              <tr>
+                <th>{t('Case', 'Caso')}</th>
+                <th>{t('Data', 'Datos')}</th>
+                <th>{t('Difficulty (R0)', 'Dificultad (R0)')}</th>
+                <th className="caos-col-text">{t('Redistribution', 'Redistribución')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cases.map((c) => (
+                <tr key={c.manifest.case_id}>
+                  <td>{c.manifest.title[lang]}</td>
+                  <td>{c.manifest.real_or_synthetic === 'synthetic' ? t('synthetic', 'sintéticos') : c.manifest.real_or_synthetic}</td>
+                  <td>{formatNumber(c.manifest.params.beta / c.manifest.params.gamma, lang, { decimals: 2 })}</td>
+                  <td className="caos-col-text">{t('Free: generated by this repository', 'Libre: la genera este repositorio')}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <Pending all={all} wait={t('Loading the artifacts', 'Cargando los artefactos')} />
+        )}
+      </DocSection>
+      <DocSection title={{ en: 'What this benchmark does not show', es: 'Lo que este benchmark no muestra' }} area="caveat" noRefsReason={{ en: 'States the limits of this page.', es: 'Declara los límites de esta página.' }}>
+        <Callout variant="honest" title={t('A comparison of two models of the same model', 'Una comparación de dos modelos del mismo modelo')}>
+          {t('The truth on this page is the example engine, not an outbreak. The tables say how well a formula and a fitted curve imitate it, on synthetic cases; they say nothing about accuracy on a real epidemic, and the timings are those of this device only.', 'La verdad en esta página es el motor del ejemplo, no un brote. Las tablas dicen cuán bien lo imitan una fórmula y una curva ajustada, en casos sintéticos; no dicen nada sobre la exactitud en una epidemia real, y los tiempos son sólo los de este dispositivo.')}
+        </Callout>
+      </DocSection>
+    </DocPage>
   );
 }

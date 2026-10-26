@@ -1,62 +1,53 @@
-"""Stage 3, train (OFFLINE, heavy lane): fit the surrogate MLP (Adam 2e-3, 500 ep, MSE in z-space) and the
-denoising AE (Adam 2e-3, 400 ep, MSE on noised input) on the sweep. Deterministic. Requires torch (lazy)."""
+"""Stage 3, train (OFFLINE): fit a tiny surrogate (numpy least-squares) mapping R0 -> peak-infected fraction,
+using the SIR engine as ground truth on the TRAINING params. Saves coeffs to models/surrogate.json. Skippable for
+products with no learned tier. (EXAMPLE, a real product trains its research-chosen model here, exporting ONNX.)"""
 from __future__ import annotations
+
+import json
+import math
+from pathlib import Path
 
 import numpy as np
 
-
-def _zstats(M: np.ndarray):
-    mu = M.mean(0)
-    sd = M.std(0)
-    sd[sd < 1e-8] = 1.0
-    return mu.astype(np.float32), sd.astype(np.float32)
+from ..io.formats import write_json
+from ..io.schema import SIRParams
+from ..model.baseline import BASIS, is_valid_bundle
+from ..model.sir import simulate
 
 
-def run(tr_rows: list[dict]) -> dict:
-    import torch
+def _design(r0: float) -> list[float]:
+    r0 = max(1e-6, r0)
+    return [1.0, r0, math.log(r0), 1.0 / r0]
 
-    from ..model.psd_ae import AE
-    from ..model.surrogate import Surrogate
-    from .feature_extraction import NM, enc_ae, enc_in, enc_out
 
-    torch.manual_seed(0)
-    np.random.seed(0)
+def run(train_params: list[SIRParams], models_dir: str) -> dict:
+    X, y = [], []
+    for p in train_params:
+        r0 = (p.beta / p.gamma) if p.gamma > 0 else 1e-6
+        X.append(_design(r0))
+        y.append((simulate(p).peak_I / p.N) if p.N > 0 else 0.0)
+    coeffs, _res, _rank, _sv = np.linalg.lstsq(np.array(X), np.array(y), rcond=None)
+    model = {"kind": "linear-lstsq", "basis": list(BASIS), "coeffs": coeffs.tolist()}
+    Path(models_dir).mkdir(parents=True, exist_ok=True)
+    write_json(Path(models_dir) / "surrogate.json", model)
+    return model
 
-    Xtr, Ytr = enc_in(tr_rows), enc_out(tr_rows)
-    xmu, xsd = _zstats(Xtr[:, NM:])
-    ymu, ysd = _zstats(Ytr)
-    Ztr = Xtr.copy()
-    Ztr[:, NM:] = (Xtr[:, NM:] - xmu) / xsd
-    Wtr = (Ytr - ymu) / ysd
 
-    sur = Surrogate()
-    opt = torch.optim.Adam(sur.parameters(), 2e-3, weight_decay=1e-5)
-    xt, yt = torch.tensor(Ztr), torch.tensor(Wtr)
-    for ep in range(500):
-        opt.zero_grad()
-        loss = ((sur(xt) - yt) ** 2).mean()
-        loss.backward()
-        opt.step()
-        if ep % 100 == 0:
-            print(f"  surrogate ep{ep} mse {loss.item():.4f}", flush=True)
-    sur.eval()
+def predict(model: dict, r0: float) -> float:
+    """The peak infected fraction, clamped to the slot's output range [0, 1]."""
+    raw = float(np.dot(np.array(model["coeffs"]), np.array(_design(r0))))
+    return min(1.0, max(0.0, raw))
 
-    Atr = enc_ae(tr_rows)
-    amu, asd = _zstats(Atr)
-    Sa = (Atr - amu) / asd
-    ae = AE()
-    opt2 = torch.optim.Adam(ae.parameters(), 2e-3, weight_decay=1e-5)
-    at = torch.tensor(Sa)
-    for ep in range(400):
-        opt2.zero_grad()
-        noisy = at + 0.05 * torch.randn_like(at)
-        loss = ((ae(noisy) - at) ** 2).mean()
-        loss.backward()
-        opt2.step()
-        if ep % 100 == 0:
-            print(f"  ae ep{ep} mse {loss.item():.4f}", flush=True)
-    ae.eval()
-    with torch.no_grad():
-        rec = ((ae(at) - at) ** 2).mean(1).numpy()
-    return {"surrogate": sur, "ae": ae, "xmu": xmu, "xsd": xsd, "ymu": ymu, "ysd": ysd,
-            "amu": amu, "asd": asd, "rec_mean": float(rec.mean()), "thr": float(np.percentile(rec, 99))}
+
+def load_released(models_dir: str | Path) -> dict | None:
+    """The released bundle ``<models_dir>/surrogate.json`` when it exists, parses and is valid, else None (the
+    baseline answers)."""
+    path = Path(models_dir) / "surrogate.json"
+    try:
+        obj = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return obj if is_valid_bundle(obj) else None
+
+
+__all__ = ["is_valid_bundle", "load_released", "predict", "run"]

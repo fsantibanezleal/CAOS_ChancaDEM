@@ -1,8 +1,3 @@
-# PRECOMPUTE lane, the heavy engines, in .venv-pipeline (local-only, never deployed). Run ONLY for
-# `python data-pipeline/run.py all --retrain` (Node sweep of the TS engine -> torch train -> ONNX export).
-# Also requires Node 20+ (for the sweep + the case bake), a system tool, not a pip dep. torch is the CPU build.
-#   install torch CPU via:  pip install torch==2.12.1 --index-url https://download.pytorch.org/whl/cpu
-numpy==2.4.6
-torch==2.12.1
-onnx==1.22.0
-onnxruntime==1.27.0
+# The offline lane. Its engines are pinned in data-pipeline/requirements.txt, one exact pin per engine the research
+# chose, each with a card in docs/frameworks/ and a verified licence.
+-r data-pipeline/requirements.txt
