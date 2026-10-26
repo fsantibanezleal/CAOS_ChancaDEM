@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hp500-survey.schema.json",
+  "title": "Hp500Survey",
+  "description": "Contract 1 (ingestion of real data), catalog row hp500-survey 1.0.0: one industrial survey of a Metso HP500 secondary cone crusher crushing itabirite iron ore, as accepted by data-pipeline/pipeline/hp500/surveys.py from the table data/examples/hp500-surveys.csv (columns survey, f80_mm, css_mm, feed_tph, power_kw), transcribed verbatim from Table A1 of Rocha, Campos, Silva and Tavares (2024), Minerals 14(9), 919, https://doi.org/10.3390/min14090919, licensed CC BY 4.0. The power is the paper's estimate from the measured electric current. A row that fails a rule is rejected with a reason; the table must hold the ten published surveys, numbered 1 to 10 without a gap (a rule the schema cannot state; the producer test checks it).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["survey", "f80_mm", "css_mm", "feed_tph", "power_kw"],
+  "properties": {
+    "survey": {"type": "integer", "minimum": 1, "maximum": 10, "description": "The survey number as published."},
+    "f80_mm": {"type": "number", "exclusiveMinimum": 0, "maximum": 400, "description": "Measured feed 80 percent passing size, mm."},
+    "css_mm": {"type": "number", "exclusiveMinimum": 0, "maximum": 200, "description": "Measured closed-side setting, mm."},
+    "feed_tph": {"type": "number", "exclusiveMinimum": 0, "maximum": 5000, "description": "Measured solid feed rate, tonnes per hour."},
+    "power_kw": {"type": "number", "exclusiveMinimum": 0, "maximum": 1000, "description": "Crusher power estimated from the measured current, kW."}
+  }
+}

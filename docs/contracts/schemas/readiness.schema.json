@@ -7,7 +7,7 @@
   "additionalProperties": false,
   "required": ["schema", "product_version", "catalog_sha256", "contracts"],
   "properties": {
-    "schema": {"const": "example.readiness/v1"},
+    "schema": {"const": "chancadem.readiness/v1"},
     "product_version": {"$ref": "#/$defs/version"},
     "catalog_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "SHA-256 of docs/contracts/catalog.md (its UTF-8 bytes with CRLF normalised to LF) the document was computed from."},
     "contracts": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/entry"}}
