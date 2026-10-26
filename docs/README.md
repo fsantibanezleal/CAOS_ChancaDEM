@@ -1,38 +1,21 @@
-# ChancaDEM, documentation wiki
+# Docs, the product wiki
 
-The navigable wiki for ChancaDEM (ADR-0056), authored as the product is built. ChancaDEM is a public, didactic
-**crusher-comminution studio**: set the machine, eccentric speed, throw, closed-side-setting (CSS) and feed size
-distribution on a cone / jaw / gyratory crusher and watch the product gradation, throughput and power form, a
-pure-TypeScript **Whiten population-balance + Evertsson capacity + Bond power** engine runs live, with a learned
-**surrogate MLP** (instant differentiable what-if) and a **denoising autoencoder** (operating-anomaly / OOD score),
-both running in the browser via onnxruntime-web.
-
-## What it is / what it is not
-
-* **Is:** a real, interactive comminution sandbox, pick one of 17 circuit cases (primary gyratory/jaw, secondary
-  cone, tertiary cone/short-head, + negative/invalid/calibration controls), move the sliders, and every view reacts;
-  the surrogate gives an instant what-if and the AE flags when the query steers off the trained manifold.
-* **Is not:** a plant control system. The physics **engine is the source of truth and the surrogate emulates it**,
-  not a real plant; the engine's constants are illustrative, pending calibration to published cone data (Duarte et
-  al. 2021, the CK1 anchor case is defined, the fit is not yet executed). The 3D chamber is a
-  kinematic animation; the offline 2-D DEM tracer is the documented next increment. No real plant data is used.
+The product wiki (ADR-0056), written as the product is built, unit by unit, never at the end. The pipeline, its
+validation and these documents are the product; the web app is its companion workbench. The design, with every
+requirement and its gate, is [design/SDD.md](design/SDD.md).
 
 ## Map
+- **[architecture/](architecture/)**, how the repo works: the frozen base, the two data contracts, determinism +
+  trace, the live/precompute gate, the staged pipeline, model evaluation, deploy.
+- **[frameworks/](frameworks/)**, one card per research-chosen engine/library (what/why · install · usage ·
+  applying). The deep research, made binding (each is pinned in a `requirements-*.txt`).
+- **[guides/](guides/)**, runnable how-tos: **instantiate the template**, run the precompute pipeline,
+  **bring your own data**, the GPU lane, run the API.
+- **[cases/](cases/)**, the CATEGORY taxonomy + the coverage matrix + one page per documented case.
 
-| Folder | What it answers |
-|---|---|
-| [`architecture/`](architecture/README.md) | the two data contracts, the staged offline pipeline (two-language), the lane gate, determinism, model evaluation, deploy |
-| [`frameworks/`](frameworks/README.md) | the binding engines (the Whiten/Evertsson/Bond TS engine, PyTorch, ONNX/onnxruntime, NumPy) + the method cards (surrogate MLP, denoising AE) |
-| [`cases/`](cases/README.md) | the 17-case circuit matrix by category + the controls + the honesty |
-| [`guides/`](guides/README.md) | run the pipeline, regenerate the models (Node sweep + torch), bring your own operating point |
-| [`../data/README.md`](../data/README.md) | the data contract (Contract 1 schema + outlier policy; Contract 2 artifact layout) |
-
-## The three lanes (at a glance)
-
-1. **Offline (precompute, heavy, two-language)**, a Node sweep of the TS engine (`sweep/gen_sweep.mjs`) produces the
-   labels; torch trains the surrogate + AE and exports ONNX. Local-only (`--retrain`); outputs committed under
-   `data/derived/`.
-2. **Live (client-side)**, the TS Whiten/Evertsson/Bond engine + onnxruntime-web (surrogate + AE), in the browser.
-3. **Replay (static)**, the committed per-case traces + metrics; the default (numpy-only) pipeline rebuilds them.
-   Today this is a build/CI artifact lane: the SPA fetches the shared learned-tier JSONs, and no page consumes the
-   per-case traces yet.
+## Honesty + data policy
+- Numbers come from the calibrated engine / committed artifacts, never from a claim. The EXAMPLE engine (SIR) is
+  synthetic and clearly labelled; a real product states sources, licenses and what is real vs synthetic.
+- Public derived artifacts are committed (`data/derived/`); raw/private sources stay out of git (`data/raw/`,
+  vault) per ADR-0055. The two data contracts ([architecture/08_data-contracts.md](architecture/08_data-contracts.md))
+  govern raw→pipeline and pipeline→web.

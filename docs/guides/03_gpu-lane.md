@@ -1,8 +1,12 @@
-# 03, GPU lane (dormant)
+# Guide, the GPU lane (optional)
 
-This solution does not require a GPU at the moment. ChancaDEM's training is tiny (a small MLP + a denoising AE over a
-few thousand sweep points, seconds on CPU). `requirements-gpu.txt` is a dormant placeholder.
+Only for products whose offline engine/sweep/training genuinely needs CUDA (large DEM, big Monte-Carlo, heavy
+model training). Never required for the live/replay path.
 
-Activate only if a future heavy increment (e.g. a much larger sweep or a deep DEM-surrogate) makes training slow:
-install the CUDA torch build, document the pin in `requirements-gpu.txt` + this guide, and keep the CPU path as the
-default reproducible lane.
+1. Pin the CUDA build in `requirements-gpu.txt` (e.g. `cupy-cuda12x`, `torch==…+cu12x`, `numba`, `taichi`).
+2. On a CUDA box: `.venv-pipeline/bin/python -m pip install -r requirements-gpu.txt`.
+3. Document the engine in `docs/frameworks/<tool>/`.
+
+The committed artifacts are produced offline regardless of lane, so a GPU-only product still deploys as a static
+replay (the browser never needs the GPU). The template's EXAMPLE has no GPU step, `requirements-gpu.txt` is a
+commented placeholder.

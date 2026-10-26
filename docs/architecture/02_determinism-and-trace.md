@@ -1,18 +1,10 @@
-# 02, Determinism & the replay trace
+# Determinism + the trace
 
-## Determinism
+**A run is a pure function of `(params, seed)`.** Use `core/rng.py :: make_rng(seed)`, never a global/implicit
+RNG. Same inputs ⇒ byte-identical artifact (asserted in `tests/test_pipeline_smoke.py`). This is what makes the
+committed artifact a trustworthy source-of-truth the SPA merely animates (ADR-0052 / ADR-0054).
 
-Every run is a pure function of `(case, seed)`. The TS engine is analytic (no RNG), so `case-results.json` is fully
-deterministic; the LHS sweep uses a seeded mulberry32 (seed 12345 train / 67890 held-out); torch training seeds
-`torch.manual_seed(0); np.random.seed(0)`. Consequence: re-running the default pipeline produces **byte-identical**
-traces + manifests (the CI determinism guard), no wall-clock in any committed artifact.
-
-## The compact trace (`chancadem.trace/v1`)
-
-`core/trace.py` builds one small JSON per case from the committed engine outputs (`case-results.json`) + the
-surrogate's held-out metrics. The payload carries the case's operating point + the engine result (P80/P50/P20, the
-%-passing grid at {1,4,8,16,32} mm, throughput, power, reduction ratio, specific energy, regime, validity) + the
-surrogate's accuracy on the key outputs (referenced from `surrogate_metrics.json`, not recomputed).
-
-The frontend mirrors this shape in `frontend/src/lib/contract.types.ts` (`CaseTrace` / `CaseResult` /
-`OperatingPoint`), so a drift between the Python trace and the TS reader **fails `tsc`**.
+**The trace** (`core/trace.py`, schema `example.trace/v1`) is the compact, decimated replay artifact, not the raw
+solver state. `build_trace()` down-samples long trajectories to `MAX_POINTS` so the committed JSON stays small.
+For a heavy product the offline run also emits the full raw output (kept local/LFS, git-ignored); only the compact
+trace is committed and shipped. Its shape is mirrored by `frontend/src/lib/contract.types.ts` (CONTRACT 2).

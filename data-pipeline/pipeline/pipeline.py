@@ -1,136 +1,161 @@
-"""The offline pipeline orchestrator + CLI (ADR-0057). Per case it applies CONTRACT 1, builds the compact per-case
-trace from the REAL committed engine outputs (case-results.json) + the surrogate metrics, runs the lane gate, and
-writes the manifest + a flat index (CONTRACT 2). The committed ONNX + metrics + case-results ARE the heavy lane's
-real outputs, so the DEFAULT path is light (numpy/stdlib, no torch/node) and deterministic. `--retrain` first
-regenerates those artifacts (Node sweep of the TS engine -> torch train) and re-bakes case-results.
+"""Offline pipeline orchestrator and CLI.
 
-    python data-pipeline/run.py                # rebuild all replay traces + manifests from committed artifacts
-    python data-pipeline/run.py S01            # one case
-    python data-pipeline/run.py all --retrain  # node sweep + torch train, then rebuild
+The canonical bake is an explicit release operation. Tests and CI smoke runs
+must pass ``--output`` so they cannot mutate committed scientific evidence.
+
+    python data-pipeline/run.py            # all cases
+    python data-pipeline/run.py EX02_epidemic --seed 7
+    python data-pipeline/run.py EX02_epidemic --output build/smoke
+    python data-pipeline/run.py all --no-train       # never trains: the released bundle, else the baseline answers
+    python data-pipeline/run.py readiness            # recompute data/derived/readiness.json from the catalog (no bake)
 """
 from __future__ import annotations
 
 import argparse
-import subprocess
+import time
+from dataclasses import dataclass
 from pathlib import Path
 
 from . import registry
+from .core import expect as expectations
+from .core import readiness
 from .core.manifest import build_index
-from .io.contract import validate_records
-from .io.formats import read_json, write_json
-from .stages import export
+from .core.rng import make_rng
+from .io.contract import validate_rows
+from .io.formats import write_json
+from .io.schema import SIRParams
+from .stages import evaluate, export, infer
+from .stages import train as train_stage
 
+# data-pipeline/pipeline/pipeline.py -> parents[2] = repo root (works under `pip install -e .` too)
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DERIVED = REPO_ROOT / "data" / "derived"
 MANIFESTS = DERIVED / "manifests"
-SWEEP_DIR = Path(__file__).resolve().parent / "sweep"
+MODELS = REPO_ROOT / "models"
+
+REPO = REPO_ROOT  # the repository the readiness document describes (catalog, VERSION, params table)
 
 STAGES = ("preprocess", "feature_extraction", "train", "infer", "evaluate", "export")
 
 
-def _load_artifacts() -> tuple[dict, dict]:
-    need = ["case-results.json", "surrogate_metrics.json"]
-    missing = [n for n in need if not (DERIVED / n).exists()]
-    if missing:
-        raise SystemExit(
-            f"missing committed artifacts in {DERIVED}: {missing}. case-results.json is baked by the TS engine "
-            f"(sweep/bake_cases.mjs); surrogate_metrics.json is the heavy lane's output, run --retrain to regenerate."
-        )
-    return read_json(DERIVED / "case-results.json"), read_json(DERIVED / "surrogate_metrics.json")
+@dataclass(frozen=True)
+class PipelinePaths:
+    root: Path
+    manifests: Path
+    models: Path
+
+    @classmethod
+    def from_output(cls, output: str | Path | None = None) -> "PipelinePaths":
+        if output is None:
+            return cls(root=DERIVED, manifests=MANIFESTS, models=MODELS)
+        root = Path(output).resolve()
+        return cls(root=root, manifests=root / "manifests", models=root / "models")
 
 
-def _contract_flags() -> list[dict]:
-    """Apply CONTRACT 1 to the 17 cases' operating points, proves the ingestion gate, carries flags (e.g. the
-    pass-through / invalid controls)."""
-    rows = [{"case_id": c.id, "machine": c.machine, "cssMm": c.cssMm, "throwMm": c.throwMm, "speedRpm": c.speedRpm,
-             "feedX63Mm": c.feedX63Mm, "feedM": c.feedM, "oreAxb": c.oreAxb} for c in registry.list_cases()]
-    rep = validate_records(rows)
-    return rep.flagged
+def _released_model(models_dir: Path) -> dict | None:
+    return train_stage.load_released(models_dir)
 
 
-def precompute(case_id: str, seed: int = 42,
-               artifacts: tuple[dict, dict] | None = None, flags: list[dict] | None = None) -> dict:
+def _train_model(models_dir: Path) -> dict:
+    # didactic surrogate: train on the non-degenerate case params; held-out eval uses a disjoint synthetic draw
+    params = [c.params for c in registry.list_cases() if c.params.I0 > 0]
+    return train_stage.run(params, str(models_dir))
+
+
+def _holdout_params(seed: int) -> list[SIRParams]:
+    rng = make_rng(seed + 999)  # disjoint from training => leakage-safe
+    out: list[SIRParams] = []
+    for i in range(20):
+        out.append(SIRParams(f"_holdout{i}", beta=float(rng.uniform(0.15, 1.2)),
+                             gamma=float(rng.uniform(0.15, 0.40)), N=100_000.0, I0=50.0))
+    return out
+
+
+def _engine_ms(params: SIRParams, repeats: int = 5) -> float:
+    """The cost the lane gate judges: one engine run, after a warm-up, as the median of several. Timing the whole case
+    (validation, evaluation, the cold start of the first case in a bake) made the verdict depend on bake order: the
+    first case baked was once labelled precompute while it runs in microseconds (found 2026-10-04)."""
+    infer.run(params)
+    times = []
+    for _ in range(repeats):
+        t0 = time.perf_counter()
+        infer.run(params)
+        times.append((time.perf_counter() - t0) * 1000.0)
+    return sorted(times)[repeats // 2]
+
+
+def precompute(
+    case_id: str,
+    seed: int = 42,
+    model: dict | None = None,
+    *,
+    output_root: str | Path | None = None,
+    train: bool = True,
+) -> dict:
+    """``model`` None trains one, unless ``train`` is False: then None means the baseline answers."""
+    paths = PipelinePaths.from_output(output_root)
     case = registry.get_case(case_id)
-    case_results, surrogate_metrics = artifacts if artifacts is not None else _load_artifacts()
-    return export.build_replay(
-        case, derived_dir=str(DERIVED), manifests_dir=str(MANIFESTS),
-        case_results=case_results, surrogate_metrics=surrogate_metrics,
-        contract_flags=(flags if flags is not None else _contract_flags()), seed=seed,
-    )
+    if model is None and train:
+        model = _train_model(paths.models)
+    # run CONTRACT 1 on the case params (proves the gate + carries flags); a real product reads raw data here
+    rep = validate_rows([{"case_id": case.params.case_id, "beta": case.params.beta, "gamma": case.params.gamma,
+                          "N": case.params.N, "I0": case.params.I0, "days": case.params.days}])
+    params = rep.accepted[0] if rep.accepted else case.params
+    result = infer.run(params)
+    expect = expectations.check(case.id, case.expect, result)  # a result outside its declared range fails the bake
+    run_ms = _engine_ms(params)
+    metrics = evaluate.run(model, _holdout_params(seed))
+    return export.run(case=case, params=params, result=result, seed=seed, run_ms=run_ms,
+                      flags=rep.flagged, metrics=metrics, models=evaluate.models_used(model), expect=expect, derived_dir=str(paths.root),
+                      manifests_dir=str(paths.manifests))
 
 
-def _node(*args: str) -> None:
-    subprocess.run(["node", "--import", "tsx", *args], check=True, cwd=str(REPO_ROOT))
+def write_readiness(paths: PipelinePaths) -> dict:
+    """Compute the readiness document for the repository and the outputs under ``paths``, and write it."""
+    doc = readiness.compute(repo_root=REPO, derived_root=paths.root, models_dir=paths.models)
+    readiness.write(paths.root, doc)
+    return doc
 
 
-def retrain(seed: int = 42) -> None:
-    """HEAVY lane: Node sweep (the TS engine) -> torch train -> export ONNX/metrics; re-bake case-results."""
-    from .stages import evaluate, infer, preprocess, train
-
-    print("[retrain] node sweep (train + held-out test) ...", flush=True)
-    _node(str(SWEEP_DIR / "gen_sweep.mjs"), "12345", "cz-sweep", "1400")
-    _node(str(SWEEP_DIR / "gen_sweep.mjs"), "67890", "cz-sweep-test", "480")
-    pre = preprocess.run(str(SWEEP_DIR))
-    print(f"  {pre['report'].summary()}; train {len(pre['train'])} | test {len(pre['test'])}", flush=True)
-    tout = train.run(pre["train"])
-    tout["nTrain"] = len(pre["train"])
-    pred = infer.run(tout, pre["test"])
-    metrics, scalers = evaluate.run(tout, pre["test"], pred)
-    export.export_models(train_out=tout, eval_metrics=metrics, scalers=scalers, derived_dir=str(DERIVED))
-    print("[retrain] re-bake case-results (TS engine over the 18 cases) ...", flush=True)
-    _node(str(SWEEP_DIR / "bake_cases.mjs"))
-    print("[retrain] bridge the HP500 real surveys through the TS engine (backbone.json) ...", flush=True)
-    _node(str(SWEEP_DIR / "bake_hp500.mjs"))
-    print(f"[retrain] wrote ONNX + scalers + metrics + case-results + hp500 backbone -> {DERIVED}", flush=True)
-
-
-def rebuild_hp500_loo() -> None:
-    """Light lane: recompute the CrusherCal LOO validation (data/derived/hp500/loo.json) from the committed
-    backbone.json (bridged from the TS engine). numpy-only + deterministic, so it is regenerated on every plain
-    `pipeline all`, proving the held-out numbers are reproducible from the committed backbone (no Node needed)."""
-    from . import hp500  # noqa: F401  (package marker)
-    from .hp500 import loo
-
-    if not loo.BACKBONE.exists():
-        print(f"[hp500] no backbone.json ({loo.BACKBONE}); run --retrain to bridge the TS engine. Skipping LOO.")
-        return
-    backbone = read_json(loo.BACKBONE)
-    write_json(loo.OUT, loo.run(backbone))
-    print(f"[hp500] rebuilt CrusherCal LOO -> {loo.OUT}")
-
-
-def run_all(seed: int = 42) -> list[dict]:
-    artifacts = _load_artifacts()
-    flags = _contract_flags()
+def run_all(seed: int = 42, *, output_root: str | Path | None = None, train: bool = True) -> list[dict]:
+    """Bake every case. ``train=False`` never trains: the model is the released bundle, or None (the baseline
+    answers) when none is valid."""
+    paths = PipelinePaths.from_output(output_root)
+    model = _train_model(paths.models) if train else _released_model(paths.models)
     entries = []
     for c in registry.list_cases():
-        precompute(c.id, seed=seed, artifacts=artifacts, flags=flags)
-        entries.append({"case_id": c.id, "category": c.category, "stage": c.stage,
-                        "manifest_path": f"manifests/{c.id}.json"})
-    write_json(MANIFESTS / "index.json", build_index(entries))
-    rebuild_hp500_loo()
+        precompute(c.id, seed=seed, model=model, output_root=paths.root, train=train)
+        entries.append({"case_id": c.id, "title": c.title, "category": c.category, "manifest_path": f"manifests/{c.id}.json"})
+    write_json(paths.manifests / "index.json", build_index(entries, registry.default_case()))
+    write_readiness(paths)
     return entries
 
 
 def main() -> None:
     ap = argparse.ArgumentParser(prog="pipeline.pipeline")
-    ap.add_argument("case", nargs="?", default="all", help="a case id, or 'all'")
+    ap.add_argument("case", nargs="?", default="all", help="a case id, 'all', or 'readiness' (no bake)")
     ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--retrain", action="store_true",
-                    help="regenerate the ONNX/metrics/case-results (Node sweep + torch) before rebuilding the replay")
+    ap.add_argument("--output", type=Path,
+                    help="sandbox output root; omit only for an intentional canonical release bake")
+    ap.add_argument("--no-train", action="store_true",
+                    help="never train: use the released bundle, or the analytic baseline when none is valid")
     args = ap.parse_args()
-    if args.retrain:
-        retrain(args.seed)
-    if args.case == "all":
-        entries = run_all(args.seed)
-        print(f"precomputed {len(entries)} cases -> {DERIVED}")
+    paths = PipelinePaths.from_output(args.output)
+    if args.case == "readiness":
+        doc = write_readiness(paths)
+        print(f"readiness -> {paths.root / 'readiness.json'} "
+              + ", ".join(f"{e['id']}={e['state']}" for e in doc["contracts"]))
+    elif args.case == "all":
+        entries = run_all(args.seed, output_root=args.output, train=not args.no_train)
+        print(f"precomputed {len(entries)} cases -> {paths.root}")
         for e in entries:
-            print(f"  {e['case_id']:6s} [{e['category']}]")
-        print(f"index -> {MANIFESTS / 'index.json'}")
+            print(f"  {e['case_id']:20s} [{e['category']['en']}]")
+        print(f"index -> {paths.manifests / 'index.json'}")
     else:
-        m = precompute(args.case, args.seed)
+        model = _released_model(paths.models) if args.no_train else None
+        m = precompute(args.case, args.seed, model, output_root=args.output, train=not args.no_train)
         print(f"precomputed {args.case}: lane={m['lane']} bytes={m['artifact']['bytes']} "
-              f"metrics={m['metrics']} -> {DERIVED / m['artifact']['path']}")
+              f"metrics={m['metrics']} -> {paths.root / m['artifact']['path']}")
 
 
 if __name__ == "__main__":

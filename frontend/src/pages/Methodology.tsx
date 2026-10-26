@@ -1,196 +1,230 @@
-import { Cite, Equation, InlineMath, Refs, SubTabs, useShellLang } from '@fasl-work/caos-app-shell';
+// The methods of the example, one topic each (ADR-0017 section 2.1): the classical model and its relations, then the
+// learned surrogate and how it is judged. Every topic is one `method` section with its paragraphs, two captioned
+// equations, a figure, one honest callout and its references. A product replaces the methods and keeps the structure.
+import { Callout, Cite, DocPage, DocSection, Equation, Figure, Tabs, useShellLang } from '@fasl-work/caos-app-shell';
+import { P, useT } from '../content/bi';
+import { FlowFigure } from '../content/figures';
 
-// Methodology, the model chain, one sub-tab per stage, with the governing equations. SVG diagrams per sub-tab
-// are added in the runtime stage; the equations + derivations are the substance and are complete here.
-const sv = { maxWidth: 560, display: 'block', margin: '0.5rem auto', font: '11px var(--font-sans, sans-serif)' } as const;
-
-export default function Methodology() {
-  const es = useShellLang() === 'es';
-  const tabs = [
-    { id: 'chamber', label: es ? 'Cámara y cinemática' : 'Chamber & kinematics', content: <Chamber es={es} /> },
-    { id: 'classify', label: es ? 'Clasificación C(d)' : 'Classification C(d)', content: <Classify es={es} /> },
-    { id: 'breakage', label: es ? 'Fractura B / t10' : 'Breakage B / t10', content: <Breakage es={es} /> },
-    { id: 'whiten', label: es ? 'Balance de Whiten' : 'Whiten balance', content: <Whiten es={es} /> },
-    { id: 'capacity', label: es ? 'Capacidad y potencia' : 'Capacity & power', content: <Capacity es={es} /> },
-    { id: 'dem', label: es ? 'DEM / SOTA' : 'DEM / SOTA', content: <DemSota es={es} /> },
-    { id: 'calib', label: es ? 'Calibración y UQ' : 'Calibration & UQ', content: <CalibUq es={es} /> },
-    { id: 'learned', label: es ? 'Tier aprendido' : 'Learned tier', content: <Learned es={es} /> },
-  ];
+function Model() {
+  const t = useT();
   return (
-    <section className="page-body prose">
-      <h2>{es ? 'Metodología' : 'Methodology'}</h2>
-      <p className="tz-lead">{es ? 'La cadena de modelos, citada de extremo a extremo: de la geometría de la cámara al producto, la capacidad y la potencia; el frente DEM/SOTA que no somos; la calibración a datos reales con validación held-out (LOO) e incertidumbre; y los dos modelos aprendidos.' : 'The model chain, cited end-to-end: from chamber geometry to product, capacity and power; the DEM/SOTA frontier we are not; the calibration to real data with held-out (LOO) validation and uncertainty; and the two learned models.'}</p>
-      <SubTabs tabs={tabs} ariaLabel="methodology" />
-      <Refs ids={['whiten1972', 'narayanan1988', 'andersen1988', 'austin1984', 'evertsson2000', 'evertsson1999', 'evertsson1997', 'bond1952', 'morrell2009', 'quist2016', 'delaney2015', 'johansson2017val', 'koh2021', 'rocha2024', 'duarte2021', 'napiermunn1996']} label="References" />
-    </section>
+    <DocSection title={{ en: 'The model and its threshold', es: 'El modelo y su umbral' }} area="method" kind="classical" refs={['km1927', 'hethcote2000', 'diekmann1990', 'vdd2002']}>
+      <P
+        en={<>A closed population of N people is split into the susceptible S, the infected I and the recovered R <Cite id="km1927" />. Contacts are homogeneous: each infected person infects susceptible people at a rate proportional to their share of the population, with contact rate β, and recovers at rate γ, so the infectious period is exponential with mean 1/γ <Cite id="hethcote2000" />.</>}
+        es={<>Una población cerrada de N personas se divide en susceptibles S, contagiados I y recuperados R <Cite id="km1927" />. Los contactos son homogéneos: cada persona contagiada contagia a los susceptibles a una tasa proporcional a su fracción de la población, con tasa de contacto β, y se recupera a tasa γ, de modo que el período infeccioso es exponencial con media 1/γ <Cite id="hethcote2000" />.</>}
+      />
+      <Equation
+        tex="\frac{dS}{dt} = -\beta \frac{S I}{N}, \qquad \frac{dI}{dt} = \beta \frac{S I}{N} - \gamma I, \qquad \frac{dR}{dt} = \gamma I"
+        caption={t('The SIR system; S + I + R = N at every time.', 'El sistema SIR; S + I + R = N en todo instante.')}
+      />
+      <Figure caption={t('The three compartments and the two flows between them.', 'Los tres compartimentos y los dos flujos entre ellos.')}>
+        <FlowFigure stages={[t('Susceptible S', 'Susceptibles S'), t('Infected I', 'Contagiados I'), t('Recovered R', 'Recuperados R')]} edges={['β', 'γ']} label={t('The SIR compartments', 'Los compartimentos SIR')} />
+      </Figure>
+      <P
+        en="The assumptions are the limits of the example: no births or deaths, no waning immunity, no structure by age or place, and a deterministic population large enough for fractions to be meaningful. A product replaces this model with the one its research chose; the structure of the page stays."
+        es="Los supuestos son los límites del ejemplo: sin nacimientos ni muertes, sin pérdida de inmunidad, sin estructura por edad o lugar, y una población determinista lo bastante grande para que las fracciones tengan sentido. Un producto reemplaza este modelo por el que eligió su investigación; la estructura de la página se mantiene."
+      />
+      <P
+        en={<>The basic reproduction number R0 is the expected number of infections caused by one infected person in a fully susceptible population <Cite id="diekmann1990" />. For this model it is the contact rate times the mean infectious period. While the effective number R0 S/N stays above one, infections grow; the epidemic peaks when it crosses one <Cite id="vdd2002" />.</>}
+        es={<>El número reproductivo básico R0 es el número esperado de contagios que causa una persona contagiada en una población totalmente susceptible <Cite id="diekmann1990" />. En este modelo es la tasa de contacto por el período infeccioso medio. Mientras el número efectivo R0 S/N se mantiene sobre uno, los contagios crecen; la epidemia alcanza su pico cuando cruza uno <Cite id="vdd2002" />.</>}
+      />
+      <Equation tex="R_0 = \frac{\beta}{\gamma}, \qquad R_t = R_0 \frac{S(t)}{N}, \qquad p_c = 1 - \frac{1}{R_0}" caption={t('The basic and effective reproduction numbers, and the share p_c that must be immune to prevent an outbreak.', 'Los números reproductivos básico y efectivo, y la fracción p_c que debe ser inmune para impedir un brote.')} />
+      <P
+        en="The immunisation variants of the App move a share v of the susceptible to R at the start. The outbreak is prevented when v exceeds p_c, which is why the 60% variant suppresses the fast-burn case only partly and the slow-spread case entirely."
+        es="Las variantes de inmunización de la App mueven una fracción v de los susceptibles a R al inicio. El brote se impide cuando v supera p_c; por eso la variante de 60% suprime sólo en parte el caso de combustión rápida y por completo el de propagación lenta."
+      />
+      <Callout variant="honest" title={t('What this model is not', 'Lo que este modelo no es')}>
+        {t('It is a textbook model with homogeneous mixing. It does not describe a real outbreak, a region or a hospital, and it is not a forecast.', 'Es un modelo de texto con mezcla homogénea. No describe un brote real, una región ni un hospital, y no es un pronóstico.')}
+      </Callout>
+    </DocSection>
   );
 }
 
-function DemSota({ es }: { es: boolean }) {
-  return (<>
-    <p>{es ? <>El frente de vanguardia para el mecanismo de un chancador de cono es el DEM (método de elementos discretos): partículas que fluyen y se fracturan resueltas por contacto. Dos familias: reemplazo de partículas (PRM, Cleary y Sinnott <Cite id="cleary2015" paren />; Delaney et al. <Cite id="delaney2015" paren />, super-cuádricas que se rompen en progenie dimensionada por el t10 del JKMRC) y roca de partículas ligadas (Quist y Evertsson <Cite id="quist2016" paren />), validadas contra laboratorio (Johansson et al. <Cite id="johansson2017val" paren />). El frente para la predicción rápida es un surrogate DNN de un modelo fenomenológico (Koh et al. <Cite id="koh2021" paren />).</> : <>The frontier for a cone crusher's mechanism is DEM (the discrete element method): flowing, breaking particles resolved by contact. Two families: particle replacement (PRM, Cleary and Sinnott <Cite id="cleary2015" paren />; Delaney et al. <Cite id="delaney2015" paren />, super-quadrics breaking into progeny sized by the JKMRC t10) and bonded-particle rock (Quist and Evertsson <Cite id="quist2016" paren />), validated against lab data (Johansson et al. <Cite id="johansson2017val" paren />). The frontier for fast prediction is a DNN surrogate of a phenomenological model (Koh et al. <Cite id="koh2021" paren />).</>}</p>
-    <div className="tz-note">{es ? <><b>ChancaDEM no es un solver DEM.</b> Ejecuta un modelo de balance poblacional (PBM) / empírico (Whiten + Evertsson + Bond) en TypeScript puro, en vivo en el navegador. El DEM es el frente de referencia que citamos y contra el que nos posicionamos, no lo que se ejecuta en el navegador (un paso DEM industrial toma horas de GPU). Ese es exactamente el hueco que ocupamos: una recalibración validada held-out, con incertidumbre, sobre datos abiertos, entregada en vivo.</> : <><b>ChancaDEM is not a DEM solver.</b> It runs a population-balance (PBM) / empirical model (Whiten + Evertsson + Bond) in pure TypeScript, live in the browser. DEM is the reference frontier we cite and position against, not what runs in the browser (an industrial DEM step is GPU-hours). That gap is exactly what we occupy: a held-out-validated, uncertainty-aware recalibration on open data, delivered live.</>}</div>
-    <svg viewBox="0 0 560 190" width="100%" style={sv} role="img" aria-label="PBM vs DEM positioning">
-      <rect x="20" y="30" width="240" height="130" rx="8" fill="color-mix(in oklab,#3fb950 10%,transparent)" stroke="#3fb950" strokeWidth="1.2" />
-      <rect x="300" y="30" width="240" height="130" rx="8" fill="color-mix(in oklab,#58a6ff 8%,transparent)" stroke="var(--color-fg-subtle)" strokeWidth="1.2" strokeDasharray="4 3" />
-      <text x="140" y="52" textAnchor="middle" fill="#3fb950" fontSize="12" fontWeight="700">ChancaDEM (PBM)</text>
-      <text x="420" y="52" textAnchor="middle" fill="var(--color-fg-subtle)" fontSize="12" fontWeight="700">DEM (SOTA frontier)</text>
-      <text x="140" y="78" textAnchor="middle" fill="var(--color-fg-subtle)" fontSize="10">Whiten C + B, Evertsson Q</text>
-      <text x="140" y="96" textAnchor="middle" fill="var(--color-fg-subtle)" fontSize="10">{es ? 'sub-ms, en vivo (navegador)' : 'sub-ms, live (browser)'}</text>
-      <text x="140" y="120" textAnchor="middle" fill="#3fb950" fontSize="10">{es ? 'LOO + UQ, datos abiertos' : 'LOO + UQ, open data'}</text>
-      <text x="140" y="138" textAnchor="middle" fill="#3fb950" fontSize="10">{es ? 'entregado en vivo' : 'delivered live'}</text>
-      <text x="420" y="78" textAnchor="middle" fill="var(--color-fg-faint)" fontSize="10">PRM / bonded-particle</text>
-      <text x="420" y="96" textAnchor="middle" fill="var(--color-fg-faint)" fontSize="10">{es ? 'horas de GPU, offline' : 'GPU-hours, offline'}</text>
-      <text x="420" y="120" textAnchor="middle" fill="var(--color-fg-faint)" fontSize="10">{es ? 'ajuste en-muestra, sin UQ' : 'in-sample fit, no UQ'}</text>
-      <text x="420" y="138" textAnchor="middle" fill="var(--color-fg-faint)" fontSize="10">{es ? 'progenie DWT (t10) ← puente' : 'DWT (t10) progeny ← bridge'}</text>
-    </svg>
-    <p>{es ? 'El puente entre ambos: el DEM SOTA dimensiona la progenie de fractura con la misma familia de aparición t10-tn del JKMRC que usa nuestro PBM (Delaney et al.), así que las tendencias de fractura son comparables aunque el mecanismo se resuelva distinto.' : 'The bridge between them: the SOTA DEM sizes breakage progeny with the same JKMRC t10-tn appearance family our PBM uses (Delaney et al.), so breakage trends are comparable even though the mechanism is resolved differently.'}</p>
-  </>);
+function FinalSize() {
+  const t = useT();
+  return (
+    <DocSection title={{ en: 'The final size', es: 'El tamaño final' }} area="method" kind="classical" refs={['km1927', 'miller2012']}>
+      <P
+        en={<>Dividing the first equation by the third gives dS/dR = -R0 S/N, so S falls exponentially in R. When the epidemic ends, I is zero and R is N minus S, which closes the relation that fixes how many are ever infected <Cite id="km1927" />. Miller derives it, and its extensions, directly from this argument <Cite id="miller2012" />.</>}
+        es={<>Al dividir la primera ecuación por la tercera se obtiene dS/dR = -R0 S/N, de modo que S decae exponencialmente en R. Cuando la epidemia termina, I es cero y R es N menos S, lo que cierra la relación que fija cuántos se contagian alguna vez <Cite id="km1927" />. Miller la deriva, junto con sus extensiones, directamente desde este argumento <Cite id="miller2012" />.</>}
+      />
+      <Equation tex="S_\infty = S_0 \, e^{-R_0 (N - S_\infty)/N} \quad \Longrightarrow \quad z = 1 - e^{-R_0 z} \;\; (S_0 \to N)" caption={t('The final-size relation; z is the share of the population ever infected.', 'La relación de tamaño final; z es la fracción de la población alguna vez contagiada.')} />
+      <P
+        en="It does not depend on the time course, only on R0, so it is an independent check of any engine: run long enough, the simulated attack rate must reach z. The Validation group of the App plots both. Where they part, either the horizon ended the run before the epidemic did, or R0 is so close to one that the epidemic is still burning."
+        es="No depende de la trayectoria temporal, sólo de R0, así que es una verificación independiente de cualquier motor: con una corrida lo bastante larga, la tasa de ataque simulada debe llegar a z. El grupo Validación de la App grafica ambas. Donde se separan, o el horizonte terminó la corrida antes que la epidemia, o R0 está tan cerca de uno que la epidemia sigue activa."
+      />
+      <P
+        en="The relation has no closed form, so the engine solves it numerically. It starts from z equal to one and applies Newton's method to the function z minus one plus e to the minus R0 z, stopping when a step changes z by less than a hundred-trillionth. For R0 at or below one the only solution is zero, and the function returns it directly."
+        es="La relación no tiene forma cerrada, así que el motor la resuelve numéricamente. Parte de z igual a uno y aplica el método de Newton a la función z menos uno más e elevado a menos R0 z, y se detiene cuando un paso cambia z en menos de una cienbillonésima. Para R0 igual o menor que uno la única solución es cero, y la función la devuelve directamente."
+      />
+      <Equation tex="z_{k+1} = z_k - \frac{z_k - 1 + e^{-R_0 z_k}}{1 - R_0 e^{-R_0 z_k}}, \qquad z_0 = 1" caption={t('Newton iteration for the final size; it converges in a handful of steps for R0 above one.', 'Iteración de Newton para el tamaño final; converge en pocos pasos para R0 sobre uno.')} />
+      <P
+        en="The final size is also the quickest sanity check of a new case. Before reading any curve, compute z from the reproduction number and ask whether the case should end near it: the epidemic case should, the slow-spread case should not within its horizon, and the sub-critical case should stay at zero. A case that disagrees with all three has a wrong parameter, not a subtle effect."
+        es="El tamaño final es también la verificación más rápida de un caso nuevo. Antes de mirar cualquier curva, calcule z a partir del número reproductivo y pregunte si el caso debería terminar cerca de él: el caso de epidemia debería, el de propagación lenta no dentro de su horizonte, y el subcrítico debería quedar en cero. Un caso que discrepa en los tres tiene un parámetro equivocado, no un efecto sutil."
+      />
+      <Figure caption={t('How the final size is checked against a run.', 'Cómo se verifica el tamaño final contra una corrida.')}>
+        <FlowFigure stages={[t('R0 from the case', 'R0 del caso'), t('Solve for z', 'Resolver z'), t('Compare with the run', 'Comparar con la corrida')]} edges={['', '']} label={t('The final-size check', 'La verificación del tamaño final')} tone="good" />
+      </Figure>
+      <Callout variant="honest" title={t('Where the check stops', 'Dónde termina la verificación')}>
+        {t('The relation holds for a closed, homogeneous population seeded by a vanishing infection. A run cut off by its horizon is expected to fall short of z, and the page says so.', 'La relación vale para una población cerrada y homogénea sembrada con una infección que tiende a cero. Una corrida cortada por su horizonte debe quedar bajo z, y la página lo dice.')}
+      </Callout>
+    </DocSection>
+  );
 }
 
-function CalibUq({ es }: { es: boolean }) {
-  return (<>
-    <p>{es ? <>El motor está calibrado a 10 encuestas industriales reales de un cono secundario Metso HP500 (mina Minas Rio, itabirita) mediante el ajuste Andersen-Whiten publicado (Rocha et al. <Cite id="rocha2024" paren />, Tabla 5), lineal en CSS y f80:</> : <>The engine is calibrated to 10 real industrial surveys of a Metso HP500 secondary cone (Minas Rio, itabirite iron ore) via the published Andersen-Whiten fit (Rocha et al. <Cite id="rocha2024" paren />, Table 5), linear in CSS and f80:</>}</p>
-    <Equation tex={String.raw`K_1=0.23\,\text{CSS}+0.30\,f_{80},\quad K_2=12+0.55\,\text{CSS}+0.40\,f_{80},\quad K_3=2.3,\quad t_{10}[\%]=64-0.12\,\text{CSS}-0.23\,f_{80}`} />
-    <p>{es ? 'La potencia del paper tiene la forma lineal Pc = ζ·Pd + Pn con ζ=1.30 y Pn=110 kW (sin carga), donde Pd es una potencia neta específica de tamaño del propio modelo del paper:' : "The paper's power has the linear form Pc = ζ·Pd + Pn with ζ=1.30 and Pn=110 kW (no-load), where Pd is a size-specific net power from the paper's own model:"}</p>
-    <Equation tex={String.raw`P_c=\zeta\,P_d+P_n,\qquad \zeta=1.30,\quad P_n=110\ \text{kW}`} />
-    <div className="tz-note">{es ? <><b>Hallazgo honesto sobre la potencia.</b> El tiro de Bond que calcula nuestro motor no es el Pd del paper (es el draw clásico de Bond, casi plano en estas encuestas), así que aplicar ζ=1.30, Pn=110 sobre nuestro Pd sobreestima. La premisa de "eliminar una sobrepredicción 2x de Bond" no se sostiene con los números del motor: se reporta como corrección en Benchmark. La potencia medida es la referencia que muestra la app. El resultado real at-bar es la paridad de t/h, no la potencia.</> : <><b>Honest finding on power.</b> The Bond draw our engine computes is not the paper's Pd (it is the classical Bond draw, nearly flat over these surveys), so applying ζ=1.30, Pn=110 on our Pd overshoots. The "removes a Bond 2x overprediction" premise does not hold against the engine's numbers: it is reported as a correction in Benchmark. The measured power is the reference the app shows. The real at-bar result is the t/h parity, not the power.</>}</div>
-    <p>{es ? 'La validación es leave-one-survey-out (LOO): para cada encuesta i se predice con las otras 9 (escalares del backbone reajustados por fold), y se comparan tres modelos en los mismos folds:' : 'Validation is leave-one-survey-out (LOO): for each survey i predict from the other 9 (backbone scalars refit per fold), comparing three models on identical folds:'}</p>
-    <Equation tex={String.raw`\hat{y}^{(-i)}_{\,M0}=\text{backbone},\quad \hat{y}^{(-i)}_{\,M1}=\text{backbone}+\underbrace{\text{clip}\big(g_\theta(\text{CSS},f_{80})\big)}_{|\Delta|\le 0.20\,\text{backbone}},\quad \hat{y}^{(-i)}_{\,M2}=\text{OLS libre}`} />
-    <svg viewBox="0 0 560 150" width="100%" style={sv} role="img" aria-label="leave-one-out folds">
-      {Array.from({ length: 10 }).map((_, i) => (
-        <g key={i}>
-          <rect x={20 + i * 52} y={40} width={44} height={22} rx={4}
-            fill={i === 3 ? 'color-mix(in oklab,#f0883e 30%,transparent)' : 'color-mix(in oklab,#3fb950 22%,transparent)'}
-            stroke={i === 3 ? '#f0883e' : '#3fb950'} strokeWidth="1.1" />
-          <text x={42 + i * 52} y={55} textAnchor="middle" fill="var(--color-fg-subtle)" fontSize="9">#{i + 1}</text>
-        </g>
-      ))}
-      <text x="20" y="30" fill="var(--color-fg-subtle)" fontSize="10">{es ? 'fold: se deja fuera #4 (naranja), se entrena con las 9 verdes, se predice #4' : 'fold: hold out #4 (orange), train on the 9 green, predict #4'}</text>
-      <text x="20" y="95" fill="#3fb950" fontSize="10">{es ? 'entrenamiento (9)' : 'train (9)'}</text>
-      <text x="200" y="95" fill="#f0883e" fontSize="10">{es ? 'validación held-out (1)' : 'held-out validation (1)'}</text>
-      <text x="20" y="120" fill="var(--color-fg-faint)" fontSize="10">{es ? 'controles: media constante · etiqueta-barajada · fold con fuga vs estricto' : 'controls: constant-mean · label-shuffle · leaky vs strict fold'}</text>
-      <text x="20" y="138" fill="var(--color-fg-faint)" fontSize="10">{es ? 'UQ: intervalo predictivo 80% = M0 ± 1.28·σ(residuo held-out); se chequea la cobertura' : 'UQ: 80% predictive interval = M0 ± 1.28·σ(held-out residual); coverage is checked'}</text>
-    </svg>
-    <p>{es ? <>Resultado (ver Benchmark): en t/h el backbone calibrado alcanza ~12% MAPE held-out (dentro de la banda ~15% del paper), supera a la media constante y pasa la etiqueta-barajada; el residuo M1 no lo supera fuera de muestra (nulo pre-registrado), así que se envía el backbone + banda empírica. La novedad es metodológica (LOO + UQ + datos abiertos + navegador en vivo), no un error menor que el DEM/paper. Segundo ancla de cono: Duarte et al. <Cite id="duarte2021" paren />.</> : <>Result (see Benchmark): for t/h the calibrated backbone reaches ~12% held-out MAPE (inside the paper's ~15% band), beats the constant-mean baseline and passes label-shuffle; the M1 residual does not beat it out-of-sample (a pre-registered null), so the backbone + empirical band is shipped. The novelty is methodological (LOO + UQ + open data + live browser), not a lower error than the DEM/paper. Second cone anchor: Duarte et al. <Cite id="duarte2021" paren />.</>}</p>
-  </>);
+function Numerics() {
+  const t = useT();
+  return (
+    <DocSection title={{ en: 'The numerical scheme', es: 'El esquema numérico' }} area="method" kind="classical" refs={['hairer1993']}>
+      <P
+        en={<>Both engines integrate the system with the explicit Euler method at a step of a quarter of a day. It is first order: the global error shrinks in proportion to the step <Cite id="hairer1993" />. Each compartment is clamped at zero, which only acts when a large step would otherwise drive it negative.</>}
+        es={<>Ambos motores integran el sistema con el método de Euler explícito a un paso de un cuarto de día. Es de primer orden: el error global disminuye en proporción al paso <Cite id="hairer1993" />. Cada compartimento se limita a cero, lo que sólo actúa cuando un paso grande lo llevaría a valores negativos.</>}
+      />
+      <Equation
+        tex="\begin{aligned} S_{k+1} &= \max\!\left(0,\; S_k - \beta \tfrac{S_k I_k}{N} \Delta t\right) \\ I_{k+1} &= \max\!\left(0,\; I_k + \beta \tfrac{S_k I_k}{N} \Delta t - \gamma I_k \Delta t\right) \\ R_{k+1} &= R_k + \gamma I_k \Delta t \end{aligned}"
+        caption={t('One step of the scheme, with Δt = 0.25 days; the Python and TypeScript engines perform the same operations in the same order.', 'Un paso del esquema, con Δt = 0,25 días; los motores en Python y en TypeScript hacen las mismas operaciones en el mismo orden.')}
+      />
+      <P
+        en="Both engines perform the same floating-point operations in the same order. The committed trace rounds values to two decimals, and the parity test holds the live engine to that rounding on every baked case. A first-order scheme is enough for an example; a product picks its integrator from its own error budget."
+        es="Ambos motores hacen las mismas operaciones de punto flotante en el mismo orden. La traza comprometida redondea a dos decimales, y la prueba de paridad exige al motor en vivo ese redondeo en cada caso precalculado. Un esquema de primer orden basta para un ejemplo; un producto elige su integrador según su propio presupuesto de error."
+      />
+      <P
+        en="A first-order method is checked by halving the step: the error should halve with it. The convergence test runs a long epidemic at steps of a quarter, an eighth and a sixteenth of a day, and requires the gap between the simulated attack rate and the final size to fall by about half at each halving. It would fail if a step size were hard-coded or the clamp acted where it should not."
+        es="Un método de primer orden se verifica reduciendo el paso a la mitad: el error debe reducirse también a la mitad. La prueba de convergencia corre una epidemia larga con pasos de un cuarto, un octavo y un dieciseisavo de día, y exige que la brecha entre la tasa de ataque simulada y el tamaño final caiga cerca de la mitad en cada reducción. Fallaría si un tamaño de paso estuviera fijo en el código o el límite en cero actuara donde no debe."
+      />
+      <Equation tex="\left| a_{\Delta t} - z \right| \le C \, \Delta t" caption={t('First-order global error: the gap between the simulated attack rate and the final size z is proportional to the step; the constant C depends on the case.', 'Error global de primer orden: la brecha entre la tasa de ataque simulada y el tamaño final z es proporcional al paso; la constante C depende del caso.')} />
+      <P
+        en="The step of a quarter of a day is a constant shared by both engines and by the trace, not a setting the reader can change. With that step the fastest case, whose peak comes in under ten days, has dozens of steps on its rise, while a whole run of 160 days takes 640 steps and, measured on the development workstation, runs in about ten microseconds."
+        es="El paso de un cuarto de día es una constante compartida por ambos motores y por la traza, no un ajuste que el lector pueda cambiar. Con ese paso el caso más rápido, cuyo pico llega en menos de diez días, tiene decenas de pasos en su subida, mientras que una corrida completa de 160 días toma 640 pasos y, medida en la estación de desarrollo, corre en unos diez microsegundos."
+      />
+      <Figure caption={t('One step of the scheme, repeated until the horizon.', 'Un paso del esquema, repetido hasta el horizonte.')}>
+        <FlowFigure stages={[t('Read S, I, R', 'Leer S, I, R'), t('New infections and recoveries', 'Nuevos contagios y recuperaciones'), t('Clamp at zero', 'Limitar en cero'), t('Store the step', 'Guardar el paso')]} label={t('One Euler step', 'Un paso de Euler')} />
+      </Figure>
+      <Callout variant="honest" title={t('Exact and approximate', 'Exacto y aproximado')}>
+        {t('The two engines agree to the rounding of the trace; both approximate the true solution with a first-order error that the convergence test measures.', 'Los dos motores coinciden hasta el redondeo de la traza; ambos aproximan la solución verdadera con un error de primer orden que la prueba de convergencia mide.')}
+      </Callout>
+    </DocSection>
+  );
 }
 
-function Chamber({ es }: { es: boolean }) {
-  return (<>
-    <p>{es ? 'En un chancador de cono/giratorio el manto es un cuerpo de revolución inclinado un ángulo excéntrico γ que nuta (gira como un péndulo cónico) alrededor de un pivote fijo a velocidad ω, no rota sobre su eje. El eje del manto es n̂(φ)=(sin γ cos φ, sin γ sin φ, cos γ) con φ=ωt. El CSS es la abertura mínima durante un giro, el OSS la máxima, y la carrera (throw) = OSS − CSS.' : 'In a cone/gyratory crusher the mantle is a body of revolution tilted by an eccentric angle γ that nutates (gyrates like a conical pendulum) about a fixed pivot at speed ω, it does not spin on its own axis. The mantle axis is n̂(φ)=(sin γ cos φ, sin γ sin φ, cos γ) with φ=ωt. The CSS is the minimum gap over one gyration, the OSS the maximum, and the throw = OSS − CSS.'}</p>
-    <Equation tex={String.raw`\hat{n}(\phi)=\big(\sin\gamma\cos\phi,\ \sin\gamma\sin\phi,\ \cos\gamma\big),\qquad \text{CSS}=\min_\phi g(\phi),\quad \text{throw}=\text{OSS}-\text{CSS}`} />
-    <svg viewBox="0 0 560 170" width="100%" style={sv} role="img" aria-label="mantle nutation">
-      {/* concave walls */}
-      <line x1="170" y1="20" x2="250" y2="150" stroke="var(--color-fg-subtle)" strokeWidth="2" />
-      <line x1="390" y1="20" x2="310" y2="150" stroke="var(--color-fg-subtle)" strokeWidth="2" />
-      {/* mantle closed side (solid) + open side (dashed) */}
-      <polygon points="230,30 290,150 270,150 215,40" fill="color-mix(in oklab,#3fb950 30%,transparent)" stroke="#3fb950" strokeWidth="1.5" />
-      <polygon points="330,30 270,150 290,150 345,40" fill="none" stroke="#3fb950" strokeWidth="1.2" strokeDasharray="4 3" />
-      {/* pivot + nutation */}
-      <circle cx="280" cy="22" r="4" fill="var(--color-fg)" />
-      <text x="280" y="14" textAnchor="middle" fill="var(--color-fg-subtle)" fontSize="10">{es ? 'pivote fijo' : 'fixed pivot'}</text>
-      <path d="M250,150 A30,8 0 0 0 310,150" fill="none" stroke="#f0883e" strokeWidth="1.4" />
-      <text x="280" y="166" textAnchor="middle" fill="#f0883e" fontSize="10">{es ? 'el hueco oscila CSS↔OSS por giro' : 'gap oscillates CSS↔OSS per revolution'}</text>
-      <text x="430" y="90" fill="var(--color-fg-subtle)" fontSize="10">γ = {es ? 'ángulo excéntrico' : 'eccentric angle'}</text>
-    </svg>
-    <p>{es ? 'Una partícula es atrapada (nipped) y no escupida hacia arriba sólo si el ángulo de nip no supera el límite de fricción:' : 'A particle is nipped (gripped, not spat upward) only if the nip angle does not exceed the friction limit:'} <InlineMath tex={String.raw`\alpha_{\text{nip}}\le 2\arctan\mu`} />. {es ? 'La mandíbula es un mecanismo de cuatro barras (biela-balancín) cuyos puntos trazan elipses.' : 'The jaw is a crank-rocker four-bar linkage whose points trace ellipses.'}</p>
-  </>);
+function Baseline() {
+  const t = useT();
+  return (
+    <DocSection title={{ en: 'The analytic peak', es: 'El pico analítico' }} area="method" kind="classical" refs={['km1927', 'hethcote2000']}>
+      <P
+        en={<>The classical baseline of the surrogate needs no training. The model has a first integral: the sum of S and I minus the logarithm of S divided by R0 stays constant along every run <Cite id="hethcote2000" />. Starting from a nearly fully susceptible population with a vanishing infection, the constant fixes the whole path in the plane of S against I.</>}
+        es={<>La línea base clásica del sustituto no necesita entrenamiento. El modelo tiene una integral primera: la suma de S e I menos el logaritmo de S dividido por R0 permanece constante en toda corrida <Cite id="hethcote2000" />. Partiendo de una población casi totalmente susceptible con una infección que tiende a cero, la constante fija toda la trayectoria en el plano de S contra I.</>}
+      />
+      <Equation tex="S + I - \frac{1}{R_0} \ln S = \text{const}" caption={t('The first integral of the SIR system, with S and I as shares of the population.', 'La integral primera del sistema SIR, con S e I como fracciones de la población.')} />
+      <P
+        en={<>The infected share peaks where its derivative is zero, which is where S equals one over R0. Substituting that value into the first integral gives the peak share in closed form <Cite id="km1927" />. It is the exact answer for a vanishing initial infection, and it is zero when R0 is at or below one, because then no outbreak starts.</>}
+        es={<>La fracción de contagiados alcanza su pico donde su derivada es cero, que es donde S es igual a uno sobre R0. Al sustituir ese valor en la integral primera se obtiene la fracción del pico en forma cerrada <Cite id="km1927" />. Es la respuesta exacta para una infección inicial que tiende a cero, y es cero cuando R0 es igual o menor que uno, porque entonces no empieza un brote.</>}
+      />
+      <Equation tex="\frac{I_{\max}}{N} = 1 - \frac{1 + \ln R_0}{R_0} \quad (R_0 > 1), \qquad 0 \quad (R_0 \le 1)" caption={t('The peak infected share as a function of R0 alone.', 'La fracción de contagiados en el pico como función sólo de R0.')} />
+      <P
+        en="The formula is exact only in the limit of a vanishing initial infection, so its error against the engine is a property of the example and not something to assume. The Benchmark page computes both in the reader's browser over a range of reproduction numbers and plots them together, which is how the departure is seen."
+        es="La fórmula es exacta sólo en el límite de una infección inicial que tiende a cero, así que su error frente al motor es una propiedad del ejemplo y no algo que suponer. La página Benchmark calcula ambos en el navegador del lector para un rango de números reproductivos y los grafica juntos, que es como se ve la separación."
+      />
+      <Figure caption={t('From the reproduction number to the peak share, with no simulation.', 'Del número reproductivo a la fracción del pico, sin simulación.')}>
+        <FlowFigure stages={[t('R0 = β / γ', 'R0 = β / γ'), t('First integral', 'Integral primera'), t('S = 1 / R0 at the peak', 'S = 1 / R0 en el pico'), t('Peak share', 'Fracción del pico')]} label={t('The analytic peak', 'El pico analítico')} />
+      </Figure>
+      <P
+        en="The baseline answers whenever no valid trained bundle is released, behind the same contract as the learned surrogate, so the site never shows an empty model slot. It also sets the bar: a learned model earns its place only if its held-out error is below this formula's error against the engine."
+        es="La línea base responde siempre que no haya un paquete entrenado válido liberado, tras el mismo contrato que el sustituto aprendido, de modo que el sitio nunca muestra una ranura de modelo vacía. También fija el listón: un modelo aprendido se gana su lugar sólo si su error reservado es menor que el error de esta fórmula contra el motor."
+      />
+      <Callout variant="honest" title={t('Where it departs from the engine', 'Dónde se aparta del motor')}>
+        {t('The formula assumes a vanishing initial infection and exact time. The engine starts from a real group of infected people and a quarter-day step, so the two differ, and the difference grows with the reproduction number.', 'La fórmula supone una infección inicial que tiende a cero y tiempo exacto. El motor parte de un grupo real de personas contagiadas y un paso de un cuarto de día, por lo que difieren, y la diferencia crece con el número reproductivo.')}
+      </Callout>
+    </DocSection>
+  );
 }
 
-function Classify({ es }: { es: boolean }) {
-  return (<>
-    <p>{es ? 'La función de clasificación C(d) es la probabilidad de que una partícula de tamaño d que entra a la cámara sea atrapada y fracturada (en vez de pasar directo). Sigue la forma de Whiten con parámetros K1/K2/K3 (Andersen & Napier-Munn):' : 'The classification function C(d) is the probability that a size-d particle entering the chamber is captured and broken (rather than passing straight through). It follows Whiten’s form with K1/K2/K3 parameters (Andersen & Napier-Munn):'}</p>
-    <Equation tex={String.raw`C(d)=\begin{cases}0 & d\le K_1\\[2pt] 1-\left(\dfrac{K_2-d}{K_2-K_1}\right)^{K_3} & K_1<d<K_2\\[6pt] 1 & d\ge K_2\end{cases}`} />
-    <svg viewBox="0 0 560 170" width="100%" style={sv} role="img" aria-label="classification function">
-      <line x1="50" y1="140" x2="540" y2="140" stroke="var(--color-fg-subtle)" /><line x1="50" y1="20" x2="50" y2="140" stroke="var(--color-fg-subtle)" />
-      <text x="535" y="155" textAnchor="end" fill="var(--color-fg-subtle)" fontSize="10">{es ? 'tamaño d' : 'size d'}</text>
-      <text x="42" y="26" textAnchor="end" fill="var(--color-fg-subtle)" fontSize="10">C=1</text><text x="42" y="140" textAnchor="end" fill="var(--color-fg-subtle)" fontSize="10">0</text>
-      {/* C(d): 0 until K1, S-rise to 1 at K2 */}
-      <path d="M50,140 L180,140 C250,140 250,30 360,30 L540,30" fill="none" stroke="var(--color-accent)" strokeWidth="2.5" />
-      <line x1="180" y1="140" x2="180" y2="150" stroke="#f0883e" strokeWidth="2" /><text x="180" y="164" textAnchor="middle" fill="#f0883e" fontSize="10">K1</text>
-      <line x1="360" y1="30" x2="360" y2="150" stroke="#f0883e" strokeWidth="1" strokeDasharray="3 2" /><text x="360" y="164" textAnchor="middle" fill="#f0883e" fontSize="10">K2</text>
-      <text x="110" y="132" fill="var(--color-fg-faint)" fontSize="10">{es ? 'pasa directo' : 'passes through'}</text>
-      <text x="420" y="24" fill="var(--color-fg-faint)" fontSize="10">{es ? 'siempre roto' : 'always broken'}</text>
-    </svg>
-    <p>{es ? <>K1 es lineal en el CSS (el hueco cerrado: un setting más cerrado atrapa partículas más pequeñas). K2 es el umbral de captura del lado abierto, así que sigue al <InlineMath tex={String.raw`\text{OSS}=\text{CSS}+\text{carrera}`} />: una carrera mayor abre más la cámara y deja escapar partículas más grandes en la fase abierta, produciendo un producto más grueso a igual CSS (Evertsson <Cite id="evertsson1999" paren />; Andersen y Napier-Munn <Cite id="andersen1988" paren />). K3 (~2.3–3.0) es la forma. Las pendientes exactas <InlineMath tex={String.raw`K=a_0+a_1\,\text{CSS}`} /> son específicas de cada máquina y requieren datos industriales, aquí se usan rangos típicos de literatura, rotulados como ilustrativos.</> : <>K1 is linear in CSS (the closed-side gap: a tighter setting captures smaller particles). K2 is the open-side capture threshold, so it tracks <InlineMath tex={String.raw`\text{OSS}=\text{CSS}+\text{throw}`} />: a larger throw opens the chamber wider and lets larger particles escape in the open phase, yielding a coarser product at fixed CSS (Evertsson <Cite id="evertsson1999" paren />; Andersen and Napier-Munn <Cite id="andersen1988" paren />). K3 (~2.3–3.0) is the shape. The exact slopes <InlineMath tex={String.raw`K=a_0+a_1\,\text{CSS}`} /> are machine-specific and need industrial data, literature-typical ranges are used here, labelled illustrative.</>}</p>
-  </>);
+function Surrogate() {
+  const t = useT();
+  return (
+    <DocSection title={{ en: 'The learned surrogate', es: 'El sustituto aprendido' }} area="method" kind="learned" refs={['hethcote2000', 'km1927']}>
+      <P
+        en={<>The learned model is a small surrogate that maps the basic reproduction number to the peak infected share without running the engine. The target is the quantity the analytic formula gives for a vanishing infection <Cite id="km1927" />; the surrogate learns it from engine runs, so it carries the real starting infection and the step of the scheme as well.</>}
+        es={<>El modelo aprendido es un sustituto pequeño que asocia el número reproductivo básico con la fracción de contagiados en el pico sin correr el motor. El objetivo es la cantidad que da la fórmula analítica para una infección que tiende a cero <Cite id="km1927" />; el sustituto la aprende de corridas del motor, así que incorpora también la infección inicial real y el paso del esquema.</>}
+      />
+      <Equation tex="\hat{y}(R_0) = c_0 + c_1 R_0 + c_2 \ln R_0 + \frac{c_3}{R_0}" caption={t('The surrogate: a linear combination of four fixed functions of R0, clamped to the range 0 to 1.', 'El sustituto: una combinación lineal de cuatro funciones fijas de R0, limitada al rango de 0 a 1.')} />
+      <P
+        en={<>The four functions are not arbitrary. The analytic peak contains a logarithm of R0 and a term in one over R0 <Cite id="hethcote2000" />, so a constant, R0 itself, its logarithm and its inverse give the fit room to follow that shape and to absorb what the formula leaves out. Because the model is linear in its coefficients, the best fit is a direct least-squares solution, not an iterative search.</>}
+        es={<>Las cuatro funciones no son arbitrarias. El pico analítico contiene un logaritmo de R0 y un término en uno sobre R0 <Cite id="hethcote2000" />, así que una constante, R0 mismo, su logaritmo y su inverso dan al ajuste espacio para seguir esa forma y para absorber lo que la fórmula deja fuera. Como el modelo es lineal en sus coeficientes, el mejor ajuste es una solución directa de mínimos cuadrados, no una búsqueda iterativa.</>}
+      />
+      <Equation tex="\mathbf{c} = \arg\min_{\mathbf{c}} \sum_{i} \left( \mathbf{x}_i^{\top} \mathbf{c} - y_i \right)^2, \qquad \mathbf{x}_i = \left(1,\, R_{0,i},\, \ln R_{0,i},\, 1 / R_{0,i}\right)" caption={t('Ordinary least squares over the training cases; y is the peak share the engine produced for each.', 'Mínimos cuadrados ordinarios sobre los casos de entrenamiento; y es la fracción del pico que produjo el motor en cada uno.')} />
+      <P
+        en="The training set is the cases of the registry that start with an infection, four of them: the sub-critical, the epidemic, the fast-burn and the slow-spread case. The control with no initial infection is left out because its peak is zero for a reason the surrogate cannot see in R0. The four coefficients are written to a small file, the released bundle."
+        es="El conjunto de entrenamiento son los casos del registro que parten con una infección, cuatro: el subcrítico, la epidemia, la combustión rápida y la propagación lenta. El control sin infección inicial se deja fuera porque su pico es cero por una razón que el sustituto no puede ver en R0. Los cuatro coeficientes se escriben en un archivo pequeño, el paquete liberado."
+      />
+      <P
+        en="A bundle is used only if it is valid: the declared kind, exactly the four basis functions in order and four finite numbers. Otherwise the analytic baseline answers and the manifest records which model did. The bundle is a few hundred bytes, so the live lane could carry it, and the contract that describes it is the same for a trained network a product might release instead."
+        es="Un paquete se usa sólo si es válido: el tipo declarado, exactamente las cuatro funciones base en orden y cuatro números finitos. De lo contrario responde la línea base analítica y el manifiesto registra qué modelo respondió. El paquete pesa unos cientos de bytes, así que el carril en vivo podría llevarlo, y el contrato que lo describe es el mismo para una red entrenada que un producto liberara en su lugar."
+      />
+      <Figure caption={t('From engine runs to a released bundle, with the baseline as the fallback.', 'De las corridas del motor a un paquete liberado, con la línea base como respaldo.')}>
+        <FlowFigure stages={[t('Four training runs', 'Cuatro corridas'), t('Least squares', 'Mínimos cuadrados'), t('Released bundle', 'Paquete liberado'), t('Baseline if invalid', 'Línea base si no es válido')]} label={t('Training the surrogate', 'Entrenamiento del sustituto')} tone="warn" />
+      </Figure>
+      <Callout variant="honest" title={t('A teaching model', 'Un modelo de enseñanza')}>
+        {t('Four training points fit four coefficients: the surrogate is a demonstration of where a learned model sits in the pipeline, not evidence that learning beats the formula for this problem.', 'Cuatro puntos de entrenamiento ajustan cuatro coeficientes: el sustituto demuestra dónde se ubica un modelo aprendido en el pipeline, no prueba que aprender supere a la fórmula en este problema.')}
+      </Callout>
+    </DocSection>
+  );
 }
 
-function Breakage({ es }: { es: boolean }) {
-  return (<>
-    <p>{es ? 'La energía específica de conminución fija la finura de la progenie vía la curva maestra t10 del JKMRC (Narayanan & Whiten); t10 es el % que pasa 1/10 del tamaño madre:' : 'The specific comminution energy sets progeny fineness via the JKMRC t10 master curve (Narayanan & Whiten); t10 is the % passing 1/10 of the parent size:'}</p>
-    <Equation tex={String.raw`t_{10}=A\big(1-e^{-b\,E_{cs}}\big)`} />
-    <p>{es ? 'La forma completa de la distribución de progenie usa la función de fractura acumulada de Austin, normalizada para pasar por (u=1/10, t10), con u = x/x_madre:' : 'The full progeny shape uses the Austin cumulative breakage function, normalized to pass through (u=1/10, t10), with u = x/x_parent:'}</p>
-    <Equation tex={String.raw`B(u)=\Phi\,u^{\gamma}+(1-\Phi)\,u^{\beta},\qquad \Phi=\frac{t_{10}-0.1^{\beta}}{0.1^{\gamma}-0.1^{\beta}}`} />
-    <svg viewBox="0 0 560 160" width="100%" style={sv} role="img" aria-label="t10 energy curve">
-      <line x1="50" y1="130" x2="540" y2="130" stroke="var(--color-fg-subtle)" /><line x1="50" y1="20" x2="50" y2="130" stroke="var(--color-fg-subtle)" />
-      <text x="535" y="146" textAnchor="end" fill="var(--color-fg-subtle)" fontSize="10">Ecs (kWh/t)</text>
-      <text x="44" y="26" textAnchor="end" fill="var(--color-fg-subtle)" fontSize="10">t10</text>
-      {/* t10 = A(1-e^-b Ecs): saturating rise */}
-      <path d="M50,130 C160,70 300,45 540,40" fill="none" stroke="var(--color-accent)" strokeWidth="2.5" />
-      <line x1="50" y1="40" x2="540" y2="40" stroke="var(--color-fg-faint)" strokeWidth="1" strokeDasharray="3 3" />
-      <text x="56" y="36" fill="var(--color-fg-faint)" fontSize="10">A {es ? '(asíntota)' : '(asymptote)'}</text>
-      <text x="300" y="110" fill="var(--color-fg-faint)" fontSize="10">{es ? 'más energía → progenie más fina' : 'more energy → finer progeny'}</text>
-    </svg>
-    <p>{es ? <>La matriz de fractura B se construye estrictamente triangular inferior (la progenie es estrictamente más fina que la madre), y cada columna se renormaliza a 1, así la masa se conserva exactamente y <InlineMath tex={String.raw`(I-B\,C)`} /> tiene diagonal unitaria, garantizando que el sistema nunca es singular.</> : <>The breakage matrix B is built strictly lower-triangular (progeny is strictly finer than the parent), and each column renormalizes to 1, so mass is conserved exactly and <InlineMath tex={String.raw`(I-B\,C)`} /> has a unit diagonal, guaranteeing the system is never singular.</>}</p>
-  </>);
+function HeldOut() {
+  const t = useT();
+  return (
+    <DocSection title={{ en: 'Judging the learned model', es: 'Juzgar el modelo aprendido' }} area="method" kind="learned" refs={['km1927', 'hethcote2000']}>
+      <P
+        en="A learned model is judged on cases it never saw. The evaluation stage draws twenty parameter sets from a generator whose seed is the bake seed plus a fixed offset, so the draw is repeatable and disjoint from the training cases. The contact rate and the recovery rate are drawn uniformly over ranges that cover the sub-critical to the fast-burn regimes."
+        es="Un modelo aprendido se juzga en casos que nunca vio. La etapa de evaluación sortea veinte conjuntos de parámetros con un generador cuya semilla es la semilla del precálculo más un desplazamiento fijo, de modo que el sorteo es repetible y disjunto de los casos de entrenamiento. La tasa de contacto y la de recuperación se sortean uniformemente en rangos que cubren desde los regímenes subcríticos hasta la combustión rápida."
+      />
+      <Equation tex="\mathrm{RMSE} = \sqrt{\frac{1}{n} \sum_{j=1}^{n} \left( \hat{y}_j - y_j \right)^2}" caption={t('Root-mean-square error of the peak share over the n held-out sets; y is the engine result, the truth of the example.', 'Error cuadrático medio de la fracción del pico sobre los n conjuntos reservados; y es el resultado del motor, la verdad del ejemplo.')} />
+      <P
+        en="The error measure is the root-mean-square error and not a percentage error. Sub-critical draws have a peak share near zero, where a percentage error divides by almost nothing and explodes, which would make a good model look bad. The coefficient of determination is reported beside it, to say how much of the spread of the peak share the model explains."
+        es="La medida de error es el error cuadrático medio y no un error porcentual. Los sorteos subcríticos tienen una fracción del pico cercana a cero, donde un error porcentual divide por casi nada y se dispara, lo que haría ver mal a un buen modelo. El coeficiente de determinación se informa a su lado, para decir cuánta de la dispersión de la fracción del pico explica el modelo."
+      />
+      <Equation tex="R^2 = 1 - \frac{\sum_j (\hat{y}_j - y_j)^2}{\sum_j (y_j - \bar{y})^2}" caption={t('Coefficient of determination on the held-out sets; one is a perfect fit and zero is no better than the mean.', 'Coeficiente de determinación en los conjuntos reservados; uno es un ajuste perfecto y cero no es mejor que el promedio.')} />
+      <P
+        en={<>When no trained bundle exists, the same stage evaluates the analytic baseline <Cite id="hethcote2000" /> on the same draw, so the two are comparable by construction. The metrics are written into every manifest beside the name of the model that produced them, and the Benchmark page reads them from there instead of repeating a number typed by hand.</>}
+        es={<>Cuando no existe un paquete entrenado, la misma etapa evalúa la línea base analítica <Cite id="hethcote2000" /> sobre el mismo sorteo, de modo que ambos son comparables por construcción. Las métricas se escriben en cada manifiesto junto al nombre del modelo que las produjo, y la página Benchmark las lee de allí en lugar de repetir una cifra escrita a mano.</>}
+      />
+      <P
+        en="Reading the result takes three steps: check that the model answering is the released bundle and not the baseline, read the error against the spread of the peak share it is trying to predict, and compare it with the baseline's error on the same draw. A small error beside a tiny spread, or no better than the baseline, is not a success."
+        es="Leer el resultado toma tres pasos: comprobar que el modelo que responde es el paquete liberado y no la línea base, leer el error frente a la dispersión de la fracción del pico que intenta predecir, y compararlo con el error de la línea base en el mismo sorteo. Un error pequeño junto a una dispersión diminuta, o no mejor que la línea base, no es un éxito."
+      />
+      <Figure caption={t('The held-out protocol, from the seed to the manifest.', 'El protocolo con datos reservados, de la semilla al manifiesto.')}>
+        <FlowFigure stages={[t('Seed plus offset', 'Semilla más desplazamiento'), t('Twenty new sets', 'Veinte conjuntos nuevos'), t('Engine and model', 'Motor y modelo'), t('Metrics in the manifest', 'Métricas en el manifiesto')]} label={t('The held-out evaluation', 'La evaluación con datos reservados')} tone="warn" />
+      </Figure>
+      <Callout variant="honest" title={t('What twenty sets can show', 'Qué pueden mostrar veinte conjuntos')}>
+        {t('Twenty draws from synthetic ranges give a rough error, not a guarantee. The truth is the example engine, so the error says how well one model imitates another, not how well either matches an outbreak.', 'Veinte sorteos de rangos sintéticos dan un error aproximado, no una garantía. La verdad es el motor del ejemplo, así que el error dice cuán bien un modelo imita a otro, no cuán bien alguno coincide con un brote.')}
+      </Callout>
+    </DocSection>
+  );
 }
 
-function Whiten({ es }: { es: boolean }) {
-  return (<>
-    <p>{es ? 'La cámara es una zona de fractura única con clasificación C y fractura B. El balance interno x = f + B·C·x da el producto:' : 'The chamber is a single breakage zone with classification C and breakage B. The internal balance x = f + B·C·x gives the product:'}</p>
-    <Equation tex={String.raw`p=(I-C)\,(I-B\,C)^{-1}\,f`} />
-    <svg viewBox="0 0 560 90" width="100%" style={sv} role="img" aria-label="whiten dataflow">
-      <rect x="8" y="32" width="70" height="28" rx="5" fill="var(--color-surface)" stroke="var(--color-border)" /><text x="43" y="50" textAnchor="middle" fill="var(--color-fg-subtle)" fontSize="11">{es ? 'feed f' : 'feed f'}</text>
-      <line x1="78" y1="46" x2="120" y2="46" stroke="var(--color-fg-subtle)" />
-      <rect x="120" y="20" width="140" height="52" rx="5" fill="var(--color-surface)" stroke="var(--color-accent)" /><text x="190" y="42" textAnchor="middle" fill="var(--color-fg)" fontSize="11">(I − B·C)⁻¹</text><text x="190" y="58" textAnchor="middle" fill="var(--color-fg-subtle)" fontSize="9">{es ? 'recirculación interna' : 'internal recycle'}</text>
-      <line x1="260" y1="46" x2="300" y2="46" stroke="var(--color-fg-subtle)" />
-      <rect x="300" y="20" width="120" height="52" rx="5" fill="var(--color-surface)" stroke="var(--color-accent)" /><text x="360" y="42" textAnchor="middle" fill="var(--color-fg)" fontSize="11">(I − C)</text><text x="360" y="58" textAnchor="middle" fill="var(--color-fg-subtle)" fontSize="9">{es ? 'lo no roto sale' : 'unbroken leaves'}</text>
-      <line x1="420" y1="46" x2="462" y2="46" stroke="var(--color-fg-subtle)" />
-      <rect x="462" y="32" width="86" height="28" rx="5" fill="var(--color-surface)" stroke="var(--color-border)" /><text x="505" y="50" textAnchor="middle" fill="var(--color-fg)" fontSize="11">{es ? 'producto p' : 'product p'}</text>
-    </svg>
-    <p>{es ? <>Nótese que <InlineMath tex={String.raw`(I-C)`} /> va a la izquierda del inverso (Whiten 1972; Napier-Munn et al. 1996), el orden importa porque las matrices no conmutan. No formamos el inverso: resolvemos <InlineMath tex={String.raw`(I-B\,C)\,x=f`} /> por LU sobre Float64Array y aplicamos <InlineMath tex={String.raw`(I-C)`} />. Un guard de condicionamiento marca (no produce NaN) los puntos casi-choke donde C→1.</> : <>Note <InlineMath tex={String.raw`(I-C)`} /> sits on the left of the inverse (Whiten 1972; Napier-Munn et al. 1996), order matters because matrices don’t commute. We never form the inverse: we LU-solve <InlineMath tex={String.raw`(I-B\,C)\,x=f`} /> on a Float64Array and apply <InlineMath tex={String.raw`(I-C)`} />. A conditioning guard flags (never NaNs) the near-choke points where C→1.</>}</p>
-  </>);
-}
-
-function Capacity({ es }: { es: boolean }) {
-  return (<>
-    <p>{es ? 'La capacidad es unimodal en la velocidad (modelo de flujo de Evertsson, forma reducida): a baja velocidad la cámara descarga lento; pasado un óptimo, el manto obstruye la caída libre más rápido de lo que la gravedad limpia el material y la capacidad cae, la joroba de capacidad.' : 'Capacity is unimodal in speed (Evertsson flow model, reduced form): at low speed the chamber discharges slowly; past an optimum the mantle obstructs free-fall faster than gravity clears material and capacity falls, the capacity hump.'}</p>
-    <Equation tex={String.raw`Q=Q_{\text{ref}}\cdot\frac{\text{CSS}+\text{throw}/2}{g_{\text{ref}}}\cdot s\,e^{1-s},\qquad s=\frac{\omega}{\omega_{\text{opt}}}`} />
-    <svg viewBox="0 0 560 150" width="100%" style={sv} role="img" aria-label="capacity hump">
-      <line x1="50" y1="120" x2="540" y2="120" stroke="var(--color-fg-subtle)" /><line x1="50" y1="20" x2="50" y2="120" stroke="var(--color-fg-subtle)" />
-      <text x="535" y="136" textAnchor="end" fill="var(--color-fg-subtle)" fontSize="10">{es ? 'velocidad ω' : 'speed ω'}</text>
-      <text x="44" y="26" textAnchor="end" fill="var(--color-fg-subtle)" fontSize="10">Q</text>
-      {/* unimodal hump s·e^(1-s) */}
-      <path d="M50,118 C140,60 230,32 300,32 C380,32 470,70 540,108" fill="none" stroke="var(--color-accent)" strokeWidth="2.5" />
-      <line x1="300" y1="32" x2="300" y2="120" stroke="#f0883e" strokeWidth="1" strokeDasharray="3 2" /><circle cx="300" cy="32" r="4" fill="#f0883e" />
-      <text x="300" y="134" textAnchor="middle" fill="#f0883e" fontSize="10">ω_opt</text>
-      <text x="120" y="60" fill="var(--color-fg-faint)" fontSize="10">{es ? 'sube' : 'rises'}</text>
-      <text x="430" y="64" fill="var(--color-fg-faint)" fontSize="10">{es ? 'el manto obstruye → cae' : 'mantle obstructs → falls'}</text>
-    </svg>
-    <p>{es ? 'La potencia es la ley de Bond (P80, F80 en micrones; W en kWh/t; potencia [kW] = W·Q):' : 'Power is Bond’s law (P80, F80 in microns; W in kWh/t; power [kW] = W·Q):'}</p>
-    <Equation tex={String.raw`W=10\,W_i\left(\frac{1}{\sqrt{P_{80}}}-\frac{1}{\sqrt{F_{80}}}\right)`} />
-    <p className="tz-note">{es ? 'La energía específica de tamaño de Morrell (Mic) es la alternativa SOTA a Bond; se documenta aquí y puede sustituirse.' : 'Morrell’s size-specific energy (Mic) is the SOTA alternative to Bond; documented here and can be swapped in.'}</p>
-  </>);
-}
-
-function Learned({ es }: { es: boolean }) {
-  return (<>
-    <p>{es ? 'Dos modelos aprendidos se ejecutan en ONNX en el navegador (entrenados offline sobre el motor de balance poblacional). 1) Un surrogate MLP que mapea los parámetros de operación al producto (P80/P50/P20, % pasantes, capacidad, potencia) en un solo paso, para respuestas instantáneas y un what-if diferenciable. Honesto: emula el motor físico barato, no una planta real.' : 'Two learned models run in ONNX in the browser (trained offline on the population-balance engine). 1) A surrogate MLP mapping operating parameters to the product (P80/P50/P20, %-passing, throughput, power) in a single pass, for instant responses and a differentiable what-if. Honest: it emulates the cheap physics engine, not a real plant.'}</p>
-    <Equation tex={es
-      ? String.raw`\hat{y}=\mathrm{MLP}_\theta(x),\quad x\in\mathbb{R}^{11}\ \text{(5 one-hot máquina + 6 continuos)},\ \ \hat{y}\in\mathbb{R}^{10}`
-      : String.raw`\hat{y}=\mathrm{MLP}_\theta(x),\quad x\in\mathbb{R}^{11}\ \text{(5 one-hot machine + 6 continuous)},\ \ \hat{y}\in\mathbb{R}^{10}`} />
-    <p>{es ? '2) Un autoencoder denoising sobre la firma de gradación del producto; el error de reconstrucción es un score de anomalía de operación que además avisa cuándo una consulta está fuera del manifold de entrenamiento (el surrogate extrapola → desconfiar). El inverso "P80 objetivo → CSS recomendado" no es una red: es bisección sobre el surrogate monótono (consistente y barato).' : '2) A denoising autoencoder over the product-gradation signature; the reconstruction error is an operating-anomaly score that also warns when a query is off the training manifold (the surrogate is extrapolating → distrust it). The inverse "target P80 → recommended CSS" is not a net: it is bisection on the monotone surrogate (consistent and cheap).'}</p>
-    <svg viewBox="0 0 560 90" width="100%" style={sv} role="img" aria-label="learned tier dataflow">
-      <rect x="10" y="30" width="120" height="30" rx="5" fill="var(--color-surface)" stroke="var(--color-border)" />
-      <text x="70" y="49" textAnchor="middle" fill="var(--color-fg-subtle)" fontSize="10">{es ? 'parámetros' : 'parameters'}</text>
-      <line x1="130" y1="45" x2="200" y2="45" stroke="var(--color-fg-subtle)" />
-      <rect x="200" y="30" width="120" height="30" rx="5" fill="var(--color-surface)" stroke="var(--color-accent)" />
-      <text x="260" y="49" textAnchor="middle" fill="var(--color-fg)" fontSize="10">surrogate MLP</text>
-      <line x1="320" y1="45" x2="390" y2="45" stroke="var(--color-fg-subtle)" />
-      <rect x="390" y="30" width="160" height="30" rx="5" fill="var(--color-surface)" stroke="var(--color-border)" />
-      <text x="470" y="49" textAnchor="middle" fill="var(--color-fg-subtle)" fontSize="10">P80 · t/h · kW {es ? '(instantáneo)' : '(instant)'}</text>
-    </svg>
-  </>);
+export function Methodology() {
+  const lang = useShellLang();
+  const t = useT();
+  return (
+    <DocPage
+      title={{ en: 'Methodology', es: 'Metodología' }}
+      lede={t(
+        'The methods behind the example, one per tab: the classical model and its threshold, the final-size relation, the numerical scheme and the analytic peak, then the learned surrogate and the held-out evaluation that judges it against that baseline.',
+        'Los métodos detrás del ejemplo, uno por pestaña: el modelo clásico y su umbral, la relación de tamaño final, el esquema numérico y el pico analítico, y luego el sustituto aprendido y la evaluación con datos reservados que lo juzga frente a esa línea base.',
+      )}
+    >
+      <Tabs
+        ariaLabel={lang === 'es' ? 'Métodos' : 'Methods'}
+        tabs={[
+          { id: 'model', label: t('Model and threshold', 'Modelo y umbral'), content: <Model /> },
+          { id: 'final-size', label: t('Final size', 'Tamaño final'), content: <FinalSize /> },
+          { id: 'numerics', label: t('Numerical scheme', 'Esquema numérico'), content: <Numerics /> },
+          { id: 'baseline', label: t('Analytic peak', 'Pico analítico'), content: <Baseline /> },
+          { id: 'surrogate', label: t('Learned surrogate', 'Sustituto aprendido'), content: <Surrogate /> },
+          { id: 'held-out', label: t('Held-out evaluation', 'Evaluación reservada'), content: <HeldOut /> },
+        ]}
+      />
+    </DocPage>
+  );
 }

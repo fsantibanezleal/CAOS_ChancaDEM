@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-# API lane (only if app/ is active: i.e. requirements-api.txt is non-placeholder AND app has a real main)
+# API lane (only if app/ is active — i.e. requirements-api.txt is non-placeholder AND app has a real main)
 if [ -f requirements-api.txt ] && grep -qvE '^\s*#|^\s*$' requirements-api.txt 2>/dev/null && [ -f app/main.py ]; then
   VP=".venv/bin/python"; [ -x "$VP" ] || VP=".venv/Scripts/python.exe"
   echo "[dev] app/ active -> starting uvicorn on :8000 (background)"
@@ -14,8 +14,8 @@ fi
 if [ -f frontend/package.json ]; then
   cd frontend
   [ -d node_modules ] || npm install
-  node copy-data.mjs
+  # npm run dev copies the declared artifacts first (predev: scripts/copy-data.mjs)
   npm run dev
 else
-  echo "[dev] no frontend/, this product ships without a web surface (static/web lane dormant)."
+  echo "[dev] no frontend/ — this product ships without a web surface (static/web lane dormant)."
 fi

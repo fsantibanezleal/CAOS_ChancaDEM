@@ -1,27 +1,16 @@
-# 02, Bring your own operating point / feed PSD
+# Guide: bring your own data
 
-ChancaDEM is not limited to the 17 baked cases, Contract 1 is the gate that lets it evaluate a new operating point.
+A product applies to new data, not only to its baked cases. The door is contract 1
+(`data-pipeline/pipeline/io/contract.py`).
 
-## 1. Describe the operating point (Contract 1)
+1. Put the input in the documented format (see [`data/README.md`](../../data/README.md); in the example, a parameters
+   CSV with `case_id,beta,gamma,N,I0[,days]`) under `data/raw/`, which git ignores.
+2. Run the pipeline on it with a sandbox output, for example
+   `python data-pipeline/run.py <case> --output build/mine`. Contract 1 validates each record: rejected with its
+   reason when it breaks the schema or a range, flagged when plausible but unusual, accepted otherwise.
+3. The pipeline writes an artifact and a manifest in the same shapes as the built-in cases, and checks the result
+   against the expected ranges declared for it.
+4. In the web, the live engine re-runs any case with the reader's values; a reader exploring a parameter set does
+   not need a bake at all.
 
-A row needs: `machine ∈ {cone-sec, cone-tert, cone-short-head, gyratory, jaw}`, `cssMm`, `throwMm`, `speedRpm`,
-`feedX63Mm`, `feedM`, `oreAxb` (and optional `oreWi`). See `data/examples/operating.csv` for passing rows.
-
-```python
-from pipeline.io.contract import validate_records, validate_psd
-rep = validate_records([{ "case_id": "mine", "machine": "cone-sec", "cssMm": 28, "throwMm": 30,
-                          "speedRpm": 360, "feedX63Mm": 95, "feedM": 1.2, "oreAxb": 50 }])
-print(rep.summary())   # accepted / rejected (with reason) / flagged
-ok, reason = validate_psd([32, 16, 8, 4, 1], [1.0, 0.8, 0.5, 0.3, 0.1])   # a bring-your-own feed PSD
-```
-
-`cssMm > 2.5× feedX63Mm` is **rejected** (CSS wider than the feed top); `cssMm ≥ feedX63Mm` is **flagged**
-(pass-through); an out-of-machine-envelope value is **flagged** (the surrogate is extrapolating, the deep-AE
-anomaly score is the live guard); a bad machine / non-numeric / non-positive is **rejected with a reason**.
-
-## 2. Evaluate it
-
-Live: the browser's TS Whiten engine computes the full result for any accepted operating point (move the sliders);
-the surrogate gives the instant what-if and the AE flags when the query steers off the trained manifold. Offline: feed the
-operating point into the engine (the sweep generator is the worked example). The honesty caveat stands, the engine
-is a calibrated model, not a real plant (see `docs/cases/README.md`).
+If your data does not fit, extend contract 1 and its tests deliberately; never loosen it to let bad data through.
