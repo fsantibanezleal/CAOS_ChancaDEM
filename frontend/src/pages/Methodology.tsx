@@ -18,7 +18,7 @@ export function Methodology() {
       title={{ en: 'Methodology', es: 'Metodología' }}
       lede={t(
         'The nine methods behind the crusher studio, in six questions: which sizes go in and out, how a particle breaks, which particles the chamber breaks, what the machine can do, what the two learned models add beside the engine, and whether the calibrated engine holds on measured surveys. Each topic gives its equations with the constants of the code, one figure, and what is exact against what is illustrative.',
-        'Los nueve métodos detrás del estudio de chancado, en seis preguntas: qué tamaños entran y salen, cómo se rompe una partícula, qué partículas rompe la cámara, qué puede hacer la máquina, qué agregan los dos modelos aprendidos junto al motor, y si el motor calibrado se sostiene con encuestas medidas. Cada tema entrega sus ecuaciones con las constantes del código, una figura, y qué es exacto frente a qué es ilustrativo.',
+        'Los nueve métodos detrás del estudio de chancado, en seis preguntas: qué tamaños entran y salen, cómo se rompe una partícula, qué partículas rompe la cámara, qué puede hacer la máquina, qué agregan los dos modelos aprendidos junto al motor, y si el motor calibrado se sostiene con muestreos medidos. Cada tema entrega sus ecuaciones con las constantes del código, una figura, y qué es exacto frente a qué es ilustrativo.',
       )}
     >
       <TabGroups
