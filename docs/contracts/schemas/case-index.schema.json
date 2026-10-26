@@ -2,12 +2,12 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "case-index.schema.json",
   "title": "CaseIndex",
-  "description": "Contract 2 (artifact), catalog row case-index 2.0.0: the flat inventory of every baked case, written by data-pipeline/pipeline/core/manifest.py build_index to data/derived/manifests/index.json. Rules the schema cannot state, checked by the producer and consumer tests: n_cases equals the number of entries, default_case is one of their case_id values, and the entries are sorted by case_id.",
+  "description": "Contract 2 (artifact), catalog row case-index 1.0.0: the flat inventory of every baked case, written by data-pipeline/pipeline/core/manifest.py build_index to data/derived/manifests/index.json. Rules the schema cannot state, checked by the producer and consumer tests: n_cases equals the number of entries, default_case is one of their case_id values, the entries are sorted by case_id, and every path in files exists under data/derived.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "engine_version", "n_cases", "default_case", "cases"],
+  "required": ["schema", "engine_version", "n_cases", "default_case", "cases", "files"],
   "properties": {
-    "schema": {"const": "example.index/v2"},
+    "schema": {"const": "chancadem.index/v1"},
     "engine_version": {"$ref": "#/$defs/version", "description": "The product version that baked the index; older than VERSION means the bake is stale."},
     "n_cases": {"type": "integer", "minimum": 1},
     "default_case": {"type": "string", "minLength": 1},
@@ -17,14 +17,20 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["case_id", "title", "category", "manifest_path"],
+        "required": ["case_id", "title", "category", "real_or_synthetic", "manifest_path"],
         "properties": {
           "case_id": {"type": "string", "minLength": 1},
           "title": {"$ref": "#/$defs/text"},
           "category": {"$ref": "#/$defs/text"},
+          "real_or_synthetic": {"enum": ["real", "synthetic"], "description": "real: one of the measured HP500 surveys; synthetic: a circuit case of the engine."},
           "manifest_path": {"type": "string", "pattern": "^manifests/[^/\\\\]+\\.json$"}
         }
       }
+    },
+    "files": {
+      "type": "array",
+      "description": "The further committed files the site serves (the model files, the HP500 validation documents, the model metrics), relative to data/derived; frontend/scripts/declared.mjs copies them with the cases.",
+      "items": {"type": "string", "pattern": "^(?!/)(?!.*\\.\\.)[^\\\\]+\\.(json|onnx)$"}
     }
   },
   "$defs": {

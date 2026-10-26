@@ -2,13 +2,57 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "surrogate-model.schema.json",
   "title": "SurrogateModel",
-  "description": "Model slot, catalog row surrogate-model 1.0.0: the released surrogate bundle models/surrogate.json written by data-pipeline/pipeline/stages/train.py and read by stages/evaluate.py. Slot input: r0 = beta / gamma (dimensionless, > 0). Slot output: the peak infected fraction peak_I / N, in [0, 1] (the predictor clamps). When no valid bundle exists the baseline data-pipeline/pipeline/model/baseline.py answers: 1 - (1 + ln r0) / r0 for r0 > 1, else 0 (the SIR peak with S0 = 1 and I0 near 0). EXAMPLE: a real product's bundle is its exported model (ONNX, say) plus a card like this one.",
+  "description": "Model slot, catalog row surrogate-model 1.0.0: the inference contract of the surrogate MLP that emulates the crusher engine, written by data-pipeline/pipeline/stages/train.py to data/derived/models/surrogate.json beside the ONNX graphs data/derived/models/surrogate.onnx (float32) and data/derived/models/surrogate.int8.onnx (dynamically quantised). The input is 11 values: a one-hot of the machine in machine_order, then the continuous inputs in input_order standardised as (value - in_mean) / in_std. The graph's input is named x with shape [1, 11]; its output y has shape [1, 10], standardised: value = y * out_std + out_mean, then 10 ** value where out_log is true, in output_order. Trained on an LHS sweep of the canonical Python engine (pipeline.model.crusher); the held-out metrics are the model-metrics row. The engine itself is the slot's baseline: it answers every query exactly, at a cost the surrogate avoids. Rules the schema cannot state, checked by the producer test: in_mean and in_std have the length of input_order, the out arrays the length of output_order, every std is positive, and the ONNX files named in graphs exist with the sha256 given.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["kind", "basis", "coeffs"],
+  "required": ["schema", "engine_version", "machine_order", "input_order", "in_mean", "in_std", "output_order", "out_log", "out_mean", "out_std", "graphs", "architecture", "training"],
   "properties": {
-    "kind": {"const": "linear-lstsq"},
-    "basis": {"const": ["1", "r0", "ln(r0)", "1/r0"], "description": "The design-matrix columns, in order."},
-    "coeffs": {"type": "array", "minItems": 4, "maxItems": 4, "items": {"type": "number"}, "description": "One coefficient per basis column."}
+    "schema": {"const": "chancadem.surrogate/v1"},
+    "engine_version": {"type": "string", "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$", "description": "The product version whose engine produced the training labels."},
+    "machine_order": {"type": "array", "prefixItems": [{"const": "cone-sec"}, {"const": "cone-tert"}, {"const": "jaw"}, {"const": "cone-short-head"}, {"const": "gyratory"}], "minItems": 5, "maxItems": 5},
+    "input_order": {"type": "array", "prefixItems": [{"const": "css_mm"}, {"const": "throw_mm"}, {"const": "speed_rpm"}, {"const": "feed_x63_mm"}, {"const": "feed_m"}, {"const": "ore_axb"}], "minItems": 6, "maxItems": 6},
+    "in_mean": {"type": "array", "items": {"type": "number"}, "minItems": 6, "maxItems": 6},
+    "in_std": {"type": "array", "items": {"type": "number", "exclusiveMinimum": 0}, "minItems": 6, "maxItems": 6},
+    "output_order": {"type": "array", "prefixItems": [{"const": "p80_mm"}, {"const": "p50_mm"}, {"const": "p20_mm"}, {"const": "pass_1"}, {"const": "pass_4"}, {"const": "pass_8"}, {"const": "pass_16"}, {"const": "pass_32"}, {"const": "throughput_tph"}, {"const": "power_kw"}], "minItems": 10, "maxItems": 10},
+    "out_log": {"type": "array", "items": {"type": "boolean"}, "minItems": 10, "maxItems": 10},
+    "out_mean": {"type": "array", "items": {"type": "number"}, "minItems": 10, "maxItems": 10},
+    "out_std": {"type": "array", "items": {"type": "number", "exclusiveMinimum": 0}, "minItems": 10, "maxItems": 10},
+    "graphs": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["float32", "int8"],
+      "properties": {
+        "float32": {"$ref": "#/$defs/graph"},
+        "int8": {"$ref": "#/$defs/graph"}
+      }
+    },
+    "architecture": {"type": "string", "minLength": 1, "description": "The layer sizes and activations, for example 11-64-64-32-10, SiLU."},
+    "training": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["seed", "n_train", "n_test", "sampler", "torch_version"],
+      "properties": {
+        "seed": {"type": "integer"},
+        "n_train": {"type": "integer", "minimum": 1},
+        "n_test": {"type": "integer", "minimum": 1},
+        "sampler": {"type": "string", "minLength": 1, "description": "How the operating points were drawn, with the bounds per input; the test draw is independent of the training draw."},
+        "torch_version": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "$defs": {
+    "graph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "opset", "input", "output"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^models/[a-z0-9.-]+\\.onnx$", "description": "Relative to data/derived."},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 5242880},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "opset": {"type": "integer", "minimum": 13},
+        "input": {"const": "x"},
+        "output": {"const": "y"}
+      }
+    }
   }
 }
