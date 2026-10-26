@@ -191,7 +191,7 @@ export function FoldFigure() {
   const tx = 14;
   const held = 3;
   return (
-    <svg className="fig-svg wide" viewBox="0 0 640 190" role="img" aria-label={t('One fold of the leave-one-survey-out protocol', 'Un pliegue del protocolo dejar una encuesta afuera')} data-chart="methodology-figure">
+    <svg className="fig-svg wide" viewBox="0 0 640 190" role="img" aria-label={t('One fold of the leave-one-survey-out protocol', 'Un pliegue del protocolo dejar un muestreo afuera')} data-chart="methodology-figure">
       {Array.from({ length: n }).map((_, i) => {
         const x = x0 + i * (bw + gap);
         const out = i === held;
@@ -203,11 +203,11 @@ export function FoldFigure() {
           </g>
         );
       })}
-      <text x={tx} y={20} fontSize="12" fill="var(--color-fg-subtle)">{t('Ten surveys of one HP500: this fold holds out survey 4', 'Diez encuestas de un HP500: este pliegue deja afuera la 4')}</text>
+      <text x={tx} y={20} fontSize="12" fill="var(--color-fg-subtle)">{t('Ten surveys of one HP500: this fold holds out survey 4', 'Diez muestreos de un HP500: este pliegue deja afuera el 4')}</text>
       <rect x={tx} y={92} width={22} height={12} rx={3} fill="var(--color-good)" />
       <text x={tx + 30} y={103} fontSize="12" fill="var(--color-fg-subtle)">{t('fit: the scalars on these nine', 'ajuste: los escalares con estas nueve')}</text>
       <rect x={tx} y={114} width={22} height={12} rx={3} fill="var(--color-warn)" />
-      <text x={tx + 30} y={125} fontSize="12" fill="var(--color-fg-subtle)">{t('predict: the survey the fit never saw', 'predecir: la encuesta que el ajuste nunca vio')}</text>
+      <text x={tx + 30} y={125} fontSize="12" fill="var(--color-fg-subtle)">{t('predict: the survey the fit never saw', 'predecir: el muestreo que el ajuste nunca vio')}</text>
       <text x={tx} y={152} fontSize="12" fill="var(--color-fg-subtle)">{t('controls: constant mean, label shuffle, leaky fold', 'controles: media constante, etiquetas barajadas, fuga')}</text>
       <text x={tx} y={172} fontSize="12" fill="var(--color-fg-subtle)">{t('interval: M0 plus or minus 1.2816 sigma of the residual', 'intervalo: M0 más o menos 1,2816 sigma del residuo')}</text>
     </svg>
