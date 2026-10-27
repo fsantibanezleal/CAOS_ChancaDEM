@@ -342,6 +342,13 @@ export const HP500_LOO = {
 } as const satisfies Record<string, Kind>;
 export type Hp500Loo = Of<{ readonly object: typeof HP500_LOO }>;
 
+/** The training range of a continuous input, [low, high], and the ranges of every continuous input of every machine (training.input_ranges of both model contracts). */
+const BOUNDS = { tuple: ['number', 'number'] } as const;
+const MACHINE_RANGES = { object: { css_mm: BOUNDS, throw_mm: BOUNDS, speed_rpm: BOUNDS, feed_x63_mm: BOUNDS, feed_m: BOUNDS, ore_axb: BOUNDS } } as const;
+const INPUT_RANGES = {
+  object: { 'cone-sec': MACHINE_RANGES, 'cone-tert': MACHINE_RANGES, jaw: MACHINE_RANGES, 'cone-short-head': MACHINE_RANGES, gyratory: MACHINE_RANGES },
+} as const;
+
 const GRAPH = (output: string) => ({ object: { path: 'string', bytes: 'integer', sha256: 'string', opset: 'integer', input: { enum: ['x'] }, output: { enum: [output] } } }) as const;
 
 /** surrogate-model: the inference contract of the surrogate MLP (input, output, scaling and graphs). */
@@ -360,7 +367,7 @@ export const SURROGATE_MODEL = {
   out_std: SERIES,
   graphs: { object: { float32: GRAPH('y'), int8: GRAPH('y') } },
   architecture: 'string',
-  training: { object: { seed: 'integer', n_train: 'integer', n_test: 'integer', sampler: 'string', torch_version: 'string', export_parity_max_abs: { optional: 'number' } } },
+  training: { object: { seed: 'integer', n_train: 'integer', n_test: 'integer', sampler: 'string', input_ranges: INPUT_RANGES, torch_version: 'string', export_parity_max_abs: { optional: 'number' } } },
 } as const satisfies Record<string, Kind>;
 export type SurrogateModel = Of<{ readonly object: typeof SURROGATE_MODEL }>;
 
@@ -394,7 +401,7 @@ export const ANOMALY_MODEL = {
   train_recon_mean: 'number',
   graph: GRAPH('xr'),
   architecture: 'string',
-  training: { object: { seed: 'integer', n_train: 'integer', noise_std: 'number', torch_version: 'string', export_parity_max_abs: { optional: 'number' } } },
+  training: { object: { seed: 'integer', n_train: 'integer', noise_std: 'number', input_ranges: INPUT_RANGES, torch_version: 'string', export_parity_max_abs: { optional: 'number' } } },
 } as const satisfies Record<string, Kind>;
 export type AnomalyModel = Of<{ readonly object: typeof ANOMALY_MODEL }>;
 

@@ -315,3 +315,140 @@ def test_evaluate_refuses_a_bundle_without_the_recorded_export_parity(tmp_path):
     assert errors("surrogate-model", bundle) == []   # optional in the schema, required by the evaluate stage
     with pytest.raises(ValueError, match="surrogate.json.*export_parity_max_abs"):
         evaluate_stage.run(models, tmp_path / "m.json", version=VERSION)
+
+
+# ---------------------------------------------------------------- F1: the applicability rule (the models answer only where they apply)
+
+SURVEYS = [f"HP500-{i:02d}" for i in range(1, 11)]
+CONTINUOUS = ("css_mm", "throw_mm", "speed_rpm", "feed_x63_mm", "feed_m", "ore_axb")
+# sha256 of the verdict lines of the shared table below; frontend/src/lib/ort.test.ts builds the same table and pins the same digest
+TABLE_DIGEST = "bcaf117a70140ee381191f35625341daa46f3720efae43b9327c5f7a0b780965"
+
+
+def _op(machine, values, calibrated=False, wi=14.0):
+    return Operating(machine, *(values[k] for k in CONTINUOUS), wi, calibrated)
+
+
+def _survey_op(case_id):
+    p = _json(BAKE.parent / "manifests" / f"{case_id}.json")["params"]
+    assert p["calibrated"] is True
+    return Operating(p["machine"], p["css_mm"], p["throw_mm"], p["speed_rpm"], p["feed_x63_mm"], p["feed_m"], p["ore_axb"],
+                     p["ore_wi"], True)
+
+
+def applicability_table(ranges: dict):
+    """The shared table of points: ``(id, operating point, expected applies, expected reasons)``. The web test builds the
+    same rows in the same order from the same contract and pins the same digest of the verdict lines."""
+    rows = []
+    for machine in sweep.MACHINES:
+        r = ranges[machine]
+        centre = {k: (r[k][0] + r[k][1]) / 2 for k in CONTINUOUS}
+        rows.append((f"{machine}.centre", _op(machine, centre), True, []))
+        rows.append((f"{machine}.calibrated", _op(machine, centre, True), False, ["calibrated_case"]))
+        for k in CONTINUOUS:
+            lo, hi = r[k]
+            rows.append((f"{machine}.{k}.lo", _op(machine, {**centre, k: lo}), True, []))
+            rows.append((f"{machine}.{k}.hi", _op(machine, {**centre, k: hi}), True, []))
+            rows.append((f"{machine}.{k}.below", _op(machine, {**centre, k: lo - 1e-6}), False, [f"outside_training_range:{k}"]))
+            rows.append((f"{machine}.{k}.above", _op(machine, {**centre, k: hi + 1e-6}), False, [f"outside_training_range:{k}"]))
+        rows.append((f"{machine}.two", _op(machine, {**centre, "css_mm": r["css_mm"][1] + 1, "feed_m": r["feed_m"][0] - 0.1}), False,
+                     ["outside_training_range:css_mm", "outside_training_range:feed_m"]))
+        rows.append((f"{machine}.nan", _op(machine, {**centre, "speed_rpm": float("nan")}), False, ["outside_training_range:speed_rpm"]))
+        rows.append((f"{machine}.calibrated_and_outside", _op(machine, {**centre, "ore_axb": 677.3}, True), False, ["calibrated_case"]))
+    for case_id in SURVEYS:
+        rows.append((case_id, _survey_op(case_id), False, ["calibrated_case"]))
+    return rows
+
+
+def _digest(verdicts):
+    return hashlib.sha256("\n".join(f"{i}|{int(a)}|{','.join(r)}" for i, a, r in verdicts).encode()).hexdigest()
+
+
+@pytest.mark.parametrize("root", sorted(MODEL_DIRS))
+@pytest.mark.parametrize("slot", sorted(SLOTS))
+def test_the_contracts_carry_the_training_ranges_of_the_sweep(root, slot):
+    bundle = _json(MODEL_DIRS[root] / SLOTS[slot])
+    assert bundle["training"]["input_ranges"] == {m: {k: list(v) for k, v in sweep.RANGES[m].items()} for m in sweep.MACHINES}
+    assert list(bundle["training"]["input_ranges"]) == list(sweep.MACHINES)
+    assert train_stage.input_ranges() == bundle["training"]["input_ranges"]
+
+
+@pytest.mark.parametrize("slot", sorted(SLOTS))
+def test_a_contract_without_input_ranges_fails_its_schema_and_releases_the_slot_to_the_baseline(slot, tmp_path):
+    bundle = _json(BAKE / SLOTS[slot])
+    del bundle["training"]["input_ranges"]
+    assert errors(SCHEMA[slot], bundle) != []
+    models = _copy_tree(BAKE, tmp_path)
+    (models / SLOTS[slot]).write_text(json.dumps(bundle), encoding="utf-8")
+    assert bundles.released_slots(models)[slot] is False
+    if slot == "surrogate-model":
+        value, provenance = bundles.surrogate_predict(CASE, models)
+        assert provenance == "baseline" and value == bundles.engine_outputs(evaluate(CASE))
+    else:
+        verdict, provenance = bundles.anomaly_score(evaluate(CASE), models)
+        assert provenance == "baseline" and verdict == {"is_anomaly": evaluate(CASE).out_of_envelope}
+
+
+@pytest.mark.parametrize("root", sorted(MODEL_DIRS))
+@pytest.mark.parametrize("slot", sorted(SLOTS))
+def test_every_range_is_an_ordered_pair_inside_its_machine(root, slot):
+    for machine, per in _json(MODEL_DIRS[root] / SLOTS[slot])["training"]["input_ranges"].items():
+        assert list(per) == list(CONTINUOUS), machine
+        assert all(lo < hi for lo, hi in per.values()), machine
+
+
+@pytest.mark.parametrize("root", sorted(MODEL_DIRS))
+def test_the_applicability_rule_on_the_shared_table(root):
+    verdicts = []
+    for slot in SLOTS:
+        bundle = bundles.load_bundle(slot, MODEL_DIRS[root])
+        rows = applicability_table(bundle["training"]["input_ranges"])
+        assert len(rows) == 5 * (2 + 6 * 4 + 3) + 10
+        out = []
+        for ident, op, applies, reasons in rows:
+            got = bundles.applicability(op, bundle)
+            assert got == (applies, reasons), f"{slot} {ident}"
+            out.append((ident, got[0], got[1]))
+        verdicts.append(out)
+    assert verdicts[0] == verdicts[1]
+    assert _digest(verdicts[0]) == TABLE_DIGEST
+
+
+@pytest.mark.parametrize("root", sorted(MODEL_DIRS))
+@pytest.mark.parametrize("case_id", SURVEYS)
+def test_a_calibrated_survey_never_gets_a_graph_answer(root, case_id, tmp_path):
+    models = _copy_tree(MODEL_DIRS[root], tmp_path)
+    op = _survey_op(case_id)
+    truth = evaluate(op)
+    value, provenance = bundles.surrogate_predict(op, models)
+    assert provenance == "baseline" and value == bundles.engine_outputs(truth)
+    verdict, provenance = bundles.anomaly_score(truth, models)
+    assert provenance == "baseline" and verdict == {"is_anomaly": truth.out_of_envelope} and "score" not in verdict
+
+
+@pytest.mark.parametrize("root", sorted(MODEL_DIRS))
+def test_an_uncalibrated_point_outside_the_range_gets_the_baseline_and_inside_the_graph(root, tmp_path):
+    models = _copy_tree(MODEL_DIRS[root], tmp_path)
+    inside, provenance = bundles.surrogate_predict(CASE, models)
+    assert provenance == "real"
+    outside = Operating("cone-sec", 32, 30, 360, 90, 1.2, 677.3, 14)   # the survey's ore competence, uncalibrated
+    value, provenance = bundles.surrogate_predict(outside, models)
+    assert provenance == "baseline" and value == bundles.engine_outputs(evaluate(outside))
+    verdict, provenance = bundles.anomaly_score(evaluate(outside), models)
+    assert provenance == "baseline" and set(verdict) == {"is_anomaly"}
+    verdict, provenance = bundles.anomaly_score(evaluate(CASE), models)
+    assert provenance == "real" and "score" in verdict
+
+
+@pytest.mark.parametrize("root", sorted(MODEL_DIRS))
+def test_the_raw_graph_readers_exist_for_the_extrapolation_demonstration_and_differ_from_the_slot(root):
+    """The notebook shows what the network does outside its domain through ``surrogate_graph`` / ``anomaly_graph``; the
+    slot's answer at the same survey is the baseline's, never the graph's."""
+    models = MODEL_DIRS[root]
+    op = _survey_op("HP500-01")
+    raw = bundles.surrogate_graph(op, bundles.load_bundle("surrogate-model", models), models)
+    assert set(raw) == set(OUT_KEYS) and raw != bundles.engine_outputs(evaluate(op))
+    assert bundles.surrogate_predict(op, models)[0] == bundles.engine_outputs(evaluate(op))
+    reading = bundles.anomaly_graph(evaluate(op), bundles.load_bundle("anomaly-model", models), models)
+    assert set(reading) == {"score", "threshold", "is_anomaly"}
+    assert "score" not in bundles.anomaly_score(evaluate(op), models)[0]

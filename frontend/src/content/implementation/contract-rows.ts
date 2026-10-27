@@ -82,7 +82,7 @@ export const ROWS: { id: string; version: string; schema: string; governs: [stri
   },
   {
     id: 'api',
-    version: '1.0.0',
+    version: '1.0.1',
     schema: 'OpenAPI',
     governs: ['The dormant read-only API, GET only.', 'La API inactiva de solo lectura, solo GET.'],
     missing: ['The API answers 503 with the declared state and never an empty body; the static readiness says missing while it is dormant.', 'La API responde 503 con el estado declarado y nunca un cuerpo vacío; la disponibilidad estática dice ausente mientras está inactiva.'],

@@ -1,12 +1,12 @@
-// The live runs of the Benchmark page: the calibrated engine, the generic engine and the surrogate at a survey's measured operating
-// point, in this browser. The surrogate emulates the generic engine (the canonical engine with no HP500 calibration, the one its
-// training sweep ran), so the generic run is the fair reference for it; the calibrated run is the backbone CrusherCal validates.
+// The live runs of the Benchmark page: the calibrated engine and the generic engine at a survey's measured operating point, in this
+// browser, and the verdict of the applicability rule for the learned surrogate. The surrogate emulates the generic engine (the
+// canonical engine with no HP500 calibration, the one its training sweep ran); a measured survey runs the calibrated engine, so
+// the rule says the surrogate does not apply and it is not graded there: no surrogate number is computed for a survey.
 import { evaluate } from '../../engine/engine';
 import type { Operating } from '../../engine/types';
 import type { CaseManifest, SurrogateModel } from '../../lib/contract.types';
-import { predictSurrogate, type SurrogateOutput } from '../../lib/ort';
+import { applicability, type Applicability } from '../../lib/ort';
 import { operatingOf } from '../../workbench/model';
-import { outsideRanges, trainingRanges, type SurrogateInputName } from './data';
 
 export interface EngineReading {
   tph: number;
@@ -20,10 +20,10 @@ export interface SurveyRun {
   measured: { tph: number; kw: number; f80: number; css: number };
   calibrated: EngineReading;
   generic: EngineReading;
-  /** The surrogate's answer; null when the slot has no released model (the engine answers). */
-  surrogate: EngineReading | null;
-  /** The inputs of this survey outside the surrogate's training range for the machine; null when the contract text does not carry the machine. */
-  outside: SurrogateInputName[] | null;
+  /** The operating point of the survey (calibrated, as the case is). */
+  op: Operating;
+  /** The applicability rule for the released surrogate at this survey; null when the slot has no released model (the engine answers). */
+  rule: Applicability | null;
 }
 
 const reading = (r: { throughputTph: number; powerKw: number; p80: number }): EngineReading => ({ tph: r.throughputTph, kw: r.powerKw, p80: r.p80 });
@@ -43,13 +43,6 @@ export async function runSurvey(manifest: CaseManifest, contract: SurrogateModel
   if (!m) throw new Error(`${manifest.case_id} carries no measured values`);
   const op = operatingOf(manifest.params);
   const { calibrated, generic } = engineReadings(op);
-  let surrogate: EngineReading | null = null;
-  let outside: SurrogateInputName[] | null = null;
-  if (contract) {
-    const y: Record<SurrogateOutput, number> = await predictSurrogate(contract, op);
-    surrogate = { tph: y.throughput_tph, kw: y.power_kw, p80: y.p80_mm };
-    const ranges = trainingRanges(contract.training.sampler, op.machine);
-    outside = ranges ? outsideRanges(op, ranges) : null;
-  }
-  return { id: manifest.case_id, n: m.survey, measured: { tph: m.feed_tph, kw: m.power_kw, f80: m.f80_mm, css: m.css_mm }, calibrated, generic, surrogate, outside };
+  const rule = contract ? applicability(op, contract) : null;
+  return { id: manifest.case_id, n: m.survey, measured: { tph: m.feed_tph, kw: m.power_kw, f80: m.f80_mm, css: m.css_mm }, calibrated, generic, op, rule };
 }

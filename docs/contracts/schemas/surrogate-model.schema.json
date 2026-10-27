@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "surrogate-model.schema.json",
   "title": "SurrogateModel",
-  "description": "Model slot, catalog row surrogate-model 1.0.0: the inference contract of the surrogate MLP that emulates the crusher engine, written by data-pipeline/pipeline/stages/train.py to data/derived/models/surrogate.json beside the ONNX graphs data/derived/models/surrogate.onnx (float32) and data/derived/models/surrogate.int8.onnx (dynamically quantised). The input is 11 values: a one-hot of the machine in machine_order, then the continuous inputs in input_order standardised as (value - in_mean) / in_std. The graph's input is named x with shape [1, 11]; its output y has shape [1, 10], standardised: value = y * out_std + out_mean, then 10 ** value where out_log is true, in output_order. Trained on an LHS sweep of the canonical Python engine (pipeline.model.crusher); the held-out metrics are the model-metrics row. The engine itself is the slot's baseline: it answers every query exactly, at a cost the surrogate avoids. Rules the schema cannot state, checked by the producer test: in_mean and in_std have the length of input_order, the out arrays the length of output_order, every std is positive, and the ONNX files named in graphs exist with the sha256 given.",
+  "description": "Model slot, catalog row surrogate-model 1.0.0: the inference contract of the surrogate MLP that emulates the crusher engine, written by data-pipeline/pipeline/stages/train.py to data/derived/models/surrogate.json beside the ONNX graphs data/derived/models/surrogate.onnx (float32) and data/derived/models/surrogate.int8.onnx (dynamically quantised). The input is 11 values: a one-hot of the machine in machine_order, then the continuous inputs in input_order standardised as (value - in_mean) / in_std. The graph's input is named x with shape [1, 11]; its output y has shape [1, 10], standardised: value = y * out_std + out_mean, then 10 ** value where out_log is true, in output_order. Trained on an LHS sweep of the canonical Python engine (pipeline.model.crusher); the held-out metrics are the model-metrics row. The engine itself is the slot's baseline: it answers every query exactly, at a cost the surrogate avoids. Applicability: training.input_ranges is the model's domain; it answers only a point that is not calibrated and inside those ranges, else the engine answers with the reason. Rules the schema cannot state, checked by the producer test: in_mean and in_std have the length of input_order, the out arrays the length of output_order, every std is positive, and the ONNX files named in graphs exist with the sha256 given.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "engine_version", "machine_order", "input_order", "in_mean", "in_std", "output_order", "out_log", "out_mean", "out_std", "graphs", "architecture", "training"],
@@ -30,18 +30,46 @@
     "training": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["seed", "n_train", "n_test", "sampler", "torch_version"],
+      "required": ["seed", "n_train", "n_test", "sampler", "input_ranges", "torch_version"],
       "properties": {
         "seed": {"type": "integer"},
         "n_train": {"type": "integer", "minimum": 1},
         "n_test": {"type": "integer", "minimum": 1},
         "sampler": {"type": "string", "minLength": 1, "description": "How the operating points were drawn, with the bounds per input; the test draw is independent of the training draw."},
+        "input_ranges": {"$ref": "#/$defs/inputRanges"},
         "torch_version": {"type": "string", "minLength": 1},
         "export_parity_max_abs": {"type": "number", "minimum": 0, "description": "The maximum absolute difference between the trained torch module and the exported float32 graph (run through onnxruntime) on the held-out draw, in standardised outputs, measured by train.py right after export; evidence the export preserved the trained module."}
       }
     }
   },
   "$defs": {
+    "inputRanges": {
+      "type": "object",
+      "description": "The training range of every continuous input, per machine: [low, high] of the training draw, inclusive, written by train.py from sweep.RANGES with no rounding. The applicability rule of both sides reads it: a model answers an operating point only when the point is not calibrated and every continuous input lies inside its machine's range; otherwise the slot's baseline answers, labelled with the reason (calibrated_case, or outside_training_range:<input>).",
+      "additionalProperties": false,
+      "required": ["cone-sec", "cone-tert", "jaw", "cone-short-head", "gyratory"],
+      "properties": {
+        "cone-sec": {"$ref": "#/$defs/machineRanges"},
+        "cone-tert": {"$ref": "#/$defs/machineRanges"},
+        "jaw": {"$ref": "#/$defs/machineRanges"},
+        "cone-short-head": {"$ref": "#/$defs/machineRanges"},
+        "gyratory": {"$ref": "#/$defs/machineRanges"}
+      }
+    },
+    "machineRanges": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["css_mm", "throw_mm", "speed_rpm", "feed_x63_mm", "feed_m", "ore_axb"],
+      "properties": {
+        "css_mm": {"$ref": "#/$defs/range"},
+        "throw_mm": {"$ref": "#/$defs/range"},
+        "speed_rpm": {"$ref": "#/$defs/range"},
+        "feed_x63_mm": {"$ref": "#/$defs/range"},
+        "feed_m": {"$ref": "#/$defs/range"},
+        "ore_axb": {"$ref": "#/$defs/range"}
+      }
+    },
+    "range": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2, "description": "[low, high], low below high."},
     "graph": {
       "type": "object",
       "additionalProperties": false,

@@ -2,7 +2,6 @@
 // number the page shows is read from hp500/loo.json, hp500/backbone.json, model-metrics.json, the surrogate contract or the
 // manifests; what is computed here is a difference, a rank or a distance of those numbers, never a figure typed in.
 import { HP500_ENVELOPE } from '../../engine/envelope';
-import type { Operating } from '../../engine/types';
 import type { Hp500Backbone, Hp500Loo, Text } from '../../lib/contract.types';
 
 export type Target = 'tph' | 'kW' | 'p80';
@@ -132,49 +131,4 @@ export function spearman(x: readonly number[], y: readonly number[]): number | n
     sbb += (b[i] - mb) ** 2;
   }
   return saa === 0 || sbb === 0 ? null : sab / Math.sqrt(saa * sbb);
-}
-
-export type SurrogateInputName = 'css_mm' | 'throw_mm' | 'speed_rpm' | 'feed_x63_mm' | 'feed_m' | 'ore_axb';
-
-/** The field of an operating point each surrogate input reads. */
-export const INPUT_FIELD: Record<SurrogateInputName, keyof Operating> = {
-  css_mm: 'cssMm',
-  throw_mm: 'throwMm',
-  speed_rpm: 'speedRpm',
-  feed_x63_mm: 'feedX63Mm',
-  feed_m: 'feedM',
-  ore_axb: 'oreAxb',
-};
-
-export const INPUT_LABEL: Record<SurrogateInputName, Text> = {
-  css_mm: { en: 'setting', es: 'abertura' },
-  throw_mm: { en: 'throw', es: 'carrera' },
-  speed_rpm: { en: 'speed', es: 'velocidad' },
-  feed_x63_mm: { en: 'feed x63', es: 'x63 de la alimentación' },
-  feed_m: { en: 'feed m', es: 'm de la alimentación' },
-  ore_axb: { en: 'ore A times b', es: 'A por b del mineral' },
-};
-
-/** The training range of each continuous input of a machine, read from the sampler text of the surrogate's contract; null when the text does not carry the machine. */
-export function trainingRanges(sampler: string, machine: string): Record<SurrogateInputName, [number, number]> | null {
-  const start = sampler.indexOf(`${machine}: `);
-  if (start < 0) return null;
-  const rest = sampler.slice(start + machine.length + 2);
-  const end = rest.search(/[;)]/);
-  const segment = end < 0 ? rest : rest.slice(0, end);
-  const out: Partial<Record<SurrogateInputName, [number, number]>> = {};
-  for (const m of segment.matchAll(/([a-z0-9_]+) ([0-9.]+) to ([0-9.]+)/g)) {
-    out[m[1] as SurrogateInputName] = [Number(m[2]), Number(m[3])];
-  }
-  const names = Object.keys(INPUT_FIELD) as SurrogateInputName[];
-  return names.every((n) => out[n]) ? (out as Record<SurrogateInputName, [number, number]>) : null;
-}
-
-/** The inputs of an operating point that lie outside the training ranges. */
-export function outsideRanges(op: Operating, ranges: Record<SurrogateInputName, [number, number]>): SurrogateInputName[] {
-  return (Object.keys(INPUT_FIELD) as SurrogateInputName[]).filter((name) => {
-    const v = op[INPUT_FIELD[name]] as number;
-    const [lo, hi] = ranges[name];
-    return v < lo || v > hi;
-  });
 }
