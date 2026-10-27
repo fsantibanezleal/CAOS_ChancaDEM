@@ -4,6 +4,40 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [0.11.000] · 2026-10-27
+
+### Added
+
+- The Performance group has a fifth sub-view, Campaign (BL-004): for the selected case it plots the operating hours until
+  the product's P80 leaves a target as the closed-side setting drifts open with liner wear, against the drift rate of the
+  setting (log axis, 0.01 to 1 mm/h), with the P80 target as a control (default: the case's P80 plus 10 percent) and the
+  45 h re-set interval of one plant (Ma et al. 2016) as the only reference line. The product models no wear and asserts no
+  wear rate: the drift rate is the reader's to measure, and the view says so in both languages.
+- Two engine functions on both sides, held equal by a shared table of 45 rows to 1e-6 mm: `css_at_p80_target` (the setting
+  at which the engine's P80 reaches a target; none when the point is invalid, the target is never reached or P80 is not
+  monotone) and `hours_to_target`.
+- A framework card for the campaign view (M13), the Methodology and Implementation text, and the SDD method-ladder line.
+- The synthetic secondary-cone (`cone-sec`) cases of the App now show a band on the throughput and power charts: at least the
+  relative half-width of CrusherCal's held-out 80 percent band (`uq.band_rel_pct`, read at run time from `hp500/loo.json`),
+  labelled in both languages as a lower bound from the calibrated model family. The other machine types show no band and say
+  that no measured data exist for them; a missing document gives no band and the readiness message (BL-017, completes BL-005).
+- Methodology, Experiments, Benchmark, the CrusherCal card and the SDD state the new band and its limit.
+
+### Changed
+
+- The engine, in Python and in TypeScript, now warns with two stable codes that never make a point invalid: `css_below_vendor_minimum`
+  (a closed-side setting below the vendor minimum of the machine type: secondary cone 16 mm, tertiary and short-head cone 6 mm, jaw
+  40 mm; no bound for the gyratory, no source found) and `reduction_ratio_above_typical` (F80/P80 above the typical ceiling of one
+  stage: secondary cone 5, tertiary and short-head cone, jaw and gyratory 4). The constants cite the Metso HP application guide, the
+  Metso C Series brochure and Metso Basics in Minerals Processing. A secondary cone at 1 mm with an F80 of 126 mm, reported valid and
+  unflagged before, now carries both codes and stays valid.
+- Contract `case-manifest` 1.1.0 (minor): the two codes join the `flags` enum. Seven of the 17 synthetic cases gain a code (S06 both;
+  CK1, S05, T01, T02, H01 and H02 the ratio code); the ten HP500 surveys gain none. The bilingual flag texts name each bound and its source.
+- CK1 is relabelled "Absolute-number control, HP-class cone": the product's absolute anchor is the calibrated HP500 lane (Rocha et al.
+  2024), and Duarte et al. 2021 cannot serve because it gives no throw, speed, ore properties or power and its size data are plots only.
+- The notebooks 01-02 and 03-02, in both languages, count the two advisory warnings apart from the refusals and print the
+  bounds and the reduction ratio they quote from the engine's own tables; reviewed again before the release.
+
 ## [0.10.000] · 2026-10-27
 
 ### Changed - the product re-instantiated on CAOS_PRODUCT_TEMPLATE 0.11.005 and the shared shell 0.19.3

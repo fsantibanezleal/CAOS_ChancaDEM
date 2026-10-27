@@ -17,7 +17,7 @@ import { PerformanceGroup } from '../views/performance';
 import { ProductGroup } from '../views/product';
 import { ViewContext, provenanceOf, type ViewCtx } from '../views/shared';
 import { ValidationGroup } from '../views/validation';
-import { bakedOf, knobBounds, KNOBS, railMoved, railOf, selectionOf, VARIANTS, type RailValues, type Selection } from './model';
+import { bakedOf, BANDED_MACHINE, knobBounds, KNOBS, railMoved, railOf, selectionOf, VARIANTS, type RailValues, type Selection } from './model';
 import './workbench.css';
 
 const MACHINE_NAME: Record<string, Text> = {
@@ -102,7 +102,9 @@ export function Workbench() {
   const sel: Selection | null = useMemo(() => (data && vals ? selectionOf(data, vals, variant) : null), [data, vals, variant]);
 
   const isReal = data?.manifest.real_or_synthetic === 'real';
-  const loo = useArtifact<Hp500Loo>((signal) => (index.state === 'ready' && isReal ? loadHp500Loo(index.data, signal) : new Promise<Hp500Loo>(() => undefined)), [index.state, isReal]);
+  // CrusherCal's document is read by a real survey (its measured band) and by a synthetic case of the machine the model family was calibrated on (a lower-bound band).
+  const readsLoo = isReal || (data?.manifest.real_or_synthetic === 'synthetic' && data.manifest.params.machine === BANDED_MACHINE);
+  const loo = useArtifact<Hp500Loo>((signal) => (index.state === 'ready' && readsLoo ? loadHp500Loo(index.data, signal) : new Promise<Hp500Loo>(() => undefined)), [index.state, readsLoo]);
 
   // A case the readiness document lists as absent stays in the selector, marked, so its reason can be read.
   const absent = lang === 'es' ? ' (aún no disponible)' : ' (not available yet)';
@@ -123,7 +125,7 @@ export function Workbench() {
     sel,
     unavailable,
     index: index.state === 'ready' ? (index.data as CaseIndex) : null,
-    loo: isReal ? loo : null,
+    loo: readsLoo ? loo : null,
     target,
     setTarget,
     canApplyCss: !!sel && !locked,

@@ -10,6 +10,7 @@ import { REF_THROW_MM } from './machines';
 import { whitenSolve } from './whiten';
 import { throughput, bondPower, calibratedPower, nipAngle, nipLimit } from './capacity';
 import { checkEnvelope } from './envelope';
+import { checkBounds } from './bounds';
 import type { Operating, CrusherResult, Regime } from './types';
 
 const TOP_MM = 256;     // sieve top size [mm]
@@ -83,6 +84,9 @@ export function evaluate(op: Operating): CrusherResult {
   const env = checkEnvelope(op, f80, declaredF80);
   for (const code of env.codes) if (!flags.includes(code)) flags.push(code);
   if (env.implausible) valid = false;
+
+  // sourced warnings, never invalid: a setting below the vendor minimum, a reduction ratio above the typical ceiling
+  for (const code of checkBounds(op.machine, op.cssMm, reductionRatio)) if (!flags.includes(code)) flags.push(code);
 
   return {
     op, feed, product,

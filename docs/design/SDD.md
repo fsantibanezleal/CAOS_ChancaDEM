@@ -189,6 +189,7 @@ criterion below holds in the TypeScript port because the shared reference holds 
 | M10 | CrusherCal: leave-one-survey-out validation of the backbone (M0), a bounded ridge residual (M1) and a free-form fit (M2), with a constant-mean baseline, a label-shuffle control and an 80 percent predictive band | classical, validation | the label-shuffle control does not beat the backbone; the backbone beats the constant mean on throughput; the leaky-strict optimism gap is exposed; the band's coverage is reported | `tests/test_hp500_loo.py::test_adversarial_the_label_shuffle_control_does_not_beat_the_backbone`, `tests/test_hp500_loo.py::test_tph_backbone_has_real_skill`, `tests/test_hp500_loo.py::test_adversarial_the_leaky_folds_expose_the_optimism_gap` |
 | M11 | The surrogate MLP 11-64-64-32-10 trained on a Latin-hypercube sweep of the engine; baseline: the engine itself | learned | held out on an independent draw, every output's R2 is computed from the shipped graph through onnxruntime; P80 monotone in CSS on every machine; with an invalid bundle the engine answers, labelled | `tests/contracts/test_models.py::test_metrics_validate`, `tests/contracts/test_models.py::test_adversarial_swap_engine_baseline_and_surrogate` |
 | M12 | The denoising autoencoder 14-16-6-16-14 as an extrapolation score; baseline: the envelope gate | learned | false-alarm and detection rates on the held-out draw and on planted off-manifold points, beside the envelope gate's on the same points | `tests/contracts/test_models.py::test_metrics_report_the_anomaly_comparison_and_the_planted_points`, `tests/contracts/test_models.py::test_adversarial_swap_envelope_baseline_and_autoencoder` |
+| M13 | The campaign view: the closed-side setting at which the engine's P80 reaches a target, and the hours to get there at a drift rate the user supplies (the form of Ma, Fan and He 2016; no wear rate asserted) | classical, what-if | both engines return the same setting on a shared table of 45 rows to 1e-6 mm; the engine's P80 at the returned setting is the target; a target already exceeded, never reached, an invalid point and a non-monotone P80 give zero hours or no answer, never a guess | `tests/test_campaign.py::test_the_shared_table_is_reproduced_to_1e6_mm`, `tests/test_campaign.py::test_a_target_never_reached_below_the_ceiling_is_none`, `frontend/src/engine/campaign.test.ts`, `frontend/src/views/campaign.test.tsx` |
 
 Not a method of this release: discrete-element simulation with breakage (the state of the art the population balance
 approximates, Cleary and Sinnott 2015; Quist and Evertsson 2016), stated on the Methodology page as the frontier.
@@ -205,8 +206,9 @@ approximates, Cleary and Sinnott 2015; Quist and Evertsson 2016), stated on the 
 - Tertiary crushing: T01 and T02 (tertiary cone, fine feed; hard and closed), H01 and H02 (short-head, the finest product;
   hard and choke-fed).
 - Controls: CP1 (pass-through: a setting wider than the feed's F80, a reduction ratio near 1, flagged), CI1 (invalid: a
-  setting wider than the feed top size, flagged and marked invalid, never a confident number), CK1 (the calibration anchor
-  for the Duarte et al. 2021 industrial data; synthetic, its fit not executed in this release, and labelled so).
+  setting wider than the feed top size, flagged and marked invalid, never a confident number), CK1 (a synthetic control for
+  absolute numbers; the product's absolute anchor is the calibrated HP500 lane, Rocha et al. 2024, and Duarte et al. 2021
+  cannot serve as an anchor because it gives no throw, speed, ore properties or power and its size data are plots only).
 - Real surveys: HP500-01 to HP500-10, the ten measured surveys of a Metso HP500 secondary cone at Minas Rio (Rocha et al.
   2024, CC BY 4.0), each at its measured setting and feed f80, scored against its measured throughput and power.
 
@@ -240,7 +242,10 @@ None of these is a model judging a model.
   residual's failure to beat the backbone out of sample (13.45 percent) is reported as the pre-registered null it is. The
   paper's own in-sample error figure is not carried by this repository (its tables are figures and the publisher page could
   not be opened by the documenting sessions), so no comparison with a band of the paper is claimed: the held-out error
-  is set beside the in-sample error of the same backbone computed here. Covered by a level 4 notebook in each language
+  is set beside the in-sample error of the same backbone computed here. The synthetic secondary-cone cases of the App
+  carry the relative half-width of that band as a labelled lower bound (the held-out error of the same model family once
+  calibrated, read from the committed document at run time); the other machine types have no measured data and show no
+  band. Covered by a level 4 notebook in each language
   (`notebooks/*/06-crushercal/`).
 
 ## Deploy driver

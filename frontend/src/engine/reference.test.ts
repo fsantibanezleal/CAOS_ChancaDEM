@@ -255,6 +255,10 @@ it('the fixture covers every reachable branch of the engine, calibrated and not,
   for (const code of ['f80_lt_css', 'css_nonpositive', 'feed_nonpositive', 'css_outside_calibrated', 'f80_outside_calibrated']) {
     checks[`envelope code ${code}`] = hit((p) => p.result.envelopeCodes.includes(code));
   }
+  for (const code of ['css_below_vendor_minimum', 'reduction_ratio_above_typical']) {
+    checks[`warning ${code}`] = hit((p) => p.result.flags.includes(code));
+    checks[`warning ${code} on a valid point`] = hit((p) => p.result.valid && p.result.flags.includes(code));
+  }
   for (const m of MACHINES) {
     checks[`machine ${m}`] = hit((p) => p.op.machine === m);
     checks[`machine ${m} valid`] = hit((p) => p.op.machine === m && p.result.valid === true);
