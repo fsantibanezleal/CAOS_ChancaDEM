@@ -7,7 +7,8 @@ import { evaluate, gridEdges, gridMid } from './engine';
 import { classificationParams, classify } from './classification';
 import { breakageMatrix, phiFromT10 } from './breakage';
 import { throughput } from './capacity';
-import { makeFeed } from './feed';
+import { makeFeed, rosinRammlerSizeAt } from './feed';
+import { checkEnvelope } from './envelope';
 import type { Operating } from './types';
 
 const base: Operating = {
@@ -140,4 +141,34 @@ test('envelope gate: the 10 real HP500 surveys are all physically plausible', ()
     const r = evaluate({ ...base, machine: 'cone-sec', cssMm: css, feedX63Mm: f80 * 1.4, calibrated: true });
     assert.equal(r.implausible, false, `survey CSS ${css} f80 ${f80} not implausible`);
   }
+});
+
+// N1: the envelope gate tests the feed's declared (untruncated) F80, not the F80 the 256 mm grid truncates.
+const x63Of = (f80: number, m = 0.9): number => f80 / Math.pow(Math.log(5), 1 / m);
+const calibrated = (css: number, f80: number): Operating => ({
+  ...base, machine: 'cone-sec', cssMm: css, throwMm: 34, speedRpm: 360, feedX63Mm: x63Of(f80), feedM: 0.9, oreAxb: 677.3, oreWi: 9, calibrated: true,
+});
+
+test('envelope gate: a calibrated point with a declared F80 of 180 mm is outside the support although the grid truncates it', () => {
+  assert.ok(Math.abs(rosinRammlerSizeAt(0.8, x63Of(180), 0.9) - 180) < 1e-6);
+  const r = evaluate(calibrated(48, 180));
+  assert.ok(r.f80 < 140, `the truncated grid F80 ${r.f80} stays the model value`);
+  assert.ok(r.envelopeCodes.includes('f80_outside_calibrated'), `codes ${r.envelopeCodes}`);
+  assert.equal(r.implausible, false);
+});
+
+test('envelope gate: the 10 real surveys keep their codes with the declared F80 (survey 7 sits on the 140 mm edge)', () => {
+  const surveys: Array<[number, number]> = [[54, 88], [54, 84], [48, 47], [48, 88], [48, 62], [40, 79], [38, 140], [44, 123], [40, 81], [55, 81]];
+  for (const [css, f80] of surveys) {
+    const codes = evaluate(calibrated(css, f80)).envelopeCodes;
+    assert.ok(!codes.includes('f80_outside_calibrated'), `survey ${css}/${f80}: ${codes}`);
+    assert.equal(codes.includes('f80_lt_css'), css >= f80, `survey ${css}/${f80}: ${codes}`);
+  }
+});
+
+test('envelope gate: checkEnvelope takes the declared F80 as a third argument, defaulting to the engine one', () => {
+  const op = calibrated(48, 88);
+  assert.deepEqual(checkEnvelope(op, 100).codes, []);
+  assert.deepEqual(checkEnvelope(op, 100, 180).codes, ['f80_outside_calibrated']);
+  assert.deepEqual(checkEnvelope(op, 100, 100).codes, []);
 });

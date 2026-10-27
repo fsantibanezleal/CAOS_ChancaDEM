@@ -52,3 +52,51 @@ def whiten_solve(c: list[float], b: list[float], f: list[float], n: int) -> Whit
         for i in range(n):
             product[i] /= total   # renormalize to a clean PSD (sum = 1)
     return WhitenOut(product=product, mass_closure=closure, cond=cond)
+
+
+def assemble_chamber(op):
+    """The chamber of one operating point as the engine builds it: the classification ``c`` (a vector of K values) and the
+    breakage matrix ``B`` (K by K, strictly lower triangular), for the grid of the engine. ``whiten_solve`` of this ``c``
+    and ``B`` and the feed of ``op`` is the product ``evaluate(op)`` returns. Same rules as ``evaluate``: the classification
+    window tracks the feed F80, the setting and the throw; the breakage comes from the specific energy and the ore A*b, or
+    from the HP500 fit on the calibrated lane."""
+    import numpy as np
+
+    from .breakage import breakage_matrix, phi_from_t10, specific_energy, t10_calibrated, t10_of
+    from .classification import classification_params, classify
+    from .engine import grid_edges, grid_f80, grid_mid
+    from .machines import REF_THROW_MM
+
+    edges, mid = grid_edges(), grid_mid()
+    f80 = grid_f80(op)
+    params = classification_params(op.machine, op.css_mm, f80_mm=f80, calibrated=op.calibrated, throw_mm=op.throw_mm)
+    c = np.array([classify(d, params) for d in mid], dtype=float)
+    ecs = specific_energy(op.speed_rpm, REF_THROW_MM[op.machine])
+    t10 = t10_calibrated(op.css_mm, f80) if op.calibrated else t10_of(ecs, op.ore_axb)
+    k = len(mid)
+    return c, np.array(breakage_matrix(edges, mid, phi_from_t10(t10)), dtype=float).reshape(k, k)
+
+
+def replacement_walk(c, b, feed, parcels, seed):
+    """The particle-replacement rule of discrete-element crusher models, run on counts of parcels per class: ``parcels``
+    parcels enter with the feed proportions; in each pass a class-j parcel is nipped with probability ``c[j]`` (binomial),
+    the ones not nipped leave as product, and the nipped ones of class j are re-distributed by the column ``b[:, j]``
+    (multinomial) and enter the next pass, until none is inside. Seeded. Returns ``(product, nips_per_parcel)``: the
+    product class fractions and the mean number of nips a parcel suffers. Its expectation is the Whiten product
+    ``(I - C)(I - B C)^-1 f``, so it measures the sampling error of a walk of that many parcels, not a different model."""
+    import numpy as np
+
+    c, b, feed = np.asarray(c, dtype=float), np.asarray(b, dtype=float), np.asarray(feed, dtype=float)
+    k = feed.size
+    rng = np.random.default_rng(seed)
+    inside = rng.multinomial(parcels, feed)
+    product = np.zeros(k, dtype=np.int64)
+    nips = 0
+    while inside.sum() > 0:
+        nipped = rng.binomial(inside, c)
+        product += inside - nipped
+        nips += nipped.sum()
+        inside = np.zeros(k, dtype=np.int64)
+        for j in np.nonzero(nipped)[0]:
+            inside += rng.multinomial(nipped[j], b[:, j])
+    return product / product.sum(), nips / parcels

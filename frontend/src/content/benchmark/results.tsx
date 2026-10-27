@@ -66,8 +66,8 @@ function LooTables({ loo }: { loo: Hp500Loo }) {
         <table className="caos-table" data-state="ready">
           <caption>
             {t(
-              'The 80 percent predictive band of the backbone: its half-width is 1.2816 times the spread of the held-out residuals, and its empirical coverage is the share of the surveys whose measurement fell inside.',
-              'La banda predictiva del 80 por ciento del esqueleto: su semianchura es 1,2816 veces la dispersión de los residuos reservados, y su cobertura empírica es la fracción de muestreos cuya medición cayó dentro.',
+              'The 80 percent predictive band of the backbone: its half-width is 1.2816 times the spread of the held-out residuals. The in-sample coverage is the share of the surveys whose measurement fell inside a band whose spread comes from those same residuals; the nested coverage, out of sample, takes the spread for each survey from the other surveys only.',
+              'La banda predictiva del 80 por ciento del esqueleto: su semianchura es 1,2816 veces la dispersión de los residuos reservados. La cobertura dentro de la muestra es la fracción de muestreos cuya medición cayó dentro de una banda cuya dispersión sale de esos mismos residuos; la cobertura anidada, fuera de la muestra, toma la dispersión de cada muestreo solo de los demás.',
             )}
           </caption>
           <thead>
@@ -77,7 +77,8 @@ function LooTables({ loo }: { loo: Hp500Loo }) {
               <th>{t('Band half-width', 'Semianchura de la banda')}</th>
               <th>{t('Band width (% of the measurement)', 'Ancho de la banda (% de lo medido)')}</th>
               <th>{t('Nominal coverage', 'Cobertura nominal')}</th>
-              <th>{t('Empirical coverage', 'Cobertura empírica')}</th>
+              <th>{t('Empirical coverage, in sample', 'Cobertura empírica, dentro de la muestra')}</th>
+              <th>{t('Nested coverage, out of sample', 'Cobertura anidada, fuera de la muestra')}</th>
             </tr>
           </thead>
           <tbody>
@@ -91,6 +92,7 @@ function LooTables({ loo }: { loo: Hp500Loo }) {
                   <td>{f(u.band_rel_pct, { decimals: 1 })}</td>
                   <td>{f(u.nominal_coverage, { percent: true, decimals: 0 })}</td>
                   <td>{f(u.empirical_coverage, { percent: true, decimals: 0 })}</td>
+                  <td>{u.nested_coverage === undefined ? t('not recorded', 'no registrada') : f(u.nested_coverage, { percent: true, decimals: 0 })}</td>
                 </tr>
               );
             })}

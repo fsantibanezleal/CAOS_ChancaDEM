@@ -287,7 +287,7 @@ export type Hp500Backbone = Of<{ readonly object: typeof HP500_BACKBONE }>;
 
 const SCORES = { object: { mape_pct: 'number', rmse: 'number', r2: 'number', maxdev_pct: 'number' } } as const;
 const RANGE = { tuple: ['number', 'number'] } as const;
-const UQ = { object: { sigma: 'number', band_halfwidth: 'number', nominal_coverage: 'number', empirical_coverage: 'number', band_rel_pct: 'number', note: 'string' } } as const;
+const UQ = { object: { sigma: 'number', band_halfwidth: 'number', nominal_coverage: 'number', empirical_coverage: 'number', band_rel_pct: 'number', note: 'string', nested_coverage: { optional: 'number' }, nested_covered: { optional: { array: 'boolean' } }, nested_sigma: { optional: SERIES }, nested_note: { optional: 'string' } } } as const;
 const FOLDS = {
   M0_backbone: SCORES,
   M1_residual: SCORES,

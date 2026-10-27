@@ -30,9 +30,9 @@
     "sha256": "704cc5f306c72ed1d8f4cfaae9e65ab7d80ef5dbd32b328ed95cc79328285125"
   },
   "hp500-loo": {
-    "version": "1.0.0",
+    "version": "1.1.0",
     "schema": "docs/contracts/schemas/hp500-loo.schema.json",
-    "sha256": "ba0a657e8e1764b11c801d9b753756118ce36aeab3fbea3305e357f24125a990"
+    "sha256": "fd760e83b7c35a840ea7b5eebde4bd8254ca951c8436e22ffb607ab541a264c2"
   },
   "surrogate-model": {
     "version": "1.0.0",
