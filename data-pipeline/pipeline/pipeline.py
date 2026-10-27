@@ -27,7 +27,6 @@ from .cases import Case, text
 from .cases import hp500_cases
 from .core import expect as expectations
 from .core import readiness, unit_gate
-from .core.gate import classify_lane
 from .core.manifest import build_index, flag_codes, index_entry
 from .core.trace import metrics_of, r6
 from .hp500 import backbone as backbone_doc
