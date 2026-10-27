@@ -5,13 +5,14 @@ nothing is written under data/."""
 from __future__ import annotations
 
 import copy
+from pathlib import Path
 
 import pytest
 
 from pipeline.hp500 import backbone, loo
 from pipeline.hp500.surveys import SURVEYS_CSV, read_surveys
 
-VERSION = "0.09.003"
+VERSION = (Path(__file__).resolve().parents[1] / "VERSION").read_text(encoding="utf-8").strip()
 
 
 @pytest.fixture(scope="module")

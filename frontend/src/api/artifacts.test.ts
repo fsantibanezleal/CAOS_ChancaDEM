@@ -1,10 +1,14 @@
 // The artifact layer refuses what is not JSON: a static host that answers a missing file with its HTML page must
 // surface as an error at the fetch, not as a parse failure in a view (T3). The loaders of the HP500 documents, the model metrics
 // and the two model slots take the readiness document and the index into account: nothing the build does not hold is asked for.
+import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CaseIndex, Readiness, ReadinessEntry } from '../lib/contract.types';
 import { resetReadiness } from '../readiness/readiness';
 import { ArtifactError, ArtifactUnavailable, getJSON, loadAnomaly, loadHp500Loo, loadModelMetrics, loadSurrogate } from './artifacts';
+
+// the product version, read from VERSION like the build does, never written here
+const VERSION = readFileSync(new URL('../../../VERSION', import.meta.url), 'utf8').trim();
 
 vi.stubGlobal('__APP_VERSION__', 'test-version');
 
@@ -35,7 +39,7 @@ describe('getJSON', () => {
 });
 
 // ---- the loaders of the HP500 documents, the model metrics and the two model slots ----
-const index = (files: string[]): CaseIndex => ({ schema: 'chancadem.index/v1', engine_version: '0.10.000', n_cases: 0, default_case: 'A', cases: [], files });
+const index = (files: string[]): CaseIndex => ({ schema: 'chancadem.index/v1', engine_version: VERSION, n_cases: 0, default_case: 'A', cases: [], files });
 const row = (id: string, state: ReadinessEntry['state'], reason: ReadinessEntry['reason'] = null): ReadinessEntry => ({
   id,
   version: '1.0.0',
@@ -45,7 +49,7 @@ const row = (id: string, state: ReadinessEntry['state'], reason: ReadinessEntry[
   reason,
   missing: [],
 });
-const readiness = (...rows: ReadinessEntry[]): Readiness => ({ schema: 'chancadem.readiness/v1', product_version: '0.10.000', catalog_sha256: '0', contracts: rows });
+const readiness = (...rows: ReadinessEntry[]): Readiness => ({ schema: 'chancadem.readiness/v1', product_version: VERSION, catalog_sha256: '0', contracts: rows });
 
 /** A host that answers the given documents by relative path and 404s the rest, counting the files it was asked for. */
 function host(docs: Record<string, unknown>) {

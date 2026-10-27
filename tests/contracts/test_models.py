@@ -283,12 +283,12 @@ def test_evaluate_refuses_a_slot_whose_bundle_is_invalid(tmp_path):
     graph = models / "surrogate.onnx"
     graph.write_bytes(graph.read_bytes() + b"\x00")
     with pytest.raises(ValueError, match="surrogate.json"):
-        evaluate_stage.run(models, tmp_path / "m.json", version="0.10.000")
+        evaluate_stage.run(models, tmp_path / "m.json", version=VERSION)
     assert not (tmp_path / "m.json").exists()
     models = _copy_tree(BAKE, tmp_path / "b")
     (models / "psd-ae.json").unlink()
     with pytest.raises(ValueError, match="psd-ae.json"):
-        evaluate_stage.run(models, tmp_path / "m2.json", version="0.10.000")
+        evaluate_stage.run(models, tmp_path / "m2.json", version=VERSION)
 
 
 def test_metrics_report_the_anomaly_comparison_and_the_planted_points():
@@ -314,4 +314,4 @@ def test_evaluate_refuses_a_bundle_without_the_recorded_export_parity(tmp_path):
     (models / "surrogate.json").write_text(json.dumps(bundle), encoding="utf-8")
     assert errors("surrogate-model", bundle) == []   # optional in the schema, required by the evaluate stage
     with pytest.raises(ValueError, match="surrogate.json.*export_parity_max_abs"):
-        evaluate_stage.run(models, tmp_path / "m.json", version="0.10.000")
+        evaluate_stage.run(models, tmp_path / "m.json", version=VERSION)
