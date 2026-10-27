@@ -52,11 +52,11 @@ def test_a_copy_is_valid(copy):
 
 def test_adversarial_a_pattern_violation_fails(copy):
     # artifact.path must not contain ".." (the schema's pattern)
-    edit(copy / "data" / "derived" / "manifests" / "EX01_subcritical.json",
-         lambda m: m["artifact"].update(path="EX01_subcritical/../trace.json"))
+    edit(copy / "data" / "derived" / "manifests" / "S01.json",
+         lambda m: m["artifact"].update(path="S01/../trace.json"))
     p = run(copy)
     assert p.returncode == 1, p.stdout + p.stderr
-    assert "EX01_subcritical" in p.stdout and "artifact/path" in p.stdout
+    assert "S01" in p.stdout and "artifact/path" in p.stdout
 
 
 def test_a_min_items_violation_fails(copy):
@@ -68,19 +68,19 @@ def test_a_min_items_violation_fails(copy):
 
 
 def test_the_provider_tree_and_the_examples_are_checked(copy):
-    edit(copy / "docs" / "contracts" / "fixtures" / "data" / "derived" / "manifests" / "FX01_fixture.json",
-         lambda m: m.update(schema="example.manifest/v3"))
+    edit(copy / "docs" / "contracts" / "fixtures" / "data" / "derived" / "manifests" / "FX01.json",
+         lambda m: m.update(schema="chancadem.manifest/v9"))
     edit(copy / "docs" / "contracts" / "examples" / "api-unavailable.json", lambda d: d["detail"].update(state="gone"))
     p = run(copy)
     assert p.returncode == 1, p.stdout + p.stderr
-    assert "FX01_fixture" in p.stdout and "api-unavailable.json" in p.stdout
+    assert "FX01" in p.stdout and "api-unavailable.json" in p.stdout
 
 
 def test_a_document_that_is_not_json_fails(copy):
-    (copy / "data" / "derived" / "EX02_epidemic" / "trace.json").write_text("{not json", encoding="utf-8")
+    (copy / "data" / "derived" / "S02" / "trace.json").write_text("{not json", encoding="utf-8")
     p = run(copy)
     assert p.returncode == 1, p.stdout + p.stderr
-    assert "EX02_epidemic" in p.stdout
+    assert "S02" in p.stdout
 
 
 def test_an_absent_index_fails(copy):
@@ -90,7 +90,7 @@ def test_an_absent_index_fails(copy):
 
 def test_a_declared_partial_bake_is_valid(copy):
     # an absent document is check_artifacts.py's business (it has the readiness to tell declared from undeclared)
-    (copy / "data" / "derived" / "EX03_fast_burn" / "trace.json").unlink()
+    (copy / "data" / "derived" / "S03" / "trace.json").unlink()
     assert run(copy).returncode == 0
 
 

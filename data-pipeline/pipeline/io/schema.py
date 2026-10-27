@@ -3,37 +3,24 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-
-@dataclass(frozen=True)
-class SIRParams:
-    """One validated operating point (EXAMPLE domain: an SIR epidemic)."""
-    case_id: str
-    beta: float        # 1/day, effective contact rate
-    gamma: float       # 1/day, recovery rate
-    N: float           # population
-    I0: float          # initial infected
-    days: int = 160    # horizon
+from ..model.crusher import Operating
 
 
 @dataclass(frozen=True)
-class FeatureRow:
-    """Derived features for the surrogate (feature_extraction stage)."""
-    case_id: str
-    r0: float          # beta / gamma (basic reproduction number)
-    beta: float
-    gamma: float
-    n_scaled: float    # log10(N)
-    i0_frac: float     # I0 / N
+class ParamsRecord:
+    """One accepted row of contract 1 (catalog row params-record): a crusher operating point under a case id."""
 
-
-@dataclass(frozen=True)
-class SIRResult:
-    """The engine output for one case (infer stage), the raw, undecimated trajectory + scalars."""
     case_id: str
-    t: list[float]
-    S: list[float]
-    I: list[float]
-    R: list[float]
-    peak_I: float
-    t_peak: float
-    attack_rate: float
+    machine: str
+    css_mm: float          # closed-side setting [mm]
+    throw_mm: float        # eccentric throw [mm]
+    speed_rpm: float       # eccentric or gyration speed [rev/min]
+    feed_x63_mm: float     # Rosin-Rammler characteristic size of the feed [mm]
+    feed_m: float          # Rosin-Rammler uniformity exponent [-]
+    ore_axb: float         # JKMRC A*b [-]
+    ore_wi: float          # Bond work index [kWh/t]
+
+    def operating(self) -> Operating:
+        """The engine's operating point of this record (synthetic: not calibrated)."""
+        return Operating(machine=self.machine, css_mm=self.css_mm, throw_mm=self.throw_mm, speed_rpm=self.speed_rpm,
+                         feed_x63_mm=self.feed_x63_mm, feed_m=self.feed_m, ore_axb=self.ore_axb, ore_wi=self.ore_wi)

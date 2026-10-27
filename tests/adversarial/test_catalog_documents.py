@@ -24,27 +24,27 @@ def test_the_slim_tree_passes_the_guard_it_stands_for(tree: Path) -> None:
 
 
 def test_an_invalid_committed_document_fails(tree: Path) -> None:
-    path = tree / "data/derived/EX01_subcritical/trace.json"
+    path = tree / "data/derived/S01/trace.json"
     doc = json.loads(path.read_text(encoding="utf-8"))
     doc["points"] = []
     path.write_text(json.dumps(doc), encoding="utf-8")
     r = guard(tree, "check_documents.py")
-    assert r.returncode == 1 and "data/derived/EX01_subcritical/trace.json: [trace]" in r.stdout, r.stdout
+    assert r.returncode == 1 and "data/derived/S01/trace.json: [trace]" in r.stdout, r.stdout
 
 
 def test_a_document_left_out_of_every_row_is_a_hole(tree: Path) -> None:
-    (tree / "data/derived/EX01_subcritical/extra.json").write_text("{}", encoding="utf-8")
+    (tree / "data/derived/S01/extra.json").write_text("{}", encoding="utf-8")
     (tree / "models/other.json").write_text("{}", encoding="utf-8")
     r = guard(tree, "check_documents.py")
     assert r.returncode == 1, r.stdout
-    assert "data/derived/EX01_subcritical/extra.json: covered by no row" in r.stdout
+    assert "data/derived/S01/extra.json: covered by no row" in r.stdout
     assert "models/other.json: covered by no row" in r.stdout
 
 
 def test_a_trace_glob_narrowed_so_a_trace_is_left_out_is_a_hole(tree: Path) -> None:
-    set_cell(tree, CATALOG, "trace", DOCUMENTS_COLUMN, "data/derived/EX01*/trace.json")
+    set_cell(tree, CATALOG, "trace", DOCUMENTS_COLUMN, "data/derived/S01*/trace.json")
     r = guard(tree, "check_documents.py")
-    assert r.returncode == 1 and "data/derived/EX02_epidemic/trace.json: covered by no row" in r.stdout, r.stdout
+    assert r.returncode == 1 and "data/derived/S02/trace.json: covered by no row" in r.stdout, r.stdout
 
 
 def test_two_rows_claiming_one_file_fail(tree: Path) -> None:
