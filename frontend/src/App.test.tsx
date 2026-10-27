@@ -53,6 +53,16 @@ describe('the landing', () => {
     expect(workbench).toMatch(/<CaseWorkbench[\s\S]*?\bfocus\b/);
   });
 
+  it('the old /focus/<machine> route forwards to the App in Focus mode, on the first case of that machine in the index', () => {
+    expect(source).toContain('<Route path="/focus/:machine" element={<FocusForward />} />');
+    const forward = readFileSync(new URL('./workbench/FocusForward.tsx', import.meta.url), 'utf8');
+    expect(forward).toContain('`/app?case=${encodeURIComponent(id)}&focus=1`');
+    expect(forward).toContain("'/app?focus=1'");
+    expect(forward).toContain('<Navigate replace');
+    // the forward is not one of the standard routes: the header never lists it
+    expect(STANDARD_ROUTES.map((r) => r.path)).not.toContain('/focus/:machine');
+  });
+
   it('adversarial: the root alone does not render the workbench', () => {
     expect(source).toContain('<Route path="/" element={<Landing />} />');
     expect(source).toContain('<Route path="*" element={<Landing />} />');
