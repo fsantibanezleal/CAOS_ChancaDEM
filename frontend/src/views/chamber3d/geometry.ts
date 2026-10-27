@@ -3,7 +3,7 @@
 //    (solid lathe whose axis nutates about a fixed pivot at the eccentric speed);
 //  * jaw: a planar mechanism, a near-vertical fixed plate and an inclined swing plate pivoting about the overhead
 //    eccentric (throw largest at the discharge, about zero at the suspension).
-import { Box3, BoxGeometry, Group, LatheGeometry, Mesh, MeshBasicMaterial, MeshStandardMaterial, SphereGeometry, Vector2, type Color } from 'three';
+import { BoxGeometry, Group, LatheGeometry, Mesh, MeshBasicMaterial, MeshStandardMaterial, SphereGeometry, Vector2, Vector3, type BufferGeometry, type Color } from 'three';
 import { chamberProfile, jawProfile, profilePolylines } from '../../engine/chamber';
 import type { Operating } from '../../engine/types';
 import type { ScenePalette } from './palette';
@@ -15,8 +15,8 @@ export interface Disposable {
 
 export interface Chamber {
   group: Group;
-  /** The chamber at rest, for the camera fit. */
-  box: Box3;
+  /** The vertices of the chamber's own meshes at rest (world space), for the camera fit. */
+  points: Vector3[];
   placer: Placer;
   zTop: number;
   /** Advances the machine's motion by k frames at animation speed spd. */
@@ -25,6 +25,19 @@ export interface Chamber {
   /** The colour of the moving part (mantle, swing plate). */
   movingColor: () => Color;
   disposables: Disposable[];
+}
+
+/** World-space vertices of every mesh under `group`, in its current pose: the chamber's real extent, not its box. */
+export function meshPoints(group: Group): Vector3[] {
+  group.updateMatrixWorld(true);
+  const out: Vector3[] = [];
+  group.traverse((o) => {
+    const mesh = o as Mesh;
+    if (!mesh.isMesh) return;
+    const pos = (mesh.geometry as BufferGeometry).getAttribute('position');
+    for (let i = 0; i < pos.count; i++) out.push(new Vector3().fromBufferAttribute(pos, i).applyMatrix4(mesh.matrixWorld));
+  });
+  return out;
 }
 
 function buildRevolution(op: Operating, palette: ScenePalette): Chamber {
@@ -42,7 +55,7 @@ function buildRevolution(op: Operating, palette: ScenePalette): Chamber {
   mantleGroup.add(new Mesh(mGeo, mMat));
   group.add(mantleGroup);
   disposables.push(ccGeo, ccMat, mGeo, mMat);
-  const box = new Box3().setFromObject(group);
+  const points = meshPoints(group);
 
   const placer: Placer = {
     breakZone: zTop * 0.32,
@@ -68,7 +81,7 @@ function buildRevolution(op: Operating, palette: ScenePalette): Chamber {
   const ecc = Math.atan2(op.throwMm, zTop) * 1.4;
   return {
     group,
-    box,
+    points,
     placer,
     zTop,
     mech: (k, spd) => {
@@ -120,7 +133,7 @@ function buildJaw(op: Operating, palette: ScenePalette): Chamber {
   eMesh.position.set(pivotX, pivotY, 0);
   group.add(eMesh);
   disposables.push(eGeo, eMat);
-  const box = new Box3().setFromObject(group);
+  const points = meshPoints(group);
   const swingAmp = j.throwMm / 2 / zTop;
 
   const placer: Placer = {
@@ -144,7 +157,7 @@ function buildJaw(op: Operating, palette: ScenePalette): Chamber {
   let phase = 0;
   return {
     group,
-    box,
+    points,
     placer,
     zTop,
     mech: (k, spd) => {
