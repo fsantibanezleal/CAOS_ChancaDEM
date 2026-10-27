@@ -1,3 +1,4 @@
+import { readdirSync, readFileSync } from 'node:fs';
 import { Box3, Color, PerspectiveCamera, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 import type { Operating } from '../../engine/types';
@@ -79,7 +80,7 @@ describe('camera fit on the real chambers', () => {
     const chamber = buildChamber({ ...OP, machine }, PAL);
     for (const aspect of ASPECTS) {
       it(`${machine} at aspect ${aspect}: inside the frame, filling the binding axis, centred`, () => {
-        const fit = fitCamera(chamber.points, 45, aspect);
+        const fit = fitCamera(chamber.points, 45, aspect, chamber.viewDir);
         const e = extent(chamber.points, camAt(fit, aspect, 45));
         const m = 1 / FIT_MARGIN;
         for (const v of [e.x0, e.x1, e.y0, e.y1]) expect(Math.abs(v)).toBeLessThanOrEqual(m + 1e-3);
@@ -93,9 +94,60 @@ describe('camera fit on the real chambers', () => {
       });
     }
     it(`${machine} in a 2:1 stage covers at least 30% of it with its projected box (the G6 floor)`, () => {
-      const fit = fitCamera(chamber.points, 45, 2);
+      const fit = fitCamera(chamber.points, 45, 2, chamber.viewDir);
       const e = extent(chamber.points, camAt(fit, 2, 45));
       expect(((e.x1 - e.x0) * (e.y1 - e.y0)) / 4).toBeGreaterThanOrEqual(0.3);
     });
   }
+});
+
+describe('framing of every committed case (the G6 stage-fill floor with a margin)', () => {
+  const dir = new URL('../../../../data/derived/manifests/', import.meta.url);
+  const ids = readdirSync(dir).filter((f) => f.endsWith('.json') && f !== 'index.json');
+  const ops = ids.map((f) => {
+    const m = JSON.parse(readFileSync(new URL(f, dir), 'utf8')) as { case_id: string; params: Record<string, number | string | boolean> };
+    const p = m.params;
+    const op: Operating = {
+      machine: p.machine as Operating['machine'],
+      cssMm: p.css_mm as number,
+      throwMm: p.throw_mm as number,
+      speedRpm: p.speed_rpm as number,
+      feedX63Mm: p.feed_x63_mm as number,
+      feedM: p.feed_m as number,
+      oreAxb: p.ore_axb as number,
+      oreWi: p.ore_wi as number,
+    };
+    return { id: m.case_id, op };
+  });
+  // the stage of the Chamber view at 1280 x 800 measures 964 x 458 (964 x 416 under a flagged case's alert line); the larger gate sizes are about 2:1
+  const STAGES = [880 / 460, 1000 / 520, 1.9, 2.1, 964 / 458, 964 / 416];
+
+  it('finds the committed cases', () => {
+    expect(ops.length).toBeGreaterThanOrEqual(27);
+  });
+  for (const aspect of STAGES) {
+    it(`every case and every machine covers at least 35% of a stage of aspect ${aspect.toFixed(2)}`, () => {
+      const low: string[] = [];
+      const all = [...ops, ...MACHINES.map((machine) => ({ id: `default ${machine}`, op: { ...OP, machine } }))];
+      for (const { id, op } of all) {
+        const chamber = buildChamber(op, PAL);
+        const pts = chamber.points;
+        const fit = fitCamera(pts, 45, aspect, chamber.viewDir);
+        const e = extent(pts, camAt(fit, aspect, 45));
+        const cover = ((e.x1 - e.x0) * (e.y1 - e.y0)) / 4;
+        if (cover < 0.35) low.push(`${id} ${(100 * cover).toFixed(1)}%`);
+      }
+      expect(low).toEqual([]);
+    });
+  }
+  it('keeps every case inside the frame at aspects 0.5 to 3', () => {
+    for (const { op } of ops) {
+      const chamber = buildChamber(op, PAL);
+      const pts = chamber.points;
+      for (const aspect of ASPECTS) {
+        const e = extent(pts, camAt(fitCamera(pts, 45, aspect, chamber.viewDir), aspect, 45));
+        for (const v of [e.x0, e.x1, e.y0, e.y1]) expect(Math.abs(v)).toBeLessThanOrEqual(1 / FIT_MARGIN + 1e-3);
+      }
+    }
+  });
 });
