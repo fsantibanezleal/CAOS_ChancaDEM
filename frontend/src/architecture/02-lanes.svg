@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="900" class="arch-svg" role="img" aria-label="The three lanes: offline, replay and live">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="900" class="arch-svg" role="img" aria-label="The three lanes: offline, replay and live, and what each one runs">
   <!-- Hand-authored; shell tokens only; both languages in one file (ADR-0058). -->
   <style>
     .arch-svg text { font-family: var(--font-sans); }
@@ -26,46 +26,46 @@
   <text class="ttl l-es" x="20" y="30">Tres carriles: dónde se calcula cada número</text>
 
   <!-- offline -->
-  <rect class="ln-off" x="20" y="50" width="270" height="390" rx="10"/>
+  <rect class="ln-off" x="20" y="50" width="270" height="350" rx="10"/>
   <text class="t-off l-en" x="36" y="76">OFFLINE, on a workstation</text>
   <text class="t-off l-es" x="36" y="76">FUERA DE LÍNEA, en una estación</text>
   <rect class="bx" x="36" y="92" width="238" height="70" rx="6"/>
-  <text class="it l-en" x="48" y="112">The pipeline, in Python</text>
-  <text class="it l-es" x="48" y="112">El pipeline, en Python</text>
-  <text class="cd mono" x="48" y="130">data-pipeline/run.py</text>
-  <text class="sub l-en" x="48" y="148">named stages, seeded, deterministic</text>
-  <text class="sub l-es" x="48" y="148">etapas con nombre, semilla, determinista</text>
+  <text class="it l-en" x="48" y="112">The bake of the cases</text>
+  <text class="it l-es" x="48" y="112">El precálculo de los casos</text>
+  <text class="cd mono" x="48" y="130">python data-pipeline/run.py all</text>
+  <text class="sub l-en" x="48" y="148">expected ranges and units fail it</text>
+  <text class="sub l-es" x="48" y="148">rangos y unidades lo hacen fallar</text>
   <rect class="bx" x="36" y="174" width="238" height="70" rx="6"/>
-  <text class="it l-en" x="48" y="194">Each case checked at bake</text>
-  <text class="it l-es" x="48" y="194">Cada caso verificado al precalcular</text>
-  <text class="cd mono" x="48" y="212">core/expect.py</text>
-  <text class="sub l-en" x="48" y="230">a result outside its range fails</text>
-  <text class="sub l-es" x="48" y="230">un resultado fuera de rango falla</text>
+  <text class="it l-en" x="48" y="194">HP500 validation</text>
+  <text class="it l-es" x="48" y="194">Validación HP500</text>
+  <text class="cd mono" x="48" y="212">run.py hp500</text>
+  <text class="sub l-en" x="48" y="230">backbone and CrusherCal, leave-one-out</text>
+  <text class="sub l-es" x="48" y="230">esqueleto y CrusherCal, uno fuera</text>
   <rect class="bx" x="36" y="256" width="238" height="70" rx="6"/>
-  <text class="it l-en" x="48" y="276">Writes the artifacts</text>
-  <text class="it l-es" x="48" y="276">Escribe los artefactos</text>
-  <text class="cd mono" x="48" y="294">data/derived/</text>
-  <text class="sub l-en" x="48" y="312">tests write only to a sandbox</text>
-  <text class="sub l-es" x="48" y="312">las pruebas escriben sólo en un sandbox</text>
-  <text class="sub l-en" x="36" y="360">Run on a data or model change;</text>
-  <text class="sub l-es" x="36" y="360">Se corre al cambiar datos o modelo;</text>
+  <text class="it l-en" x="48" y="276">Training of the two models</text>
+  <text class="it l-es" x="48" y="276">Entrenamiento de los dos modelos</text>
+  <text class="cd mono" x="48" y="294">run.py models</text>
+  <text class="sub l-en" x="48" y="312">torch on the CPU, exported to ONNX</text>
+  <text class="sub l-es" x="48" y="312">torch en CPU, exportado a ONNX</text>
+  <text class="sub l-en" x="36" y="360">Run on a workstation at a release;</text>
+  <text class="sub l-es" x="36" y="360">Se corre en una estación al publicar;</text>
   <text class="sub l-en" x="36" y="376">never in CI, never in the browser.</text>
   <text class="sub l-es" x="36" y="376">nunca en CI, nunca en el navegador.</text>
 
   <!-- replay -->
-  <rect class="ln-rep" x="315" y="50" width="270" height="390" rx="10"/>
+  <rect class="ln-rep" x="315" y="50" width="270" height="350" rx="10"/>
   <text class="t-rep l-en" x="331" y="76">REPLAY, committed</text>
   <text class="t-rep l-es" x="331" y="76">REPRODUCCIÓN, comprometida</text>
   <rect class="bx" x="331" y="92" width="238" height="70" rx="6"/>
-  <text class="it l-en" x="343" y="112">Index, manifests, traces</text>
-  <text class="it l-es" x="343" y="112">Índice, manifiestos, trazas</text>
-  <text class="cd mono" x="343" y="130">index/v2 · manifest/v4 · trace/v1</text>
+  <text class="it l-en" x="343" y="112">Case documents</text>
+  <text class="it l-es" x="343" y="112">Documentos de caso</text>
+  <text class="cd mono" x="343" y="130">index, manifest, trace</text>
   <text class="sub l-en" x="343" y="148">small, reviewable, in git</text>
   <text class="sub l-es" x="343" y="148">pequeños, revisables, en git</text>
   <rect class="bx" x="331" y="174" width="238" height="70" rx="6"/>
   <text class="it l-en" x="343" y="194">Copied into the site</text>
   <text class="it l-es" x="343" y="194">Copiados al sitio</text>
-  <text class="cd mono" x="343" y="212">frontend/scripts/copy-data.mjs</text>
+  <text class="cd mono" x="343" y="212">copy-data.mjs</text>
   <text class="sub l-en" x="343" y="230">exactly what the index declares</text>
   <text class="sub l-es" x="343" y="230">exactamente lo que declara el índice</text>
   <rect class="bx" x="331" y="256" width="238" height="70" rx="6"/>
@@ -74,40 +74,43 @@
   <text class="cd mono" x="343" y="294">data/...json?v=VERSION</text>
   <text class="sub l-en" x="343" y="312">an HTML answer is an error</text>
   <text class="sub l-es" x="343" y="312">una respuesta HTML es un error</text>
-  <text class="sub l-en" x="331" y="360">The web reads them; nothing</text>
-  <text class="sub l-es" x="331" y="360">La web los lee; nada</text>
-  <text class="sub l-en" x="331" y="376">baked is recomputed here.</text>
+  <text class="sub l-en" x="331" y="360">The web reads them; nothing baked</text>
+  <text class="sub l-es" x="331" y="360">La web los lee; nada de lo</text>
+  <text class="sub l-en" x="331" y="376">is recomputed here.</text>
   <text class="sub l-es" x="331" y="376">precalculado se recalcula aquí.</text>
 
   <!-- live -->
-  <rect class="ln-live" x="610" y="50" width="270" height="390" rx="10"/>
+  <rect class="ln-live" x="610" y="50" width="270" height="350" rx="10"/>
   <text class="t-live l-en" x="626" y="76">LIVE, in the browser</text>
   <text class="t-live l-es" x="626" y="76">EN VIVO, en el navegador</text>
   <rect class="bx" x="626" y="92" width="238" height="70" rx="6"/>
   <text class="it l-en" x="638" y="112">The engine, in TypeScript</text>
   <text class="it l-es" x="638" y="112">El motor, en TypeScript</text>
-  <text class="cd mono" x="638" y="130">frontend/src/engine/sir.ts</text>
+  <text class="cd mono" x="638" y="130">evaluate(operating point)</text>
   <text class="sub l-en" x="638" y="148">re-runs on every control change</text>
   <text class="sub l-es" x="638" y="148">recalcula con cada cambio de control</text>
   <rect class="bx" x="626" y="174" width="238" height="70" rx="6"/>
-  <text class="it l-en" x="638" y="194">Held to the baked traces</text>
-  <text class="it l-es" x="638" y="194">Sujeto a las trazas precalculadas</text>
-  <text class="cd mono" x="638" y="212">engine/sir.parity.test.ts</text>
-  <text class="sub l-en" x="638" y="230">every case, to the trace rounding</text>
-  <text class="sub l-es" x="638" y="230">cada caso, al redondeo de la traza</text>
+  <text class="it l-en" x="638" y="194">Held to the Python engine</text>
+  <text class="it l-es" x="638" y="194">Sujeto al motor de Python</text>
+  <text class="cd mono" x="638" y="212">shared reference, tolerance 1e-9</text>
+  <text class="sub l-en" x="638" y="230">and to every trace, to six digits</text>
+  <text class="sub l-es" x="638" y="230">y a cada traza, a seis cifras</text>
   <rect class="bx" x="626" y="256" width="238" height="70" rx="6"/>
-  <text class="it l-en" x="638" y="276">Views keyed by the selection</text>
-  <text class="it l-es" x="638" y="276">Vistas con la clave de la selección</text>
-  <text class="cd mono" x="638" y="294">data-state-key</text>
-  <text class="sub l-en" x="638" y="312">an old view says it is old</text>
-  <text class="sub l-es" x="638" y="312">una vista antigua avisa que lo es</text>
-  <text class="sub l-en" x="626" y="360">Within the run budget the lane</text>
-  <text class="sub l-es" x="626" y="360">Dentro del presupuesto de corrida</text>
-  <text class="sub l-en" x="626" y="376">gate set (see Benchmark).</text>
-  <text class="sub l-es" x="626" y="376">que fijó la compuerta (ver Benchmark).</text>
+  <text class="it l-en" x="638" y="276">Learned models in the browser</text>
+  <text class="it l-es" x="638" y="276">Modelos aprendidos en el navegador</text>
+  <text class="cd mono" x="638" y="294">onnxruntime-web 1.27.0, WASM</text>
+  <text class="sub l-en" x="638" y="312">opened with the Learned group</text>
+  <text class="sub l-es" x="638" y="312">se abren con el grupo Aprendido</text>
+  <text class="sub l-en" x="626" y="360">A case is live only if it passes the</text>
+  <text class="sub l-es" x="626" y="360">Un caso es en vivo solo si pasa la</text>
+  <text class="sub l-en" x="626" y="376">gate: 1500 ms, 256 KiB, numpy only.</text>
+  <text class="sub l-es" x="626" y="376">compuerta: 1500 ms, 256 KiB, solo numpy.</text>
 
+  <path class="flow" d="M274,127 H329" marker-end="url(#ln2-arrow)"/>
+  <path class="flow" d="M274,209 H329" marker-end="url(#ln2-arrow)"/>
   <path class="flow" d="M274,291 H329" marker-end="url(#ln2-arrow)"/>
-  <path class="flow" d="M569,209 H624" marker-end="url(#ln2-arrow)"/>
-  <text class="sub l-en" x="262" y="420">artifacts flow left to right; the parity test ties the right lane to the middle one</text>
-  <text class="sub l-es" x="232" y="420">los artefactos fluyen de izquierda a derecha; la prueba de paridad une el carril derecho al central</text>
+  <path class="flow" d="M569,127 H624" marker-end="url(#ln2-arrow)"/>
+  <path class="flow" d="M569,291 H624" marker-end="url(#ln2-arrow)"/>
+  <text class="sub l-en" x="450" y="430" text-anchor="middle">artifacts flow left to right; the shared reference and the parity test tie the live lane to the others</text>
+  <text class="sub l-es" x="450" y="430" text-anchor="middle">los artefactos fluyen de izquierda a derecha; la referencia compartida y la prueba de paridad atan el carril en vivo a los demás</text>
 </svg>
