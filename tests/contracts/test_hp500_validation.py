@@ -13,7 +13,7 @@ from pipeline.hp500.surveys import SURVEYS_CSV, read_surveys
 from pipeline.model.crusher import evaluate, operating_from_survey
 from pipeline.model.crusher.capacity import bond_power, calibrated_power
 
-VERSION = "0.09.003"
+VERSION = (cs.ROOT / "VERSION").read_text(encoding="utf-8").strip()
 FIXTURE = cs.FIXTURE_ROOT / "data" / "derived" / "hp500"
 COMMITTED = cs.ROOT / "data" / "derived" / "hp500"
 

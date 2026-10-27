@@ -32,6 +32,9 @@ import {
   type Trace,
 } from './contract.types';
 
+// the product version, read from VERSION like the build does, never written here
+const VERSION = readFileSync(new URL('../../../VERSION', import.meta.url), 'utf8').trim();
+
 const BAKE = new URL('../../../data/derived/', import.meta.url);
 const PROVIDER = new URL('../../../docs/contracts/fixtures/data/derived/', import.meta.url);
 const catalogUrl = new URL('../../../docs/contracts/catalog.md', import.meta.url);
@@ -236,7 +239,7 @@ describe('CONTRACT 2: the checker', () => {
     const names = ['p80_mm', 'p50_mm', 'p20_mm', 'pass_1', 'pass_4', 'pass_8', 'pass_16', 'pass_32', 'throughput_tph', 'power_kw'];
     const doc = {
       schema: SCHEMAS.metrics,
-      engine_version: '0.10.000',
+      engine_version: VERSION,
       surrogate: {
         n_train: 6000,
         n_test: 2000,
