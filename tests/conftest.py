@@ -130,5 +130,5 @@ def _sandboxed_pipeline(tmp_path: pathlib.Path, monkeypatch: pytest.MonkeyPatch)
     root = tmp_path / "sandbox-derived"
     monkeypatch.setattr(pipeline, "DERIVED", root)
     monkeypatch.setattr(pipeline, "MANIFESTS", root / "manifests")
-    monkeypatch.setattr(pipeline, "MODELS", tmp_path / "sandbox-models")
+    monkeypatch.setattr(pipeline, "MODELS", root / "models")   # graphs resolve against the models folder's parent
     return root
