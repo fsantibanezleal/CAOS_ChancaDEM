@@ -66,8 +66,8 @@ function LooTables({ loo }: { loo: Hp500Loo }) {
         <table className="caos-table" data-state="ready">
           <caption>
             {t(
-              'The 80 percent predictive band of the backbone: its half-width is 1.2816 times the spread of the held-out residuals. The in-sample coverage is the share of the surveys whose measurement fell inside a band whose spread comes from those same residuals; the nested coverage, out of sample, takes the spread for each survey from the other surveys only.',
-              'La banda predictiva del 80 por ciento del esqueleto: su semianchura es 1,2816 veces la dispersión de los residuos reservados. La cobertura dentro de la muestra es la fracción de muestreos cuya medición cayó dentro de una banda cuya dispersión sale de esos mismos residuos; la cobertura anidada, fuera de la muestra, toma la dispersión de cada muestreo solo de los demás.',
+              'The 80 percent predictive band of the backbone: its half-width is 1.2816 times the spread of the held-out residuals. The in-sample coverage is the share of the surveys whose measurement fell inside a band whose spread comes from those same residuals; the nested coverage, out of sample, takes the spread for each survey from the other surveys only. The relative half-width in the last column is also drawn, as a lower bound, on the synthetic secondary-cone cases of the App; the other machine types have no measured data and show no band.',
+              'La banda predictiva del 80 por ciento del esqueleto: su semianchura es 1,2816 veces la dispersión de los residuos reservados. La cobertura dentro de la muestra es la fracción de muestreos cuya medición cayó dentro de una banda cuya dispersión sale de esos mismos residuos; la cobertura anidada, fuera de la muestra, toma la dispersión de cada muestreo solo de los demás. La semianchura relativa de la última columna también se dibuja, como cota inferior, en los casos sintéticos de cono secundario de la App; los demás tipos de máquina no tienen datos medidos y no muestran banda.',
             )}
           </caption>
           <thead>

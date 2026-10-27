@@ -256,6 +256,46 @@ export function parityOf(live: readonly number[], committed: readonly number[]):
  *  is the out-of-sample check of the same band. */
 export const bandHalfWidth = (loo: Hp500Loo, target: 'tph' | 'kW'): number => loo.loo[target].strict.uq.band_halfwidth;
 
+/** The only synthetic machine whose model family has been calibrated on measured data (the ten HP500 surveys, a secondary cone). */
+export const BANDED_MACHINE = 'cone-sec';
+
+/** A synthetic case's band: the held-out relative half-width of the calibrated model family as a lower bound, or no band and why. */
+export type SyntheticBand = { kind: 'band'; halfWidth: number; relPct: number; label: Text } | { kind: 'none'; reason: Text };
+
+/** What a view hands in: the load state of CrusherCal's document (null for a case that does not read it). */
+export type LooState = { state: 'ready'; data: Hp500Loo } | { state: 'unavailable'; reason: Text } | { state: 'loading' } | { state: 'error'; error: string };
+
+const num1 = (x: number, lang: 'en' | 'es'): string => (lang === 'es' ? x.toFixed(1).replace('.', ',') : x.toFixed(1));
+
+/**
+ * The band of a synthetic case's engine value for one target. A synthetic case is the uncalibrated engine, so no parametric band
+ * exists; the honest figure is the held-out error of the same model family once calibrated, the relative half-width of CrusherCal's
+ * 80 percent band (strict leave-one-survey-out), read from the committed document and never typed here. It is a lower bound: an
+ * uncalibrated case cannot be more accurate. Only the machine the family was calibrated on gets it; the others have no measured data.
+ */
+export function syntheticBand(machine: string, loo: LooState | null, target: 'tph' | 'kW', value: number): SyntheticBand {
+  if (machine !== BANDED_MACHINE) {
+    return { kind: 'none', reason: { en: 'No measured data exist for this machine type, so no band can be stated.', es: 'No hay datos medidos de este tipo de máquina, así que no se puede indicar una banda.' } };
+  }
+  if (loo?.state === 'unavailable') {
+    return { kind: 'none', reason: { en: `The held-out band of the calibrated model is not available yet: ${loo.reason.en.replace(/[.\s]+$/, '')}.`, es: `La banda reservada del modelo calibrado aún no está disponible: ${loo.reason.es.replace(/[.\s]+$/, '')}.` } };
+  }
+  if (loo?.state !== 'ready') {
+    return { kind: 'none', reason: { en: 'The held-out band of the calibrated model is not available yet: the validation document has not loaded.', es: 'La banda reservada del modelo calibrado aún no está disponible: el documento de validación no se ha cargado.' } };
+  }
+  const relPct = loo.data.loo[target].strict.uq.band_rel_pct;
+  const n = loo.data.n;
+  return {
+    kind: 'band',
+    halfWidth: (value * relPct) / 100,
+    relPct,
+    label: {
+      en: `At least plus or minus ${num1(relPct, 'en')} percent: the held-out error of this model family once calibrated on ${n} HP500 surveys; an uncalibrated case cannot be more accurate.`,
+      es: `Al menos más o menos ${num1(relPct, 'es')} por ciento: el error reservado de esta familia de modelos una vez calibrada con ${n} muestreos HP500; un caso sin calibrar no puede ser más preciso.`,
+    },
+  };
+}
+
 /** The groups of the App, in the order of the tab row. The write-up is the tab after them. */
 export const GROUP_ORDER = ['chamber', 'product', 'performance', 'learned', 'validation'] as const;
 export type GroupId = (typeof GROUP_ORDER)[number];
@@ -274,5 +314,5 @@ export const GROUP_ROWS: Record<GroupId | 'context', string[]> = {
   context: ['case-manifest'],
 };
 
-/** The rows of a group that a case reads: the HP500 validation only matters to a real survey. */
-export const rowsFor = (group: GroupId | 'context', real: boolean): string[] => GROUP_ROWS[group].filter((id) => real || id !== 'hp500-loo');
+/** The rows of a group that a case reads: the HP500 validation matters to a real survey and to a synthetic case of the banded machine. */
+export const rowsFor = (group: GroupId | 'context', real: boolean, banded = false): string[] => GROUP_ROWS[group].filter((id) => real || banded || id !== 'hp500-loo');
