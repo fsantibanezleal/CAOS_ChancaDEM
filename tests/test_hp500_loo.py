@@ -30,7 +30,7 @@ def test_loo_is_deterministic(bb: dict) -> None:
     assert loo.build(bb, VERSION, seed=42) == loo.build(bb, VERSION, seed=42)
 
 
-def test_label_shuffle_control_does_not_beat_backbone(bb: dict) -> None:
+def test_adversarial_the_label_shuffle_control_does_not_beat_the_backbone(bb: dict) -> None:
     """A model trained on SHUFFLED labels must not beat the real backbone; if it did, we would have leakage."""
     res = loo.build(bb, VERSION)
     for target in ("tph", "kW"):
@@ -44,7 +44,7 @@ def test_tph_backbone_has_real_skill(bb: dict) -> None:
     assert strict["M0_backbone"]["mape_pct"] < strict["constant_mean"]["mape_pct"]
 
 
-def test_overfit_optimism_gap_is_exposed(bb: dict) -> None:
+def test_adversarial_the_leaky_folds_expose_the_optimism_gap(bb: dict) -> None:
     """The free-form model must look better LEAKY than STRICT (the overfitting the LOO is there to expose); the
     calibrated backbone must be far more stable across the two."""
     tph = loo.build(bb, VERSION)["loo"]["tph"]
