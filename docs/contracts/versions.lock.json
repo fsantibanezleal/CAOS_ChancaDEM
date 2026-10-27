@@ -55,8 +55,8 @@
     "sha256": "c12cefa7d5ecac1f06569756b128bccaddbfc03815f33c3e57bd27342033eff5"
   },
   "api": {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "schema": "docs/contracts/api.openapi.json",
-    "sha256": "46a68a0faf5256d3e39e51316f645ce1593c6f2da77c76b2188d05cdb21b14e5"
+    "sha256": "b2fddf91894beab20d0a952c341c2e6a22b06a2f014968d314277e462ab743a8"
   }
 }

@@ -3,7 +3,7 @@
   "jsonSchemaDialect": "https://json-schema.org/draft/2020-12/schema",
   "info": {
     "title": "Product dormant API",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "summary": "Catalog row api 1.0.0: the read-only API of app/ (ADR-0057), dormant until the API lane is activated.",
     "description": "Serves the committed documents of data/derived unchanged, GET only. A document that does not exist yet is a declared state, never an empty body that looks like data: the API answers 503 with the state missing and its reason. The schemas are the catalog's schema files; this document and docs/contracts/schemas/ are the single source the TypeScript types are generated from (frontend/src/lib/contract.gen.ts)."
   },
