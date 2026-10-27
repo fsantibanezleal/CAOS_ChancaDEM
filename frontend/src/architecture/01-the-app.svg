@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="900" class="arch-svg" role="img" aria-label="The App route: the rail and the instrument">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="900" class="arch-svg" role="img" aria-label="The App route: the rail with the case, the variants and the six knobs, and the instrument with its five groups of views">
   <!-- Hand-authored. Every colour is a shell token, so the diagram repaints with the theme; every label is written
        twice (l-en, l-es) and the modal shows one language (ADR-0058). -->
   <style>
@@ -12,11 +12,12 @@
     .arch-svg .it { fill: var(--color-fg); font-size: 11px; }
     .arch-svg .sub { fill: var(--color-fg-subtle); font-size: 10.5px; }
     .arch-svg .acc { fill: var(--color-accent); font-size: 11px; font-weight: 600; }
-    .arch-svg .s { fill: none; stroke: var(--color-accent); stroke-width: 2; }
-    .arch-svg .i { fill: none; stroke: var(--color-bad); stroke-width: 2; }
-    .arch-svg .r { fill: none; stroke: var(--color-good); stroke-width: 2; }
-    .arch-svg .rp { fill: none; stroke: var(--color-fg-subtle); stroke-width: 1.4; stroke-dasharray: 6 4; }
-    .arch-svg .ax { stroke: var(--color-fg-faint); stroke-width: 1; }
+    .arch-svg .good { fill: var(--color-good); font-size: 11px; font-weight: 600; }
+    .arch-svg .live { fill: none; stroke: var(--color-accent); stroke-width: 2.2; }
+    .arch-svg .rep { fill: none; stroke: var(--color-good); stroke-width: 2; stroke-dasharray: 6 4; }
+    .arch-svg .ax { stroke: var(--color-fg-faint); stroke-width: 1; fill: none; }
+    .arch-svg .trk { stroke: var(--color-border); stroke-width: 3; stroke-linecap: round; }
+    .arch-svg .dot { fill: var(--color-accent); }
   </style>
 
   <text class="ttl l-en" x="20" y="30">The App: what you choose on the left, what it shows on the right</text>
@@ -24,69 +25,118 @@
 
   <!-- the rail -->
   <rect class="pn" x="20" y="50" width="250" height="390" rx="10"/>
-  <text class="h l-en" x="34" y="74">Rail</text>
-  <text class="h l-es" x="34" y="74">Panel</text>
-  <rect class="bx" x="34" y="86" width="222" height="40" rx="6"/>
-  <text class="it l-en" x="46" y="104">Case: Epidemic</text>
-  <text class="it l-es" x="46" y="104">Caso: Epidemia</text>
-  <text class="sub l-en" x="46" y="118">from the index; ?case= links it</text>
-  <text class="sub l-es" x="46" y="118">desde el índice; ?case= lo enlaza</text>
-  <rect class="bx" x="34" y="136" width="222" height="56" rx="6"/>
-  <text class="it l-en" x="46" y="154">Immunisation: 0%, 30%, 60%</text>
-  <text class="it l-es" x="46" y="154">Inmunización: 0%, 30%, 60%</text>
-  <text class="sub l-en" x="46" y="170">the variants of the case,</text>
-  <text class="sub l-es" x="46" y="170">las variantes del caso,</text>
-  <text class="sub l-en" x="46" y="184">re-run by the live engine</text>
-  <text class="sub l-es" x="46" y="184">recalculadas por el motor en vivo</text>
-  <rect class="bx" x="34" y="202" width="222" height="70" rx="6"/>
-  <text class="it l-en" x="46" y="220">Contact rate and recovery rate</text>
-  <text class="it l-es" x="46" y="220">Tasa de contacto y de recuperación</text>
-  <line class="ax" x1="46" y1="238" x2="244" y2="238"/>
-  <circle cx="120" cy="238" r="5" fill="var(--color-accent)"/>
-  <line class="ax" x1="46" y1="258" x2="244" y2="258"/>
-  <circle cx="90" cy="258" r="5" fill="var(--color-accent)"/>
-  <rect class="bx" x="34" y="282" width="222" height="96" rx="6"/>
-  <text class="it l-en" x="46" y="300">Live values</text>
-  <text class="it l-es" x="46" y="300">Valores en vivo</text>
-  <text class="sub l-en" x="46" y="318">R0, peak infected, peak day,</text>
-  <text class="sub l-es" x="46" y="318">R0, pico de contagiados, día del pico,</text>
-  <text class="sub l-en" x="46" y="332">attack rate, recomputed on</text>
-  <text class="sub l-es" x="46" y="332">tasa de ataque, recalculados en</text>
-  <text class="sub l-en" x="46" y="346">every change, with their units</text>
-  <text class="sub l-es" x="46" y="346">cada cambio, con sus unidades</text>
-  <text class="sub l-en" x="46" y="366">badges: live, synthetic</text>
-  <text class="sub l-es" x="46" y="366">insignias: en vivo, sintéticos</text>
-  <text class="sub l-en" x="34" y="410">Pickers and numbers live here, so</text>
-  <text class="sub l-es" x="34" y="410">Selectores y números viven aquí, así</text>
-  <text class="sub l-en" x="34" y="424">the drawing keeps the instrument.</text>
-  <text class="sub l-es" x="34" y="424">el dibujo conserva el instrumento.</text>
+  <text class="h l-en" x="34" y="72">Rail</text>
+  <text class="h l-es" x="34" y="72">Panel</text>
+
+  <rect class="bx" x="34" y="82" width="222" height="44" rx="6"/>
+  <text class="it l-en" x="46" y="100">Case: a circuit case or a</text>
+  <text class="it l-es" x="46" y="100">Caso: un caso del circuito o un</text>
+  <text class="it l-en" x="46" y="116">measured HP500 survey</text>
+  <text class="it l-es" x="46" y="116">muestreo HP500 medido</text>
+
+  <rect class="on" x="34" y="136" width="70" height="26" rx="6"/>
+  <rect class="bx" x="110" y="136" width="70" height="26" rx="6"/>
+  <rect class="bx" x="186" y="136" width="70" height="26" rx="6"/>
+  <text class="acc l-en" x="69" y="153" text-anchor="middle">Canonical</text>
+  <text class="acc l-es" x="69" y="153" text-anchor="middle">Canónica</text>
+  <text class="it l-en" x="145" y="153" text-anchor="middle">Tight</text>
+  <text class="it l-es" x="145" y="153" text-anchor="middle">Cerrada</text>
+  <text class="it l-en" x="221" y="153" text-anchor="middle">Open</text>
+  <text class="it l-es" x="221" y="153" text-anchor="middle">Abierta</text>
+  <text class="sub l-en" x="34" y="178">variants scale the setting: x1, x0.85, x1.15</text>
+  <text class="sub l-es" x="34" y="178">las variantes escalan la abertura: x1, x0,85, x1,15</text>
+
+  <text class="h l-en" x="34" y="200">Six knobs of the live engine</text>
+  <text class="h l-es" x="34" y="200">Seis perillas del motor en vivo</text>
+  <text class="it l-en" x="34" y="220">Closed-side setting</text>
+  <text class="it l-es" x="34" y="220">Abertura de descarga</text>
+  <line class="trk" x1="160" y1="216" x2="256" y2="216"/><circle class="dot" cx="205" cy="216" r="4"/>
+  <text class="it l-en" x="34" y="240">Throw</text>
+  <text class="it l-es" x="34" y="240">Carrera</text>
+  <line class="trk" x1="160" y1="236" x2="256" y2="236"/><circle class="dot" cx="190" cy="236" r="4"/>
+  <text class="it l-en" x="34" y="260">Eccentric speed</text>
+  <text class="it l-es" x="34" y="260">Velocidad excéntrica</text>
+  <line class="trk" x1="160" y1="256" x2="256" y2="256"/><circle class="dot" cx="220" cy="256" r="4"/>
+  <text class="it l-en" x="34" y="280">Feed size x63</text>
+  <text class="it l-es" x="34" y="280">x63 del alimento</text>
+  <line class="trk" x1="160" y1="276" x2="256" y2="276"/><circle class="dot" cx="200" cy="276" r="4"/>
+  <text class="it l-en" x="34" y="300">Feed uniformity m</text>
+  <text class="it l-es" x="34" y="300">Uniformidad m</text>
+  <line class="trk" x1="160" y1="296" x2="256" y2="296"/><circle class="dot" cx="195" cy="296" r="4"/>
+  <text class="it l-en" x="34" y="320">Ore A times b</text>
+  <text class="it l-es" x="34" y="320">Mineral A por b</text>
+  <line class="trk" x1="160" y1="316" x2="256" y2="316"/><circle class="dot" cx="180" cy="316" r="4"/>
+  <text class="sub l-en" x="34" y="338">a measured survey locks its inputs</text>
+  <text class="sub l-es" x="34" y="338">un muestreo medido fija sus entradas</text>
+
+  <rect class="bx" x="34" y="350" width="222" height="80" rx="6"/>
+  <text class="h l-en" x="46" y="368">Live values</text>
+  <text class="h l-es" x="46" y="368">Valores en vivo</text>
+  <text class="it l-en" x="46" y="386">P80 and reduction ratio</text>
+  <text class="it l-es" x="46" y="386">P80 y razón de reducción</text>
+  <text class="it l-en" x="46" y="402">Throughput and power</text>
+  <text class="it l-es" x="46" y="402">Capacidad y potencia</text>
+  <text class="it l-en" x="46" y="418">Energy, machine, Bond index</text>
+  <text class="it l-es" x="46" y="418">Energía, máquina, índice de Bond</text>
 
   <!-- the instrument -->
-  <rect class="pn" x="286" y="50" width="594" height="390" rx="10"/>
-  <text class="h l-en" x="300" y="74">Instrument</text>
-  <text class="h l-es" x="300" y="74">Instrumento</text>
-  <rect class="on" x="300" y="84" width="90" height="26" rx="6"/>
-  <text class="acc l-en" x="314" y="101">Dynamics</text>
-  <text class="acc l-es" x="314" y="101">Dinámica</text>
-  <text class="it l-en" x="404" y="101">Validation</text>
-  <text class="it l-es" x="404" y="101">Validación</text>
-  <text class="it l-en" x="482" y="101">Compare immunisation</text>
-  <text class="it l-es" x="482" y="101">Comparar inmunización</text>
-  <text class="it l-en" x="640" y="101">Context</text>
-  <text class="it l-es" x="640" y="101">Contexto</text>
-  <line class="ax" x1="300" y1="116" x2="866" y2="116"/>
+  <rect class="pn" x="290" y="50" width="590" height="390" rx="10"/>
+  <text class="h l-en" x="304" y="72">Instrument: the views of the case, grouped by question</text>
+  <text class="h l-es" x="304" y="72">Instrumento: las vistas del caso, agrupadas por pregunta</text>
 
-  <rect class="bx" x="300" y="126" width="566" height="300" rx="8"/>
-  <line class="ax" x1="340" y1="390" x2="850" y2="390"/>
-  <line class="ax" x1="340" y1="150" x2="340" y2="390"/>
-  <path class="s" d="M340,160 C440,162 500,190 560,280 S700,372 850,376"/>
-  <path class="r" d="M340,388 C450,386 520,350 580,260 S720,180 850,176"/>
-  <path class="i" d="M340,388 C420,386 470,330 520,300 S600,350 700,384 L850,388"/>
-  <path class="rp" d="M340,388 C420,385 470,328 520,298 S600,348 700,383 L850,388"/>
-  <text class="sub l-en" x="560" y="146">solid: the live run; dashed: the committed replay</text>
-  <text class="sub l-es" x="560" y="146">continua: corrida en vivo; segmentada: reproducción comprometida</text>
-  <text class="sub l-en" x="560" y="408">day</text>
-  <text class="sub l-es" x="560" y="408">día</text>
-  <text class="sub l-en" x="300" y="420">The open view takes the height the tab row leaves.</text>
-  <text class="sub l-es" x="300" y="420">La vista abierta toma la altura que deja la fila de pestañas.</text>
+  <rect class="bx" x="304" y="84" width="80" height="26" rx="6"/>
+  <rect class="on" x="390" y="84" width="80" height="26" rx="6"/>
+  <rect class="bx" x="476" y="84" width="100" height="26" rx="6"/>
+  <rect class="bx" x="582" y="84" width="80" height="26" rx="6"/>
+  <rect class="bx" x="668" y="84" width="90" height="26" rx="6"/>
+  <rect class="bx" x="764" y="84" width="102" height="26" rx="6"/>
+  <text class="it l-en" x="344" y="101" text-anchor="middle">Chamber</text>
+  <text class="it l-es" x="344" y="101" text-anchor="middle">Cámara</text>
+  <text class="acc l-en" x="430" y="101" text-anchor="middle">Product</text>
+  <text class="acc l-es" x="430" y="101" text-anchor="middle">Producto</text>
+  <text class="it l-en" x="526" y="101" text-anchor="middle">Performance</text>
+  <text class="it l-es" x="526" y="101" text-anchor="middle">Desempeño</text>
+  <text class="it l-en" x="622" y="101" text-anchor="middle">Learned</text>
+  <text class="it l-es" x="622" y="101" text-anchor="middle">Aprendido</text>
+  <text class="it l-en" x="713" y="101" text-anchor="middle">Validation</text>
+  <text class="it l-es" x="713" y="101" text-anchor="middle">Validación</text>
+  <text class="it l-en" x="815" y="101" text-anchor="middle">Context</text>
+  <text class="it l-es" x="815" y="101" text-anchor="middle">Contexto</text>
+
+  <!-- a sketch of the open group: the gradation of the feed and the product -->
+  <rect class="bx" x="304" y="124" width="300" height="250" rx="8"/>
+  <path class="ax" d="M334,150 V342 H584"/>
+  <path class="rep" d="M334,338 C400,334 470,250 580,160"/>
+  <path class="live" d="M334,338 C360,290 400,200 450,168 C490,150 540,152 582,152"/>
+  <text class="sub l-en" x="440" y="362" text-anchor="middle">particle size (log scale)</text>
+  <text class="sub l-es" x="440" y="362" text-anchor="middle">tamaño de partícula (escala log)</text>
+  <text class="sub l-en" x="322" y="142">cumulative passing</text>
+  <text class="sub l-es" x="322" y="142">pasante acumulado</text>
+
+  <rect class="bx" x="620" y="124" width="246" height="250" rx="8"/>
+  <text class="h l-en" x="634" y="146">Every view says</text>
+  <text class="h l-es" x="634" y="146">Cada vista dice</text>
+  <path class="live" d="M634,170 H664"/>
+  <text class="acc l-en" x="672" y="174">live: in the browser</text>
+  <text class="acc l-es" x="672" y="174">en vivo: en el navegador</text>
+  <path class="rep" d="M634,196 H664"/>
+  <text class="good l-en" x="672" y="200">replay: from the trace</text>
+  <text class="good l-es" x="672" y="200">reproducción: de la traza</text>
+  <text class="it l-en" x="634" y="230">whether its data is synthetic or real,</text>
+  <text class="it l-es" x="634" y="230">si sus datos son sintéticos o reales,</text>
+  <text class="it l-en" x="634" y="248">which model answered, the engine</text>
+  <text class="it l-es" x="634" y="248">qué modelo respondió, el motor</text>
+  <text class="it l-en" x="634" y="266">or a learned one, and the readiness</text>
+  <text class="it l-es" x="634" y="266">o uno aprendido, y la disponibilidad</text>
+  <text class="it l-en" x="634" y="284">of the documents it reads.</text>
+  <text class="it l-es" x="634" y="284">de los documentos que lee.</text>
+  <text class="sub l-en" x="634" y="312">A view that still shows an earlier</text>
+  <text class="sub l-es" x="634" y="312">Una vista que aún muestra una</text>
+  <text class="sub l-en" x="634" y="328">selection says so.</text>
+  <text class="sub l-es" x="634" y="328">selección anterior lo avisa.</text>
+
+  <text class="sub l-en" x="304" y="398">Focus opens the open group in the full viewport; the case, the group and the sub-view stay.</text>
+  <text class="sub l-es" x="304" y="398">Foco abre el grupo abierto a pantalla completa; el caso, el grupo y la subvista se mantienen.</text>
+  <text class="sub l-en" x="304" y="418">Context is the write-up of the case: the question, the variables and how to read the views.</text>
+  <text class="sub l-es" x="304" y="418">Contexto es la descripción del caso: la pregunta, las variables y cómo leer las vistas.</text>
 </svg>
