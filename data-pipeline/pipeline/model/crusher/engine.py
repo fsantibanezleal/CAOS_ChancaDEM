@@ -16,7 +16,8 @@ from .breakage import breakage_matrix, phi_from_t10, specific_energy, t10_calibr
 from .capacity import bond_power, calibrated_power, nip_angle, nip_limit, throughput
 from .classification import classification_params, classify
 from .envelope import check_envelope
-from .feed import make_feed
+from .feed import make_feed, rosin_rammler_size_at
+from .jsmath import jfloor
 from .machines import REF_THROW_MM
 from .sieve import make_grid, mid_sizes, passing_at_size, size_at_passing, to_psd
 from .types import CrusherResult, Operating
@@ -36,6 +37,12 @@ def grid_edges() -> list[float]:
 
 def grid_mid() -> list[float]:
     return list(_MID)
+
+
+def grid_f80(op: Operating) -> float:
+    """The feed 80%-passing size [mm] of an operating point read on the engine's grid, which stops at the top size: the
+    F80 the model works with, below the declared one for a feed coarser than the grid."""
+    return size_at_passing(make_feed(_EDGES, op.feed_x63_mm, op.feed_m), 0.8)
 
 
 def evaluate(op: Operating) -> CrusherResult:
@@ -93,7 +100,11 @@ def evaluate(op: Operating) -> CrusherResult:
         regime = "invalid"
 
     # envelope gate: a physically-nonsensical point is also marked invalid
-    env = check_envelope(op, f80)
+    # the calibrated support is tested on the F80 the feed declares, not on the grid-truncated f80 above (a 180 mm feed
+    # reads about 136 mm on the 256 mm grid); rounded to a micrometre so a survey on the 140 mm edge is not pushed over it
+    # by float noise (the x63 of a survey is rebuilt from its f80 by the inverse law)
+    declared_f80 = jfloor(rosin_rammler_size_at(0.8, op.feed_x63_mm, op.feed_m) * 1e6 + 0.5) / 1e6
+    env = check_envelope(op, f80, declared_f80)
     for code in env.codes:
         if code not in flags:
             flags.append(code)

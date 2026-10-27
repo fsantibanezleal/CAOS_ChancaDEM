@@ -1,4 +1,4 @@
-"""Contracts hp500-backbone and hp500-loo (catalog rows 1.0.0): the documents the pipeline builds from the survey
+"""Contracts hp500-backbone 1.0.0 and hp500-loo 1.1.0: the documents the pipeline builds from the survey
 table validate against their schemas, are computed by the canonical engine, are deterministic and equal the
 provider tree (the documents of release 0.09.003 mapped to the new field names) within 1e-9 relative."""
 from __future__ import annotations
@@ -99,6 +99,23 @@ def test_loo_validates(lo: dict) -> None:
     strict = lo["loo"]["tph"]["strict"]
     assert strict["M1_label_shuffle"]["mape_pct"] > strict["M0_backbone"]["mape_pct"]
     assert len(lo["power_parity"]["per_survey"]) == len(lo["tph_parity"]["per_survey"]) == n
+
+
+def test_loo_carries_the_nested_out_of_sample_coverage_beside_the_in_sample_one(lo: dict) -> None:
+    """hp500-loo 1.1.0: each strict uq block holds the in-sample coverage unchanged and the nested one: one verdict and one
+    sigma per survey, sigma taken from the other surveys' held-out residuals only."""
+    for target in ("tph", "kW", "p80"):
+        t = lo["loo"][target]
+        uq = t["strict"]["uq"]
+        resid = [m - p for m, p in zip(t["measured"], t["strict"]["pred"]["M0"])]
+        assert len(uq["nested_covered"]) == len(uq["nested_sigma"]) == lo["n"], target
+        assert uq["nested_coverage"] == pytest.approx(sum(uq["nested_covered"]) / lo["n"], abs=1e-3), target
+        for i in range(lo["n"]):
+            others = [r for k, r in enumerate(resid) if k != i]
+            mean = sum(others) / len(others)
+            sigma = math.sqrt(sum((r - mean) ** 2 for r in others) / (len(others) - 1))
+            assert uq["nested_sigma"][i] == pytest.approx(sigma, abs=0.01), (target, i)
+        assert "in sample" in uq["nested_note"] and "out of sample" in uq["nested_note"]
 
 
 def test_loo_equals_the_provider_tree(lo: dict) -> None:

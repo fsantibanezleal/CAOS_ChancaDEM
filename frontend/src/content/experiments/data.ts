@@ -226,7 +226,7 @@ export const MODEL_LABEL: Record<ModelKey, Text> = {
   M1_label_shuffle: { en: 'M1 with shuffled labels', es: 'M1 con etiquetas barajadas' },
 };
 
-/** Whether each held-out survey falls inside the 80 percent band of the backbone, and how many do (the empirical coverage, by count). */
+/** Whether each held-out survey falls inside the 80 percent band of the backbone, and how many do (the in-sample empirical coverage, by count: the half-width comes from the same residuals; the document's nested_coverage is the out-of-sample one). */
 export function coverage(loo: Hp500Loo, target: 'tph' | 'kW'): { inside: boolean[]; count: number } {
   const t = loo.loo[target];
   const half = t.strict.uq.band_halfwidth;

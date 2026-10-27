@@ -3,7 +3,7 @@
 // surrogate honestly emulates this engine). Pure TypeScript, sub-millisecond, no Pyodide, no backend.
 
 import { makeGrid, midSizes, toPSD, sizeAtPassing, passingAtSize } from './sieve';
-import { makeFeed } from './feed';
+import { makeFeed, rosinRammlerSizeAt } from './feed';
 import { classificationParams, classify } from './classification';
 import { specificEnergy, t10Of, t10Calibrated, phiFromT10, breakageMatrix } from './breakage';
 import { REF_THROW_MM } from './machines';
@@ -76,7 +76,11 @@ export function evaluate(op: Operating): CrusherResult {
 
   // envelope gate (negative control): flag implausible / out-of-calibrated-support inputs. A physically-nonsensical
   // point is also marked invalid so no view treats it as a trustworthy reading.
-  const env = checkEnvelope(op, f80);
+  // The calibrated support is tested on the F80 the feed declares, not on the grid-truncated f80 above (a 180 mm feed reads
+  // about 136 mm on the 256 mm grid); rounded to a micrometre so a survey on the 140 mm edge is not pushed over it by
+  // float noise (the x63 of a survey is rebuilt from its f80 by the inverse law).
+  const declaredF80 = Math.floor(rosinRammlerSizeAt(0.8, op.feedX63Mm, op.feedM) * 1e6 + 0.5) / 1e6;
+  const env = checkEnvelope(op, f80, declaredF80);
   for (const code of env.codes) if (!flags.includes(code)) flags.push(code);
   if (env.implausible) valid = false;
 

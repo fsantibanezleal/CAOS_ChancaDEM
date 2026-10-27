@@ -12,6 +12,12 @@ export function rosinRammlerPassing(xMm: number, x63: number, m: number): number
   return 1 - Math.exp(-Math.pow(xMm / x63, m));
 }
 
+/** The size (mm) at a cumulative passing fraction of the untruncated Rosin–Rammler law, the inverse of rosinRammlerPassing:
+ *  x63 · (−ln(1 − fraction))^(1/m). It does not stop at the sieve top size: it is the F80 the feed declares. */
+export function rosinRammlerSizeAt(fraction: number, x63: number, m: number): number {
+  return x63 * Math.pow(-Math.log(1 - fraction), 1 / m);
+}
+
 /** Discretize a Rosin–Rammler feed onto a sieve grid → per-class mass (Σ=1). */
 export function makeFeed(edges: number[], x63: number, m: number): PSD {
   const k = edges.length - 1;

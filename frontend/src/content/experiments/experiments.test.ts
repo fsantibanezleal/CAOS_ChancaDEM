@@ -117,4 +117,21 @@ describe('the predictive band', () => {
       expect(c.count / loo.n, target).toBeCloseTo(loo.loo[target].strict.uq.empirical_coverage, 6);
     }
   });
+
+  it('records the nested, out-of-sample coverage as the share of its per-survey verdicts, with the sigma of the other surveys', () => {
+    for (const target of ['tph', 'kW'] as const) {
+      const uq = loo.loo[target].strict.uq;
+      const t = loo.loo[target];
+      expect(uq.nested_covered?.length, target).toBe(loo.n);
+      expect(uq.nested_sigma?.length, target).toBe(loo.n);
+      expect(uq.nested_covered!.filter(Boolean).length / loo.n, target).toBeCloseTo(uq.nested_coverage!, 3);
+      uq.nested_covered!.forEach((covered, i) => {
+        const others = t.measured.map((y, k) => y - t.strict.pred.M0[k]).filter((_, k) => k !== i);
+        const mean = others.reduce((a, b) => a + b, 0) / others.length;
+        const sigma = Math.sqrt(others.reduce((a, b) => a + (b - mean) ** 2, 0) / (others.length - 1));
+        expect(uq.nested_sigma![i], `${target} ${i}`).toBeCloseTo(sigma, 1);
+        expect(covered, `${target} ${i}`).toBe(Math.abs(t.measured[i] - t.strict.pred.M0[i]) <= 1.2816 * sigma);
+      });
+    }
+  });
 });

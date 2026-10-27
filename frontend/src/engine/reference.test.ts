@@ -118,6 +118,9 @@ export function referencePoints(): RefPoint[] {
   add('cal:css-below-support', { ...c, cssMm: 30 });
   add('cal:f80-below-support', { ...c, feedX63Mm: x63FromF80(30) });
   add('cal:f80-above-support', { ...c, feedX63Mm: x63FromF80(170) });
+  add('cal:f80-180-grid-truncated', { ...c, feedX63Mm: x63FromF80(180) });
+  add('cal:f80-edge-140-declared', { ...c, cssMm: 38, feedX63Mm: x63FromF80(140) });
+  add('cal:f80-just-above-edge', { ...c, feedX63Mm: x63FromF80(140.01) });
   add('cal:both-outside-support', { ...c, cssMm: 60, feedX63Mm: x63FromF80(170) });
   add('cal:implausible-css-ge-f80', { ...c, cssMm: 120, feedX63Mm: x63FromF80(40) });
   add('cal:css-nonpositive', { ...c, cssMm: -3 });

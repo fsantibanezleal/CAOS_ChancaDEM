@@ -49,6 +49,13 @@ def jlog(x: float) -> float:
     return math.log(x)
 
 
+def jfloor(x: float) -> float:
+    """``Math.floor``: NaN and the infinities are returned as they are (``math.floor`` raises on them)."""
+    if is_nan(x) or math.isinf(x):
+        return x
+    return float(math.floor(x))
+
+
 def jsqrt(x: float) -> float:
     """``Math.sqrt``: NaN below 0."""
     if is_nan(x) or x < 0:
