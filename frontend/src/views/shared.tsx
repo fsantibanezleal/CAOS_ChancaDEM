@@ -7,7 +7,7 @@ import type { Loaded } from '../api/artifacts';
 import { flagText } from '../engine/flags';
 import type { CaseIndex, Hp500Loo, Text } from '../lib/contract.types';
 import { ReadinessNote } from '../readiness/ReadinessNote';
-import { rowsFor, type GroupId, type Selection } from '../workbench/model';
+import { BANDED_MACHINE, rowsFor, type GroupId, type Selection } from '../workbench/model';
 
 export interface ViewCtx {
   /** The case at the rail's values and the open variant; null while the case loads or when it is not available. */
@@ -15,7 +15,7 @@ export interface ViewCtx {
   /** Why the selected case is not available yet, from the readiness document; null when it is. */
   unavailable: Text | null;
   index: CaseIndex | null;
-  /** CrusherCal, for a real case; null on a synthetic one. */
+  /** CrusherCal, for a real case and for a synthetic case of the banded machine; null on any other. */
   loo: Loaded<Hp500Loo> | null;
   /** The target P80 of the inverse search, in millimetres. */
   target: number;
@@ -126,11 +126,12 @@ export function GroupFrame({ group, ariaLabel, tabs }: { group: GroupId; ariaLab
   const lang = useShellLang();
   const { sel } = useView();
   const real = sel?.data.manifest.real_or_synthetic === 'real';
+  const banded = sel?.data.manifest.params.machine === BANDED_MACHINE;
   // a group with one view has no row of sub-tabs to choose from
   if (tabs.length === 1) {
     return (
       <>
-        <ReadinessNote ids={rowsFor(group, real)} />
+        <ReadinessNote ids={rowsFor(group, real, banded)} />
         <FlagsAlert />
         {tabs[0].content}
       </>
@@ -138,7 +139,7 @@ export function GroupFrame({ group, ariaLabel, tabs }: { group: GroupId; ariaLab
   }
   return (
     <>
-      <ReadinessNote ids={rowsFor(group, real)} />
+      <ReadinessNote ids={rowsFor(group, real, banded)} />
       <FlagsAlert />
       <SubTabs ariaLabel={pick(ariaLabel, lang)} tabs={tabs.map((t) => ({ id: t.id, label: pick(t.label, lang), content: t.content }))} />
     </>

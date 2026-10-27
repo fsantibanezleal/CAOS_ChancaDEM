@@ -8,7 +8,9 @@
 | Breakage / appearance (t10 to progeny) | JKMRC drop-weight t10; Austin appearance function |
 | Cone-crusher capacity | Evertsson (2000), *Cone Crusher Performance* (Chalmers) |
 | Comminution power | Bond's third theory of comminution |
-| **Calibration anchor** | **Duarte, Pereira, et al. 2021**, Minerals 11(11):1256, DOI 10.3390/min11111256 |
+| **Absolute-number anchor** | The calibrated HP500 lane: **Rocha, Campos, Silva and Tavares 2024**, Minerals 14(9):919, DOI 10.3390/min14090919 (CC BY 4.0) |
+| Industrial cone fit, cited, not an anchor | **Duarte, Yamashita, da Silva, Cota and Euzebio 2021**, Minerals 11(11):1256, DOI 10.3390/min11111256 (CC BY 4.0): it gives no throw, speed, ore properties or power, so it cannot anchor the engine's absolute numbers |
+| Setting and reduction-ratio warnings | Metso, *Nordberg HP Series cone crushers, Wear parts application guide* (2602); Metso, *Nordberg C Series jaw crushers* brochure 4226-04-24 (2024); Metso, *Basics in Minerals Processing* (8th ed., 2011) |
 
 ## Data / honesty
 

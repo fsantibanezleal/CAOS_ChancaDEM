@@ -1,0 +1,770 @@
+{
+ "schema": "chancadem.campaign-reference/v1",
+ "rows": [
+  {
+   "id": "S01-plus3",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 32,
+    "throw_mm": 30,
+    "speed_rpm": 360,
+    "feed_x63_mm": 90,
+    "feed_m": 1.2,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 28.529,
+   "css_max_mm": 90,
+   "css_target_mm": 33.04312978564734
+  },
+  {
+   "id": "S01-plus10",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 32,
+    "throw_mm": 30,
+    "speed_rpm": 360,
+    "feed_x63_mm": 90,
+    "feed_m": 1.2,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 30.4678,
+   "css_max_mm": 90,
+   "css_target_mm": 35.212184118551505
+  },
+  {
+   "id": "S01-plus30",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 32,
+    "throw_mm": 30,
+    "speed_rpm": 360,
+    "feed_x63_mm": 90,
+    "feed_m": 1.2,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 36.0074,
+   "css_max_mm": 90,
+   "css_target_mm": 40.67309640350487
+  },
+  {
+   "id": "S01-exceeded",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 32,
+    "throw_mm": 30,
+    "speed_rpm": 360,
+    "feed_x63_mm": 90,
+    "feed_m": 1.2,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 22.1584,
+   "css_max_mm": 90,
+   "css_target_mm": 32.0
+  },
+  {
+   "id": "S01-never",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 32,
+    "throw_mm": 30,
+    "speed_rpm": 360,
+    "feed_x63_mm": 90,
+    "feed_m": 1.2,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 1000000.0,
+   "css_max_mm": 90,
+   "css_target_mm": null
+  },
+  {
+   "id": "S02-plus3",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 40,
+    "throw_mm": 32,
+    "speed_rpm": 300,
+    "feed_x63_mm": 120,
+    "feed_m": 1.0,
+    "ore_axb": 80,
+    "ore_wi": 11,
+    "calibrated": false
+   },
+   "p80_target_mm": 34.8122,
+   "css_max_mm": 90,
+   "css_target_mm": 41.05442293718386
+  },
+  {
+   "id": "S02-plus10",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 40,
+    "throw_mm": 32,
+    "speed_rpm": 300,
+    "feed_x63_mm": 120,
+    "feed_m": 1.0,
+    "ore_axb": 80,
+    "ore_wi": 11,
+    "calibrated": false
+   },
+   "p80_target_mm": 37.1781,
+   "css_max_mm": 90,
+   "css_target_mm": 44.36809498772169
+  },
+  {
+   "id": "S02-plus30",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 40,
+    "throw_mm": 32,
+    "speed_rpm": 300,
+    "feed_x63_mm": 120,
+    "feed_m": 1.0,
+    "ore_axb": 80,
+    "ore_wi": 11,
+    "calibrated": false
+   },
+   "p80_target_mm": 43.9377,
+   "css_max_mm": 90,
+   "css_target_mm": 52.727148418169165
+  },
+  {
+   "id": "S02-exceeded",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 40,
+    "throw_mm": 32,
+    "speed_rpm": 300,
+    "feed_x63_mm": 120,
+    "feed_m": 1.0,
+    "ore_axb": 80,
+    "ore_wi": 11,
+    "calibrated": false
+   },
+   "p80_target_mm": 27.0386,
+   "css_max_mm": 90,
+   "css_target_mm": 40.0
+  },
+  {
+   "id": "S02-never",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 40,
+    "throw_mm": 32,
+    "speed_rpm": 300,
+    "feed_x63_mm": 120,
+    "feed_m": 1.0,
+    "ore_axb": 80,
+    "ore_wi": 11,
+    "calibrated": false
+   },
+   "p80_target_mm": 1000000.0,
+   "css_max_mm": 90,
+   "css_target_mm": null
+  },
+  {
+   "id": "S05-plus3",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 16,
+    "throw_mm": 26,
+    "speed_rpm": 360,
+    "feed_x63_mm": 55,
+    "feed_m": 1.6,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 14.0518,
+   "css_max_mm": 90,
+   "css_target_mm": 16.47504592990746
+  },
+  {
+   "id": "S05-plus10",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 16,
+    "throw_mm": 26,
+    "speed_rpm": 360,
+    "feed_x63_mm": 55,
+    "feed_m": 1.6,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 15.0067,
+   "css_max_mm": 90,
+   "css_target_mm": 17.454992211322214
+  },
+  {
+   "id": "S05-plus30",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 16,
+    "throw_mm": 26,
+    "speed_rpm": 360,
+    "feed_x63_mm": 55,
+    "feed_m": 1.6,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 17.7352,
+   "css_max_mm": 90,
+   "css_target_mm": 19.93819427879881
+  },
+  {
+   "id": "S05-exceeded",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 16,
+    "throw_mm": 26,
+    "speed_rpm": 360,
+    "feed_x63_mm": 55,
+    "feed_m": 1.6,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 10.914,
+   "css_max_mm": 90,
+   "css_target_mm": 16.0
+  },
+  {
+   "id": "S05-never",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 16,
+    "throw_mm": 26,
+    "speed_rpm": 360,
+    "feed_x63_mm": 55,
+    "feed_m": 1.6,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 1000000.0,
+   "css_max_mm": 90,
+   "css_target_mm": null
+  },
+  {
+   "id": "T01-plus3",
+   "op": {
+    "machine": "cone-tert",
+    "css_mm": 8,
+    "throw_mm": 16,
+    "speed_rpm": 400,
+    "feed_x63_mm": 28,
+    "feed_m": 1.5,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 7.3243,
+   "css_max_mm": 22,
+   "css_target_mm": 8.28815894813247
+  },
+  {
+   "id": "T01-plus10",
+   "op": {
+    "machine": "cone-tert",
+    "css_mm": 8,
+    "throw_mm": 16,
+    "speed_rpm": 400,
+    "feed_x63_mm": 28,
+    "feed_m": 1.5,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 7.822,
+   "css_max_mm": 22,
+   "css_target_mm": 8.858162415239331
+  },
+  {
+   "id": "T01-plus30",
+   "op": {
+    "machine": "cone-tert",
+    "css_mm": 8,
+    "throw_mm": 16,
+    "speed_rpm": 400,
+    "feed_x63_mm": 28,
+    "feed_m": 1.5,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 9.2442,
+   "css_max_mm": 22,
+   "css_target_mm": 10.291733847583156
+  },
+  {
+   "id": "T01-exceeded",
+   "op": {
+    "machine": "cone-tert",
+    "css_mm": 8,
+    "throw_mm": 16,
+    "speed_rpm": 400,
+    "feed_x63_mm": 28,
+    "feed_m": 1.5,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 5.6888,
+   "css_max_mm": 22,
+   "css_target_mm": 8.0
+  },
+  {
+   "id": "T01-never",
+   "op": {
+    "machine": "cone-tert",
+    "css_mm": 8,
+    "throw_mm": 16,
+    "speed_rpm": 400,
+    "feed_x63_mm": 28,
+    "feed_m": 1.5,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 1000000.0,
+   "css_max_mm": 22,
+   "css_target_mm": null
+  },
+  {
+   "id": "H01-plus3",
+   "op": {
+    "machine": "cone-short-head",
+    "css_mm": 6,
+    "throw_mm": 14,
+    "speed_rpm": 500,
+    "feed_x63_mm": 22,
+    "feed_m": 1.6,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 4.6959,
+   "css_max_mm": 16,
+   "css_target_mm": 6.234935641570402
+  },
+  {
+   "id": "H01-plus10",
+   "op": {
+    "machine": "cone-short-head",
+    "css_mm": 6,
+    "throw_mm": 14,
+    "speed_rpm": 500,
+    "feed_x63_mm": 22,
+    "feed_m": 1.6,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 5.015,
+   "css_max_mm": 16,
+   "css_target_mm": 6.670011174889529
+  },
+  {
+   "id": "H01-plus30",
+   "op": {
+    "machine": "cone-short-head",
+    "css_mm": 6,
+    "throw_mm": 14,
+    "speed_rpm": 500,
+    "feed_x63_mm": 22,
+    "feed_m": 1.6,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 5.9268,
+   "css_max_mm": 16,
+   "css_target_mm": 7.54614315981075
+  },
+  {
+   "id": "H01-exceeded",
+   "op": {
+    "machine": "cone-short-head",
+    "css_mm": 6,
+    "throw_mm": 14,
+    "speed_rpm": 500,
+    "feed_x63_mm": 22,
+    "feed_m": 1.6,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 3.6473,
+   "css_max_mm": 16,
+   "css_target_mm": 6.0
+  },
+  {
+   "id": "H01-never",
+   "op": {
+    "machine": "cone-short-head",
+    "css_mm": 6,
+    "throw_mm": 14,
+    "speed_rpm": 500,
+    "feed_x63_mm": 22,
+    "feed_m": 1.6,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 1000000.0,
+   "css_max_mm": 16,
+   "css_target_mm": null
+  },
+  {
+   "id": "J02-plus3",
+   "op": {
+    "machine": "jaw",
+    "css_mm": 80,
+    "throw_mm": 36,
+    "speed_rpm": 280,
+    "feed_x63_mm": 300,
+    "feed_m": 1.0,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 84.9086,
+   "css_max_mm": 160,
+   "css_target_mm": 82.80400724567261
+  },
+  {
+   "id": "J02-plus10",
+   "op": {
+    "machine": "jaw",
+    "css_mm": 80,
+    "throw_mm": 36,
+    "speed_rpm": 280,
+    "feed_x63_mm": 300,
+    "feed_m": 1.0,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 90.6791,
+   "css_max_mm": 160,
+   "css_target_mm": 88.73812000494175
+  },
+  {
+   "id": "J02-plus30",
+   "op": {
+    "machine": "jaw",
+    "css_mm": 80,
+    "throw_mm": 36,
+    "speed_rpm": 280,
+    "feed_x63_mm": 300,
+    "feed_m": 1.0,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 107.1663,
+   "css_max_mm": 160,
+   "css_target_mm": 103.68513988008212
+  },
+  {
+   "id": "J02-exceeded",
+   "op": {
+    "machine": "jaw",
+    "css_mm": 80,
+    "throw_mm": 36,
+    "speed_rpm": 280,
+    "feed_x63_mm": 300,
+    "feed_m": 1.0,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 65.9485,
+   "css_max_mm": 160,
+   "css_target_mm": 80.0
+  },
+  {
+   "id": "J02-never",
+   "op": {
+    "machine": "jaw",
+    "css_mm": 80,
+    "throw_mm": 36,
+    "speed_rpm": 280,
+    "feed_x63_mm": 300,
+    "feed_m": 1.0,
+    "ore_axb": 55,
+    "ore_wi": 14,
+    "calibrated": false
+   },
+   "p80_target_mm": 1000000.0,
+   "css_max_mm": 160,
+   "css_target_mm": null
+  },
+  {
+   "id": "G01-plus3",
+   "op": {
+    "machine": "gyratory",
+    "css_mm": 165,
+    "throw_mm": 30,
+    "speed_rpm": 150,
+    "feed_x63_mm": 600,
+    "feed_m": 0.8,
+    "ore_axb": 40,
+    "ore_wi": 16,
+    "calibrated": false
+   },
+   "p80_target_mm": 158.2071,
+   "css_max_mm": 240,
+   "css_target_mm": 177.33592554328283
+  },
+  {
+   "id": "G01-plus10",
+   "op": {
+    "machine": "gyratory",
+    "css_mm": 165,
+    "throw_mm": 30,
+    "speed_rpm": 150,
+    "feed_x63_mm": 600,
+    "feed_m": 0.8,
+    "ore_axb": 40,
+    "ore_wi": 16,
+    "calibrated": false
+   },
+   "p80_target_mm": 168.9591,
+   "css_max_mm": 240,
+   "css_target_mm": null
+  },
+  {
+   "id": "G01-plus30",
+   "op": {
+    "machine": "gyratory",
+    "css_mm": 165,
+    "throw_mm": 30,
+    "speed_rpm": 150,
+    "feed_x63_mm": 600,
+    "feed_m": 0.8,
+    "ore_axb": 40,
+    "ore_wi": 16,
+    "calibrated": false
+   },
+   "p80_target_mm": 199.6789,
+   "css_max_mm": 240,
+   "css_target_mm": null
+  },
+  {
+   "id": "G01-exceeded",
+   "op": {
+    "machine": "gyratory",
+    "css_mm": 165,
+    "throw_mm": 30,
+    "speed_rpm": 150,
+    "feed_x63_mm": 600,
+    "feed_m": 0.8,
+    "ore_axb": 40,
+    "ore_wi": 16,
+    "calibrated": false
+   },
+   "p80_target_mm": 122.8793,
+   "css_max_mm": 240,
+   "css_target_mm": 165.0
+  },
+  {
+   "id": "G01-never",
+   "op": {
+    "machine": "gyratory",
+    "css_mm": 165,
+    "throw_mm": 30,
+    "speed_rpm": 150,
+    "feed_x63_mm": 600,
+    "feed_m": 0.8,
+    "ore_axb": 40,
+    "ore_wi": 16,
+    "calibrated": false
+   },
+   "p80_target_mm": 1000000.0,
+   "css_max_mm": 240,
+   "css_target_mm": null
+  },
+  {
+   "id": "CK1-plus3",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 25,
+    "throw_mm": 30,
+    "speed_rpm": 350,
+    "feed_x63_mm": 80,
+    "feed_m": 1.15,
+    "ore_axb": 52,
+    "ore_wi": 15,
+    "calibrated": false
+   },
+   "p80_target_mm": 22.3749,
+   "css_max_mm": 90,
+   "css_target_mm": 25.649154077550058
+  },
+  {
+   "id": "CK1-plus10",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 25,
+    "throw_mm": 30,
+    "speed_rpm": 350,
+    "feed_x63_mm": 80,
+    "feed_m": 1.15,
+    "ore_axb": 52,
+    "ore_wi": 15,
+    "calibrated": false
+   },
+   "p80_target_mm": 23.8955,
+   "css_max_mm": 90,
+   "css_target_mm": 27.099394005501388
+  },
+  {
+   "id": "CK1-plus30",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 25,
+    "throw_mm": 30,
+    "speed_rpm": 350,
+    "feed_x63_mm": 80,
+    "feed_m": 1.15,
+    "ore_axb": 52,
+    "ore_wi": 15,
+    "calibrated": false
+   },
+   "p80_target_mm": 28.2402,
+   "css_max_mm": 90,
+   "css_target_mm": 32.36950489787729
+  },
+  {
+   "id": "CK1-exceeded",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 25,
+    "throw_mm": 30,
+    "speed_rpm": 350,
+    "feed_x63_mm": 80,
+    "feed_m": 1.15,
+    "ore_axb": 52,
+    "ore_wi": 15,
+    "calibrated": false
+   },
+   "p80_target_mm": 17.3786,
+   "css_max_mm": 90,
+   "css_target_mm": 25.0
+  },
+  {
+   "id": "CK1-never",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 25,
+    "throw_mm": 30,
+    "speed_rpm": 350,
+    "feed_x63_mm": 80,
+    "feed_m": 1.15,
+    "ore_axb": 52,
+    "ore_wi": 15,
+    "calibrated": false
+   },
+   "p80_target_mm": 1000000.0,
+   "css_max_mm": 90,
+   "css_target_mm": null
+  },
+  {
+   "id": "CAL-plus3",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 45,
+    "throw_mm": 34,
+    "speed_rpm": 360,
+    "feed_x63_mm": 100,
+    "feed_m": 0.9,
+    "ore_axb": 677.3,
+    "ore_wi": 9.0,
+    "calibrated": true
+   },
+   "p80_target_mm": 44.075,
+   "css_max_mm": 90,
+   "css_target_mm": 48.46286356818939
+  },
+  {
+   "id": "CAL-plus10",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 45,
+    "throw_mm": 34,
+    "speed_rpm": 360,
+    "feed_x63_mm": 100,
+    "feed_m": 0.9,
+    "ore_axb": 677.3,
+    "ore_wi": 9.0,
+    "calibrated": true
+   },
+   "p80_target_mm": 47.0704,
+   "css_max_mm": 90,
+   "css_target_mm": 56.792915807993595
+  },
+  {
+   "id": "CAL-plus30",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 45,
+    "throw_mm": 34,
+    "speed_rpm": 360,
+    "feed_x63_mm": 100,
+    "feed_m": 0.9,
+    "ore_axb": 677.3,
+    "ore_wi": 9.0,
+    "calibrated": true
+   },
+   "p80_target_mm": 55.6286,
+   "css_max_mm": 90,
+   "css_target_mm": null
+  },
+  {
+   "id": "CAL-exceeded",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 45,
+    "throw_mm": 34,
+    "speed_rpm": 360,
+    "feed_x63_mm": 100,
+    "feed_m": 0.9,
+    "ore_axb": 677.3,
+    "ore_wi": 9.0,
+    "calibrated": true
+   },
+   "p80_target_mm": 34.233,
+   "css_max_mm": 90,
+   "css_target_mm": 45.0
+  },
+  {
+   "id": "CAL-never",
+   "op": {
+    "machine": "cone-sec",
+    "css_mm": 45,
+    "throw_mm": 34,
+    "speed_rpm": 360,
+    "feed_x63_mm": 100,
+    "feed_m": 0.9,
+    "ore_axb": 677.3,
+    "ore_wi": 9.0,
+    "calibrated": true
+   },
+   "p80_target_mm": 1000000.0,
+   "css_max_mm": 90,
+   "css_target_mm": null
+  }
+ ]
+}

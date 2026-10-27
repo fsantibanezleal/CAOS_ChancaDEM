@@ -1,5 +1,5 @@
-// Group 3, Performance: the result table above the capacity hump, the setting trade-off, the power draw, and the comparison of
-// the three variants. Each chart draws the live engine at the rail's values (solid) and the committed sweep of the replay
+// Group 3, Performance: the result table above the capacity hump, the setting trade-off, the power draw, the comparison of
+// the three variants, and the campaign view (hours until the P80 target is exceeded against the drift rate of the setting; campaign.tsx). Each chart draws the live engine at the rail's values (solid) and the committed sweep of the replay
 // (dashed), with the current setting marked. On a real survey the measured throughput and power are reference lines, with the
 // CrusherCal 80 percent predictive band (the strict leave-one-survey-out folds) and the pre-registered null stated in the note.
 import { PlotCard, ViewsRow, useShellLang, useWorkbenchState, type BiText } from '@fasl-work/caos-app-shell';
@@ -9,7 +9,8 @@ import { optimalSpeed, throughput } from '../engine/capacity';
 import { evaluate } from '../engine/engine';
 import type { Operating } from '../engine/types';
 import type { Text } from '../lib/contract.types';
-import { bandHalfWidth, selectionOf, VARIANTS } from '../workbench/model';
+import { bandHalfWidth, syntheticBand, selectionOf, VARIANTS, type SyntheticBand } from '../workbench/model';
+import { CampaignView } from './campaign';
 import { Fill, Stack } from './draw';
 import { bare, GroupFrame, Pending, provenanceOf, REGIME_TEXT, useNum, useT, useView, type Sub } from './shared';
 import { asc, finAll, LIVE_COLOR, linSpace, REPLAY_COLOR, REPLAY_DASH } from './series';
@@ -25,8 +26,19 @@ interface BandNote {
 }
 
 /** The note on a real survey's reference lines: what the band is, and the pre-registered null. */
-function bandNote(sel: Selection, bandReady: boolean, reason: Text | null): BandNote | null {
-  if (sel.data.manifest.real_or_synthetic !== 'real') return null;
+function bandNote(sel: Selection, bandReady: boolean, reason: Text | null, synthetic?: SyntheticBand): BandNote | null {
+  if (sel.data.manifest.real_or_synthetic !== 'real') {
+    if (!synthetic) return null;
+    if (synthetic.kind === 'band') {
+      return {
+        text: {
+          en: `Dotted lines: the engine’s value with a band of ${synthetic.label.en} It is a lower bound from the calibrated model family, not a band of this case.`,
+          es: `Líneas punteadas: el valor del motor con una banda de ${synthetic.label.es} Es una cota inferior de la familia de modelos calibrada, no una banda de este caso.`,
+        },
+      };
+    }
+    return { text: { en: `No band is drawn. ${synthetic.reason.en}`, es: `No se dibuja banda. ${synthetic.reason.es}` } };
+  }
   const base: Text = {
     en: 'Dotted lines: the measured value of the survey, and the engine’s value with the 80 percent predictive half-band of CrusherCal (strict leave-one-survey-out). The pre-registered null holds: the residual model does not beat the calibrated backbone out of sample, so the backbone and its empirical band are shown.',
     es: 'Líneas punteadas: el valor medido del muestreo, y el valor del motor con la semibanda predictiva del 80 por ciento de CrusherCal (dejando un muestreo fuera). El nulo preregistrado se cumple: el modelo de residuos no supera al esqueleto calibrado fuera de muestra, así que se muestran el esqueleto y su banda empírica.',
@@ -38,6 +50,16 @@ function bandNote(sel: Selection, bandReady: boolean, reason: Text | null): Band
       es: `El valor medido es la línea punteada. La banda predictiva aún no está disponible: ${bare(reason?.es ?? 'el documento de validación no está en esta versión')}.`,
     },
   };
+}
+
+type YMark = NonNullable<SweepProps['yMarks']>[number];
+
+/** The two limits of a band around a value, drawn the same way on a real survey and on a synthetic case; only the label differs. */
+function bandMarks(center: number, half: number, label: BiText): YMark[] {
+  return [
+    { y: center + half, label, tone: 'neutral' },
+    { y: center - half, tone: 'neutral' },
+  ];
 }
 
 interface SweepProps {
@@ -104,11 +126,10 @@ function ResultView() {
   const yMarks: NonNullable<SweepProps['yMarks']> = [];
   if (measured) {
     yMarks.push({ y: measured.feed_tph, label: { en: 'measured', es: 'medido' }, tone: 'good' });
-    if (band !== null) {
-      yMarks.push({ y: r.throughputTph + band, label: { en: '80% band', es: 'banda 80%' }, tone: 'neutral' });
-      yMarks.push({ y: r.throughputTph - band, tone: 'neutral' });
-    }
+    if (band !== null) yMarks.push(...bandMarks(r.throughputTph, band, { en: '80% band', es: 'banda 80%' }));
   }
+  const synth = measured || sel.data.manifest.real_or_synthetic === 'real' ? undefined : syntheticBand(sel.data.manifest.params.machine, loo ?? null, 'tph', r.throughputTph);
+  if (synth?.kind === 'band') yMarks.push(...bandMarks(r.throughputTph, synth.halfWidth, { en: 'at least 80% band', es: 'al menos banda 80%' }));
   const head: [string, string][] = [
     ['P80 (mm)', 'P80 (mm)'],
     ['P50 (mm)', 'P50 (mm)'],
@@ -192,7 +213,7 @@ function ResultView() {
           { x: optimalSpeed(op.machine), label: { en: 'optimum', es: 'óptimo' } },
         ]}
         yMarks={yMarks}
-        note={bandNote(sel, band !== null, loo?.state === 'unavailable' ? loo.reason : null)?.text}
+        note={bandNote(sel, band !== null, loo?.state === 'unavailable' ? loo.reason : null, synth)?.text}
       />
     </>
   );
@@ -252,11 +273,10 @@ function PowerView() {
   const yMarks: NonNullable<SweepProps['yMarks']> = [];
   if (measured) {
     yMarks.push({ y: measured.power_kw, label: { en: 'measured', es: 'medido' }, tone: 'good' });
-    if (band !== null) {
-      yMarks.push({ y: sel.result.powerKw + band, label: { en: '80% band', es: 'banda 80%' }, tone: 'neutral' });
-      yMarks.push({ y: sel.result.powerKw - band, tone: 'neutral' });
-    }
+    if (band !== null) yMarks.push(...bandMarks(sel.result.powerKw, band, { en: '80% band', es: 'banda 80%' }));
   }
+  const synth = measured || sel.data.manifest.real_or_synthetic === 'real' ? undefined : syntheticBand(sel.data.manifest.params.machine, loo ?? null, 'kW', sel.result.powerKw);
+  if (synth?.kind === 'band') yMarks.push(...bandMarks(sel.result.powerKw, synth.halfWidth, { en: 'at least 80% band', es: 'al menos banda 80%' }));
   return (
     <SweepCard
       sel={sel}
@@ -271,7 +291,7 @@ function PowerView() {
       replay={trace ? trace.speed_sweep.power_kw : null}
       marks={[{ x: op.speedRpm, label: { en: 'current', es: 'actual' } }]}
       yMarks={yMarks}
-      note={bandNote(sel, band !== null, loo?.state === 'unavailable' ? loo.reason : null)?.text}
+      note={bandNote(sel, band !== null, loo?.state === 'unavailable' ? loo.reason : null, synth)?.text}
     />
   );
 }
@@ -352,6 +372,7 @@ export function PerformanceGroup() {
     { id: 'setting', label: { en: 'Setting trade-off', es: 'Efecto de la abertura' }, content: <SettingView /> },
     { id: 'power', label: { en: 'Power', es: 'Potencia' }, content: <PowerView /> },
     { id: 'compare', label: { en: 'Compare variants', es: 'Comparar variantes' }, content: <CompareView /> },
+    { id: 'campaign', label: { en: 'Campaign', es: 'Campaña' }, content: <CampaignView /> },
   ];
   return <GroupFrame group="performance" ariaLabel={{ en: 'Performance views', es: 'Vistas de desempeño' }} tabs={tabs} />;
 }

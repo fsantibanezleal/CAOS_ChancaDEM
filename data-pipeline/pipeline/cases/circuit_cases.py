@@ -2,7 +2,8 @@
 cone, the tertiary cone and short-head, and three controls. Each case is a complete operating point (the same as the
 row of data/examples/params.csv); the workbench loads ONE and every view reacts, and Experiments and Benchmark show
 cross-case summaries by category. CP1 and CI1 are deliberate negative and invalid CONTROLS (the engine must show about
-zero reduction or flag invalidity, not a pretty plot); CK1 is the absolute-number calibration anchor.
+zero reduction or flag invalidity, not a pretty plot); CK1 is a synthetic control for absolute numbers (the
+product's absolute anchor is the calibrated HP500 lane, not this point).
 
 Every case states its expectation twice: in words (``expected_band``, with the numbers) and as the checked ranges
 (``expect``), which fail the bake. The ranges are NOT the engine's own value padded by a percentage: each rests on a
@@ -252,15 +253,15 @@ CASES: list[Case] = [
              "El producto es igual a la alimentación y el caso queda marcado como inválido. Una vista que lo muestre sin la marca está en silencio equivocada."),
         {"p80_mm": (120, 130), "reduction_ratio": (0.95, 1.05)}, control="invalid"),
     _case(
-        "CK1", text("Calibration anchor, HP-class cone", "Ancla de calibración, cono de clase HP"),
+        "CK1", text("Absolute-number control, HP-class cone", "Control de números absolutos, cono de clase HP"),
         CONTROLS, "control", Operating("cone-sec", 25, 30, 350, 80, 1.15, 52, 15),
-        text("An operating point chosen as the anchor for absolute-number calibration against published industrial cone data: P80 between 17 and 28 mm, between 450 and 650 t/h and a reduction ratio between 4 and 6.5.",
-             "Un punto de operación elegido como ancla de la calibración de números absolutos frente a datos industriales publicados de conos: P80 entre 17 y 28 mm, entre 450 y 650 t/h y razón de reducción entre 4 y 6,5."),
-        text("The shape of the curves is not enough: a decision needs the absolute numbers right. This point is where the engine is compared with published HP-class cone data (Duarte et al. 2021).",
-             "La forma de las curvas no basta: una decisión necesita los números absolutos correctos. Este punto es donde el motor se compara con datos publicados de conos de clase HP (Duarte et al. 2021)."),
+        text("A synthetic control at a typical operating point of an HP-class secondary cone, kept to check absolute numbers: P80 between 17 and 28 mm, between 450 and 650 t/h and a reduction ratio between 4 and 6.5.",
+             "Un control sintético en un punto de operación típico de un cono secundario de clase HP, para verificar números absolutos: P80 entre 17 y 28 mm, entre 450 y 650 t/h y razón de reducción entre 4 y 6,5."),
+        text("The shape of the curves is not enough: a decision needs the absolute numbers right. The absolute anchor of this product is the calibrated HP500 lane (Rocha et al. 2024, CrusherCal), the ten measured surveys of a Metso HP500; this point is not fitted to it. Duarte et al. 2021 cannot serve as the anchor: the paper gives the setting, throughput and feed F80 of seven points of an HP400 and a CH660, but no throw, speed, ore properties or power (Table 1, p. 9), and its size distributions are plots only (Figures 4 to 9).",
+             "La forma de las curvas no basta: una decisión necesita los números absolutos correctos. El ancla absoluta de este producto es el carril HP500 calibrado (Rocha et al. 2024, CrusherCal), los diez muestreos medidos de un Metso HP500; este punto no está ajustado a él. Duarte et al. 2021 no puede ser el ancla: el artículo da la abertura, el flujo y el F80 de alimentación de siete puntos de un HP400 y un CH660, pero no el recorrido, la velocidad, las propiedades del mineral ni la potencia (Tabla 1, p. 9), y sus distribuciones de tamaño son solo gráficos (Figuras 4 a 9)."),
         text("The setting of 25 mm and the 350 rpm speed place it between S01 and S05.",
              "La abertura de 25 mm y la velocidad de 350 rpm lo ubican entre S01 y S05."),
-        text("The fit to the published data is still pending, so these ranges come from the crushing relation of the setting and not from that data. The measured HP500 surveys are the real check of the absolute numbers.",
-             "El ajuste a los datos publicados sigue pendiente, así que estos rangos vienen de la relación de chancado con la abertura y no de esos datos. Los muestreos HP500 medidos son la verificación real de los números absolutos."),
+        text("CK1 stays a synthetic control, so these ranges come from the crushing relation of the setting and not from measured data. Its reduction ratio sits above the typical ceiling of 5 for one secondary-cone stage, so the engine also raises the warning reduction_ratio_above_typical; the point stays valid. The measured HP500 surveys are the real check of the absolute numbers.",
+             "CK1 sigue siendo un control sintético, así que estos rangos vienen de la relación de chancado con la abertura y no de datos medidos. Su razón de reducción supera el techo típico de 5 para una etapa de cono secundario, así que el motor también emite la advertencia reduction_ratio_above_typical; el punto sigue siendo válido. Los muestreos HP500 medidos son la verificación real de los números absolutos."),
         {"p80_mm": (17, 28), "throughput_tph": (450, 650), "reduction_ratio": (4, 6.5)}, control="calibration"),
 ]
