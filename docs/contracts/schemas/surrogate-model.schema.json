@@ -36,7 +36,8 @@
         "n_train": {"type": "integer", "minimum": 1},
         "n_test": {"type": "integer", "minimum": 1},
         "sampler": {"type": "string", "minLength": 1, "description": "How the operating points were drawn, with the bounds per input; the test draw is independent of the training draw."},
-        "torch_version": {"type": "string", "minLength": 1}
+        "torch_version": {"type": "string", "minLength": 1},
+        "export_parity_max_abs": {"type": "number", "minimum": 0, "description": "The maximum absolute difference between the trained torch module and the exported float32 graph (run through onnxruntime) on the held-out draw, in standardised outputs, measured by train.py right after export; evidence the export preserved the trained module."}
       }
     }
   },

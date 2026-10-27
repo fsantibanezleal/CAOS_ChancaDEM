@@ -124,7 +124,7 @@ def test_metrics_validate(heldout_results):
     truth = np.array([r.p80 for r in heldout_results])
     r2 = 1.0 - float(np.sum((pred - truth) ** 2)) / float(np.sum((truth - truth.mean()) ** 2))
     assert round(r2, 4) == doc["surrogate"]["per_output"]["p80_mm"]["r2"]
-    assert doc["surrogate"]["parity"]["torch_vs_float32_max_abs"] < 1e-4
+    assert doc["surrogate"]["parity"]["torch_vs_float32_max_abs"] == surrogate["training"]["export_parity_max_abs"] < 1e-4
     assert doc["surrogate"]["p80_monotone_vs_css"] is True
 
 
@@ -297,3 +297,21 @@ def test_metrics_report_the_anomaly_comparison_and_the_planted_points():
     assert 0 <= doc["false_alarm_rate"] <= 0.05   # the threshold is the 99th percentile of the training scores
     assert doc["detection_rate"] > doc["false_alarm_rate"]
     assert "training range" in doc["planted"] or "training bounds" in doc["planted"]
+
+
+def test_export_parity_is_recorded_in_both_contracts_and_small():
+    """Static (ADR-0074: no training in a test): train.py measured the trained module against the exported graph and
+    recorded it; a bake whose export drifted would carry a larger number or none."""
+    for name, key in (("surrogate.json", "training"), ("psd-ae.json", "training")):
+        parity = _json(BAKE / name)[key]["export_parity_max_abs"]
+        assert 0 <= parity < 1e-4, name
+
+
+def test_evaluate_refuses_a_bundle_without_the_recorded_export_parity(tmp_path):
+    models = _copy_tree(BAKE, tmp_path)
+    bundle = _json(models / "surrogate.json")
+    del bundle["training"]["export_parity_max_abs"]
+    (models / "surrogate.json").write_text(json.dumps(bundle), encoding="utf-8")
+    assert errors("surrogate-model", bundle) == []   # optional in the schema, required by the evaluate stage
+    with pytest.raises(ValueError, match="surrogate.json.*export_parity_max_abs"):
+        evaluate_stage.run(models, tmp_path / "m.json", version="0.10.000")
