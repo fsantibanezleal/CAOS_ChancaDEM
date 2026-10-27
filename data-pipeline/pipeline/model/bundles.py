@@ -16,11 +16,12 @@ import math
 from functools import lru_cache
 from pathlib import Path
 
-import numpy as np
 from jsonschema import Draft202012Validator
 
 from .crusher import CrusherResult, Operating, evaluate
-from .crusher.encoding import AE_FEATURES, ae_feats, ae_input, encode_input
+
+# numpy and the encodings (which round to float32 with numpy) are imported inside the functions that run a model: the
+# readiness document calls released_slots, and scripts/check_readiness.py runs in CI without the pipeline's dependencies.
 
 SCHEMAS = Path(__file__).resolve().parents[3] / "docs" / "contracts" / "schemas"
 FILES = {"surrogate-model": "surrogate.json", "anomaly-model": "psd-ae.json"}
@@ -111,6 +112,8 @@ def engine_outputs(r: CrusherResult) -> dict[str, float]:
 def decode_outputs(z: np.ndarray, bundle: dict) -> np.ndarray:
     """Standardised graph outputs (rows of 10) to original units: ``z * out_std + out_mean`` then 10 ** where
     ``out_log``."""
+    import numpy as np
+
     v = z.astype(np.float64) * np.array(bundle["out_std"]) + np.array(bundle["out_mean"])
     log = np.array(bundle["out_log"], dtype=bool)
     v[:, log] = np.power(10.0, v[:, log])
@@ -120,6 +123,10 @@ def decode_outputs(z: np.ndarray, bundle: dict) -> np.ndarray:
 def surrogate_predict(op: Operating, models_dir: Path) -> tuple[dict, str]:
     """The ten decoded outputs and provenance ``real`` when the surrogate slot is released; the engine's own values
     and ``baseline`` when it is not."""
+    import numpy as np
+
+    from .crusher.encoding import encode_input
+
     try:
         bundle = load_bundle("surrogate-model", Path(models_dir))
     except BundleError:
@@ -132,6 +139,10 @@ def surrogate_predict(op: Operating, models_dir: Path) -> tuple[dict, str]:
 
 def reconstruction_score(feats: list[float], bundle: dict, sess) -> float:
     """Mean squared reconstruction error over the 14 standardised features (NaN when a feature is not finite)."""
+    import numpy as np
+
+    from .crusher.encoding import ae_input
+
     x = np.array([ae_input(feats, bundle["mean"], bundle["std"])], np.float32)
     xr = sess.run(None, {"x": x})[0]
     return float(np.mean((xr.astype(np.float64) - x.astype(np.float64)) ** 2))
@@ -141,6 +152,8 @@ def anomaly_score(result: CrusherResult, models_dir: Path) -> tuple[dict, str]:
     """``{"score", "threshold", "is_anomaly"}`` with provenance ``real`` when the anomaly slot is released (a score
     that is not finite, from a result with no finite feature, counts as anomalous); otherwise the envelope gate's
     verdict ``{"is_anomaly": out_of_envelope}`` with ``baseline``."""
+    from .crusher.encoding import AE_FEATURES, ae_feats
+
     try:
         bundle = load_bundle("anomaly-model", Path(models_dir))
     except BundleError:

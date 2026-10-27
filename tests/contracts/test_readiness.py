@@ -358,10 +358,13 @@ def test_check_readiness_passes_on_the_repository():
     assert "readiness: current" in p.stdout
 
 
-def test_adversarial_check_readiness_without_numpy_fails_loudly_and_says_why():
+def test_adversarial_check_readiness_runs_without_numpy():
+    """CI runs the readiness check without the pipeline's dependencies: numpy is planted as missing and the check must pass,
+    so nothing on the readiness path may import numpy at module level (model/bundles.py imports it inside the functions that
+    run a model)."""
     p = _check(no_numpy=True)
-    assert p.returncode == 1, p.stdout + p.stderr
-    assert "numpy" in p.stdout and "Traceback" not in p.stdout + p.stderr
+    assert p.returncode == 0, p.stdout + p.stderr
+    assert "readiness: current" in p.stdout
 
 
 def test_adversarial_check_readiness_fails_on_a_changed_catalog(tmp_path):
