@@ -117,7 +117,7 @@ def test_cross_case_reference_trends(bake: Path) -> None:
     assert "pass_through" in manifest(bake, "CP1")["flags"]
 
 
-def test_a_planted_change_of_the_css_term_fails_the_bake(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+def test_adversarial_a_planted_change_of_the_css_term_fails_the_bake(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     """The ranges can fail: an engine whose product ignores the setting is refused by at least one case."""
     from pipeline.stages import infer
 

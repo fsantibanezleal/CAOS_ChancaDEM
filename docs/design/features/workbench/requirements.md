@@ -1,19 +1,10 @@
-# Requirements: the example workbench, end to end
+# Requirements: The App: one crushing case at a time on the shell's workbench
 
-EARS (Mavin et al., RE'09, doi:10.1109/RE.2009.9). Every requirement names the gate that fails when it is violated.
+EARS (Mavin et al., RE'09, https://doi.org/10.1109/RE.2009.9). Every requirement names the gate that fails when it is violated.
 
 | ID | Requirement | Gate |
 |---|---|---|
-| EX-001 | WHEN the bake runs a case, THE pipeline SHALL fail if a result metric lies outside the range the case declares, naming the metric. | `tests/test_expect.py::test_a_value_outside_its_range_is_named` |
-| EX-002 | THE pipeline SHALL write identical artifacts for the same case and seed. | `tests/test_pipeline_smoke.py::test_adversarial_same_seed_bakes_identical_bytes_and_a_changed_byte_of_equal_size_is_seen` |
-| EX-003 | IF a test writes into the committed artifacts, THEN THE test session SHALL fail and name the files. | `tests/conftest.py` |
-| EX-004 | WHEN an ingestion value is missing, non-numeric, NaN or out of range, THE pipeline SHALL reject the record with its reason. | `tests/test_contract.py::test_adversarial_bad_rows_rejected_not_coerced` |
-| EX-005 | THE web SHALL read exactly the keys the pipeline writes, with their types, in every committed artifact. | `frontend/src/lib/contract.test.ts::the index conforms and names a baked default case` (and, per case, `manifest and trace conform`, over the bake and the provider tree) |
-| EX-006 | THE live engine SHALL reproduce every baked trace to the trace rounding. | `tests/adversarial/test_requirements_refuted.py::test_an_engine_that_drifts_from_the_python_engine_fails_the_parity_and_convergence_tests` (which first runs the parity test of `frontend/src/engine/sir.parity.test.ts` on the unchanged engine, one test per baked case) |
-| EX-007 | THE live engine SHALL converge to the final size at first order in the step. | `frontend/src/engine/sir.parity.test.ts::the engine converges to the final size at first order, as the Methodology page states` |
-| EX-008 | IF an artifact answers anything but JSON, THEN THE web SHALL raise an error naming the file. | `frontend/src/api/artifacts.test.ts::adversarial: refuses an HTML answer (the host fallback for a missing file)` |
-| EX-009 | WHEN a reader opens any route directly, with or without a trailing slash, THE site SHALL answer 200 with that route. | `frontend/scripts/materialize-routes.mjs`, measured by `frontend/scripts/gate.mjs` (G4) |
-| EX-010 | WHILE the App route is open at 1280x800 or larger, THE drawn views SHALL cover at least half of the viewport. | `frontend/scripts/gate.mjs` (G6) |
-| EX-011 | WHEN any registered control changes, THE workbench SHALL change the selection key, and no view SHALL keep an earlier key. | `frontend/scripts/gate.mjs` (G9) |
-| EX-012 | THE repository SHALL state its version in VERSION only. | `scripts/check_version_coherence.py` |
-| EX-013 | IF the example remains in an instantiated product, THEN THE guards SHALL fail and list where. | `scripts/check_template_residue.py` |
+| WK-001 | THE App SHALL be the shell's case workbench at `/app`, the leftmost route, with Focus mode for every case, and THE root SHALL land on the Introduction's executive view. | `frontend/src/App.test.tsx::the App route renders the workbench and not the executive view`, `frontend/scripts/gate.mjs` (G18, Focus required) |
+| WK-002 | THE variants SHALL be the canonical setting, a tight one and an open one, applied live on the rail's values, and a real case SHALL say its variants are a calibrated what-if. | `frontend/src/workbench/model.test.ts` |
+| WK-003 | THE Validation view SHALL hold the live engine against the committed replay and show the largest difference. | `frontend/src/workbench/model.test.ts` |
+| WK-004 | THE App's routes SHALL be measured by the shell's gate at zero failures at every size, both themes, both languages and both font passes (the drawn views at least half the App route, every chart with Tier A). | `frontend/scripts/gate.mjs` |
