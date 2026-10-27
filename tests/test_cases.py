@@ -33,7 +33,7 @@ def test_every_case_is_authored_completely(case) -> None:
     for text in (case.title, case.expected_band, *case.context.values()):
         assert set(text) == {"en", "es"} and text["en"].strip() and text["es"].strip()
         joined = text["en"] + text["es"]
-        assert "·" not in joined and "—" not in joined and "→" not in joined
+        assert not any(ch in joined for ch in map(chr, (0xB7, 0x2014, 0x2192)))
     assert set(case.context) == {"problem", "variables", "reading"}
     for part in case.context.values():
         for lang in ("en", "es"):
