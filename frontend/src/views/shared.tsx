@@ -1,7 +1,7 @@
 // What every view of the App shares: the selection the workbench hands down (a context, so no view takes it through six props),
 // the states a view declares while its data is not there, the alert for a flagged point, and the group frame that puts the
 // readiness note above a group. Nothing here draws a chart; the views do, on the shell's chart and drawing kit.
-import { Callout, formatNumber, pick, SubTabs, useShellLang, type BiText, type FormatOptions, type Provenance } from '@fasl-work/caos-app-shell';
+import { formatNumber, pick, SubTabs, useShellLang, type BiText, type FormatOptions, type Provenance } from '@fasl-work/caos-app-shell';
 import { createContext, useContext, type ReactNode } from 'react';
 import type { Loaded } from '../api/artifacts';
 import { flagText } from '../engine/flags';
@@ -87,23 +87,27 @@ export function useT(): (en: string, es: string) => string {
   return (en, es) => (lang === 'es' ? es : en);
 }
 
-/** A flagged point is never a confident number (catalog: the envelope gate): the alert lists why, in the interface language. */
+/** A flagged point is never a confident number (catalog: the envelope gate). The alert takes one line above the views, so a
+ * flagged case keeps the instrument's height (ADR-0071 rule 8: at 1280 x 800 a full list took about 90 px from every view);
+ * it names how many reasons there are and opens to read them, and the Context tab lists them in full. */
 export function FlagsAlert() {
   const lang = useShellLang();
   const { sel } = useView();
   if (!sel || sel.flags.length === 0) return null;
+  const n = sel.flags.length;
   const title: BiText = sel.result.outOfEnvelope
-    ? { en: 'Outside the validated envelope: read these numbers with the reasons below', es: 'Fuera de la envolvente validada: lea estos números con las razones de abajo' }
-    : { en: 'This point is flagged', es: 'Este punto está marcado' };
+    ? { en: `Outside the validated envelope: this reading is not confident (${n} ${n === 1 ? 'reason' : 'reasons'})`, es: `Fuera de la envolvente validada: esta lectura no es confiable (${n} ${n === 1 ? 'razón' : 'razones'})` }
+    : { en: `This point is flagged (${n} ${n === 1 ? 'reason' : 'reasons'})`, es: `Este punto está marcado (${n} ${n === 1 ? 'razón' : 'razones'})` };
   return (
     <div role="alert" className="cdem-alert" data-flags={sel.flags.join(' ')}>
-      <Callout variant="honest" title={pick(title, lang)}>
+      <details>
+        <summary>{pick(title, lang)}</summary>
         <ul>
           {sel.flags.map((code) => (
             <li key={code}>{flagText(code, lang)}</li>
           ))}
         </ul>
-      </Callout>
+      </details>
     </div>
   );
 }
