@@ -37,12 +37,12 @@
   "surrogate-model": {
     "version": "1.0.0",
     "schema": "docs/contracts/schemas/surrogate-model.schema.json",
-    "sha256": "62af31ace5ddcfec328d9811c2bccaad78ad9fa289f463e9374a61783d758f32"
+    "sha256": "51d3838052d8fa27ad8c36d0079fb32c5ce8c81d6c902fa0fee46cfa7ef330e6"
   },
   "anomaly-model": {
     "version": "1.0.0",
     "schema": "docs/contracts/schemas/anomaly-model.schema.json",
-    "sha256": "3e41fa3c834a6aacce0a7e4b40cc5c623fb7801d15d008d9d509000dab0c55ed"
+    "sha256": "57f23ddb34cbbcf44939ac01c04b9d03ed08c153cad1ff5d96d6820da4a8d492"
   },
   "model-metrics": {
     "version": "1.0.0",
