@@ -1,7 +1,7 @@
 // Topics 3 and 4 of the Methodology: the Whiten classification and population balance, and the calibrated HP500 lane.
 import { Callout, Cite, DocSection, Equation, Figure, useFormat } from '@fasl-work/caos-app-shell';
 import { P, useT } from '../bi';
-import { CalibratedFigure, ClassificationFigure } from './figures';
+import { CalibratedFigure, ClassificationFigure, FlowDiagram } from './figures';
 
 export function Whiten() {
   const t = useT();
@@ -65,6 +65,9 @@ export function Whiten() {
       <Figure caption={t('The classification curve of the reference secondary cone (CSS 32 mm) at its design throw of 30 mm and at 46 mm, computed by the engine; the window K1 to K2 shifts toward coarser sizes with the throw, K1 does not move.', 'La curva de clasificación del cono secundario de referencia (CSS 32 mm) con su carrera de diseño de 30 mm y con 46 mm, calculada por el motor; la ventana K1 a K2 se desplaza hacia tamaños más gruesos con la carrera, K1 no se mueve.')}>
         <ClassificationFigure />
       </Figure>
+      <Figure caption={t('The steps from the setting and the throw to the product.', 'Los pasos desde el ajuste y la carrera hasta el producto.')}>
+        <FlowDiagram topic="classification" />
+      </Figure>
       <P
         en={<>The internal balance of the zone is x = f + B C x: what is in the chamber is the feed plus the progeny of what was nipped. The product is what is not nipped, p = (I - C) x, and substituting gives the Whiten solution with the factor (I - C) to the left of the inverse <Cite id="whiten1972" /> <Cite id="napiermunn1996" />. The inverse is never formed: the engine solves (I - B C) x = f by LU decomposition with partial pivoting, applies (I - C), and renormalises the product to a clean distribution.</>}
         es={<>El balance interno de la zona es x = f + B C x: lo que hay en la cámara es el alimento más la progenie de lo que fue mordido. El producto es lo que no se muerde, p = (I - C) x, y al sustituir se obtiene la solución de Whiten con el factor (I - C) a la izquierda del inverso <Cite id="whiten1972" /> <Cite id="napiermunn1996" />. El inverso nunca se forma: el motor resuelve (I - B C) x = f por descomposición LU con pivoteo parcial, aplica (I - C) y renormaliza el producto a una distribución limpia.</>}
@@ -108,8 +111,11 @@ export function Calibrated() {
         tex={String.raw`t_{10}\,[\%] = \min\!\big(44,\ \max(0,\ 64 - 0.12\,\mathrm{CSS} - 0.23\,f_{80})\big), \qquad x_{63} = \frac{f_{80}}{(\ln 5)^{1/m}},\ \ m = 0.9`}
         caption={t('The calibrated fineness and the feed reconstruction: t10 in percent from CSS and f80 (mm), capped at 44 % as in the synthetic path; x63 is the Rosin-Rammler size of the rebuilt feed (mm) and m its exponent, assumed 0.9, from R(f80) = 0.8.', 'La finura calibrada y la reconstrucción del alimento: t10 en porcentaje a partir de CSS y f80 (mm), con tope de 44 % como en la ruta sintética; x63 es el tamaño de Rosin-Rammler del alimento reconstruido (mm) y m su exponente, supuesto 0,9, a partir de R(f80) = 0,8.')}
       />
-      <Figure caption={t('The calibrated t10 against the closed-side setting for three feed sizes, computed by the engine; the shaded band is the support of the ten surveys, and the itabirite surveys sit so high that the cap of the engine acts on the whole finest-feed curve.', 'El t10 calibrado frente al lado cerrado para tres tamaños de alimento, calculado por el motor; la banda sombreada es el soporte de los diez muestreos, y los muestreos de itabirita quedan tan alto que el tope del motor actúa sobre toda la curva del alimento más fino.')}>
+      <Figure caption={t('The calibrated t10 against the closed-side setting for three feed sizes, computed by the engine; the two marks bound the support of the ten surveys, and the itabirite surveys sit so high that the cap of the engine acts on the whole finest-feed curve.', 'El t10 calibrado frente al lado cerrado para tres tamaños de alimento, calculado por el motor; las dos marcas acotan el soporte de los diez muestreos, y los muestreos de itabirita quedan tan alto que el tope del motor actúa sobre toda la curva del alimento más fino.')}>
         <CalibratedFigure />
+      </Figure>
+      <Figure caption={t('The calibrated lane, from the measured setting and feed size to the product.', 'La vía calibrada, desde el ajuste y el tamaño de alimento medidos hasta el producto.')}>
+        <FlowDiagram topic="calibrated" />
       </Figure>
       <P
         en="The paper publishes the feed curves only as figures, so the engine rebuilds each feed from the measured f80 alone. Setting the Rosin-Rammler law equal to 0.8 at f80 and solving for x63 gives the second equation above, with an assumed uniformity exponent of 0.9, a value typical of a run-of-mine itabirite feed. The reconstructed feed matches the measured f80 by construction and the measured shape only as well as that assumption holds, which is the reason for the caveat on the callout."
