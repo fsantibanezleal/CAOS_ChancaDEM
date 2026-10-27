@@ -86,6 +86,9 @@ function ChamberCanvas(p: CanvasProps) {
         onUserMove: (pose) => {
           latest.current.poseRef.current = pose;
         },
+        onRefit: () => {
+          latest.current.poseRef.current = null;
+        },
       });
     } catch {
       latest.current.onUnavailable();
@@ -198,6 +201,7 @@ export function ChamberView({ op, p80Mm, f80Mm, provenance, note }: ChamberViewP
               >
                 {viz.playing ? pick(T.PAUSE, lang) : pick(T.PLAY, lang)}
               </button>
+              {/* View-local display controls: native inputs with the shell's range, chip and btn classes and no data-control, because they change only this drawing, not the instrument's state key (gate G9) */}
               <label className="chamber3d-slider" title={pick(T.SPEED_HINT, lang)}>
                 <span>{pick(T.SPEED, lang)}</span>
                 <input
