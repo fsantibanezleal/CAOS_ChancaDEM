@@ -7,7 +7,8 @@ import { PlotCard, Stage, useShellLang, useWorkbenchState } from '@fasl-work/cao
 import { chamberProfile, jawProfile, machineGeom, profilePolylines } from '../engine/chamber';
 import type { Operating } from '../engine/types';
 import { Fill, Labels, LabelText, Stack, TOKEN } from './draw';
-import { GroupFrame, Pending, useNum, useT, useView, type Sub } from './shared';
+import { ChamberView } from './chamber3d';
+import { GroupFrame, Pending, provenanceOf, useNum, useT, useView, type Sub } from './shared';
 
 const STRUCTURE_NOTE = {
   en: 'The structure is illustrative of the machine class, not the plant’s own drawing; the settings, the nip angle and the grip limit are the engine’s numbers.',
@@ -249,8 +250,16 @@ function NipView() {
   );
 }
 
+/** The 3D chamber (unit U2b-2): a kinematic view of the selected case's chamber, driven by the live engine's values. */
+function Chamber3DView() {
+  const { sel } = useView();
+  if (!sel) return <Pending />;
+  return <ChamberView op={sel.op} p80Mm={sel.result.p80} f80Mm={sel.result.f80} provenance={provenanceOf(sel)} />;
+}
+
 export function ChamberGroup() {
   const tabs: Sub[] = [
+    { id: '3d', label: { en: '3D chamber', es: 'Cámara 3D' }, content: <Chamber3DView /> },
     { id: 'slice', label: { en: 'Section', es: 'Corte' }, content: <SliceView /> },
     { id: 'nip', label: { en: 'Nip angle', es: 'Ángulo de nip' }, content: <NipView /> },
   ];
