@@ -129,6 +129,12 @@ def test_the_readme_instantiate_writes_states_every_area(tmp_path: Path) -> None
     assert CHECK.findings_of(root) == []
 
 
+# instantiate.py refuses a tree that is not the template: in a product the step has nothing to run on (BD-1)
+TEMPLATE_ONLY = pytest.mark.skipif(not (ROOT / ".template-source").exists(),
+                                   reason="instantiate runs only in the template repository (.template-source)")
+
+
+@TEMPLATE_ONLY
 def test_instantiate_leaves_a_passing_readme_and_the_notebooks(tmp_path: Path) -> None:
     """The whole instantiate step, on a copy: the product README passes, the example notebooks stay (the residue guard lists them)."""
     product = tmp_path / "p"

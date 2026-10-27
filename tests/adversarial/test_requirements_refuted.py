@@ -20,6 +20,10 @@ NODE = shutil.which("node")
 NODE_MODULES = ROOT / "frontend" / "node_modules"
 needs_web = pytest.mark.skipif(NODE is None or not (NODE_MODULES / "@fasl-work").is_dir(),
                                reason="needs node and `npm ci` in frontend/")
+# the residue of the template's own example exists only in the template: in an instantiated product (no .template-source)
+# the planted copy has no sentinel to remove and no example to find (BD-1, CAOS_ChancaDEM 2026-10-26)
+TEMPLATE_ONLY = pytest.mark.skipif(not (ROOT / ".template-source").exists(),
+                                   reason="the template's example residue exists only in the template repository (.template-source)")
 
 
 def link_node_modules(frontend: Path) -> None:
@@ -65,6 +69,23 @@ def test_a_version_stated_twice_and_disagreeing_fails_the_coherence_guard(repo: 
     assert r.returncode == 1 and "9.9.9" in r.stdout and r.stdout != before, r.stdout
 
 
+def test_adversarial_example_residue_planted_in_any_repository_fails_the_residue_guard(tmp_path: Path) -> None:
+    """EX-013 in every repository, the products included: example residue planted in a throwaway git tree's helper scripts
+    makes the guard fail and name each line (the test above needs the template's own example and runs only there)."""
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    for i in range(10):
+        (tree / f"filler{i}.txt").write_text(f"filler {i}\n", encoding="utf-8")
+    (tree / "scripts").mkdir()
+    (tree / "scripts" / "precompute.ps1").write_text("# E.g.:  ./scripts/precompute.ps1 EX02_epidemic --seed 7\n", encoding="utf-8")
+    (tree / "scripts" / "precompute.sh").write_text("# the tiny teaching engine\n", encoding="utf-8")
+    subprocess.run(["git", "init", "-q"], cwd=tree, check=True)
+    r = subprocess.run([sys.executable, str(ROOT / "scripts" / "check_template_residue.py"), str(tree)], capture_output=True, text=True)
+    assert r.returncode == 1, r.stdout
+    assert "scripts/precompute.ps1:1: an example case id" in r.stdout and "scripts/precompute.sh:1: prose about the example engine" in r.stdout
+
+
+@TEMPLATE_ONLY
 def test_an_instantiated_product_that_keeps_the_example_fails_the_residue_guard(repo: Path) -> None:
     (repo / ".template-source").unlink()
     subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
