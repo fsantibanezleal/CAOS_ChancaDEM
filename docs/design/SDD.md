@@ -97,7 +97,7 @@ Every pinned dependency of `requirements-precompute.txt` (through `data-pipeline
 `notebooks/requirements.txt` and `frontend/package.json`, with the version installed; `scripts/check_tech_matrix.py` fails when a
 pin and this table disagree. A package.json range is recorded at the version `frontend/package-lock.json` resolves it to. The
 versions were read at the package registries on 2026-10-26 (the sizing record lists the sources). Runtimes: Python 3.13
-(the workstation; CI uses the template's Python 3.12) and Node 24 (the workstation; CI uses the template's Node 22).
+(the workstation; CI uses the template's Python 3.12) and Node 24 (the workstation, CI and the Pages build alike: the engine reference is written and checked to the bit on one runtime, and Node 22 rounds one anomaly feature differently).
 
 | component | package | version | use | alternative considered |
 |---|---|---|---|---|
