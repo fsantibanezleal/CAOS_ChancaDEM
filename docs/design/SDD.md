@@ -116,11 +116,49 @@ RESOURCES_TABLE
 
 ## Method ladder
 
-METHOD_LADDER
+Classical to learned, each method with its acceptance criterion and the gate that fails it (ADR-0069). The engine is one
+vertical implementation in two languages: the Python package `data-pipeline/pipeline/model/crusher/` is canonical, and every
+criterion below holds in the TypeScript port because the shared reference holds the two equal
+(`tests/test_crusher_engine.py::test_python_engine_reproduces_the_reference`, `frontend/src/engine/reference.test.ts`).
+
+| # | method | kind | acceptance criterion | gate |
+|---|---|---|---|---|
+| M1 | Rosin-Rammler feed on a square-root-of-two sieve grid (Rosin and Rammler 1933), P80 by interpolation | classical | the feed masses sum to 1 and the coarsest edge passes 100 percent | `tests/test_crusher_engine.py::test_feed_psd_normalizes_and_f80_is_sensible` |
+| M2 | JKMRC t10 energy-fineness relation and the Austin appearance function (Napier-Munn et al. 1996) | classical | the breakage matrix is strictly lower triangular and every column conserves mass | `tests/test_crusher_engine.py::test_breakage_matrix_is_strictly_lower_triangular_and_columns_conserve_mass` |
+| M3 | Andersen and Napier-Munn classification K1, K2, K3, with K2 tracking the open-side setting | classical | C(d) is monotone, 0 below K1 and 1 above K2; a wider throw coarsens the product at a fixed setting and is neutral at the design throw | `tests/test_crusher_engine.py::test_classification_is_monotone_non_decreasing_c_small_zero_c_large_one`, `tests/test_crusher_engine.py::test_more_throw_widens_oss_and_gives_a_coarser_product_with_higher_capacity` |
+| M4 | The Whiten population balance p = (I - C)(I - B C)^-1 f (Whiten 1972), with its conditioning proxy | classical | mass closure and a product finer than the feed; a tighter setting gives a finer product | `tests/test_crusher_engine.py::test_whiten_solve_conserves_mass_and_product_normalizes`, `tests/test_crusher_engine.py::test_tighter_css_gives_a_finer_product` |
+| M5 | Evertsson capacity with eccentric speed (Evertsson 2000) | classical | the capacity is unimodal in speed | `tests/test_crusher_engine.py::test_capacity_is_unimodal_in_speed` |
+| M6 | Nip angle against its grip limit, and the regimes | classical | the pass-through and invalid regimes are flagged at a setting at or above the feed's F80 and top size | `tests/test_crusher_engine.py::test_pass_through_and_invalid_guard_fires_when_css_ge_feed_top_size` |
+| M7 | Bond power (Bond 1952) and the current-based power form of Rocha et al. 2024 | classical | positive and finite at every valid point; the honest negative of the current-based form on the engine's Bond draw is reported, not hidden | `tests/test_crusher_engine.py::test_throughput_and_power_are_positive_and_finite_for_a_valid_point`, `tests/contracts/test_hp500_validation.py::test_loo_validates` |
+| M8 | The Andersen-Whiten fit calibrated to the ten HP500 surveys (Rocha et al. 2024 Table 5) | classical, calibrated | the calibrated engine at each survey equals the backbone document; the surveys are physically plausible | `tests/contracts/test_hp500_validation.py::test_backbone_is_the_engine`, `tests/test_crusher_engine.py::test_envelope_gate_the_ten_real_hp500_surveys_are_physically_plausible` |
+| M9 | The envelope gate: implausible and out-of-calibrated-support inputs flagged, never answered with a confident number | classical | an implausible point is flagged and invalid; a calibrated point outside the HP500 support is flagged as extrapolating | `tests/test_crusher_engine.py::test_envelope_gate_an_implausible_point_is_flagged_and_marked_invalid`, `tests/test_crusher_engine.py::test_envelope_gate_calibrated_lane_flags_out_of_support_as_extrapolating` |
+| M10 | CrusherCal: leave-one-survey-out validation of the backbone (M0), a bounded ridge residual (M1) and a free-form fit (M2), with a constant-mean baseline, a label-shuffle control and an 80 percent predictive band | classical, validation | the label-shuffle control does not beat the backbone; the backbone beats the constant mean on throughput; the leaky-strict optimism gap is exposed; the band's coverage is reported | `tests/test_hp500_loo.py::test_label_shuffle_control_does_not_beat_backbone`, `tests/test_hp500_loo.py::test_tph_backbone_has_real_skill`, `tests/test_hp500_loo.py::test_overfit_optimism_gap_is_exposed` |
+| M11 | The surrogate MLP 11-64-64-32-10 trained on a Latin-hypercube sweep of the engine; baseline: the engine itself | learned | held out on an independent draw, every output's R2 is computed from the shipped graph through onnxruntime; P80 monotone in CSS on every machine; with an invalid bundle the engine answers, labelled | `tests/contracts/test_models.py::test_metrics_validate`, `tests/contracts/test_models.py::test_adversarial_swap_engine_baseline_and_surrogate` |
+| M12 | The denoising autoencoder 14-16-6-16-14 as an extrapolation score; baseline: the envelope gate | learned | false-alarm and detection rates on the held-out draw and on planted off-manifold points, beside the envelope gate's on the same points | `tests/contracts/test_models.py::test_metrics_report_the_anomaly_comparison_and_the_planted_points`, `tests/contracts/test_models.py::test_adversarial_swap_envelope_baseline_and_autoencoder` |
+
+Not a method of this release: discrete-element simulation with breakage (the state of the art the population balance
+approximates, Cleary and Sinnott 2015; Quist and Evertsson 2016), stated on the Methodology page as the frontier.
 
 ## Cases
 
-CASES_SECTION
+27 cases in five categories (`data-pipeline/pipeline/cases/`; the coverage matrix is [`docs/cases/README.md`](../cases/README.md)):
+
+- Primary crushing: G01 and G02 (gyratory, hard run-of-mine and soft high-tonnage), J01 and J02 (jaw, hard run-of-mine and
+  a trickle-fed medium ore).
+- Secondary cone: S01 (the reference point, choke-fed at the capacity optimum; the default case), S02 (soft and coarse,
+  below the optimum speed), S03 (hard, past the optimum: the throughput falls), S04 (hard run-of-mine at a wide setting), S05
+  (fines-heavy, tight setting), S06 (trickle-fed, tight setting).
+- Tertiary crushing: T01 and T02 (tertiary cone, fine feed; hard and closed), H01 and H02 (short-head, the finest product;
+  hard and choke-fed).
+- Controls: CP1 (pass-through: a setting wider than the feed's F80, a reduction ratio near 1, flagged), CI1 (invalid: a
+  setting wider than the feed top size, flagged and marked invalid, never a confident number), CK1 (the calibration anchor
+  for the Duarte et al. 2021 industrial data; synthetic, its fit not executed in this release, and labelled so).
+- Real surveys: HP500-01 to HP500-10, the ten measured surveys of a Metso HP500 secondary cone at Minas Rio (Rocha et al.
+  2024, CC BY 4.0), each at its measured setting and feed f80, scored against its measured throughput and power.
+
+Every case states numeric expected ranges, enforced by `data-pipeline/pipeline/core/expect.py`, and its context (the
+problem, the variables, how to read the views). Variants, computed live: the canonical setting, a tight setting (15 percent
+lower) and an open setting (15 percent higher).
 
 ## Oracles
 
@@ -135,7 +173,16 @@ None of these is a model judging a model.
 
 ## Beyond the state of the art
 
-BEYOND_SECTION
+- BS-1, CrusherCal: an out-of-sample validation of a calibrated crusher model on open industrial survey data, with a
+  calibrated predictive band and pre-registered controls, run in the reader's browser. The state of the art it goes
+  beyond: the HP500 model of Rocha et al. 2024 is fitted and judged in sample on the same ten surveys
+  (https://doi.org/10.3390/min14090919), and the learned surrogates of comminution models (Koh et al. 2021,
+  https://doi.org/10.1016/j.mineng.2021.107026) report no held-out industrial parity and no uncertainty. Evidence, from the
+  committed `data/derived/hp500/loo.json`: the calibrated capacity backbone reproduces the measured throughput with a strict
+  leave-one-survey-out error inside the paper's own band and below the constant-mean baseline, the label-shuffle control
+  does not beat it, the 80 percent band's empirical coverage is reported, and the bounded residual's failure to beat the
+  backbone out of sample is reported as the pre-registered null it is. Covered by a level 4 notebook in each language
+  (`notebooks/*/06-crushercal/`).
 
 ## Deploy driver
 

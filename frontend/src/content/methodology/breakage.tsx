@@ -1,7 +1,7 @@
 // Topic 2 of the Methodology: the energy of a nip, the JKMRC t10 relation, the Austin appearance function and the breakage matrix.
 import { Callout, Cite, DocSection, Equation, Figure } from '@fasl-work/caos-app-shell';
 import { P, useT } from '../bi';
-import { BreakageFigure } from './figures';
+import { BreakageFigure, FlowDiagram } from './figures';
 
 export function Breakage() {
   const t = useT();
@@ -25,6 +25,9 @@ export function Breakage() {
       />
       <Figure caption={t('The cumulative breakage function for three values of t10, all computed from the engine; every curve passes through its t10 at the relative size 1/10 and reaches 100 % at u = 1.', 'La función de fractura acumulada para tres valores de t10, todas calculadas con el motor; cada curva pasa por su t10 en el tamaño relativo 1/10 y llega a 100 % en u = 1.')}>
         <BreakageFigure />
+      </Figure>
+      <Figure caption={t('The steps from the energy of a nip to the breakage matrix.', 'Los pasos desde la energía de una mordida hasta la matriz de fractura.')}>
+        <FlowDiagram topic="breakage" />
       </Figure>
       <P
         en={<>The shape of the progeny follows the Austin cumulative breakage function <Cite id="austin1984" />, with the slopes fixed in the code. At full weight on the fines term the curve reaches 0.1 to the power 0.35, which is 0.447, at one tenth of the size, so no larger t10 can be represented; this is why the cap is 0.44. An earlier slope of 0.62 capped at about 0.24 and silently clamped the weight, so the displayed t10 disagreed with the matrix, and the code comment records that defect.</>}
