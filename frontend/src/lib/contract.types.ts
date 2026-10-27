@@ -125,6 +125,8 @@ export const FLAG_CODES = [
   'f80_lt_css',
   'css_outside_calibrated',
   'f80_outside_calibrated',
+  'css_below_vendor_minimum',
+  'reduction_ratio_above_typical',
 ] as const;
 export type FlagCode = (typeof FLAG_CODES)[number];
 

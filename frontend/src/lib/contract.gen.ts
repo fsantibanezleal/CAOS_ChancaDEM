@@ -246,8 +246,8 @@ export interface components {
                 trace_bytes_budget: number;
                 reasons: string[];
             };
-            /** @description Stable codes of the engine's flags and envelope codes for this case, in the engine's order: css_ge_feed_top (nothing is gripped), pass_through (CSS at or above F80), negligible_reduction (reduction ratio near 1), ill_conditioned (the solve's conditioning guard), and the envelope codes css_nonpositive, feed_nonpositive, f80_lt_css, css_outside_calibrated, f80_outside_calibrated. The web maps each code to its bilingual text. */
-            flags: ("css_ge_feed_top" | "pass_through" | "negligible_reduction" | "ill_conditioned" | "css_nonpositive" | "feed_nonpositive" | "f80_lt_css" | "css_outside_calibrated" | "f80_outside_calibrated")[];
+            /** @description Stable codes of the engine's flags and envelope codes for this case, in the engine's order: css_ge_feed_top (nothing is gripped), pass_through (CSS at or above F80), negligible_reduction (reduction ratio near 1), ill_conditioned (the solve's conditioning guard), the envelope codes css_nonpositive, feed_nonpositive, f80_lt_css, css_outside_calibrated, f80_outside_calibrated, and two sourced warnings that never make a case invalid: css_below_vendor_minimum (the setting is below the vendor minimum of the machine type) and reduction_ratio_above_typical (F80/P80 is above the typical ceiling of one stage). The web maps each code to its bilingual text. */
+            flags: ("css_ge_feed_top" | "pass_through" | "negligible_reduction" | "ill_conditioned" | "css_nonpositive" | "feed_nonpositive" | "f80_lt_css" | "css_outside_calibrated" | "f80_outside_calibrated" | "css_below_vendor_minimum" | "reduction_ratio_above_typical")[];
             /** @description The case's result scalars (p80_mm, p50_mm, p20_mm, f80_mm, reduction_ratio, throughput_tph, power_kw, specific_energy_kwh_t) and, on a real case, the model error against the survey (throughput_err_pct, power_err_pct). */
             metrics: {
                 [key: string]: number;
