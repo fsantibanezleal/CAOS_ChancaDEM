@@ -5,11 +5,11 @@
 - the technology-matrix guard reads an npm alias `npm:<package>@<version>`;
 - no file a product takes verbatim names the owner. The personal name is refused; the GitHub handle `fsantibanezleal` is the
   repositories' owner identifier (it stands in source URLs, for example `scripts/check_contracts.py`) and stays allowed."""
+
 from __future__ import annotations
 
 import json
 import os
-import re
 import subprocess
 import sys
 from pathlib import Path
@@ -18,8 +18,6 @@ import pytest
 from planting import ROOT, edit, git_commit, guard, make_tree, set_cell
 
 DASH = "\u2014"
-
-# ---------------------------------------------------------------- content standards: files with no suffix (WB-016)
 
 
 @pytest.fixture
@@ -80,16 +78,8 @@ def test_the_residue_allow_file_of_the_template_has_no_em_dash() -> None:
     assert DASH not in (ROOT / "scripts" / ".template_residue_allow").read_text(encoding="utf-8")
 
 
-# ---------------------------------------------------------------- documents that are not JSON (WB-017)
-
-DOC_INPUTS = ("scripts/check_documents.py", "scripts/check_contracts.py", "tests/contracts/contract_schemas.py", "docs/contracts", "data", "models")
 CATALOG = "docs/contracts/catalog.md"
 DOCUMENTS, PRODUCER, CONSUMER = 5, 6, 7  # the columns of the params-record row, whose documents cell is "-"
-
-
-@pytest.fixture
-def docs(tmp_path: Path) -> Path:
-    return make_tree(tmp_path / "repo", *DOC_INPUTS)
 
 
 def declare_binary(repo: Path, glob: str, rel: str, payload: bytes) -> None:
@@ -121,23 +111,6 @@ def test_a_declared_csv_table_passes_with_a_test_and_fails_without_one(docs: Pat
     r = guard(docs, "check_documents.py")
     assert r.returncode == 1 and "data/tables/rates.csv" in r.stdout, r.stdout
 
-
-def test_a_json_document_is_still_validated_against_its_schema(docs: Path) -> None:
-    path = docs / "data/derived/S01/trace.json"
-    doc = json.loads(path.read_text(encoding="utf-8"))
-    doc["points"] = []
-    path.write_text(json.dumps(doc), encoding="utf-8")
-    r = guard(docs, "check_documents.py")
-    assert r.returncode == 1 and "[trace]" in r.stdout, r.stdout
-
-
-def test_a_json_file_with_a_json_suffix_that_is_not_json_still_fails(docs: Path) -> None:
-    (docs / "data/derived/S01/trace.json").write_text("not json at all", encoding="utf-8")
-    r = guard(docs, "check_documents.py")
-    assert r.returncode == 1 and "not readable as JSON" in r.stdout, r.stdout
-
-
-# ---------------------------------------------------------------- npm aliases in the technology matrix (WB-018)
 
 TECH_INPUTS = ("scripts/check_tech_matrix.py", "docs/design/SDD.md", "requirements*.txt", "data-pipeline/requirements.txt", "notebooks/requirements.txt",
                "pyproject.toml", "frontend/package.json", "frontend/package-lock.json")
@@ -196,40 +169,3 @@ def test_an_alias_whose_table_row_gives_another_version_fails(tech: Path) -> Non
     edit(tech, "docs/design/SDD.md", f"| {ALIAS} | 5.9.3 |", f"| {ALIAS} | 5.9.2 |")
     r = guard(tech, "check_tech_matrix.py")
     assert r.returncode == 1 and ALIAS in r.stdout and "5.9.2" in r.stdout, r.stdout
-
-
-# ---------------------------------------------------------------- the owner's name in the verbatim files (WB-019)
-
-GUIDE = ROOT / "docs" / "guides" / "00_instantiate.md"
-# the personal name as a word; the GitHub handle `fsantibanezleal` in a source URL is a repository address, not the name
-OWNER = re.compile(r"\b(?:Felipe|Santib[aá][nñ]ez)\b", re.I)
-
-
-def verbatim_files() -> list[str]:
-    """The files the guide lists under 'Files a product takes verbatim'."""
-    text = GUIDE.read_text(encoding="utf-8")
-    start = re.search(r"^#+ Files a product takes verbatim\s*$", text, re.M)
-    assert start, "docs/guides/00_instantiate.md has no section 'Files a product takes verbatim'"
-    rest = text[start.end():]
-    stop = re.search(r"^#+ ", rest, re.M)
-    section = rest[: stop.start()] if stop else rest
-    return sorted(set(re.findall(r"`((?:frontend/)?scripts/[\w./-]+)`", section)))
-
-
-def test_the_guide_lists_the_files_a_product_takes_verbatim() -> None:
-    files = verbatim_files()
-    for name in ("check_sdd.py", "check_content_standards.py", "check_documents.py", "check_base_integrity.py", "check_tech_matrix.py"):
-        assert f"scripts/{name}" in files, files
-    assert "frontend/scripts/gate.mjs" in files, files
-    assert all((ROOT / f).is_file() for f in files), [f for f in files if not (ROOT / f).is_file()]
-
-
-def test_no_file_a_product_takes_verbatim_names_the_owner() -> None:
-    named = {f: [m.group(0) for m in OWNER.finditer((ROOT / f).read_text(encoding="utf-8"))] for f in verbatim_files()}
-    assert not any(named.values()), {f: v for f, v in named.items() if v}
-
-
-def test_adversarial_the_owner_check_sees_a_name_in_a_comment(tmp_path: Path) -> None:
-    probe = tmp_path / "probe.py"
-    probe.write_text("# the rule (Felipe, 2026-10-13)\n", encoding="utf-8")
-    assert OWNER.search(probe.read_text(encoding="utf-8"))

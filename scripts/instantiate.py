@@ -16,8 +16,9 @@ What it does, in order:
   5. writes deploy/TARGET and removes the other deploy place (one deploy place, decided first): `pages` removes the
      VPS unit and site templates and, with --domain, writes frontend/public/CNAME; `vps` removes the Pages workflow
      and fills the unit and site templates with the slug and domain;
-  6. deletes the sentinel, the template blueprint files (STRUCTURE.md, .vscode/) and the template's own guide to
-     instantiating (docs/guides/00_instantiate.md);
+  6. deletes the sentinel, the template blueprint files (STRUCTURE.md, .vscode/), the template's own guide to
+     instantiating (docs/guides/00_instantiate.md) and the template's own tests (tests/template/, the planted-defect
+     tests of the base guards that need the example), with the feature rows whose gate is one of those tests;
   7. writes a README for the product (its name, taglines, badges, the `## Areas` section that scripts/check_readme_areas.py
      holds, how to run it);
   8. unless --no-run: bakes the cases, runs the tests, builds the web once, and reports what of the example remains
@@ -68,6 +69,34 @@ def write(rel: str, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8", newline="\n")
     print(f"  wrote   {rel}")
+
+
+def drop_template_test_rows() -> None:
+    """Remove the feature rows whose gate is a test under tests/template/ (BD-3).
+
+    The base features (contracts, notebooks, repository, web) describe the guards a product takes verbatim, and the planted-defect
+    tests of those guards live in tests/template/, which is removed. A requirement or validation row naming such a test would fail
+    the product's SDD guard on the first run, so both rows of that requirement id go with the tests: the guard they describe is
+    tested in the template, and the product writes the rows of its own features."""
+    features = ROOT / "docs" / "design" / "features"
+    if not features.is_dir():
+        return
+    for folder in sorted(p for p in features.iterdir() if p.is_dir()):
+        files = {f: f.read_text(encoding="utf-8").split("\n") for f in (folder / "requirements.md", folder / "validation.md") if f.is_file()}
+
+        def row_id(line: str) -> str:
+            return line.strip().strip("|").split("|")[0].strip() if line.startswith("|") else ""
+
+        ids = {row_id(ln) for lines in files.values() for ln in lines if ln.startswith("|") and "tests/template/" in ln}
+        ids.discard("")
+        if not ids:
+            continue
+        for f, lines in files.items():
+            write(f.relative_to(ROOT).as_posix(), "\n".join(ln for ln in lines if row_id(ln) not in ids))
+        print(f"  pruned  {len(ids)} requirement(s) of {folder.name} whose gate is a test under tests/template/")
+        left = [ln for ln in (folder / "requirements.md").read_text(encoding="utf-8").splitlines() if re.match(r"\|\s*[A-Z]{1,4}-\d{3}\s*\|", ln)]
+        if not left:  # a feature whose every requirement was tested in the template has nothing left to state
+            remove(f"docs/design/features/{folder.name}")
 
 
 def remove(rel: str) -> None:
@@ -260,6 +289,13 @@ def main() -> int:
         remove(rel)
     # the guide to instantiating is the template's, read before this step; in a product it only names the example
     remove("docs/guides/00_instantiate.md")
+    # the base's own tests that plant into or read the example: the guards a product takes verbatim are tested in the
+    # template, a product tests its own guards and features under tests/adversarial/ (BD-3)
+    remove("tests/template")
+    ci = ROOT / ".github" / "workflows" / "ci.yml"
+    if ci.exists():  # the template's CI also runs those plants; the product's runs only its own tests/adversarial
+        write(".github/workflows/ci.yml", ci.read_text(encoding="utf-8").replace(" tests/template/adversarial", ""))
+    drop_template_test_rows()
     guides = ROOT / "docs" / "guides.md"
     if guides.exists():
         kept = [ln for ln in guides.read_text(encoding="utf-8").splitlines() if "guides/00_instantiate.md" not in ln]
