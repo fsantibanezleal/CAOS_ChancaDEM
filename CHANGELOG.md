@@ -4,6 +4,76 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [0.10.000] · 2026-10-27
+
+### Changed - the product re-instantiated on CAOS_PRODUCT_TEMPLATE 0.11.005 and the shared shell 0.19.3
+
+- The repository is an instance of the product template 0.11.005 (`.template-version`, `product.json`): its pipeline, its data
+  contracts and the contract catalog, the lanes and the lane gate, the readiness document, the documentation tree, the
+  notebooks, the guards and the measured gate. The shell is pinned exactly at 0.19.3 (it was the range `^0.3.0`).
+- The canonical engine is a Python port of the shipped TypeScript engine (`data-pipeline/pipeline/model/crusher/`); the two are
+  held to each other by one committed reference of operating points (`tests/fixtures/engine-reference.json`), checked on both
+  sides. The Node bridges that ran the TypeScript engine offline are retired.
+- The HP500 real lane runs on the Python engine: the ten surveys of Rocha et al. 2024 are a contract of their own
+  (`data/examples/hp500-surveys.csv`), and the calibrated backbone and CrusherCal are rebuilt from it with the same numbers.
+- The surrogate and the anomaly autoencoder are retrained on a Latin-hypercube sweep of the Python engine and evaluated held out
+  through the shipped ONNX graphs (`data/derived/model-metrics.json`).
+- The offline pipeline is ChancaDEM's own on the template's structure: contract 1 for the crusher operating point
+  (`data/examples/params.csv`, 17 cases), 27 cases (17 authored circuit cases and the 10 measured HP500 surveys) each with a
+  bilingual title, band, context and numeric expected ranges that fail the bake, and the bake of contract 2 (index, manifests
+  with trace sha256, traces with the capacity and setting sweeps) with the measured lane gate. `run.py` commands: `all` (the
+  release bake, never trains), `<case>`, `readiness`, `hp500`, `models` (train then evaluate), `fixtures`.
+
+### Added
+
+- The executive view of the Introduction: crushing and comminution as an industry problem in copper mining, with sector figures
+  read at their sources and three illustrations, the landing of the site.
+- The App as a case workbench with Focus: groups Chamber (with a 3D chamber view framed per machine), Product, Performance,
+  Learned, Validation and Context over the 27 cases and their variants.
+- The documentation pages rewritten for this product: Introduction (technical view), Methodology, Implementation (with the
+  architecture diagrams), Experiments and Benchmark; the wiki of framework cards under `docs/frameworks/`.
+- Contracts: twelve catalog rows with their schemas, providers, tests on both sides and a declared missing-data behavior.
+- Two units gates (CAOS_MANAGE `conventions/units-gate.md`): CONTRACT 3 at run time and over the shipped artifacts
+  (`pipeline/core/unit_gate.py`, run by the bake and by `scripts/check_artifacts.py`), and CONTRACT 3b at author time
+  (`scripts/check_unit_constants.py` with the reviewed `scripts/.unit_constants_allow.json`).
+- `pipeline/oracles.py` (Rosin-Rammler, Bond energy and power, mass closure) with its tests, and the coverage matrix of the 27
+  cases in `docs/cases/README.md`.
+- Public pipeline functions for the steps the notebooks teach: `pipeline.hp500.loo` (`fold_indices`, `fit_capacity_base`,
+  `predict_capacity`, `fit_freeform`, `predict_freeform`, `fit_residual`, `fit_power_form`, `mape`, `r2`, `stats`,
+  `predictive_band`, `nested_band_coverage`), `pipeline.stages.evaluate` (`r2_mape`, `monotonicity_check`, `planted_points`),
+  `pipeline.stages.train` (`target_vector`) and `pipeline.model.crusher.whiten` (`assemble_chamber`, `replacement_walk`).
+- The notebooks: 18 per language in seven topics, worked lessons that run the product's methods through those public functions,
+  reviewed against the notebook bar by a reviewer other than their writer; the README states the repository by areas.
+
+### Changed
+
+- The learned models answer only where they apply. Both model contracts record the training ranges (`training.input_ranges`),
+  and one rule decides in `pipeline.model.bundles.applicability` and `frontend/src/lib/ort.ts`: a model applies when the point
+  is not calibrated and every continuous input lies inside its machine's range; otherwise the slot's baseline answers (the
+  engine, the envelope gate), labelled with the reason, in both languages. A shared table of 155 points gives the same verdicts
+  on both sides. The Benchmark no longer grades the surrogate on the measured surveys.
+- CrusherCal's 80 percent band is measured out of sample too (contract `hp500-loo` 1.1.0): beside the in-sample coverage (0.90
+  on throughput, sigma from the same ten residuals) the nested coverage takes each survey's sigma from the other nine (0.80 on
+  throughput, 0.90 on power). Every page and card says which coverage each figure is.
+- The design document's BS-1 states what is measured (held-out MAPE 12.09 percent, in sample 11.55, constant mean 18.29) and
+  no longer claims a band of the paper, for which the repository holds no source.
+
+### Removed
+
+- The template's epidemic example (model, stages, cases, data, tests), the dormant Pyodide entrypoint, the work-in-progress 2-D
+  DEM tracer (the DEM is the documented frontier on the Methodology page), the Node sweep bridges and the 0.09.003 root
+  documents (scaler, autoencoder scaler and threshold, surrogate metrics, case results).
+
+### Fixed
+
+- The envelope gate tests the F80 the feed declares (the untruncated Rosin-Rammler value) for the calibrated support, not the F80
+  read on the 256 mm grid, on both engines; a calibrated point with a declared F80 of 180 mm is flagged `f80_outside_calibrated`.
+- The version surfaces agree (VERSION, CHANGELOG, the manifests, the tag), closing issue #44; the tests read the version from
+  VERSION.
+- The executive view states the digital-twin adoption in processing as its source shows it (28 percent), does not claim the
+  product models liner wear, and its Spanish carries the same content as its English.
+- The shell scripts are executable; the attribution states the real data the product uses.
+
 ## [0.09.003] · 2026-08-25
 
 ### Fixed
