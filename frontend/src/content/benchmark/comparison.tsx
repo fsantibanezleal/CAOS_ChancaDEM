@@ -6,13 +6,11 @@ import { useEffect, useState } from 'react';
 import type { Hp500Loo } from '../../lib/contract.types';
 import { ReadinessNote } from '../../readiness/ReadinessNote';
 import { P, useT } from '../bi';
-import { INPUT_LABEL, TARGET_LABEL, errPct, optimismGap, scoresOf, type Target } from './data';
+import { INPUT_LABEL } from '../../lib/ort';
+import { TARGET_LABEL, errPct, optimismGap, scoresOf, type Target } from './data';
 import { runSurvey, type SurveyRun } from './runs';
 import { Pending, Ready, TableWrap, useBench } from './shared';
 import type { Loaded } from '../../api/artifacts';
-
-/** A list in prose: `a, b and c`. */
-const andList = (v: string[], word: string): string => (v.length < 2 ? v.join('') : `${v.slice(0, -1).join(', ')} ${word} ${v[v.length - 1]}`);
 
 const GAP_TARGETS: Target[] = ['tph', 'kW'];
 
@@ -146,8 +144,8 @@ function SurrogateVsEngine() {
   const f = useFormat();
   const lang = useShellLang();
   const runs = useSurveyRuns();
-  const { surrogate } = useBench();
-  if (runs.state !== 'ready') return <Pending of={runs} wait={{ en: 'Running the engine and the surrogate in this browser', es: 'Corriendo el motor y el sustituto en este navegador' }} />;
+  const { surrogate, metrics } = useBench();
+  if (runs.state !== 'ready') return <Pending of={runs} wait={{ en: 'Running the engines in this browser', es: 'Corriendo los motores en este navegador' }} />;
   const slot = surrogate.state === 'ready' ? surrogate.data : null;
   const rs = runs.data;
   if (!slot || slot.answer === 'baseline') {
@@ -158,44 +156,35 @@ function SurrogateVsEngine() {
       </p>
     );
   }
-  const flagged = rs.filter((r) => r.outside && r.outside.length > 0);
-  const names = [...new Set(flagged.flatMap((r) => r.outside ?? []))];
-  const rel = (a: number | undefined, b: number) => (a === undefined ? null : errPct(a, b));
-  const median = (v: number[]) => {
-    const s = [...v].sort((x, y) => x - y);
-    return s.length ? (s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2) : null;
+  const refused = rs.filter((r) => r.rule && !r.rule.applies);
+  const m = metrics.state === 'ready' ? metrics.data.surrogate : null;
+  const mape = (k: 'p80_mm' | 'throughput_tph' | 'power_kw') => (m ? f(m.per_output[k].mape_pct, { decimals: 1 }) : '');
+  const verdict = (r: SurveyRun): string => {
+    if (!r.rule) return t('not available', 'no disponible');
+    if (r.rule.applies) return t('applies', 'aplica');
+    if (r.rule.reasons.includes('calibrated_case')) return t('does not apply: calibrated case', 'no aplica: caso calibrado');
+    const names = r.rule.reasons.map((x) => INPUT_LABEL[x.slice('outside_training_range:'.length) as keyof typeof INPUT_LABEL]?.[lang] ?? x);
+    return `${t('does not apply: outside the training range in', 'no aplica: fuera del rango de entrenamiento en')} ${names.join(', ')}`;
   };
-  const medTph = median(rs.map((r) => Math.abs(rel(r.surrogate?.tph, r.generic.tph) ?? NaN)).filter(Number.isFinite));
-  const medKw = median(rs.map((r) => Math.abs(rel(r.surrogate?.kw, r.generic.kw) ?? NaN)).filter(Number.isFinite));
   return (
     <>
       <p>
         {t(
-          `Computed in this browser, live, for the ${rs.length} surveys. The surrogate emulates the generic engine (no HP500 calibration), so the fair reference is the generic engine; the calibrated engine, the backbone CrusherCal validates, is shown beside it. Median absolute difference of the surrogate against the generic engine: ${f(medTph, { decimals: 1 })} percent in throughput and ${f(medKw, { decimals: 1 })} percent in power.`,
-          `Calculado en este navegador, en vivo, para los ${rs.length} muestreos. El sustituto emula el motor genérico (sin calibración HP500), así que la referencia justa es el motor genérico; el motor calibrado, el esqueleto que valida CrusherCal, se muestra a su lado. Diferencia absoluta mediana del sustituto frente al motor genérico: ${f(medTph, { decimals: 1 })} por ciento en capacidad y ${f(medKw, { decimals: 1 })} por ciento en potencia.`,
+          `The surrogate is graded where it applies: on its own held-out draw, against the engine it emulates${m ? ` (${f(m.n_test, { decimals: 0 })} points; mean absolute percentage error ${mape('p80_mm')} percent in P80, ${mape('throughput_tph')} percent in throughput and ${mape('power_kw')} percent in power)` : ''}, in the first table of the Results section. It was trained on the uncalibrated engine over a range of inputs per machine, so a model applies to an operating point only when the point is not calibrated and every input lies inside its machine's training range. All ${refused.length} of the ${rs.length} surveys fail that rule, because a measured survey runs the calibrated fit, so the page computes no surrogate number for them: the calibrated engine answers there, and the comparison that carries the page on real data is the one above, the calibrated backbone against the bounded residual.`,
+          `El sustituto se califica donde aplica: en su propio sorteo reservado, frente al motor que emula${m ? ` (${f(m.n_test, { decimals: 0 })} puntos; error porcentual absoluto medio de ${mape('p80_mm')} por ciento en P80, ${mape('throughput_tph')} por ciento en capacidad y ${mape('power_kw')} por ciento en potencia)` : ''}, en la primera tabla de la sección de Resultados. Se entrenó con el motor sin calibrar sobre un rango de entradas por máquina, así que un modelo aplica a un punto de operación sólo cuando el punto no está calibrado y cada entrada queda dentro del rango de entrenamiento de su máquina. Los ${refused.length} de los ${rs.length} muestreos incumplen esa regla, porque un muestreo medido corre el ajuste calibrado, así que la página no calcula ningún número del sustituto para ellos: allí responde el motor calibrado, y la comparación que sostiene la página con datos reales es la de arriba, el esqueleto calibrado frente al residuo acotado.`,
         )}
-        {flagged.length > 0 && names.length > 0
-          ? t(
-              ` In ${flagged.length} of the ${rs.length} surveys the ${andList(names.map((n) => INPUT_LABEL[n].en), 'and')} ${names.length > 1 ? 'lie' : 'lies'} outside the range the surrogate was trained on for this machine, so those rows measure its extrapolation and not its error on its own range, which is the held-out table of the first section.`,
-              ` En ${flagged.length} de los ${rs.length} muestreos ${andList(names.map((n) => INPUT_LABEL[n].es), 'y')} ${names.length > 1 ? 'quedan' : 'queda'} fuera del rango con que se entrenó el sustituto para esta máquina, así que esas filas miden su extrapolación y no su error en su propio rango, que es la tabla reservada de la primera sección.`,
-            )
-          : ''}
       </p>
       <TableWrap>
         <table className="caos-table" data-state="ready" data-live="surrogate-vs-engine">
-          <caption>{t('The surrogate against the engine at each survey’s measured operating point (live).', 'El sustituto frente al motor en el punto de operación medido de cada muestreo (en vivo).')}</caption>
+          <caption>{t('The engines at each survey’s measured operating point (live), and the verdict of the applicability rule for the surrogate.', 'Los motores en el punto de operación medido de cada muestreo (en vivo), y el veredicto de la regla de aplicabilidad para el sustituto.')}</caption>
           <thead>
             <tr>
               <th className="caos-col-text">{t('Survey', 'Muestreo')}</th>
               <th>{t('Calibrated engine (t/h)', 'Motor calibrado (t/h)')}</th>
               <th>{t('Generic engine (t/h)', 'Motor genérico (t/h)')}</th>
-              <th>{t('Surrogate (t/h)', 'Sustituto (t/h)')}</th>
-              <th>{t('Surrogate vs generic (%)', 'Sustituto frente a genérico (%)')}</th>
               <th>{t('Calibrated engine (kW)', 'Motor calibrado (kW)')}</th>
               <th>{t('Generic engine (kW)', 'Motor genérico (kW)')}</th>
-              <th>{t('Surrogate (kW)', 'Sustituto (kW)')}</th>
-              <th>{t('Surrogate vs generic (%)', 'Sustituto frente a genérico (%)')}</th>
-              <th className="caos-col-text">{t('Inputs outside the training range', 'Entradas fuera del rango de entrenamiento')}</th>
+              <th className="caos-col-text">{t('Surrogate', 'Sustituto')}</th>
             </tr>
           </thead>
           <tbody>
@@ -204,13 +193,9 @@ function SurrogateVsEngine() {
                 <td className="caos-col-text">{r.n}</td>
                 <td>{f(r.calibrated.tph, { decimals: 0 })}</td>
                 <td>{f(r.generic.tph, { decimals: 0 })}</td>
-                <td>{f(r.surrogate?.tph, { decimals: 0 })}</td>
-                <td>{f(rel(r.surrogate?.tph, r.generic.tph), { decimals: 1 })}</td>
                 <td>{f(r.calibrated.kw, { decimals: 0 })}</td>
                 <td>{f(r.generic.kw, { decimals: 0 })}</td>
-                <td>{f(r.surrogate?.kw, { decimals: 0 })}</td>
-                <td>{f(rel(r.surrogate?.kw, r.generic.kw), { decimals: 1 })}</td>
-                <td className="caos-col-text">{r.outside === null ? t('not available', 'no disponible') : r.outside.length === 0 ? t('none', 'ninguna') : r.outside.map((n) => INPUT_LABEL[n][lang]).join(', ')}</td>
+                <td className="caos-col-text">{verdict(r)}</td>
               </tr>
             ))}
           </tbody>
@@ -242,12 +227,12 @@ export function Comparison() {
       <P
         en={
           <>
-            The second comparison asks a different question: does the learned surrogate agree with the engine it replaced, at the operating points of the real surveys? The surrogate is trained only on the engine&apos;s synthetic sweeps <Cite id="koh2021" />, never on the surveys, so this is a test of how far it carries outside its sweep.
+            The second comparison asks a different question: does the learned surrogate agree with the engine it replaced, at the operating points of the real surveys? The surrogate is trained only on the engine&apos;s synthetic sweeps <Cite id="koh2021" />, never on the surveys, and only over a range of inputs per machine, so the page asks first whether the surrogate applies to a survey at all, by the rule below, and grades it only where it does.
           </>
         }
         es={
           <>
-            La segunda comparación hace otra pregunta: ¿concuerda el sustituto aprendido con el motor que reemplazó, en los puntos de operación de los muestreos reales? El sustituto se entrena sólo con los barridos sintéticos del motor <Cite id="koh2021" />, nunca con los muestreos, así que esto prueba hasta dónde llega fuera de su barrido.
+            La segunda comparación hace otra pregunta: ¿concuerda el sustituto aprendido con el motor que reemplazó, en los puntos de operación de los muestreos reales? El sustituto se entrena sólo con los barridos sintéticos del motor <Cite id="koh2021" />, nunca con los muestreos, y sólo sobre un rango de entradas por máquina, así que la página pregunta primero si el sustituto aplica a un muestreo, por la regla de abajo, y lo califica sólo donde aplica.
           </>
         }
       />
