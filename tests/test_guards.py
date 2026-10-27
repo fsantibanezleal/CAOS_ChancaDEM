@@ -38,8 +38,30 @@ def _git_tree(tmp: Path) -> Path:
     return tree
 
 
-# scripts/check_artifacts.py is the product's own (one trace per case, sha256, expected ranges, the units gate): its
-# planted-defect tests are tests/test_check_artifacts.py.
+def test_check_artifacts_reads_one_or_many_artifacts_and_the_index_files(tmp_path):
+    d = tmp_path / "data" / "derived"
+    n_single = _put(d, "A/trace.json", {"t": [0, 1]})
+    n_v1 = _put(d, "B/v1.json", {"x": 1})
+    n_v2 = _put(d, "B/v2.json", {"x": 22})
+    _put(d, "contract/index.json", {"families": []})
+    gate = {"lane": "live"}
+    _put(d, "manifests/A.json", {"artifact": {"path": "A/trace.json", "bytes": n_single}, "lane": "live", "gate": gate})
+    _put(d, "manifests/B.json", {"artifacts": [{"path": "B/v1.json", "bytes": n_v1, "lane": "live", "gate": gate},
+                                               {"path": "B/v2.json", "bytes": n_v2, "lane": "live", "gate": gate}]})
+    index = {"files": ["contract/index.json"], "cases": [{"case_id": "A", "manifest_path": "manifests/A.json"},
+                                                         {"case_id": "B", "manifest_path": "manifests/B.json"}]}
+    _put(d, "manifests/index.json", index)
+    ok = _run("check_artifacts.py", str(tmp_path))
+    assert ok.returncode == 0 and "2 cases, 3 artifacts" in ok.stdout, ok.stdout
+    # drift in the second variant, a lane that disagrees with its gate, a declared file gone
+    _put(d, "manifests/B.json", {"artifacts": [{"path": "B/v1.json", "bytes": n_v1, "lane": "live", "gate": gate},
+                                               {"path": "B/v2.json", "bytes": n_v2 + 1, "lane": "precompute", "gate": gate}]})
+    (d / "contract" / "index.json").unlink()
+    bad = _run("check_artifacts.py", str(tmp_path))
+    assert bad.returncode == 1
+    assert "byte drift" in bad.stdout and "B/v2.json" in bad.stdout
+    assert "lane/gate mismatch: B B/v2.json" in bad.stdout
+    assert "declared by the index but missing or empty" in bad.stdout
 
 
 REQ = """# Requirements: a unit not built yet
@@ -155,6 +177,45 @@ def test_instantiate_renames_the_lockfile_and_drops_the_template_guide(tmp_path)
     assert not (copy / "docs" / "guides" / "00_instantiate.md").exists()
     assert "00_instantiate" not in (copy / "docs" / "guides.md").read_text(encoding="utf-8")
     assert not (copy / ".template-source").exists()
+
+
+def _template_only_offenders(tests_root: Path) -> list[str]:
+    """Test functions that run instantiate.py or remove the template's sentinel without the TEMPLATE_ONLY marker. Such a
+    test needs the template's own tree, so in every instantiated product it fails instead of skipping (BD-1: two did, found
+    on CAOS_ChancaDEM's re-instantiation, 2026-10-26)."""
+    import ast
+
+    offenders: list[str] = []
+    for path in sorted(tests_root.rglob("test_*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.FunctionDef) or not node.name.startswith("test_"):
+                continue
+            body = ast.unparse(node)
+            runs_instantiate = "instantiate.py" in body and "subprocess" in body
+            drops_sentinel = ".template-source" in body and ".unlink(" in body
+            marked = any("TEMPLATE_ONLY" in ast.unparse(d) for d in node.decorator_list)
+            if (runs_instantiate or drops_sentinel) and not marked:
+                offenders.append(f"{path.relative_to(tests_root).as_posix()}::{node.name}")
+    return offenders
+
+
+def test_every_test_that_needs_the_template_tree_is_template_only():
+    assert _template_only_offenders(ROOT / "tests") == []
+
+
+def test_adversarial_an_unmarked_template_only_test_is_named(tmp_path):
+    planted = tmp_path / "tests" / "test_planted.py"
+    planted.parent.mkdir(parents=True)
+    # the planted source is spelled in pieces, so this test's own body never holds the tokens the guard looks for
+    script, sentinel, drop = "instan" + "tiate.py", ".template" + "-source", ".un" + "link("
+    planted.write_text(
+        "import subprocess, sys\n\n\ndef test_runs_it(tmp_path):\n"
+        f"    subprocess.run([sys.executable, 'scripts/{script}', '--no-run'])\n\n\n"
+        f"def test_drops_it(repo):\n    (repo / '{sentinel}'){drop})\n",
+        encoding="utf-8",
+    )
+    assert _template_only_offenders(tmp_path / "tests") == ["test_planted.py::test_runs_it", "test_planted.py::test_drops_it"]
 
 
 def _version_tree(tmp: Path) -> Path:
