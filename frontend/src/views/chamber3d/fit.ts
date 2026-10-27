@@ -7,8 +7,8 @@ import { Vector3 } from 'three';
 
 /** Room left around the chamber: it fills 1 / FIT_MARGIN of the half-frustum on its binding axis. */
 export const FIT_MARGIN = 1.06;
-/** From the target to the camera: the three-quarter view the shipped view used (x and z equal, a little above). */
-const VIEW_DIR = new Vector3(0.72, 0.4, 0.72).normalize();
+/** The three-quarter view of a surface of revolution. A machine may pass its own (the jaw: higher and more oblique). */
+export const DEFAULT_VIEW_DIR = new Vector3(0.72, 0.4, 0.72).normalize();
 const FALLBACK = [new Vector3(-500, 0, -500), new Vector3(500, 1000, 500)];
 const ITERATIONS = 6;
 
@@ -21,7 +21,8 @@ export interface Fit {
   binding: 'vertical' | 'horizontal';
 }
 
-export function fitCamera(points: Vector3[], fovDeg: number, aspect: number): Fit {
+export function fitCamera(points: Vector3[], fovDeg: number, aspect: number, dirIn: Vector3 = DEFAULT_VIEW_DIR): Fit {
+  const VIEW_DIR = dirIn.clone().normalize(); // from the target to the camera
   const pts = points.length > 0 ? points : FALLBACK;
   const tanV = Math.tan((fovDeg * Math.PI) / 360);
   const tanH = tanV * Math.max(aspect, 1e-3);
