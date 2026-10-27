@@ -1,4 +1,4 @@
-/* The product's own widgets only (shell 0.19.2): the stack that puts a table above a drawing, the area a chart or a Stage fills, the
+/* The product's own widgets only (shell 0.19.3): the stack that puts a table above a drawing, the area a chart or a Stage fills, the
    table's scroll box and the alert of a flagged point. Every colour and size is a token of the shell; no shell class is restyled. */
 .cdem-stack {
   display: flex;
