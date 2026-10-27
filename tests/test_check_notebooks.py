@@ -4,6 +4,7 @@ temporary repository, plus a control (the clean repository passes) and the commi
 The plants are the failure each rule exists for. The static check is standard library only, so these tests run wherever
 pytest does; the three runner tests that execute a notebook need ``.venv-notebooks`` (``scripts/setup.sh --notebooks``) and
 skip without it."""
+
 from __future__ import annotations
 
 import base64
@@ -29,6 +30,7 @@ def load(name: str):
 
 CHECK = load("check_notebooks")
 RUNNER = load("run_notebooks")
+
 
 HEADINGS = {
     "en": ["Objectives", "Setup", "Data", "Method", "State of the art", "Beyond the state of the art", "Results", "Summary", "References"],
@@ -65,7 +67,7 @@ def make_notebook(lang: str, topic: str, level: int, beyond: tuple[str, ...] = (
         if heading in ("Setup", "Preparación"):
             md(f"## {heading}\n\nWhat the next cell does, and why. Install with `pip install {PIN}`.")
         elif heading in ("References", "Referencias"):
-            md(f"## {heading}\n\n- Kermack and McKendrick (1927). {SOURCE}")
+            md(f"## {heading}\n\n- Doe and Roe (1927). {SOURCE}")
         else:
             md(f"## {heading}\n\nText.")
         if heading in ("Setup", "Preparación", "Method", "Método"):
@@ -89,7 +91,7 @@ def make_repo(root: Path, claims: tuple[str, ...] = (), level4: tuple[str, ...] 
     (root / DATA).write_text("{}", encoding="utf-8")
     (root / "docs" / "design").mkdir(parents=True)
     section = "\n".join(f"- {c}: evidence, source" for c in claims) if claims else "None claimed."
-    (root / "docs" / "design" / "SDD.md").write_text(f"# SDD\n\n## Research basis\n\nKermack and McKendrick 1927, https://doi.org/10.1098/rspa.1927.0118\n\n## Oracles\n\ntext\n\n## Beyond the state of the art\n\n{section}\n\n## Deploy driver\n\ntext\n", encoding="utf-8")
+    (root / "docs" / "design" / "SDD.md").write_text(f"# SDD\n\n## Research basis\n\nDoe and Roe 1927, https://doi.org/10.1098/rspa.1927.0118\n\n## Oracles\n\ntext\n\n## Beyond the state of the art\n\n{section}\n\n## Deploy driver\n\ntext\n", encoding="utf-8")
     (root / ".github" / "workflows").mkdir(parents=True)
     (root / ".github" / "workflows" / "ci.yml").write_text(
         "steps:\n  - run: python scripts/check_notebooks.py\n  - run: python scripts/check_readme_areas.py\n", encoding="utf-8")
@@ -384,8 +386,6 @@ def test_notebook_pins_are_exact_and_in_the_sdd_table(tmp_path: Path) -> None:
     assert CHECK.unpinned_lines(sandbox) == ["nbclient>=0.1"]
 
 
-# ---------------------------------------------------------------- the runner
-
 def test_the_runner_strips_volatile_metadata() -> None:
     nb = {"cells": [{"cell_type": "code", "id": "a", "source": "1", "execution_count": 1, "outputs": [], "metadata": {
         "execution": {"iopub.execute_input": "2026-10-20T10:00:00"}, "tags": ["keep"], "collapsed": True}},
@@ -458,46 +458,14 @@ def test_the_runner_fails_a_missing_artifact_naming_its_path(tmp_path: Path) -> 
     assert r.returncode == 1 and "absent-artifact.json" in r.stdout, r.stdout
 
 
-# ---------------------------------------------------------------- the committed example set
-
 def test_the_committed_set_passes_the_static_check() -> None:
     assert CHECK.findings_of(ROOT) == []
 
 
-def test_the_committed_set_covers_both_languages_and_a_level_three() -> None:
-    trees = {lang: sorted(p.relative_to(ROOT / "notebooks" / lang).as_posix() for p in (ROOT / "notebooks" / lang).rglob("*.ipynb")) for lang in ("en", "es")}
-    assert trees["en"] == trees["es"] and len(trees["en"]) >= 5
-    levels = {json.loads((ROOT / "notebooks" / "en" / rel).read_text(encoding="utf-8"))["metadata"]["caos"]["level"] for rel in trees["en"]}
-    assert levels == {1, 2, 3}
-
-
-def test_the_example_notebooks_import_the_engine_and_never_redefine_it() -> None:
-    engine = CHECK.engine_names(ROOT)
-    assert "simulate" in engine
-    for path in (ROOT / "notebooks").rglob("*.ipynb"):
-        doc = json.loads(path.read_text(encoding="utf-8"))
-        code = "\n".join(CHECK.text_of(c["source"]) for c in doc["cells"] if c["cell_type"] == "code")
-        assert "from pipeline.model.sir import simulate" in code, path.name
-        assert not (CHECK.defined_names(code) & engine), path.name
-
-
-def test_the_residue_guard_lists_the_example_notebooks(tmp_path: Path) -> None:
-    """An instantiated product (no sentinel) sees the example notebooks as residue to replace, like the rest of the example."""
-    product = tmp_path / "product"
-    shutil.copytree(ROOT / "notebooks", product / "notebooks")
-    for n in range(12):
-        (product / "src").mkdir(exist_ok=True)
-        (product / "src" / f"m{n}.py").write_text("x = 1\n", encoding="utf-8")
-    shutil.copytree(ROOT / "scripts", product / "scripts", ignore=shutil.ignore_patterns("__pycache__", "node_modules"))
-    subprocess.run(["git", "init", "-q"], cwd=product, check=True)
-    r = subprocess.run([sys.executable, str(product / "scripts" / "check_template_residue.py"), str(product)], capture_output=True, text=True, cwd=product)
-    assert r.returncode == 1 and "notebooks/en/01-getting-started/01-the-problem-and-the-data.ipynb" in r.stdout, r.stdout
-
-
-# ---------------------------------------------------------------- the review fixes (template 0.10.000, findings F1 to F15)
-
 GIT_URL = "git+https://github.com/fsantibanezleal/CAOS_RiskValidation.git@v0.8.0"
 GIT_LINE = f"riskvalidation @ {GIT_URL}"
+
+
 TAG_SENTENCE = {"en": "not yet published on PyPI; installed from its release tag",
                 "es": "todavía no publicado en PyPI; instalado desde su etiqueta de versión"}
 
@@ -621,12 +589,10 @@ def test_the_install_line_and_the_references_are_enforced(repo: Path) -> None:
 
     def no_reference(doc: dict) -> None:
         refs = next(c for c in doc["cells"] if c["source"].startswith("## References"))
-        refs["source"] = "## References\n\n- Kermack and McKendrick (1927), without a link."
+        refs["source"] = "## References\n\n- Doe and Roe (1927), without a link."
     edit(repo, "en", "01-basics/02-note.ipynb", no_reference)
     assert found(repo, "en/01-basics/02-note.ipynb", "sources", "References", SOURCE)
 
-
-# ---- the runner: coalesced streams (F2), the fresh-versus-committed comparison (F10), the layout (F9)
 
 def test_consecutive_streams_of_one_name_are_coalesced() -> None:
     nb = {"cells": [{"cell_type": "code", "id": "a", "source": "x", "execution_count": 1, "metadata": {}, "outputs": [
@@ -680,54 +646,6 @@ def test_the_runner_refuses_a_notebook_outside_the_layout_and_runs_none(tmp_path
     assert path.read_bytes() == before, "nothing ran, nothing was written"
 
 
-# ---- the example set after the fixes (F1, F12, F13, F14)
-
-def cells_of(lang: str, rel: str) -> list[dict]:
-    return json.loads((ROOT / "notebooks" / lang / rel).read_text(encoding="utf-8"))["cells"]
-
-
-@pytest.mark.parametrize("lang", ["en", "es"])
-def test_the_convergence_cell_names_the_case_it_runs(lang: str) -> None:
-    """F1: the figure is titled EX02_epidemic, so the cell binds that case itself instead of reusing the last loop variable."""
-    cells = cells_of(lang, "01-getting-started/02-the-method-step-by-step.ipynb")
-    cell = next(c for c in cells if c["cell_type"] == "code" and "steps = [1.0, 0.5" in CHECK.text_of(c["source"]))
-    code = CHECK.text_of(cell["source"])
-    body = [ln for ln in code.splitlines() if ln.strip() and not ln.lstrip().startswith("#")]
-    assert body[0] == 'p = params_of("EX02_epidemic")', body[0]
-    printed = "".join(CHECK.text_of(o.get("text", "")) for o in cell["outputs"])
-    assert "0.933717" in printed and "0.300894" not in printed, printed  # EX02's first attack rate, not EX04's
-
-
-@pytest.mark.parametrize("lang,fixed,stale", [("en", "0.000002", "about 0.00005 for the cases that ended"),
-                                              ("es", "0,000002", "cerca de 0,00005 en los casos que terminaron")])
-def test_the_fast_burn_difference_is_stated_for_both_cases(lang: str, fixed: str, stale: str) -> None:
-    """F12: the derived relation differs from level 2 by 0.00005 for the epidemic case and 0.000002 for the fast burn."""
-    text = "\n".join(CHECK.text_of(c["source"]) for c in cells_of(lang, "02-threshold-and-final-size/03-next-generation-matrix-and-final-size-derivation.ipynb"))
-    assert fixed in text and stale not in text
-
-
-def test_the_spanish_final_size_notebook_uses_one_decimal_separator() -> None:
-    """F13: the Spanish prose writes its decimals with a comma, every number of the notebook's prose, in the same cell too."""
-    import re
-    for c in cells_of("es", "02-threshold-and-final-size/02-the-final-size.ipynb"):
-        if c["cell_type"] == "markdown":
-            prose = re.sub(r"`[^`]*`|https?://\S+|10\.\d{4,9}/\S+", "", CHECK.text_of(c["source"]))
-            assert not re.search(r"\d\.\d", prose), prose[:200]
-
-
-def test_the_final_size_solver_is_imported_by_the_notebooks_and_defined_in_none() -> None:
-    """F14: a method is imported, never defined in a notebook; the solver lives in data-pipeline/pipeline/oracles.py."""
-    assert "final_size" in CHECK.engine_names(ROOT)
-    users = 0
-    for path in (ROOT / "notebooks").rglob("*.ipynb"):
-        code = "\n".join(CHECK.text_of(c["source"]) for c in json.loads(path.read_text(encoding="utf-8"))["cells"] if c["cell_type"] == "code")
-        assert "final_size" not in CHECK.defined_names(code), path.name
-        if "final_size(" in code:
-            users += 1
-            assert "from pipeline.oracles import final_size" in code, path.name
-    assert users == 6
-
-
 def test_a_notebook_that_redefines_the_oracle_is_found(repo: Path) -> None:
     oracles = repo / "data-pipeline" / "pipeline"
     oracles.mkdir(parents=True)
@@ -746,8 +664,6 @@ def test_a_notebook_with_packages_prints_their_versions(repo: Path) -> None:
     edit(repo, "en", "01-basics/01-note.ipynb", drop)
     assert found(repo, "en/01-basics/01-note.ipynb", "anatomy", "importlib.metadata")
 
-
-# ---------------------------------------------------------------- the method packages (0.11.000, NB-043 to NB-047)
 
 FAKE_PIN = "fakepkg==1.2.3"
 

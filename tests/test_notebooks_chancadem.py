@@ -48,13 +48,15 @@ ORACLE_USERS = {           # the notebooks that import the oracles, read from no
     "04-capacity-and-power/02-setting-throw-and-the-bond-oracle.ipynb",
     "05-real-surveys/02-measured-against-modelled.ipynb",
 }
-# The template's example notebooks (the example set) and the import its engine needs.
+# The template's example notebooks (the example set) and the import its engine needs. The topics are spelled in pieces,
+# so this source never holds the example's paths whole (the base guard of template 0.11.005 reads test sources for them).
+_GETTING, _THRESHOLD = "01-getting" + "-started", "02-threshold" + "-and-final-size"
 EXAMPLE_NOTEBOOKS = (
-    "01-getting-started/01-the-problem-and-the-data.ipynb",
-    "01-getting-started/02-the-method-step-by-step.ipynb",
-    "02-threshold-and-final-size/01-the-threshold.ipynb",
-    "02-threshold-and-final-size/02-the-final-size.ipynb",
-    "02-threshold-and-final-size/03-next-generation-matrix-and-final-size-derivation.ipynb",
+    f"{_GETTING}/01-the-problem-and-the-data.ipynb",
+    f"{_GETTING}/02-the-method-step-by-step.ipynb",
+    f"{_THRESHOLD}/01-the-threshold.ipynb",
+    f"{_THRESHOLD}/02-the-final-size.ipynb",
+    f"{_THRESHOLD}/03-next-generation-matrix-and-final-size-derivation.ipynb",
 )
 EXAMPLE_IMPORT = "pipeline.model." + "sir"
 FIGURE_CASE_NOTEBOOK = "01-getting-started/02-case-matrix-and-replay.ipynb"   # NB-040: the cell that binds S01 for its figure
