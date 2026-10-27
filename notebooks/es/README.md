@@ -1,32 +1,56 @@
-# Cuadernos, español
+# Notebooks, español
 
 El índice del árbol en español. Los temas van de lo simple a lo complejo; dentro de un tema el orden de lectura es el
-número del cuaderno y el nivel nunca baja. El equivalente en inglés de cada cuaderno está en la misma ruta bajo
+número del notebook y el nivel nunca baja. La contraparte en inglés de cada notebook está en la misma ruta bajo
 [`../en/`](../en/README.md). Cómo correrlos está en [`../README.md`](../README.md).
 
 Niveles: 1 fundamentos, 2 el método en la práctica, 3 estado del arte, 4 más allá del estado del arte.
 
+Cada notebook responde una pregunta del problema del producto, corre el pipeline propio del producto sobre sus datos
+versionados, y lee sus figuras en el texto que las sigue. ChancaDEM no publica un paquete: los notebooks importan el motor,
+los oráculos, la vía HP500 y los paquetes de modelos desde `data-pipeline/pipeline/` por su ruta y nunca definen un método
+propio.
+
 ## Temas
 
-Un tema sin cuaderno de nivel 3 explica por qué en su fila.
+Un tema sin un notebook de nivel 3 dice por qué en su fila.
 
 | Tema | Requiere | Nivel 3 |
 |---|---|---|
-| [01-getting-started](01-getting-started/) | ninguno, es el tema de entrada | Sin nivel 3: el tema enseña el motor mismo, y el estado del arte que nombra la base de investigación es el asunto del tema 02 |
-| [02-threshold-and-final-size](02-threshold-and-final-size/) | tema 01-getting-started | [03-next-generation-matrix-and-final-size-derivation](02-threshold-and-final-size/03-next-generation-matrix-and-final-size-derivation.ipynb) |
+| [01-getting-started](01-getting-started/) | ninguno, es el tema de entrada | Sin nivel 3: el tema enseña las entradas del motor y la matriz de casos, y el estado del arte que nombra la base de investigación es el asunto de los temas 03 y 07 |
+| [02-size-distributions](02-size-distributions/) | tema 01-getting-started | Sin nivel 3: la ley de Rosin-Rammler y la interpolación de tamices son métodos de texto, y la base de investigación no nombra un rival para ellos |
+| [03-breakage-and-classification](03-breakage-and-classification/) | tema 02-size-distributions | [03-population-balance-against-particle-replacement](03-breakage-and-classification/03-population-balance-against-particle-replacement.ipynb) |
+| [04-capacity-and-power](04-capacity-and-power/) | tema 03-breakage-and-classification | Sin nivel 3: los dossiers nombran la energía específica por tamaño de Morrell como alternativa a Bond, pero su fuente queda fuera de la base de investigación del SDD y el producto no corre ninguna implementación de ella |
+| [05-real-surveys](05-real-surveys/) | temas 01-getting-started y 04-capacity-and-power | [03-the-in-sample-fit-of-the-paper](05-real-surveys/03-the-in-sample-fit-of-the-paper.ipynb) |
+| [06-crushercal](06-crushercal/) | tema 05-real-surveys | Sin nivel 3: el estado del arte que correría, el ajuste dentro de la muestra del artículo, es el nivel 3 del tema 05, y el notebook de nivel 4 de aquí lo contrasta con el protocolo de datos retenidos |
+| [07-learned-models](07-learned-models/) | temas 01-getting-started y 05-real-surveys | [03-the-surrogate-against-the-plant](07-learned-models/03-the-surrogate-against-the-plant.ipynb) |
 
-## Cuadernos
+## Notebooks
 
-| Cuaderno | Nivel | Qué enseña |
+| Notebook | Nivel | Qué enseña |
 |---|---|---|
-| [01-getting-started/01-the-problem-and-the-data.ipynb](01-getting-started/01-the-problem-and-the-data.ipynb) | 1 | el problema epidémico, el índice, los manifiestos y las trazas versionados, las ecuaciones SIR, una primera corrida del motor del pipeline contrastada con la traza versionada |
-| [01-getting-started/02-the-method-step-by-step.ipynb](01-getting-started/02-the-method-step-by-step.ipynb) | 2 | un paso de Euler hacia adelante a mano, R0 = beta / gamma como umbral, la relación del tamaño final como oráculo, convergencia de primer orden en el paso |
-| [02-threshold-and-final-size/01-the-threshold.ipynb](02-threshold-and-final-size/01-the-threshold.ipynb) | 1 | R0 y el umbral de rebaño 1 - 1/R0 en los casos calculados, y el motor corrido con parte de la población inmunizada |
-| [02-threshold-and-final-size/02-the-final-size.ipynb](02-threshold-and-final-size/02-the-final-size.ipynb) | 2 | resolver z = 1 - exp(-R0 z), ubicar los casos calculados en su curva, y un tamaño final que no depende del curso temporal |
-| [02-threshold-and-final-size/03-next-generation-matrix-and-final-size-derivation.ipynb](02-threshold-and-final-size/03-next-generation-matrix-and-final-size-derivation.ipynb) | 3 | R0 por la matriz de la siguiente generación (van den Driessche y Watmough, 2002) y la derivación del tamaño final (Miller, 2012), comparados con el nivel 2 en los mismos casos |
+| [01-getting-started/01-first-run.ipynb](01-getting-started/01-first-run.ipynb) | 1 | un punto de operación de ocho números, una corrida del motor en el cono secundario de referencia S01, la malla de tamices, los diez muestreos del HP500 y el motor en uno de ellos |
+| [01-getting-started/02-case-matrix-and-replay.ipynb](01-getting-started/02-case-matrix-and-replay.ipynb) | 2 | los 27 casos por etapa y máquina, los regímenes y las negativas del motor vivo, las variantes de la abertura, la compuerta de expectativas y una repetición frente a las métricas horneadas |
+| [02-size-distributions/01-rosin-rammler-feed.ipynb](02-size-distributions/01-rosin-rammler-feed.ipynb) | 1 | la alimentación de Rosin-Rammler, x63 y m, el F80 por interpolación, y por qué el F80 del motor difiere del de los textos |
+| [02-size-distributions/02-grid-interpolation-and-the-oracle.ipynb](02-size-distributions/02-grid-interpolation-and-the-oracle.ipynb) | 2 | la malla de raíz de dos, de masas de clase a una curva de pasante, el error de interpolación frente a la finura de la malla y el oráculo en x63 |
+| [03-breakage-and-classification/01-breakage-and-classification-curves.ipynb](03-breakage-and-classification/01-breakage-and-classification-curves.ipynb) | 1 | la energía por apriete, la relación t10 de JKMRC, la función de aparición de Austin y la curva de clasificación K1, K2, K3 |
+| [03-breakage-and-classification/02-whiten-solve-step-by-step.ipynb](03-breakage-and-classification/02-whiten-solve-step-by-step.ipynb) | 2 | la matriz de quiebre, el balance de la cámara, su solución como masa circulante y eventos de apriete, el producto, y la recirculación frente a la abertura |
+| [03-breakage-and-classification/03-population-balance-against-particle-replacement.ipynb](03-breakage-and-classification/03-population-balance-against-particle-replacement.ipynb) | 3 | la literatura de chancadores de elementos discretos (Cleary y Sinnott, Quist y Evertsson) y su regla de reemplazo corrida con la selección y el quiebre propios del producto, frente al balance de Whiten |
+| [04-capacity-and-power/01-capacity-hump-and-nip-geometry.ipynb](04-capacity-and-power/01-capacity-hump-and-nip-geometry.ipynb) | 1 | la ley de capacidad de Evertsson y su joroba de velocidad, la respuesta de capacidad, potencia y P80 a la velocidad, y el ángulo de apriete frente al límite de agarre |
+| [04-capacity-and-power/02-setting-throw-and-the-bond-oracle.ipynb](04-capacity-and-power/02-setting-throw-and-the-bond-oracle.ipynb) | 2 | la ley de Bond y su oráculo de forma cerrada, la abertura y la carrera como dos palancas, y la mejor combinación para un P80 requerido |
+| [05-real-surveys/01-the-ten-surveys-and-the-calibrated-engine.ipynb](05-real-surveys/01-the-ten-surveys-and-the-calibrated-engine.ipynb) | 1 | los diez muestreos del HP500, qué toma de ellos la vía calibrada, la capacidad del motor en cada uno, qué hace con el f80 y el soporte de la calibración |
+| [05-real-surveys/02-measured-against-modelled.ipynb](05-real-surveys/02-measured-against-modelled.ipynb) | 2 | la compuerta de expectativas de los casos reales, los residuos de capacidad, la potencia que no sigue a la planta, qué cambia la calibración y la energía específica |
+| [05-real-surveys/03-the-in-sample-fit-of-the-paper.ipynb](05-real-surveys/03-the-in-sample-fit-of-the-paper.ipynb) | 3 | el protocolo dentro de la muestra del artículo fuente corrido con el código CrusherCal: tres modelos juzgados con los muestreos a los que se ajustaron, y un coeficiente de potencia con el signo equivocado |
+| [06-crushercal/01-holding-a-survey-out.ipynb](06-crushercal/01-holding-a-survey-out.ipynb) | 1 | el pliegue de dejar un muestreo fuera, la capacidad retenida de la columna vertebral, y el optimismo del juicio dentro de la muestra |
+| [06-crushercal/02-strict-against-leaky-and-the-controls.ipynb](06-crushercal/02-strict-against-leaky-and-the-controls.ipynb) | 2 | el optimismo por modelo y objetivo, la línea base de media constante, el control de barajado con 200 semillas y el residuo acotado como un nulo preregistrado |
+| [06-crushercal/03-held-out-validation-beyond-the-in-sample-fit.ipynb](06-crushercal/03-held-out-validation-beyond-the-in-sample-fit.ipynb) | 4 | la afirmación BS-1 medida: dos conclusiones del protocolo dentro de la muestra revertidas, robustez sobre subconjuntos aleatorios y la calibración de la banda predictiva de 80 por ciento |
+| [07-learned-models/01-the-surrogate-against-the-engine.ipynb](07-learned-models/01-the-surrogate-against-the-engine.ipynb) | 1 | el sustituto publicado con onnxruntime: validación del paquete, codificación, decodificación, el error por salida, la barrida y la respuesta de línea base rotulada |
+| [07-learned-models/02-held-out-draw-and-the-anomaly-guard.ipynb](07-learned-models/02-held-out-draw-and-the-anomaly-guard.ipynb) | 2 | la muestra retenida independiente, R cuadrado y MAPE por salida, el grafo de 8 bits, la monotonía, y el autoencoder frente a la compuerta de envolvente con puntos plantados |
+| [07-learned-models/03-the-surrogate-against-the-plant.ipynb](07-learned-models/03-the-surrogate-against-the-plant.ipynb) | 3 | el enfoque del sustituto aprendido frente a la planta: el sustituto en los diez muestreos, su extrapolación fuera del rango de entrenamiento y la ceguera del autoencoder ante ella |
 
 ## Más allá del estado del arte
 
-Nada declarado: el ejemplo es un modelo didáctico, así que no tiene cuaderno de nivel 4. Un producto que declara un
-componente más allá del estado del arte lo lista en su SDD y lo cubre con un cuaderno de nivel 4 en cada idioma
-([`docs/guides/08_notebooks.md`](../../docs/guides/08_notebooks.md)).
+El SDD lista una afirmación, BS-1, CrusherCal: validación con datos retenidos de un modelo de chancador calibrado con datos de
+muestreos industriales abiertos, con una banda predictiva calibrada y controles preregistrados. Su notebook de nivel 4 es
+[06-crushercal/03-held-out-validation-beyond-the-in-sample-fit](06-crushercal/03-held-out-validation-beyond-the-in-sample-fit.ipynb),
+que la mide: los números retenidos, los controles, la robustez sobre subconjuntos y la calibración de la banda.
