@@ -1,0 +1,55 @@
+"""The real-survey lane of the HP500 secondary cone (Minas Rio itabirite). Counterpart of the constants and the
+``opOfSurvey`` of the TypeScript app layer (``frontend/src/data/real/hp500-minasrio.ts`` and
+``frontend/src/state/store.ts``).
+
+Source (open access, CC BY 4.0): Rocha, Campos, Silva and Tavares, "Fit-for-Purpose Model of HP500 Cone Crusher in
+Size Reduction of Itabirite Iron Ore", Minerals 2024, 14(9), 919, DOI 10.3390/min14090919. The surveys vary only the
+CSS and the feed f80; the eccentric throw and speed are machine constants. The feed is reconstructed from the measured
+f80 with a Rosin-Rammler band (m = 0.9, the documented assumption); the ore competence and the Bond work index are the
+itabirite blend; ``calibrated=True`` switches the engine to the Table 5 fit. The survey table itself is not here.
+"""
+from __future__ import annotations
+
+import math
+from typing import NamedTuple
+
+from .jsmath import jpow
+from .types import Operating
+
+
+class Hp500Nominal(NamedTuple):
+    throw_mm: float
+    speed_rpm: float
+
+
+# Held fixed on the real lane: a representative mid of the HP500 throw range, and the cone-sec capacity optimum.
+HP500_NOMINAL = Hp500Nominal(throw_mm=34, speed_rpm=360)
+
+# Drop-weight ore competence bands for the itabirite blend (Table 1); Wi in kWh/t.
+HP500_ORE = {
+    "compact": {"A": 64.5, "b": 10.5, "axb": 677.3, "wi_kwh_t": 7.2},
+    "supercompact": {"A": 56.1, "b": 2.2, "axb": 123.4, "wi_kwh_t": 10.6},
+}
+HP500_BLEND_WI_KWH_T = 9.0     # representative blend Wi of the modeled Bond power parity readout
+HP500_FEED_M = 0.9             # Rosin-Rammler uniformity of the reconstructed feed
+
+
+def x63_from_f80(f80_mm: float, m: float = HP500_FEED_M) -> float:
+    """Reconstruct the Rosin-Rammler characteristic size x63 from the measured f80. From R(x) = 1 - exp[-(x / x63)^m]
+    at x = f80, R = 0.8: (f80 / x63)^m = ln 5, so x63 = f80 / ln(5)^(1 / m)."""
+    return f80_mm / jpow(math.log(5), 1 / m)
+
+
+def operating_from_survey(css_mm: float, f80_mm: float) -> Operating:
+    """The operating point of an HP500 survey, as the store's ``opOfSurvey`` builds it."""
+    return Operating(
+        machine="cone-sec",
+        css_mm=css_mm,
+        throw_mm=HP500_NOMINAL.throw_mm,
+        speed_rpm=HP500_NOMINAL.speed_rpm,
+        feed_x63_mm=x63_from_f80(f80_mm),
+        feed_m=HP500_FEED_M,
+        ore_axb=HP500_ORE["compact"]["axb"],   # metadata only: the calibrated t10 does not use A*b
+        ore_wi=HP500_BLEND_WI_KWH_T,
+        calibrated=True,
+    )

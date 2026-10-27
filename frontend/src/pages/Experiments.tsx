@@ -1,36 +1,57 @@
-import { Refs, useShellLang } from '@fasl-work/caos-app-shell';
-import { CASES } from '../data/cases';
+// The Experiments page of ChancaDEM (ADR-0017 section 2.1): six experimental questions answered from the committed artifacts, each with its
+// table and its chart, and the three areas that say how the answers are judged (the metrics, the held-out protocol and the datasets). The
+// text modules, the data functions and the views are in `content/experiments/`; the cross-case content moved here from the App.
+import { DocPage, TabGroups } from '@fasl-work/caos-app-shell';
+import { useT } from '../content/bi';
+import { ExperimentsData } from '../content/experiments/context';
+import { Datasets, Metrics, Protocol } from '../content/experiments/method';
+import { CapacityQuestion, EnvelopeQuestion, PowerQuestion, SettingQuestion, SpeedQuestion, ThrowQuestion } from '../content/experiments/questions';
 
-// Experiments, the case-coverage matrix and the controlled sweeps the studio runs. The held-out results + the
-// live parity scatter are on the Benchmark page (loaded from the committed artifacts); this page documents the
-// protocol design + the live case matrix.
-export default function Experiments() {
-  const es = useShellLang() === 'es';
+export function Experiments() {
+  const t = useT();
   return (
-    <section className="page-body prose">
-      <h2>{es ? 'Experimentos' : 'Experiments'}</h2>
-      <p className="tz-lead">{es ? 'La cobertura de casos y los barridos controlados que explora el estudio: tipo de máquina, dureza, granulometría de alimentación, régimen y los dos controles (paso directo e inválido).' : 'The case coverage and controlled sweeps the studio explores: machine type, hardness, feed gradation, regime, and the two controls (pass-through and invalid).'}</p>
-
-      <h3>{es ? 'Matriz de casos' : 'Case matrix'}</h3>
-      <table className="tz-table">
-        <thead><tr><th>ID</th><th>{es ? 'Caso' : 'Case'}</th><th>{es ? 'Máquina' : 'Machine'}</th><th className="num">CSS</th><th className="num">A·b</th><th>{es ? 'Tipo' : 'Type'}</th></tr></thead>
-        <tbody>{CASES.map((c) => (
-          <tr key={c.id}><td><b>{c.id}</b></td><td>{c.name}</td><td>{c.machine}</td><td className="num">{c.cssMm}</td><td className="num">{c.oreAxb}</td>
-            <td>{c.control ? <span className={`tz-badge ${c.control === 'invalid' ? 'bad' : c.control === 'negative' ? 'warn' : 'ok'}`}>{c.control}</span> : ', '}</td></tr>
-        ))}</tbody>
-      </table>
-
-      <h3>{es ? 'Barridos controlados' : 'Controlled sweeps'}</h3>
-      <ul>
-        <li>{es ? <><b>CSS → P80.</b> Cerrar el CSS afina el producto monótonamente (verificado en los tests del motor). La pestaña de mapa de operación muestra P80 sobre velocidad×CSS.</> : <><b>CSS → P80.</b> Closing the CSS makes the product monotonically finer (asserted in the engine tests). The operating-map tab shows P80 over speed×CSS.</>}</li>
-        <li>{es ? <><b>Velocidad → capacidad.</b> La capacidad sube hasta un óptimo y luego cae (la joroba de Evertsson), el caso S03 (sobre-velocidad) cruza deliberadamente al lado descendente.</> : <><b>Speed → capacity.</b> Capacity rises to an optimum then falls (the Evertsson hump), case S03 (over-speed) deliberately crosses to the falling side.</>}</li>
-        <li>{es ? <><b>Controles.</b> CP1 (paso directo, CSS ≥ F80) debe mostrar reducción ≈1; CI1 (CSS &gt; tope de feed) debe marcarse inválido, nunca un gráfico bonito.</> : <><b>Controls.</b> CP1 (pass-through, CSS ≥ F80) must show reduction ≈1; CI1 (CSS &gt; feed top) must be flagged invalid, never a pretty plot.</>}</li>
-      </ul>
-
-      <h3>{es ? 'Protocolo a prueba de fugas' : 'Leakage-safe protocol'}</h3>
-      <p>{es ? 'El surrogate se entrena con un barrido Latin-hypercube sobre el espacio de operación (5 máquinas × 6 ejes continuos, 6724 puntos válidos, semilla 12345) evaluado por el motor físico exacto. Se evalúa en un segundo barrido Latin-hypercube independiente (semilla 67890, 2402 puntos), no un split de filas, que filtraría el diseño estratificado. Los puntos inválidos (CSS≥F80, mal condicionados) se descartan del entrenamiento del surrogate y forman el conjunto negativo del autoencoder.' : 'The surrogate trains on a Latin-hypercube sweep of the operating space (5 machines × 6 continuous axes, 6724 valid points, seed 12345) evaluated by the exact physics engine. It is evaluated on a second independent Latin-hypercube draw (seed 67890, 2402 points), not a row-split, which would leak the stratified design. Invalid points (CSS≥F80, ill-conditioned) are discarded from surrogate training and form the autoencoder’s negative set.'}</p>
-      <p className="tz-note">{es ? 'Los resultados held-out reales (R²/MAPE por salida) y el scatter de paridad en vivo (surrogate ONNX vs motor físico) se muestran en la página Benchmark. Las trazas DEM offline y el cruce balance-poblacional↔DEM se incorporan en el siguiente incremento.' : 'The real held-out results (per-output R²/MAPE) and the live parity scatter (ONNX surrogate vs the physics engine) are on the Benchmark page. The offline DEM traces and the population-balance↔DEM cross-check are wired in the next increment.'}</p>
-      <Refs ids={['duarte2021', 'quist2016', 'napiermunn1996']} label="References" />
-    </section>
+    <DocPage
+      wide
+      title={{ en: 'Experiments', es: 'Experimentos' }}
+      lede={t(
+        'Six experimental questions on the crusher, each answered from the committed artifacts with its table and its chart: how the product and the capacity move with the setting and with the speed, whether a wider throw coarsens the product, where the ten HP500 surveys sit, and whether the calibrated capacity and the power of the engine reproduce the measured ones out of sample. The metrics, the held-out protocol and the datasets follow.',
+        'Seis preguntas experimentales sobre el chancador, cada una respondida desde los artefactos comprometidos con su tabla y su gráfico: cómo se mueven el producto y la capacidad con la abertura y con la velocidad, si una carrera más ancha engrosa el producto, dónde caen los diez muestreos HP500, y si la capacidad calibrada y la potencia del motor reproducen las medidas fuera de muestra. Siguen las métricas, el protocolo con datos reservados y los conjuntos de datos.',
+      )}
+    >
+      <ExperimentsData>
+        <TabGroups
+          ariaLabel={t('Experiments topics', 'Temas de los experimentos')}
+          groups={[
+            {
+              id: 'engine',
+              label: t('How does the engine respond?', '¿Cómo responde el motor?'),
+              tabs: [
+                { id: 'setting', label: t('The setting', 'La abertura'), content: <SettingQuestion /> },
+                { id: 'speed', label: t('The speed hump', 'La joroba de velocidad'), content: <SpeedQuestion /> },
+                { id: 'throw', label: t('The throw', 'La carrera'), content: <ThrowQuestion /> },
+              ],
+            },
+            {
+              id: 'surveys',
+              label: t('What do the ten surveys say?', '¿Qué dicen los diez muestreos?'),
+              tabs: [
+                { id: 'envelope', label: t('The envelope', 'La envolvente'), content: <EnvelopeQuestion /> },
+                { id: 'capacity', label: t('The capacity', 'La capacidad'), content: <CapacityQuestion /> },
+                { id: 'power', label: t('The power', 'La potencia'), content: <PowerQuestion /> },
+              ],
+            },
+            {
+              id: 'judged',
+              label: t('How are the answers judged?', '¿Cómo se juzgan las respuestas?'),
+              tabs: [
+                { id: 'metrics', label: t('Metrics', 'Métricas'), content: <Metrics /> },
+                { id: 'protocol', label: t('Protocol', 'Protocolo'), content: <Protocol /> },
+                { id: 'datasets', label: t('Datasets', 'Datos'), content: <Datasets /> },
+              ],
+            },
+          ]}
+        />
+      </ExperimentsData>
+    </DocPage>
   );
 }

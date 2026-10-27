@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "anomaly-model.schema.json",
+  "title": "AnomalyModel",
+  "description": "Model slot, catalog row anomaly-model 1.0.0: the inference contract of the denoising autoencoder that scores how far an operating result lies from the engine's training manifold, written by data-pipeline/pipeline/stages/train.py to data/derived/models/psd-ae.json beside the ONNX graph data/derived/models/psd-ae.onnx. The input is the 14 features of feature_order built from an engine result (log10 of p80_mm, p50_mm and p20_mm, the five product fractions passing, throughput_tph, power_kw, reduction_ratio, log10 of f80_mm, specific_energy_kwh_t, feed_m) standardised as (value - mean) / std; the graph's input x has shape [1, 14] and its output xr the reconstruction of the same shape. The score is the mean squared reconstruction error over the 14 values; a score above threshold_p99 (the 99th percentile of the scores on the training draw) marks the point anomalous. The slot's baseline is the engine's envelope gate (pipeline.model.crusher.envelope): a rule check that flags a point outside the physical and calibrated envelope. Applicability: training.input_ranges is the operating domain of the engine draw the model was trained on; the model scores only a point that is not calibrated and inside those ranges, else the envelope gate answers with the reason. Rules the schema cannot state, checked by the producer test: mean and std have the length of feature_order, every std is positive, and the ONNX file exists with the sha256 given.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "engine_version", "feature_order", "mean", "std", "threshold_p99", "train_recon_mean", "graph", "architecture", "training"],
+  "properties": {
+    "schema": {"const": "chancadem.anomaly/v1"},
+    "engine_version": {"type": "string", "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$"},
+    "feature_order": {"type": "array", "prefixItems": [{"const": "log10_p80_mm"}, {"const": "log10_p50_mm"}, {"const": "log10_p20_mm"}, {"const": "pass_1"}, {"const": "pass_4"}, {"const": "pass_8"}, {"const": "pass_16"}, {"const": "pass_32"}, {"const": "throughput_tph"}, {"const": "power_kw"}, {"const": "reduction_ratio"}, {"const": "log10_f80_mm"}, {"const": "specific_energy_kwh_t"}, {"const": "feed_m"}], "minItems": 14, "maxItems": 14},
+    "mean": {"type": "array", "items": {"type": "number"}, "minItems": 14, "maxItems": 14},
+    "std": {"type": "array", "items": {"type": "number", "exclusiveMinimum": 0}, "minItems": 14, "maxItems": 14},
+    "threshold_p99": {"type": "number", "exclusiveMinimum": 0},
+    "train_recon_mean": {"type": "number", "minimum": 0},
+    "graph": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "bytes", "sha256", "opset", "input", "output"],
+      "properties": {
+        "path": {"const": "models/psd-ae.onnx"},
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 5242880},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "opset": {"type": "integer", "minimum": 13},
+        "input": {"const": "x"},
+        "output": {"const": "xr"}
+      }
+    },
+    "architecture": {"type": "string", "minLength": 1, "description": "The layer sizes, for example 14-16-6-16-14, and the input noise used in training."},
+    "training": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["seed", "n_train", "noise_std", "input_ranges", "torch_version"],
+      "properties": {
+        "seed": {"type": "integer"},
+        "n_train": {"type": "integer", "minimum": 1},
+        "noise_std": {"type": "number", "minimum": 0},
+        "input_ranges": {"$ref": "#/$defs/inputRanges"},
+        "torch_version": {"type": "string", "minLength": 1},
+        "export_parity_max_abs": {"type": "number", "minimum": 0, "description": "The maximum absolute difference between the trained torch module's reconstruction and the exported graph's (run through onnxruntime) on the held-out draw, in standardised features, measured by train.py right after export; evidence the export preserved the trained module."}
+      }
+    }
+  },
+
+  "$defs": {
+    "inputRanges": {
+      "type": "object",
+      "description": "The training range of every continuous input, per machine: [low, high] of the training draw, inclusive, written by train.py from sweep.RANGES with no rounding. The applicability rule of both sides reads it: a model answers an operating point only when the point is not calibrated and every continuous input lies inside its machine's range; otherwise the slot's baseline answers, labelled with the reason (calibrated_case, or outside_training_range:<input>).",
+      "additionalProperties": false,
+      "required": ["cone-sec", "cone-tert", "jaw", "cone-short-head", "gyratory"],
+      "properties": {
+        "cone-sec": {"$ref": "#/$defs/machineRanges"},
+        "cone-tert": {"$ref": "#/$defs/machineRanges"},
+        "jaw": {"$ref": "#/$defs/machineRanges"},
+        "cone-short-head": {"$ref": "#/$defs/machineRanges"},
+        "gyratory": {"$ref": "#/$defs/machineRanges"}
+      }
+    },
+    "machineRanges": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["css_mm", "throw_mm", "speed_rpm", "feed_x63_mm", "feed_m", "ore_axb"],
+      "properties": {
+        "css_mm": {"$ref": "#/$defs/range"},
+        "throw_mm": {"$ref": "#/$defs/range"},
+        "speed_rpm": {"$ref": "#/$defs/range"},
+        "feed_x63_mm": {"$ref": "#/$defs/range"},
+        "feed_m": {"$ref": "#/$defs/range"},
+        "ore_axb": {"$ref": "#/$defs/range"}
+      }
+    },
+    "range": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2, "description": "[low, high], low below high."}
+  }
+}

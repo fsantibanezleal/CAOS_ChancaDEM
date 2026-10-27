@@ -1,0 +1,13 @@
+# The notebook environment (.venv-notebooks, built by scripts/setup.sh --notebooks or scripts/setup.ps1 -Notebooks).
+# Exact pins only (scripts/check_tech_matrix.py reads this file; scripts/check_notebooks.py holds each notebook's
+# `caos.packages` to these lines). ChancaDEM publishes no package of its own: its methods live in data-pipeline/pipeline/
+# and the notebooks import them by path, so the pins are the libraries those methods and the figures use.
+numpy==2.4.6
+matplotlib==3.11.2
+# the released models run in onnxruntime (topic 07), and the pipeline's bundle loader validates their contracts with jsonschema
+onnxruntime==1.27.0
+jsonschema==4.26.0
+# the runtime that executes the notebooks (scripts/run_notebooks.py)
+nbclient==0.11.0
+nbformat==5.11.1
+ipykernel==7.4.0

@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hp500-backbone.schema.json",
+  "title": "Hp500Backbone",
+  "description": "Catalog row hp500-backbone 1.0.0: the calibrated engine evaluated on each of the ten HP500 surveys, written by data-pipeline/pipeline/hp500/backbone.py to data/derived/hp500/backbone.json. The engine is the canonical Python engine (pipeline.model.crusher) with calibrated true, the survey's measured closed-side setting and f80, and the HP500 nominal throw and speed; the measured block repeats the survey row. Derived from data licensed CC BY 4.0 (Rocha, Campos, Silva and Tavares 2024, https://doi.org/10.3390/min14090919). Rules the schema cannot state, checked by the producer test: n equals the number of surveys and the surveys are numbered 1 to n in order.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "source", "engine_version", "note", "n", "surveys"],
+  "properties": {
+    "schema": {"const": "chancadem.hp500.backbone/v1"},
+    "source": {"$ref": "#/$defs/source"},
+    "engine_version": {"type": "string", "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$"},
+    "note": {"type": "string", "minLength": 1},
+    "n": {"type": "integer", "minimum": 1},
+    "surveys": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "n", "measured", "backbone"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^HP500-[0-9]{2}$"},
+          "n": {"type": "integer", "minimum": 1},
+          "measured": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["css_mm", "f80_mm", "feed_tph", "power_kw"],
+            "properties": {
+              "css_mm": {"type": "number"},
+              "f80_mm": {"type": "number"},
+              "feed_tph": {"type": "number"},
+              "power_kw": {"type": "number"}
+            }
+          },
+          "backbone": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["p80_mm", "throughput_tph", "bond_power_kw", "calibrated_power_kw", "f80_model_mm"],
+            "properties": {
+              "p80_mm": {"type": "number", "minimum": 0},
+              "throughput_tph": {"type": "number", "minimum": 0},
+              "bond_power_kw": {"type": "number", "minimum": 0, "description": "The classical Bond draw of the engine at the survey."},
+              "calibrated_power_kw": {"type": "number", "minimum": 0, "description": "The paper's current-based form, 1.30 times the Bond draw plus 110 kW."},
+              "f80_model_mm": {"type": "number", "minimum": 0, "description": "The f80 of the Rosin-Rammler feed the engine reconstructed from the measured f80."}
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["paper", "doi", "license", "table"],
+      "properties": {
+        "paper": {"type": "string", "minLength": 1},
+        "doi": {"const": "10.3390/min14090919"},
+        "license": {"const": "CC BY 4.0"},
+        "table": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

@@ -1,43 +1,56 @@
-import { Refs, useShellLang } from '@fasl-work/caos-app-shell';
+// The Implementation page of ChancaDEM (ADR-0017 section 2.1): how the product is built, in six questions. Ten topics, each one
+// `DocSection` of its area, transcribed from the code, the contract catalog and the SDD; the text modules are in
+// `content/implementation/`. The areas are architecture, contract, engine (five topics), lanes, reproducibility and deployment.
+import { DocPage, TabGroups } from '@fasl-work/caos-app-shell';
+import { useT } from '../content/bi';
+import { Architecture, Contract } from '../content/implementation/built';
+import { CapacityPower, EnvelopeGate, WhitenSolve } from '../content/implementation/engine';
+import { CrusherCalProtocol, LearnedModels } from '../content/implementation/learned';
+import { Deployment, Lanes, Reproducibility } from '../content/implementation/runs';
 
-// Implementation, the two-tier architecture: heavy work offline (LHS sweep of the TS engine + torch training →
-// ONNX artifacts); the pure-TS physics + ONNX inference live. The offline 2-D DEM tracer (stages/dem.py) is the
-// documented next increment, it is not wired into the shipped app yet.
-const sv = { maxWidth: 620, display: 'block', margin: '0.8rem auto', font: '11px var(--font-sans, sans-serif)' } as const;
-
-export default function Implementation() {
-  const es = useShellLang() === 'es';
+export function Implementation() {
+  const t = useT();
   return (
-    <section className="page-body prose">
-      <h2>{es ? 'Implementación' : 'Implementation'}</h2>
-      <p className="tz-lead">{es ? 'Dos capas: lo pesado (el barrido LHS del motor + el entrenamiento de los modelos) se precalcula offline y se versiona como artefactos reproducibles + modelos ONNX; lo liviano (balance poblacional + inferencia aprendida) se ejecuta en vivo en el navegador.' : 'Two tiers: the heavy work (the LHS sweep of the engine + model training) is precomputed offline and versioned as reproducible artifacts + ONNX models; the light work (population balance + learned inference) runs live in the browser.'}</p>
-
-      <svg viewBox="0 0 640 220" width="100%" style={sv} role="img" aria-label="architecture">
-        <rect x="10" y="14" width="300" height="92" rx="8" fill="none" stroke="var(--color-border)" strokeDasharray="4 3" />
-        <text x="20" y="30" fill="var(--color-fg-subtle)" fontSize="11" fontWeight="600">{es ? 'OFFLINE · .venv (Python)' : 'OFFLINE · .venv (Python)'}</text>
-        <rect x="22" y="40" width="130" height="26" rx="5" fill="var(--color-surface)" stroke="var(--color-border)" /><text x="87" y="57" textAnchor="middle" fontSize="10" fill="var(--color-fg-subtle)">{es ? 'barrido LHS (motor TS)' : 'LHS sweep (TS engine)'}</text>
-        <rect x="22" y="74" width="130" height="26" rx="5" fill="var(--color-surface)" stroke="var(--color-border)" /><text x="87" y="91" textAnchor="middle" fontSize="10" fill="var(--color-fg-subtle)">{es ? 'entrena → ONNX' : 'train → ONNX'}</text>
-        <rect x="166" y="40" width="130" height="60" rx="5" fill="var(--color-surface)" stroke="var(--color-accent)" /><text x="231" y="66" textAnchor="middle" fontSize="10" fill="var(--color-fg)">{es ? 'artefactos:' : 'artifacts:'}</text><text x="231" y="82" textAnchor="middle" fontSize="9" fill="var(--color-fg-subtle)">cz-sweep*.jsonl · *.onnx · json</text>
-
-        <line x1="320" y1="60" x2="360" y2="60" stroke="var(--color-fg-subtle)" />
-        <text x="340" y="52" textAnchor="middle" fontSize="9" fill="var(--color-fg-faint)">git</text>
-
-        <rect x="360" y="14" width="270" height="180" rx="8" fill="none" stroke="var(--color-border)" strokeDasharray="4 3" />
-        <text x="370" y="30" fill="var(--color-fg-subtle)" fontSize="11" fontWeight="600">{es ? 'EN VIVO · navegador (TS)' : 'LIVE · browser (TS)'}</text>
-        <rect x="372" y="40" width="240" height="26" rx="5" fill="var(--color-surface)" stroke="var(--color-border)" /><text x="492" y="57" textAnchor="middle" fontSize="10" fill="var(--color-fg-subtle)">{es ? 'motor Whiten + Evertsson + Bond' : 'Whiten + Evertsson + Bond engine'}</text>
-        <rect x="372" y="74" width="240" height="26" rx="5" fill="var(--color-surface)" stroke="var(--color-border)" /><text x="492" y="91" textAnchor="middle" fontSize="10" fill="var(--color-fg-subtle)">onnxruntime-web (surrogate + AE)</text>
-        <rect x="372" y="108" width="240" height="26" rx="5" fill="var(--color-surface)" stroke="var(--color-border)" /><text x="492" y="125" textAnchor="middle" fontSize="10" fill="var(--color-fg-subtle)">three.js {es ? 'cámara cinemática 3D' : 'kinematic 3D chamber'}</text>
-        <rect x="372" y="142" width="240" height="38" rx="5" fill="var(--color-surface)" stroke="var(--color-accent)" /><text x="492" y="165" textAnchor="middle" fontSize="10" fill="var(--color-fg)">{es ? '~12 vistas reactivas (zustand)' : '~12 reactive views (zustand)'}</text>
-      </svg>
-
-      <h3>{es ? 'Decisiones clave' : 'Key decisions'}</h3>
-      <ul>
-        <li>{es ? <><b>TypeScript puro, no Pyodide.</b> El cálculo en vivo es álgebra lineal densa pequeña (un solve de Whiten de ~28×28, sub-milisegundo); un solveLU escrito a mano sobre Float64Array evita un arranque en frío de ~6–10 MB de Pyodide+numpy.</> : <><b>Pure TypeScript, not Pyodide.</b> The live compute is small dense linear algebra (a ~28×28 Whiten solve, sub-millisecond); a hand-written solveLU on Float64Array avoids a ~6–10 MB Pyodide+numpy cold start.</>}</li>
-        <li>{es ? <><b>DEM sólo offline.</b> El DEM industrial es ~10⁶ partículas/litro y ~4 h de cómputo por segundo de operación, imposible en el navegador. La vista 3D actual es una animación cinemática de la cámara (no resuelve partículas); reproducir trazas DEM pre-precalculadas y decimadas (&lt;1 MB) es el siguiente incremento documentado.</> : <><b>DEM offline only.</b> Industrial DEM is ~10⁶ particles/litre and ~4 h compute per second of operation, impossible in-browser. Today's 3D view is a kinematic chamber animation (it does not solve particles); replaying pre-baked, decimated DEM traces (&lt;1 MB) is the documented next increment.</>}</li>
-        <li>{es ? <><b>ONNX sólo para lo aprendido.</b> onnxruntime-web (WASM, 1 hilo: Pages no tiene COOP/COEP) ejecuta el surrogate y el autoencoder; el paquete npm y los .wasm se fijan a la misma versión.</> : <><b>ONNX only for the learned models.</b> onnxruntime-web (WASM, 1 thread: Pages has no COOP/COEP) runs the surrogate and the autoencoder; the npm package and the .wasm are pinned to the same version.</>}</li>
-        <li>{es ? <><b>Contrato de preprocesamiento congelado.</b> Un <code>scaler.json</code> aplica el z-scoring idéntico en entrenamiento e inferencia, con un test de paridad PyTorch↔onnxruntime-web.</> : <><b>Frozen preprocessing contract.</b> A <code>scaler.json</code> applies identical z-scoring at train and inference time, with a PyTorch↔onnxruntime-web parity test.</>}</li>
-      </ul>
-      <Refs ids={['quist2016', 'cleary2009', 'tavares2021', 'napiermunn1996']} label="References" />
-    </section>
+    <DocPage
+      title={{ en: 'Implementation', es: 'Implementación' }}
+      lede={t(
+        'How the crusher studio is built, in six questions: how the offline pipeline, the contracts and the site fit together, how the engine computes a product, a capacity and a power, what the learned models and the leave-one-survey-out validation add, what runs where, whether a result can be reproduced, and how the site is deployed and checked. Each topic gives the steps, constants and guards of the code and the equation of its step.',
+        'Cómo está construido el estudio de chancado, en seis preguntas: cómo encajan el pipeline fuera de línea, los contratos y el sitio, cómo el motor calcula un producto, una capacidad y una potencia, qué agregan los modelos aprendidos y la validación dejando un muestreo fuera, qué corre dónde, si un resultado puede reproducirse, y cómo se despliega y se verifica el sitio. Cada tema entrega los pasos, las constantes y las guardas del código y la ecuación de su paso.',
+      )}
+    >
+      <TabGroups
+        ariaLabel={t('Implementation topics', 'Temas de implementación')}
+        groups={[
+          {
+            id: 'built',
+            label: t('How is it built?', '¿Cómo está construido?'),
+            tabs: [
+              { id: 'architecture', label: t('Architecture', 'Arquitectura'), content: <Architecture /> },
+              { id: 'contract', label: t('Contracts', 'Contratos'), content: <Contract /> },
+            ],
+          },
+          {
+            id: 'engine',
+            label: t('How does the engine compute?', '¿Cómo calcula el motor?'),
+            tabs: [
+              { id: 'whiten', label: t('Whiten solve', 'Solución de Whiten'), content: <WhitenSolve /> },
+              { id: 'capacity', label: t('Capacity and power', 'Capacidad y potencia'), content: <CapacityPower /> },
+              { id: 'envelope', label: t('Envelope gate', 'Compuerta de envolvente'), content: <EnvelopeGate /> },
+            ],
+          },
+          {
+            id: 'beyond',
+            label: t('What do the models and the validation add?', '¿Qué agregan los modelos y la validación?'),
+            tabs: [
+              { id: 'learned', label: t('Learned models', 'Modelos aprendidos'), content: <LearnedModels /> },
+              { id: 'crushercal', label: t('CrusherCal', 'CrusherCal'), content: <CrusherCalProtocol /> },
+            ],
+          },
+          { id: 'runs', label: t('What runs where?', '¿Qué corre dónde?'), tabs: [{ id: 'lanes', label: t('Lanes', 'Carriles'), content: <Lanes /> }] },
+          { id: 'trust', label: t('Can it be reproduced?', '¿Se puede reproducir?'), tabs: [{ id: 'reproducibility', label: t('Reproducibility', 'Reproducibilidad'), content: <Reproducibility /> }] },
+          { id: 'ships', label: t('How does it ship?', '¿Cómo se entrega?'), tabs: [{ id: 'deployment', label: t('Deployment', 'Despliegue'), content: <Deployment /> }] },
+        ]}
+      />
+    </DocPage>
   );
 }
