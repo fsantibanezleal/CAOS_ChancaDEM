@@ -30,14 +30,14 @@ def load(name: str):
 
 CHECK = load("check_notebooks")
 
-# Read from notebooks/en on 2026-10-27: topic folder -> the level of each notebook, in order (06-03 is level 4 by design).
+# Read from notebooks/en on 2026-10-27: topic folder -> the level of each notebook, in order (06-04 is level 4 by design).
 LEVELS = {
     "01-getting-started": [1, 2],
     "02-size-distributions": [1, 2],
     "03-breakage-and-classification": [1, 2, 2],
     "04-capacity-and-power": [1, 2],
-    "05-real-surveys": [1, 2, 3],
-    "06-crushercal": [1, 2, 4],
+    "05-real-surveys": [1, 2],
+    "06-crushercal": [1, 2, 3, 4],
     "07-learned-models": [1, 2, 3],
 }
 PER_LANGUAGE = 18          # the sum of LEVELS
