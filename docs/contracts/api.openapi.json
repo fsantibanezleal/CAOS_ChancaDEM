@@ -48,7 +48,7 @@
       "get": {
         "operationId": "getArtifact",
         "summary": "An artifact a manifest names (catalog row trace), by its path under data/derived.",
-        "description": "rel_path may contain slashes (for example EX02_epidemic/trace.json); only a path an indexed manifest names is served; anything else is not found, and an artifact that cannot be read is unavailable.",
+        "description": "rel_path may contain slashes (for example S01/trace.json); only a path an indexed manifest names is served; anything else is not found, and an artifact that cannot be read is unavailable.",
         "parameters": [{"name": "rel_path", "in": "path", "required": true, "schema": {"type": "string"}}],
         "responses": {
           "200": {"description": "The committed artifact.", "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Trace"}}}},
