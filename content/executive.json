@@ -4,8 +4,8 @@
     "es": "Chancado y conminución: el costo de energía y de desgaste de romper roca en la minería del cobre"
   },
   "key_statement": {
-    "en": "As ore grades fall and rock gets harder, copper concentrators use more electricity per tonne of metal, and crushers drift with wear after they are set. Running crushing as one managed system with the ore and the mill keeps that energy in check.",
-    "es": "Con menos ley y roca más dura, las concentradoras de cobre usan más electricidad por tonelada de metal, y los chancadores se desvían con el desgaste. Operar el chancado como un solo sistema gestionado, junto con el mineral y el molino, mantiene bajo control esa energía."
+    "en": "As ore grades fall and rock gets harder, copper concentrators use more electricity per tonne of metal, and crushers drift with wear after they are set. The direction proposed is to run crushing as one managed system with the ore and the mill.",
+    "es": "Con leyes más bajas y roca más dura, las concentradoras de cobre usan más electricidad por tonelada de metal, y los chancadores se desvían con el desgaste después de ajustados. La dirección propuesta es operar el chancado como un solo sistema gestionado, junto con el mineral y el molino."
   },
   "headline_figures": [
     {
@@ -33,8 +33,8 @@
         "es": "20,2"
       },
       "unit": {
-        "en": "percent more electricity in Chilean copper mining from 2025 to 2034, against 8.3 percent more fine copper",
-        "es": "por ciento más de electricidad en la minería chilena del cobre entre 2025 y 2034, frente a un 8,3 por ciento más de cobre fino"
+        "en": "percent more electricity projected for Chilean copper mining from 2025 to 2034, against 8.3 percent more fine copper",
+        "es": "por ciento más de electricidad proyectada para la minería chilena del cobre entre 2025 y 2034, frente a un 8,3 por ciento más de cobre fino"
       },
       "source": "cochilco-projection"
     },
@@ -57,7 +57,7 @@
   "pain": {
     "key_message": {
       "en": "Breaking rock takes a growing share of the electricity of copper mining, and a crusher left at its first setting wastes some of it as the liners wear.",
-      "es": "Romper roca consume una parte creciente de la electricidad del cobre, y un chancador que queda en su primer ajuste desperdicia parte de ella al desgastarse los revestimientos."
+      "es": "Romper roca consume una parte creciente de la electricidad de la minería del cobre, y un chancador fijo en su primer ajuste desperdicia parte de ella al desgastarse los revestimientos."
     },
     "paragraphs": [
       {
@@ -231,12 +231,12 @@
       },
       {
         "en": "An energy efficiency law obliges the largest energy users to run an energy management system, name an energy manager, report each year and pass an external audit. The agency reports read for this view do not separate the energy of crushing from that of grinding.",
-        "es": "Una ley de eficiencia energética obliga a los grandes usuarios a tener un sistema de gestión de energía, nombrar un gestor energético, informar cada año y pasar una auditoría. Los informes del organismo revisados para esta vista no separan la energía del chancado de la de la molienda."
+        "es": "Una ley de eficiencia energética obliga a los grandes usuarios a tener un sistema de gestión de energía, nombrar un gestor energético, informar cada año y pasar una auditoría externa. Los informes del organismo revisados para esta vista no separan la energía del chancado de la de la molienda."
       }
     ],
     "setting": {
       "en": "The class of operations is the large and medium open-pit copper mine with a concentrator. Its rules are an energy efficiency law and yearly reporting to the national agency. Its data come from an agency survey that covers nearly all national fine copper production. Its technology is gyratory and cone crushers with automatic setting regulation, simulation models and a first wave of artificial intelligence.",
-      "es": "La clase de operaciones es la mina de cobre a cielo abierto, grande y mediana, con planta concentradora. Sus reglas son una ley de eficiencia energética y el informe anual al organismo nacional. Sus datos vienen de una encuesta del organismo que cubre casi toda la producción nacional de cobre fino. Su tecnología son chancadores giratorios y de cono con regulación automática del ajuste, modelos de simulación y una primera ola de inteligencia artificial."
+      "es": "La clase de operaciones es la mina de cobre a cielo abierto, grande y mediana, con planta concentradora. Sus reglas son una ley de eficiencia energética y el informe anual al organismo nacional. Sus datos vienen de un levantamiento del organismo que cubre casi toda la producción nacional de cobre fino. Su tecnología son chancadores giratorios y de cono con regulación automática del ajuste, modelos de simulación y una primera ola de inteligencia artificial."
     },
     "forces": [
       {
@@ -279,14 +279,14 @@
       {
         "statement": {
           "en": "In its stated policies scenario, the International Energy Agency finds that announced projects leave an implied 30 percent copper deficit in 2035, citing declining ore grades.",
-          "es": "La Agencia Internacional de Energía halla que los proyectos anunciados dejan un déficit implícito de cobre de 30 por ciento en 2035, y cita la baja de las leyes."
+          "es": "En su escenario de políticas declaradas, la Agencia Internacional de Energía halla un déficit implícito de cobre de 30 por ciento en 2035 y cita la baja de leyes."
         },
         "source": "iea-outlook"
       },
       {
         "statement": {
           "en": "The energy efficiency law covers about 94 percent of the copper sector, and 98 percent of the covered operations already have an energy management system.",
-          "es": "La ley cubre cerca del 94 por ciento del sector del cobre, y el 98 por ciento de las operaciones cubiertas ya tiene un sistema de gestión de energía."
+          "es": "La ley de eficiencia energética cubre cerca del 94 por ciento del sector cuprífero, y el 98 por ciento de las operaciones cubiertas ya tiene un sistema de gestión energética."
         },
         "source": "cochilco-energy"
       },
@@ -515,7 +515,7 @@
         "signal": {
           "statement": {
             "en": "The agency projects sector electricity up from 27.6 to 33.2 terawatt-hours between 2025 and 2034, plus 20.2 percent, against plus 8.3 percent for fine copper.",
-            "es": "Según su proyección, la electricidad del sector sube 20,2 por ciento entre 2025 y 2034, de 27,6 a 33,2 teravatios hora, y el cobre fino 8,3 por ciento."
+            "es": "Según la proyección del organismo, la electricidad del sector sube 20,2 por ciento entre 2025 y 2034, de 27,6 a 33,2 teravatios hora, y el cobre fino 8,3 por ciento."
           },
           "source": "cochilco-projection"
         },
@@ -535,8 +535,8 @@
         "horizon": "two_years",
         "signal": {
           "statement": {
-            "en": "In 2024, 44 percent of large operations used or piloted artificial intelligence in extraction and processing, and digital twins stood near 20 percent in processing.",
-            "es": "En 2024, el 44 por ciento de las grandes operaciones usaba o pilotaba inteligencia artificial en extracción y procesamiento, y los gemelos digitales rondaban el 20 por ciento."
+            "en": "In 2024, 44 percent of large operations used or piloted artificial intelligence in extraction and processing, and 28 percent used or piloted digital twins in processing.",
+            "es": "En 2024, el 44 por ciento de las grandes operaciones usaba o pilotaba inteligencia artificial en extracción y procesamiento, y el 28 por ciento, gemelos digitales en procesamiento."
           },
           "source": "workforce-study"
         },
@@ -623,7 +623,7 @@
         },
         "applies": {
           "en": "A setting or a speed means something only against the ore hardness, the liner wear, the feed size and what the mill downstream does with the product.",
-          "es": "Un ajuste o una velocidad solo significan algo frente a la dureza del mineral, el desgaste, la alimentación y lo que hace el molino con el producto."
+          "es": "Un ajuste o una velocidad solo significan algo frente a la dureza del mineral, el desgaste de los revestimientos, el tamaño de alimentación y el molino que recibe el producto."
         }
       },
       {
@@ -643,7 +643,7 @@
         },
         "applies": {
           "en": "One governed record of plant data, models and agents, so that any change to a crusher setpoint has an owner, a limit and an audit trail.",
-          "es": "Un registro gobernado de datos, modelos y agentes, de modo que todo cambio al valor objetivo de un chancador tenga responsable, límite y huella de auditoría."
+          "es": "Un registro gobernado de datos de planta, modelos y agentes, de modo que todo cambio al valor objetivo de un chancador tenga responsable, límite y huella de auditoría."
         }
       }
     ],
@@ -794,8 +794,8 @@
       }
     ],
     "handoff": {
-      "en": "The technical view explores one part of this problem, the setting and wear of a crusher, showing product size, throughput and power for a chosen feed.",
-      "es": "La vista técnica explora una parte de este problema, el ajuste y el desgaste de un chancador, mostrando tamaño de producto, capacidad y potencia para una alimentación elegida."
+      "en": "The technical view explores one part of this problem, the setting and speed of a crusher against its feed, showing product size, throughput and power, without modelling liner wear.",
+      "es": "La vista técnica explora una parte del problema, el ajuste y la velocidad de un chancador según su alimentación, con tamaño de producto, capacidad y potencia, sin modelar el desgaste."
     }
   },
   "illustrations": {
