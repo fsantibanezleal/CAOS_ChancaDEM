@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "model-metrics.schema.json",
+  "title": "ModelMetrics",
+  "description": "Catalog row model-metrics 1.0.0: the held-out evaluation of the two model slots, written by data-pipeline/pipeline/stages/evaluate.py to data/derived/model-metrics.json. The surrogate is scored on an LHS draw independent of its training draw (a different seed), per output, against the canonical engine; the ONNX graphs are scored through onnxruntime, not through torch, and the parity between torch and the float32 and int8 graphs is reported; the monotonicity check is that the surrogate's P80 does not decrease as the closed-side setting opens on every machine's sweep. The autoencoder is scored by its false-alarm rate on the held-out draw and its detection rate on planted off-manifold points, beside the envelope gate's rates on the same points. Every number is computed by the evaluate stage; none is written by hand.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "engine_version", "surrogate", "anomaly"],
+  "properties": {
+    "schema": {"const": "chancadem.model-metrics/v1"},
+    "engine_version": {"type": "string", "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$"},
+    "surrogate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["n_train", "n_test", "test_seed", "per_output", "p80_monotone_vs_css", "parity", "note"],
+      "properties": {
+        "n_train": {"type": "integer", "minimum": 1},
+        "n_test": {"type": "integer", "minimum": 1},
+        "test_seed": {"type": "integer"},
+        "per_output": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["p80_mm", "p50_mm", "p20_mm", "pass_1", "pass_4", "pass_8", "pass_16", "pass_32", "throughput_tph", "power_kw"],
+          "patternProperties": {
+            "^[a-z0-9_]+$": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["r2", "mape_pct", "mape_pct_int8"],
+              "properties": {
+                "r2": {"type": "number", "maximum": 1},
+                "mape_pct": {"type": "number", "minimum": 0},
+                "mape_pct_int8": {"type": "number", "minimum": 0}
+              }
+            }
+          }
+        },
+        "p80_monotone_vs_css": {"type": "boolean"},
+        "parity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["torch_vs_float32_max_abs", "float32_vs_int8_max_abs"],
+          "properties": {
+            "torch_vs_float32_max_abs": {"type": "number", "minimum": 0},
+            "float32_vs_int8_max_abs": {"type": "number", "minimum": 0}
+          }
+        },
+        "note": {"type": "string", "minLength": 1}
+      }
+    },
+    "anomaly": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["n_heldout", "false_alarm_rate", "n_planted", "detection_rate", "envelope_false_alarm_rate", "envelope_detection_rate", "planted", "note"],
+      "properties": {
+        "n_heldout": {"type": "integer", "minimum": 1},
+        "false_alarm_rate": {"type": "number", "minimum": 0, "maximum": 1},
+        "n_planted": {"type": "integer", "minimum": 1},
+        "detection_rate": {"type": "number", "minimum": 0, "maximum": 1},
+        "envelope_false_alarm_rate": {"type": "number", "minimum": 0, "maximum": 1},
+        "envelope_detection_rate": {"type": "number", "minimum": 0, "maximum": 1},
+        "planted": {"type": "string", "minLength": 1, "description": "How the off-manifold points were planted (which inputs moved outside the training bounds, and by how much)."},
+        "note": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

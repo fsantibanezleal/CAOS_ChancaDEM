@@ -1,27 +1,42 @@
-# data-pipeline/, the offline engine (`pipeline`)
+# data-pipeline/, the offline engine
 
-The staged, seeded, contract-bounded offline pipeline for ChancaDEM (ADR-0057). Install editable from the repo root
-(`pip install -e .`); run with `python data-pipeline/run.py`.
+The scripts of the product's science, invoked by path (`python data-pipeline/run.py`); the product declares no package of
+its own. They run in `.venv-pipeline` (`scripts/setup.sh` or `scripts/setup.ps1`), on a workstation, never in CI.
 
-```
-pipeline/
-├─ __init__.py            # __version__ = "0.03.000"
-├─ pipeline.py            # orchestrator + CLI (light replay by default; --retrain runs the heavy two-language lane)
-├─ registry.py            # cases grouped by CATEGORY (primary / secondary / tertiary / controls)
-├─ live.py                # Pyodide live-lane entrypoint, DORMANT (ChancaDEM's live lane is the TS engine + ONNX)
-├─ io/      contract.py (CONTRACT 1: operating-point schema + envelopes + outlier policy + PSD guard) · schema · formats
-├─ core/    rng · trace.py (CONTRACT 2 chancadem.trace/v1) · manifest.py (chancadem.manifest/v2) · gate.py (lane gate)
-├─ model/   surrogate.py (MLP 11→…→10) · psd_ae.py (denoising AE 14→6→14), torch
-├─ stages/  preprocess · feature_extraction · train · infer · evaluate · export · dem.py (offline 2-D DEM tracer, WIP)
-├─ cases/   circuit_cases.py (the 17-case circuit matrix)
-└─ sweep/   gen_sweep.mjs (LHS over the op-space via the TS engine) · bake_cases.mjs (the 17 cases → case-results.json)
-```
+## Commands
 
-**Two lanes:**
+| Command | What it does |
+|---|---|
+| `run.py` or `run.py all` | the release bake: the 27 cases, the HP500 documents, the index and the readiness; never trains (about 5 s) |
+| `run.py <case>` | one case, for example `run.py S01` |
+| `run.py readiness` | recompute `data/derived/readiness.json` from the catalog and the repository, no bake |
+| `run.py hp500` | the two HP500 documents (backbone and CrusherCal leave-one-survey-out) |
+| `run.py models` | the heavy lane: train the surrogate and the autoencoder on the canonical engine, evaluate them held-out (needs torch, onnx, onnxruntime) |
+| `run.py fixtures` | regenerate the provider tree `docs/contracts/fixtures/data` from this code |
 
-* **Default (light, numpy-only)**, `python data-pipeline/run.py all` rebuilds every per-case replay trace +
-  manifest from the committed `case-results.json` + `surrogate_metrics.json`. No torch, no Node, a clone replays.
-* **Heavy (`--retrain`)**, `pipeline all --retrain` runs the **Node sweep** of the TS Whiten engine
-  (`sweep/gen_sweep.mjs`, no Python re-port) → torch trains the surrogate + AE → exports ONNX + metrics, then
-  re-bakes `case-results.json`. Needs the `--precompute` setup (torch) + **Node 20+**. See
-  `docs/guides/01_precompute-pipeline.md`.
+Every command takes `--output <sandbox>` (tests and smoke runs must), and `--params` and `--surveys` to read other source
+tables. `scripts/precompute.sh` and `.ps1` call `run.py`.
+
+## Layout
+
+- `pipeline/pipeline.py`: the orchestrator and its CLI, and the engine time the lane gate judges
+- `pipeline/registry.py`: the cases, grouped by category, and the default case (S01)
+- `pipeline/cases/`: `circuit_cases.py` (17 authored cases: bilingual title, band, context and expected ranges) and
+  `hp500_cases.py` (the 10 measured surveys)
+- `pipeline/io/`: `contract.py` (contract 1: the params table), `formats.py` (readers and writers), `schema.py` (types)
+- `pipeline/core/`: `trace.py` and `manifest.py` (contract 2), `gate.py` (the lane gate), `expect.py` (expected ranges),
+  `unit_gate.py` (contract 3), `readiness.py` (the readiness document), `rng.py` (seeded determinism)
+- `pipeline/model/crusher/`: the canonical Python engine (Whiten population balance, Evertsson capacity, Bond power, the
+  HP500 calibration), held to the TypeScript engine by `tests/fixtures/engine-reference.json`; `bundles.py` decides which
+  model slots are released
+- `pipeline/hp500/`: the survey contract, the calibrated backbone and CrusherCal
+- `pipeline/stages/`: preprocess, infer, export (per case), train and evaluate (the heavy lane)
+- `pipeline/oracles.py`: independent closed-form checks (Rosin-Rammler, Bond, mass closure) the tests and notebooks import
+
+## Gates
+
+`scripts/check_artifacts.py` (contracts 2 and 3 over the shipped artifacts), `scripts/check_unit_constants.py` (contract
+3b over the engine's constants), `scripts/check_readiness.py`, `scripts/check_documents.py`, `scripts/check_contracts.py`.
+The bake fails when a result leaves its case's expected range or a prediction leaves its observable's units.
+
+See [../docs/architecture/05_precompute-pipeline.md](../docs/architecture/05_precompute-pipeline.md).

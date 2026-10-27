@@ -1,0 +1,3 @@
+case_id,machine,css_mm,throw_mm,speed_rpm,feed_x63_mm,feed_m,ore_axb,ore_wi
+FX01,cone-sec,32,30,360,90,1.2,55,14
+FX03,jaw,125,40,300,400,0.9,42,16

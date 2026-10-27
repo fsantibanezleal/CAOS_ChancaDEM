@@ -1,0 +1,462 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hp500-loo.schema.json",
+  "title": "Hp500Loo",
+  "description": "Catalog row hp500-loo 1.1.0: CrusherCal, the leave-one-survey-out validation of the calibrated backbone on the ten HP500 surveys, written by data-pipeline/pipeline/hp500/loo.py to data/derived/hp500/loo.json. Per target (throughput tph and power kW measured; P80 a model output reported as self-consistency), strict folds (every fitted scalar refit without the held-out survey) and leaky folds (fitted on all ten) grade M0 the calibrated backbone, M1 the backbone plus a bounded ridge residual, M2 a free-form least-squares fit, a constant-mean baseline and a label-shuffle negative control; the strict folds carry an 80 percent predictive interval, its empirical coverage (in sample: sigma comes from the same residuals the coverage checks) and its nested coverage (out of sample: for each survey, sigma from the held-out residuals of the other surveys only). The two parity blocks are in-sample contrasts of the power forms and of the capacity backbone against the measured values. Deterministic for a seed. Derived from data licensed CC BY 4.0 (https://doi.org/10.3390/min14090919). Rules the schema cannot state, checked by the producer test: every measured and pred list has n values in survey order; the label-shuffle control does not beat M0 on throughput; nested_covered and nested_sigma have n values in survey order and nested_coverage is the share of true entries of nested_covered.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source",
+    "engine_version",
+    "n",
+    "seed",
+    "config",
+    "loo",
+    "power_parity",
+    "tph_parity"
+  ],
+  "properties": {
+    "schema": {
+      "const": "chancadem.hp500.loo/v1"
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "engine_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$"
+    },
+    "n": {
+      "type": "integer",
+      "minimum": 3
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "resid_clip_frac",
+        "ridge_lambda",
+        "features",
+        "targets_primary",
+        "target_secondary"
+      ],
+      "properties": {
+        "resid_clip_frac": {
+          "type": "number",
+          "minimum": 0
+        },
+        "ridge_lambda": {
+          "type": "number",
+          "minimum": 0
+        },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "targets_primary": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "tph",
+              "kW"
+            ]
+          }
+        },
+        "target_secondary": {
+          "type": "array",
+          "items": {
+            "const": "p80"
+          }
+        }
+      }
+    },
+    "loo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tph",
+        "kW",
+        "p80"
+      ],
+      "properties": {
+        "tph": {
+          "$ref": "#/$defs/target"
+        },
+        "kW": {
+          "$ref": "#/$defs/target"
+        },
+        "p80": {
+          "$ref": "#/$defs/target"
+        }
+      }
+    },
+    "power_parity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "note",
+        "bond_pd_range_kw",
+        "measured_range_kw",
+        "bare_bond",
+        "engine_pc_1p30_110",
+        "refit_pc",
+        "constant_mean",
+        "per_survey"
+      ],
+      "properties": {
+        "note": {
+          "type": "string",
+          "minLength": 1
+        },
+        "bond_pd_range_kw": {
+          "$ref": "#/$defs/range"
+        },
+        "measured_range_kw": {
+          "$ref": "#/$defs/range"
+        },
+        "bare_bond": {
+          "$ref": "#/$defs/scores"
+        },
+        "engine_pc_1p30_110": {
+          "$ref": "#/$defs/scores"
+        },
+        "refit_pc": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/scores"
+            }
+          ],
+          "type": "object",
+          "required": [
+            "zeta",
+            "pn"
+          ],
+          "properties": {
+            "zeta": {
+              "type": "number"
+            },
+            "pn": {
+              "type": "number"
+            }
+          }
+        },
+        "constant_mean": {
+          "$ref": "#/$defs/scores"
+        },
+        "per_survey": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "n",
+              "css",
+              "measured",
+              "bare_bond",
+              "engine_pc",
+              "refit_pc"
+            ],
+            "properties": {
+              "n": {
+                "type": "integer"
+              },
+              "css": {
+                "type": "number"
+              },
+              "measured": {
+                "type": "number"
+              },
+              "bare_bond": {
+                "type": "number"
+              },
+              "engine_pc": {
+                "type": "number"
+              },
+              "refit_pc": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    },
+    "tph_parity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "note",
+        "backbone",
+        "per_survey"
+      ],
+      "properties": {
+        "note": {
+          "type": "string",
+          "minLength": 1
+        },
+        "backbone": {
+          "$ref": "#/$defs/scores"
+        },
+        "per_survey": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "n",
+              "css",
+              "measured",
+              "backbone"
+            ],
+            "properties": {
+              "n": {
+                "type": "integer"
+              },
+              "css": {
+                "type": "number"
+              },
+              "measured": {
+                "type": "number"
+              },
+              "backbone": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "range": {
+      "type": "array",
+      "prefixItems": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "number"
+        }
+      ],
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "scores": {
+      "type": "object",
+      "required": [
+        "mape_pct",
+        "rmse",
+        "r2",
+        "maxdev_pct"
+      ],
+      "properties": {
+        "mape_pct": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rmse": {
+          "type": "number",
+          "minimum": 0
+        },
+        "r2": {
+          "type": "number"
+        },
+        "maxdev_pct": {
+          "type": "number",
+          "minimum": 0
+        }
+      }
+    },
+    "folds": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "M0_backbone",
+        "M1_residual",
+        "M2_freeform",
+        "constant_mean",
+        "M1_label_shuffle",
+        "pred"
+      ],
+      "properties": {
+        "M0_backbone": {
+          "$ref": "#/$defs/scores"
+        },
+        "M1_residual": {
+          "$ref": "#/$defs/scores"
+        },
+        "M2_freeform": {
+          "$ref": "#/$defs/scores"
+        },
+        "constant_mean": {
+          "$ref": "#/$defs/scores"
+        },
+        "M1_label_shuffle": {
+          "$ref": "#/$defs/scores"
+        },
+        "pred": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "M0",
+            "M1",
+            "M2"
+          ],
+          "properties": {
+            "M0": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "M1": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "M2": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          }
+        },
+        "uq": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sigma",
+            "band_halfwidth",
+            "nominal_coverage",
+            "empirical_coverage",
+            "band_rel_pct",
+            "note"
+          ],
+          "properties": {
+            "sigma": {
+              "type": "number",
+              "minimum": 0
+            },
+            "band_halfwidth": {
+              "type": "number",
+              "minimum": 0
+            },
+            "nominal_coverage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "empirical_coverage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "band_rel_pct": {
+              "type": "number",
+              "minimum": 0
+            },
+            "note": {
+              "type": "string"
+            },
+            "nested_coverage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Out-of-sample coverage of the 80 percent band: the share of surveys whose held-out residual lies within the factor times the sigma of the other surveys' residuals."
+            },
+            "nested_covered": {
+              "type": "array",
+              "items": {
+                "type": "boolean"
+              },
+              "description": "Per survey, in survey order: whether its residual lay within the nested band."
+            },
+            "nested_sigma": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "description": "Per survey, in survey order: the sample standard deviation of the held-out residuals of the other surveys."
+            },
+            "nested_note": {
+              "type": "string",
+              "description": "States which coverage is in sample (empirical_coverage) and which is out of sample (nested_coverage)."
+            }
+          }
+        }
+      }
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target",
+        "measured",
+        "strict",
+        "leaky"
+      ],
+      "properties": {
+        "target": {
+          "enum": [
+            "tph",
+            "kW",
+            "p80"
+          ]
+        },
+        "measured": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "strict": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/folds"
+            }
+          ],
+          "required": [
+            "uq"
+          ]
+        },
+        "leaky": {
+          "$ref": "#/$defs/folds"
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "paper",
+        "doi",
+        "license",
+        "table"
+      ],
+      "properties": {
+        "paper": {
+          "type": "string",
+          "minLength": 1
+        },
+        "doi": {
+          "const": "10.3390/min14090919"
+        },
+        "license": {
+          "const": "CC BY 4.0"
+        },
+        "table": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

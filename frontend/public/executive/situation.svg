@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" role="img" aria-label="Five roles each hold part of the picture, the study reaches the plant as a report, and every tool in use has a gap">
+<title>Five roles each hold part of the picture, the study reaches the plant as a report, and every tool in use has a gap</title>
+<rect x="1" y="1" width="798" height="478" rx="12" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="1.5"/>
+<rect x="2" y="168" width="796" height="300" rx="0" fill="var(--color-surface-2)" stroke="none" stroke-width="0"/>
+<path d="M 2 168 L 798 168" fill="none" stroke="var(--color-border)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 24 160 L 24 126 L 54 126 L 54 100 L 84 100 L 84 160 Z" fill="var(--color-surface-2)" stroke="var(--color-border)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="70" cy="74" r="7.0" fill="var(--color-fg-subtle)" stroke="var(--color-border)" stroke-width="1.2"/><path d="M 61 104 L 62 88 Q 70 82 78 88 L 79 104 Z" fill="var(--color-accent)" stroke="var(--color-border)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M 90 156 L 104 130 L 118 156 Z" fill="var(--color-fg-subtle)" stroke="var(--color-border)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M 106 150 L 120 138 L 134 156 Z" fill="var(--color-fg-subtle)" stroke="var(--color-border)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="124" cy="118" r="5" fill="var(--color-warn)" stroke="var(--color-border)" stroke-width="1"/><path d="M 124 123 L 124 138" fill="none" stroke="var(--color-warn)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="2 3"/>
+<rect x="185" y="128" width="110" height="9" rx="3" fill="var(--color-border)" stroke="var(--color-border)" stroke-width="1.2"/><path d="M 195 137 L 195 162 M 285 137 L 285 162" fill="none" stroke="var(--color-border)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="222" cy="76" r="7.0" fill="var(--color-fg-subtle)" stroke="var(--color-border)" stroke-width="1.2"/><path d="M 213 106 L 214 90 Q 222 84 230 90 L 231 106 Z" fill="var(--color-accent)" stroke="var(--color-border)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><rect x="246" y="96" width="36" height="30" rx="2" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="1.5"/><path d="M 254 104 L 274 104 L 270 116 L 258 116 Z" fill="var(--color-accent-soft)" stroke="var(--color-border)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M 252 121 L 276 121" fill="none" stroke="var(--color-border)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="345" y="128" width="110" height="9" rx="3" fill="var(--color-border)" stroke="var(--color-border)" stroke-width="1.2"/><path d="M 355 137 L 355 162 M 445 137 L 445 162" fill="none" stroke="var(--color-border)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="380" cy="76" r="7.0" fill="var(--color-fg-subtle)" stroke="var(--color-border)" stroke-width="1.2"/><path d="M 371 106 L 372 90 Q 380 84 388 90 L 389 106 Z" fill="var(--color-accent-2)" stroke="var(--color-border)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><rect x="404" y="92" width="44" height="34" rx="3" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="1.5"/><rect x="409" y="97" width="14" height="10" rx="1" fill="var(--color-accent-soft)" stroke="var(--color-border)" stroke-width="1"/><rect x="428" y="97" width="14" height="10" rx="1" fill="var(--color-accent-soft)" stroke="var(--color-border)" stroke-width="1"/><circle cx="416" cy="117" r="4" fill="var(--color-warn)" stroke="var(--color-border)" stroke-width="1"/><circle cx="434" cy="117" r="4" fill="var(--color-bad)" stroke="var(--color-border)" stroke-width="1"/>
+<rect x="505" y="150" width="110" height="9" rx="3" fill="var(--color-border)" stroke="var(--color-border)" stroke-width="1.2"/><circle cx="540" cy="98" r="7.0" fill="var(--color-fg-subtle)" stroke="var(--color-border)" stroke-width="1.2"/><path d="M 531 128 L 532 112 Q 540 106 548 112 L 549 128 Z" fill="var(--color-accent)" stroke="var(--color-border)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M 566 146 Q 584 100 602 146" fill="none" stroke="var(--color-warn)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/><path d="M 574 138 L 578 130 L 582 138 L 586 128 L 590 138" fill="none" stroke="var(--color-bad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="665" y="128" width="110" height="9" rx="3" fill="var(--color-border)" stroke="var(--color-border)" stroke-width="1.2"/><path d="M 675 137 L 675 162 M 765 137 L 765 162" fill="none" stroke="var(--color-border)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/><circle cx="702" cy="76" r="7.0" fill="var(--color-fg-subtle)" stroke="var(--color-border)" stroke-width="1.2"/><path d="M 693 106 L 694 90 Q 702 84 710 90 L 711 106 Z" fill="var(--color-accent-2)" stroke="var(--color-border)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><rect x="726" y="94" width="36" height="32" rx="2" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="1.5"/><path d="M 732 102 L 756 102 M 732 109 L 756 109 M 732 116 L 748 116" fill="none" stroke="var(--color-border)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 240 168 Q 250 230 330 292" fill="none" stroke="var(--color-warn)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 6"/>
+<path d="M 720 168 Q 700 240 560 292" fill="none" stroke="var(--color-warn)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="8 6"/>
+<path d="M 330 332 L 330 312 L 350 312 L 350 292 L 396 292 L 396 332 Z" fill="var(--color-surface-2)" stroke="var(--color-border)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M 398 256 L 454 256 L 444 276 L 408 276 Z" fill="var(--color-surface-2)" stroke="var(--color-border)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M 406 276 L 446 276 L 450 332 L 402 332 Z" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M 416 276 L 436 276 L 432 310 L 420 310 Z" fill="var(--color-accent-soft)" stroke="var(--color-border)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/><rect x="470" y="298" width="70" height="34" rx="3" fill="var(--color-surface-2)" stroke="var(--color-border)" stroke-width="1.5"/><circle cx="505" cy="315" r="12" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="1.4"/><path d="M 430 322 L 470 322" fill="none" stroke="var(--color-fg-faint)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="6" y="178" width="143" height="34" rx="8" fill="var(--color-surface)" stroke="var(--color-accent)" stroke-width="2"/>
+<text data-lang="en" x="77.5" y="203" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Blasting</text>
+<text data-lang="es" x="77.5" y="203" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Tronadura</text>
+<rect x="120" y="218" width="244" height="34" rx="8" fill="var(--color-surface)" stroke="var(--color-accent)" stroke-width="2"/>
+<text data-lang="en" x="242" y="243" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Process design</text>
+<text data-lang="es" x="242" y="243" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Diseño de proceso</text>
+<rect x="330" y="178" width="130" height="34" rx="8" fill="var(--color-surface)" stroke="var(--color-accent)" stroke-width="2"/>
+<text data-lang="en" x="395" y="203" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Operator</text>
+<text data-lang="es" x="395" y="203" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Operador</text>
+<rect x="490" y="178" width="193" height="34" rx="8" fill="var(--color-surface)" stroke="var(--color-accent)" stroke-width="2"/>
+<text data-lang="en" x="586.5" y="203" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Maintenance</text>
+<text data-lang="es" x="586.5" y="203" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Mantenimiento</text>
+<rect x="546" y="218" width="244" height="34" rx="8" fill="var(--color-surface)" stroke="var(--color-accent)" stroke-width="2"/>
+<text data-lang="en" x="668" y="243" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Energy manager</text>
+<text data-lang="es" x="668" y="243" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Gestor energético</text>
+<rect x="20" y="262" width="244" height="34" rx="8" fill="var(--color-surface)" stroke="var(--color-warn)" stroke-width="2"/>
+<text data-lang="en" x="142" y="287" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Design report</text>
+<text data-lang="es" x="142" y="287" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Informe de diseño</text>
+<rect x="584" y="262" width="206" height="34" rx="8" fill="var(--color-surface)" stroke="var(--color-warn)" stroke-width="2"/>
+<text data-lang="en" x="687" y="287" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">A year later</text>
+<text data-lang="es" x="687" y="287" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Un año después</text>
+<rect x="6" y="346" width="148" height="86" rx="8" fill="var(--color-surface-2)" stroke="var(--color-border)" stroke-width="1.5"/>
+<rect x="162" y="346" width="148" height="86" rx="8" fill="var(--color-surface-2)" stroke="var(--color-border)" stroke-width="1.5"/>
+<rect x="318" y="346" width="148" height="86" rx="8" fill="var(--color-surface-2)" stroke="var(--color-border)" stroke-width="1.5"/>
+<rect x="474" y="346" width="148" height="86" rx="8" fill="var(--color-surface-2)" stroke="var(--color-border)" stroke-width="1.5"/>
+<rect x="630" y="346" width="148" height="86" rx="8" fill="var(--color-surface-2)" stroke="var(--color-border)" stroke-width="1.5"/>
+<rect x="28" y="358" width="90" height="14" rx="2" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="1.5"/>
+<path d="M 40 358 L 40 366 M 54 358 L 54 368 M 68 358 L 68 366 M 82 358 L 82 368 M 96 358 L 96 366" fill="none" stroke="var(--color-border)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 32 386 L 116 386" fill="none" stroke="var(--color-fg-faint)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 4"/>
+<rect x="186" y="356" width="18" height="11" rx="2" fill="var(--color-accent-soft)" stroke="var(--color-border)" stroke-width="1.2"/>
+<rect x="210" y="356" width="18" height="11" rx="2" fill="var(--color-accent-soft)" stroke="var(--color-border)" stroke-width="1.2"/>
+<rect x="234" y="356" width="18" height="11" rx="2" fill="var(--color-accent-soft)" stroke="var(--color-border)" stroke-width="1.2"/>
+<rect x="258" y="356" width="18" height="11" rx="2" fill="var(--color-accent-soft)" stroke="var(--color-border)" stroke-width="1.2"/>
+<rect x="186" y="372" width="18" height="11" rx="2" fill="var(--color-accent-soft)" stroke="var(--color-border)" stroke-width="1.2"/>
+<rect x="210" y="372" width="18" height="11" rx="2" fill="var(--color-accent-soft)" stroke="var(--color-border)" stroke-width="1.2"/>
+<rect x="234" y="372" width="18" height="11" rx="2" fill="var(--color-accent-soft)" stroke="var(--color-border)" stroke-width="1.2"/>
+<rect x="258" y="372" width="18" height="11" rx="2" fill="var(--color-accent-soft)" stroke="var(--color-border)" stroke-width="1.2"/>
+<path d="M 192 390 L 280 390" fill="none" stroke="var(--color-fg-faint)" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="3 4"/>
+<rect x="346" y="368" width="20" height="14" rx="2" fill="var(--color-fg-subtle)" stroke="var(--color-border)" stroke-width="1.2"/>
+<rect x="368" y="368" width="20" height="14" rx="2" fill="var(--color-fg-subtle)" stroke="var(--color-border)" stroke-width="1.2"/>
+<rect x="390" y="368" width="20" height="14" rx="2" fill="var(--color-fg-subtle)" stroke="var(--color-border)" stroke-width="1.2"/>
+<rect x="412" y="368" width="20" height="14" rx="2" fill="var(--color-fg-subtle)" stroke="var(--color-border)" stroke-width="1.2"/>
+<rect x="357" y="354" width="20" height="14" rx="2" fill="var(--color-fg-subtle)" stroke="var(--color-border)" stroke-width="1.2"/>
+<rect x="379" y="354" width="20" height="14" rx="2" fill="var(--color-fg-subtle)" stroke="var(--color-border)" stroke-width="1.2"/>
+<rect x="401" y="354" width="20" height="14" rx="2" fill="var(--color-fg-subtle)" stroke="var(--color-border)" stroke-width="1.2"/>
+<path d="M 516 388 A 32 32 0 0 1 580 388" fill="none" stroke="var(--color-border)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 548 388 L 566 368" fill="none" stroke="var(--color-accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="548" cy="388" r="4" fill="var(--color-fg)" stroke="var(--color-border)" stroke-width="1"/>
+<circle cx="682" cy="374" r="14" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="1.8"/>
+<circle cx="712" cy="374" r="14" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="1.8"/>
+<path d="M 686 358 L 708 358" fill="none" stroke="var(--color-fg-subtle)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 730 384 L 756 384" fill="none" stroke="var(--color-fg-faint)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="33" y="398" width="93" height="34" rx="8" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="2"/>
+<text data-lang="en" x="79.5" y="423" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Laws</text>
+<text data-lang="es" x="79.5" y="423" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Leyes</text>
+<rect x="177" y="398" width="118" height="34" rx="8" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="2"/>
+<text data-lang="en" x="236" y="423" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Models</text>
+<text data-lang="es" x="236" y="423" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Modelos</text>
+<rect x="333" y="398" width="118" height="34" rx="8" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="2"/>
+<text data-lang="en" x="392" y="423" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Simulation</text>
+<text data-lang="es" x="392" y="423" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Simulación</text>
+<rect x="489" y="398" width="118" height="34" rx="8" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="2"/>
+<text data-lang="en" x="548" y="423" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Control</text>
+<text data-lang="es" x="548" y="423" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Control</text>
+<rect x="639" y="398" width="130" height="34" rx="8" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="2"/>
+<text data-lang="en" x="704" y="423" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Rolls</text>
+<text data-lang="es" x="704" y="423" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Rodillos</text>
+<path d="M 15 362 L 20 368 L 30 355" fill="none" stroke="var(--color-good)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 131 355 L 145 369 M 145 355 L 131 369" fill="none" stroke="var(--color-bad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 171 362 L 176 368 L 186 355" fill="none" stroke="var(--color-good)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 287 355 L 301 369 M 301 355 L 287 369" fill="none" stroke="var(--color-bad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 327 362 L 332 368 L 342 355" fill="none" stroke="var(--color-good)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 443 355 L 457 369 M 457 355 L 443 369" fill="none" stroke="var(--color-bad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 483 362 L 488 368 L 498 355" fill="none" stroke="var(--color-good)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 599 355 L 613 369 M 613 355 L 599 369" fill="none" stroke="var(--color-bad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 639 362 L 644 368 L 654 355" fill="none" stroke="var(--color-good)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 755 355 L 769 369 M 769 355 L 755 369" fill="none" stroke="var(--color-bad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 23 454 L 28 460 L 38 447" fill="none" stroke="var(--color-good)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="48" y="437" width="130" height="34" rx="8" fill="var(--color-surface)" stroke="var(--color-good)" stroke-width="2"/>
+<text data-lang="en" x="113" y="462" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Achieves</text>
+<text data-lang="es" x="113" y="462" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Logra</text>
+<path d="M 211 447 L 225 461 M 225 447 L 211 461" fill="none" stroke="var(--color-bad)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="236" y="437" width="206" height="34" rx="8" fill="var(--color-surface)" stroke="var(--color-bad)" stroke-width="2"/>
+<text data-lang="en" x="339" y="462" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Falls short</text>
+<text data-lang="es" x="339" y="462" text-anchor="middle" font-size="22" font-weight="600" fill="var(--color-fg)">Se queda corto</text>
+</svg>

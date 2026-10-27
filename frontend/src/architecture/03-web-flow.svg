@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="900" class="arch-svg" role="img" aria-label="The web flow: from the index and the readiness document to a view, the learned models, and the gate before a deploy">
+  <!-- Hand-authored; shell tokens only; both languages in one file (ADR-0058). -->
+  <style>
+    .arch-svg text { font-family: var(--font-sans); }
+    .arch-svg .mono { font-family: var(--font-mono); }
+    .arch-svg .bx { fill: var(--color-surface-2); stroke: var(--color-border); stroke-width: 1; }
+    .arch-svg .st-rep { fill: var(--color-surface-2); stroke: var(--color-good); stroke-width: 1.4; }
+    .arch-svg .st-live { fill: var(--color-surface-2); stroke: var(--color-accent); stroke-width: 1.4; }
+    .arch-svg .st-gate { fill: var(--color-surface-2); stroke: var(--color-warn); stroke-width: 1.4; }
+    .arch-svg .ttl { fill: var(--color-fg); font-size: 15px; font-weight: 700; }
+    .arch-svg .h { fill: var(--color-fg); font-size: 12px; font-weight: 700; }
+    .arch-svg .it { fill: var(--color-fg); font-size: 11px; font-weight: 600; }
+    .arch-svg .sub { fill: var(--color-fg-subtle); font-size: 10.5px; }
+    .arch-svg .cd { fill: var(--color-fg-subtle); font-size: 10px; }
+    .arch-svg .flow { fill: none; stroke: var(--color-fg-faint); stroke-width: 1.4; }
+    .arch-svg .back { fill: none; stroke: var(--color-accent); stroke-width: 1.4; stroke-dasharray: 5 4; }
+  </style>
+  <defs>
+    <marker id="wf3-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L8,4 L0,8 z" fill="var(--color-fg-faint)"/>
+    </marker>
+    <marker id="wf3-back" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L8,4 L0,8 z" fill="var(--color-accent)"/>
+    </marker>
+  </defs>
+
+  <text class="ttl l-en" x="20" y="26">From the index to a view, and the gate before a deploy</text>
+  <text class="ttl l-es" x="20" y="26">Del índice a una vista, y la compuerta antes de desplegar</text>
+
+  <!-- row 1: the documents and the live engine -->
+  <rect class="st-rep" x="20" y="64" width="190" height="70" rx="6"/>
+  <text class="it l-en" x="32" y="84">Index and readiness</text>
+  <text class="it l-es" x="32" y="84">Índice y disponibilidad</text>
+  <text class="cd mono" x="32" y="102">index.json, readiness.json</text>
+  <text class="sub l-en" x="32" y="120">the default case; what is real</text>
+  <text class="sub l-es" x="32" y="120">el caso inicial; qué es real</text>
+
+  <rect class="st-rep" x="243" y="64" width="190" height="70" rx="6"/>
+  <text class="it l-en" x="255" y="84">Manifest and trace</text>
+  <text class="it l-es" x="255" y="84">Manifiesto y traza</text>
+  <text class="cd mono" x="255" y="102">manifest.json, trace.json</text>
+  <text class="sub l-en" x="255" y="120">absent: not available yet</text>
+  <text class="sub l-es" x="255" y="120">ausente: aún no disponible</text>
+
+  <rect class="st-live" x="466" y="64" width="190" height="70" rx="6"/>
+  <text class="it l-en" x="478" y="84">Selection and live engine</text>
+  <text class="it l-es" x="478" y="84">Selección y motor en vivo</text>
+  <text class="cd mono" x="478" y="102">evaluate(operating point)</text>
+  <text class="sub l-en" x="478" y="120">case, variant and six knobs</text>
+  <text class="sub l-es" x="478" y="120">caso, variante y seis perillas</text>
+
+  <rect class="st-live" x="689" y="64" width="190" height="70" rx="6"/>
+  <text class="it l-en" x="701" y="84">Views</text>
+  <text class="it l-es" x="701" y="84">Vistas</text>
+  <text class="cd mono" x="701" y="102">data-state-key</text>
+  <text class="sub l-en" x="701" y="120">each carries its selection key</text>
+  <text class="sub l-es" x="701" y="120">cada una lleva su clave</text>
+
+  <path class="flow" d="M210,99 H241" marker-end="url(#wf3-arrow)"/>
+  <path class="flow" d="M433,99 H464" marker-end="url(#wf3-arrow)"/>
+  <path class="flow" d="M656,99 H687" marker-end="url(#wf3-arrow)"/>
+  <path class="back" d="M784,64 V46 H561 V62" marker-end="url(#wf3-back)"/>
+  <text class="sub l-en" x="672" y="40" text-anchor="middle">a control moves: the engine runs again</text>
+  <text class="sub l-es" x="672" y="40" text-anchor="middle">se mueve un control: el motor corre de nuevo</text>
+
+  <!-- row 2: the learned models -->
+  <path class="flow" d="M561,134 V152 H115 V168" marker-end="url(#wf3-arrow)"/>
+  <text class="sub l-en" x="338" y="148" text-anchor="middle">the result is the autoencoder input</text>
+  <text class="sub l-es" x="338" y="148" text-anchor="middle">el resultado es la entrada del autocodificador</text>
+
+  <rect class="bx" x="20" y="170" width="190" height="70" rx="6"/>
+  <text class="it l-en" x="32" y="190">Learned group opens</text>
+  <text class="it l-es" x="32" y="190">Se abre el grupo Aprendido</text>
+  <text class="cd mono" x="32" y="208">onnxruntime-web, WASM</text>
+  <text class="sub l-en" x="32" y="226">loaded on first use</text>
+  <text class="sub l-es" x="32" y="226">se carga al primer uso</text>
+
+  <rect class="bx" x="243" y="170" width="190" height="70" rx="6"/>
+  <text class="it l-en" x="255" y="190">Contract and graph</text>
+  <text class="it l-es" x="255" y="190">Contrato y grafo</text>
+  <text class="cd mono" x="255" y="208">sha256 checked</text>
+  <text class="sub l-en" x="255" y="226">absent or invalid: baseline</text>
+  <text class="sub l-es" x="255" y="226">ausente o inválido: línea base</text>
+
+  <rect class="bx" x="466" y="170" width="190" height="70" rx="6"/>
+  <text class="it l-en" x="478" y="190">Answer, labelled</text>
+  <text class="it l-es" x="478" y="190">Respuesta rotulada</text>
+  <text class="cd mono" x="478" y="208">released model or baseline</text>
+  <text class="sub l-en" x="478" y="226">the engine or the envelope gate</text>
+  <text class="sub l-es" x="478" y="226">el motor o la compuerta</text>
+
+  <path class="flow" d="M210,205 H241" marker-end="url(#wf3-arrow)"/>
+  <path class="flow" d="M433,205 H464" marker-end="url(#wf3-arrow)"/>
+  <text class="sub l-en" x="689" y="196">Replay views read the trace;</text>
+  <text class="sub l-es" x="689" y="196">Las vistas de reproducción leen</text>
+  <text class="sub l-en" x="689" y="212">they need no engine run.</text>
+  <text class="sub l-es" x="689" y="212">la traza; no corren el motor.</text>
+
+  <!-- row 3: before a deploy -->
+  <text class="h l-en" x="20" y="282">Before a deploy</text>
+  <text class="h l-es" x="20" y="282">Antes de desplegar</text>
+
+  <rect class="st-gate" x="20" y="292" width="200" height="70" rx="6"/>
+  <text class="it l-en" x="32" y="312">Build</text>
+  <text class="it l-es" x="32" y="312">Compilación</text>
+  <text class="cd mono" x="32" y="330">npm run build</text>
+  <text class="sub l-en" x="32" y="348">copy declared files, type-check</text>
+  <text class="sub l-es" x="32" y="348">copia archivos, verifica tipos</text>
+
+  <rect class="st-gate" x="240" y="292" width="200" height="70" rx="6"/>
+  <text class="it l-en" x="252" y="312">Measured gate</text>
+  <text class="it l-es" x="252" y="312">Compuerta medida</text>
+  <text class="cd mono" x="252" y="330">npm run gate</text>
+  <text class="sub l-en" x="252" y="348">5 sizes, 2 themes, 2 languages</text>
+  <text class="sub l-es" x="252" y="348">5 tamaños, 2 temas, 2 idiomas</text>
+
+  <rect class="st-gate" x="460" y="292" width="200" height="70" rx="6"/>
+  <text class="it l-en" x="472" y="312">Deploy on main</text>
+  <text class="it l-es" x="472" y="312">Despliegue en main</text>
+  <text class="cd mono" x="472" y="330">after CI succeeds</text>
+  <text class="sub l-en" x="472" y="348">builds the pushed commit</text>
+  <text class="sub l-es" x="472" y="348">compila el commit empujado</text>
+
+  <rect class="st-gate" x="680" y="292" width="200" height="70" rx="6"/>
+  <text class="it l-en" x="692" y="312">Live check</text>
+  <text class="it l-es" x="692" y="312">Verificación en vivo</text>
+  <text class="cd mono" x="692" y="330">build.json = pushed commit</text>
+  <text class="sub l-en" x="692" y="348">routes 200, missing file 404</text>
+  <text class="sub l-es" x="692" y="348">rutas 200, archivo faltante 404</text>
+
+  <path class="flow" d="M220,327 H238" marker-end="url(#wf3-arrow)"/>
+  <path class="flow" d="M440,327 H458" marker-end="url(#wf3-arrow)"/>
+  <path class="flow" d="M660,327 H678" marker-end="url(#wf3-arrow)"/>
+
+  <text class="sub l-en" x="20" y="394">The gate fails on an error, a dead control, a blank drawing, a view that never settles or a page without a required area.</text>
+  <text class="sub l-es" x="20" y="394">La compuerta falla ante un error, un control muerto, un dibujo en blanco, una vista que no se estabiliza o una página sin un área requerida.</text>
+  <text class="sub l-en" x="20" y="414">The deploy never trains or bakes; it publishes the committed files and then checks the live site.</text>
+  <text class="sub l-es" x="20" y="414">El despliegue nunca entrena ni precalcula; publica los archivos comprometidos y luego verifica el sitio.</text>
+</svg>

@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="900" class="arch-svg" role="img" aria-label="The data contracts: contract 1 for what enters the pipeline, contract 2 for what is committed for the web, and how both are checked">
+  <!-- Hand-authored; shell tokens only; both languages in one file (ADR-0058). -->
+  <style>
+    .arch-svg text { font-family: var(--font-sans); }
+    .arch-svg .mono { font-family: var(--font-mono); }
+    .arch-svg .pn-in { fill: var(--color-surface); stroke: var(--color-accent-2); stroke-width: 1.4; }
+    .arch-svg .pn-out { fill: var(--color-surface); stroke: var(--color-good); stroke-width: 1.4; }
+    .arch-svg .pn-pipe { fill: var(--color-surface-2); stroke: var(--color-magenta); stroke-width: 1.4; }
+    .arch-svg .bx { fill: var(--color-surface-2); stroke: var(--color-border); stroke-width: 1; }
+    .arch-svg .ttl { fill: var(--color-fg); font-size: 15px; font-weight: 700; }
+    .arch-svg .h { fill: var(--color-fg); font-size: 12px; font-weight: 700; }
+    .arch-svg .nm { fill: var(--color-fg); font-size: 10.5px; font-weight: 600; }
+    .arch-svg .sub { fill: var(--color-fg-subtle); font-size: 10.5px; }
+    .arch-svg .dsc { fill: var(--color-fg-subtle); font-size: 10px; }
+    .arch-svg .flow { fill: none; stroke: var(--color-fg-faint); stroke-width: 1.4; }
+  </style>
+  <defs>
+    <marker id="dc5-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L8,4 L0,8 z" fill="var(--color-fg-faint)"/>
+    </marker>
+  </defs>
+
+  <text class="ttl l-en" x="20" y="26">Data contracts: what enters, what is committed, how both are held</text>
+  <text class="ttl l-es" x="20" y="26">Contratos de datos: lo que entra, lo que se compromete, cómo se sostienen</text>
+
+  <!-- contract 1 -->
+  <rect class="pn-in" x="20" y="44" width="220" height="226" rx="10"/>
+  <text class="h l-en" x="34" y="66">Contract 1: what enters</text>
+  <text class="h l-es" x="34" y="66">Contrato 1: lo que entra</text>
+  <rect class="bx" x="34" y="78" width="192" height="40" rx="6"/>
+  <text class="nm mono" x="44" y="94">params-record</text>
+  <text class="dsc l-en" x="44" y="109">operating point of a case</text>
+  <text class="dsc l-es" x="44" y="109">punto de operación de un caso</text>
+  <rect class="bx" x="34" y="126" width="192" height="40" rx="6"/>
+  <text class="nm mono" x="44" y="142">hp500-survey</text>
+  <text class="dsc l-en" x="44" y="157">one measured survey</text>
+  <text class="dsc l-es" x="44" y="157">un muestreo medido</text>
+  <text class="sub l-en" x="34" y="188">A bad value is rejected with its</text>
+  <text class="sub l-es" x="34" y="188">Un valor inválido se rechaza con</text>
+  <text class="sub l-en" x="34" y="203">reason, never coerced. An unusual</text>
+  <text class="sub l-es" x="34" y="203">su razón, nunca se fuerza. Uno</text>
+  <text class="sub l-en" x="34" y="218">one is accepted and flagged, so</text>
+  <text class="sub l-es" x="34" y="218">inusual se acepta y se marca, así</text>
+  <text class="sub l-en" x="34" y="233">the controls are baked.</text>
+  <text class="sub l-es" x="34" y="233">los controles se precalculan.</text>
+
+  <!-- the pipeline -->
+  <rect class="pn-pipe" x="280" y="110" width="140" height="102" rx="10"/>
+  <text class="h l-en" x="350" y="134" text-anchor="middle">Pipeline</text>
+  <text class="h l-es" x="350" y="134" text-anchor="middle">Pipeline</text>
+  <text class="sub l-en" x="350" y="158" text-anchor="middle">bakes the cases</text>
+  <text class="sub l-es" x="350" y="158" text-anchor="middle">precalcula casos</text>
+  <text class="sub l-en" x="350" y="174" text-anchor="middle">validates HP500</text>
+  <text class="sub l-es" x="350" y="174" text-anchor="middle">valida HP500</text>
+  <text class="sub l-en" x="350" y="190" text-anchor="middle">trains the models</text>
+  <text class="sub l-es" x="350" y="190" text-anchor="middle">entrena modelos</text>
+  <path class="flow" d="M240,161 H278" marker-end="url(#dc5-arrow)"/>
+  <path class="flow" d="M420,161 H458" marker-end="url(#dc5-arrow)"/>
+
+  <!-- contract 2 -->
+  <rect class="pn-out" x="460" y="44" width="420" height="226" rx="10"/>
+  <text class="h l-en" x="474" y="66">Contract 2: what is committed for the web</text>
+  <text class="h l-es" x="474" y="66">Contrato 2: lo que se compromete para la web</text>
+
+  <rect class="bx" x="474" y="76" width="194" height="34" rx="6"/>
+  <text class="nm mono" x="484" y="90">case-index</text>
+  <text class="dsc l-en" x="484" y="103">inventory, default case</text>
+  <text class="dsc l-es" x="484" y="103">inventario, caso inicial</text>
+  <rect class="bx" x="474" y="114" width="194" height="34" rx="6"/>
+  <text class="nm mono" x="484" y="128">case-manifest</text>
+  <text class="dsc l-en" x="484" y="141">one baked case</text>
+  <text class="dsc l-es" x="484" y="141">un caso precalculado</text>
+  <rect class="bx" x="474" y="152" width="194" height="34" rx="6"/>
+  <text class="nm mono" x="484" y="166">trace</text>
+  <text class="dsc l-en" x="484" y="179">replay: gradations and sweeps</text>
+  <text class="dsc l-es" x="484" y="179">reproducción y barridos</text>
+  <rect class="bx" x="474" y="190" width="194" height="34" rx="6"/>
+  <text class="nm mono" x="484" y="204">hp500-backbone</text>
+  <text class="dsc l-en" x="484" y="217">calibrated engine per survey</text>
+  <text class="dsc l-es" x="484" y="217">motor calibrado por muestreo</text>
+  <rect class="bx" x="474" y="228" width="194" height="34" rx="6"/>
+  <text class="nm mono" x="484" y="242">hp500-loo</text>
+  <text class="dsc l-en" x="484" y="255">CrusherCal validation</text>
+  <text class="dsc l-es" x="484" y="255">validación CrusherCal</text>
+
+  <rect class="bx" x="678" y="76" width="188" height="34" rx="6"/>
+  <text class="nm mono" x="688" y="90">surrogate-model</text>
+  <text class="dsc l-en" x="688" y="103">contract and graphs</text>
+  <text class="dsc l-es" x="688" y="103">contrato y grafos</text>
+  <rect class="bx" x="678" y="114" width="188" height="34" rx="6"/>
+  <text class="nm mono" x="688" y="128">anomaly-model</text>
+  <text class="dsc l-en" x="688" y="141">contract and graph</text>
+  <text class="dsc l-es" x="688" y="141">contrato y grafo</text>
+  <rect class="bx" x="678" y="152" width="188" height="34" rx="6"/>
+  <text class="nm mono" x="688" y="166">model-metrics</text>
+  <text class="dsc l-en" x="688" y="179">held-out evaluation</text>
+  <text class="dsc l-es" x="688" y="179">evaluación con datos retenidos</text>
+  <rect class="bx" x="678" y="190" width="188" height="34" rx="6"/>
+  <text class="nm mono" x="688" y="204">readiness</text>
+  <text class="dsc l-en" x="688" y="217">what is real, six states</text>
+  <text class="dsc l-es" x="688" y="217">qué es real, seis estados</text>
+  <rect class="bx" x="678" y="228" width="188" height="34" rx="6"/>
+  <text class="nm mono" x="688" y="242">api</text>
+  <text class="dsc l-en" x="688" y="255">dormant, read only</text>
+  <text class="dsc l-es" x="688" y="255">inactiva, solo lectura</text>
+
+  <!-- how both are held -->
+  <path class="flow" d="M670,270 V288 H450 V302" marker-end="url(#dc5-arrow)"/>
+  <text class="sub l-en" x="560" y="283" text-anchor="middle">the web reads them and is held to them</text>
+  <text class="sub l-es" x="560" y="283" text-anchor="middle">la web los lee y se sujeta a ellos</text>
+
+  <rect class="bx" x="20" y="304" width="280" height="116" rx="8"/>
+  <text class="h l-en" x="34" y="326">One schema file each</text>
+  <text class="h l-es" x="34" y="326">Un archivo de esquema cada uno</text>
+  <text class="sub l-en" x="34" y="348">The schema files are the source.</text>
+  <text class="sub l-es" x="34" y="348">Los archivos de esquema son la fuente.</text>
+  <text class="sub l-en" x="34" y="364">The TypeScript types are generated</text>
+  <text class="sub l-es" x="34" y="364">Los tipos de TypeScript se generan</text>
+  <text class="sub l-en" x="34" y="380">from them, and the build fails when</text>
+  <text class="sub l-es" x="34" y="380">a partir de ellos, y la compilación</text>
+  <text class="sub l-en" x="34" y="396">the generated file is out of date.</text>
+  <text class="sub l-es" x="34" y="396">falla si el archivo generado está viejo.</text>
+
+  <rect class="bx" x="310" y="304" width="280" height="116" rx="8"/>
+  <text class="h l-en" x="324" y="326">Tested on both sides</text>
+  <text class="h l-es" x="324" y="326">Probado en ambos lados</text>
+  <text class="sub l-en" x="324" y="348">A producer test, a consumer test and</text>
+  <text class="sub l-es" x="324" y="348">Una prueba del productor, otra del</text>
+  <text class="sub l-en" x="324" y="364">a swap test on a provider tree. A key</text>
+  <text class="sub l-es" x="324" y="364">consumidor y una de intercambio en un</text>
+  <text class="sub l-en" x="324" y="380">on one side only fails the other, and</text>
+  <text class="sub l-es" x="324" y="380">árbol de proveedor. Una clave de un</text>
+  <text class="sub l-en" x="324" y="396">so does a number typed as a boolean.</text>
+  <text class="sub l-es" x="324" y="396">solo lado falla, y un número como booleano.</text>
+
+  <rect class="bx" x="600" y="304" width="280" height="116" rx="8"/>
+  <text class="h l-en" x="614" y="326">Versions and states</text>
+  <text class="h l-es" x="614" y="326">Versiones y estados</text>
+  <text class="sub l-en" x="614" y="348">Semantic versions with a digest lock.</text>
+  <text class="sub l-es" x="614" y="348">Versiones semánticas con candado de huellas.</text>
+  <text class="sub l-en" x="614" y="364">Six states per row: available, partial,</text>
+  <text class="sub l-es" x="614" y="364">Seis estados por fila: disponible, parcial,</text>
+  <text class="sub l-en" x="614" y="380">stale, provider, training, missing;</text>
+  <text class="sub l-es" x="614" y="380">desactualizado, proveedor, entrenando, ausente;</text>
+  <text class="sub l-en" x="614" y="396">never an empty chart.</text>
+  <text class="sub l-es" x="614" y="396">nunca un gráfico vacío.</text>
+</svg>
