@@ -71,4 +71,6 @@ TypeScript engine, and the replay of the backbone is drawn in the Validation gro
 - Rocha, Campos, Silva and Tavares 2024, *Fit-for-Purpose Model of HP500 Cone Crusher in Size Reduction of Itabirite Iron
   Ore*, Minerals 14(9), 919, [doi:10.3390/min14090919](https://doi.org/10.3390/min14090919) (CC BY 4.0)
 - Duarte, Yamashita, da Silva, Cota and Euzebio 2021, [doi:10.3390/min11111256](https://doi.org/10.3390/min11111256), a second
-  industrial cone calibration (the calibration anchor case CK1 is synthetic and its fit is not executed in this release)
+  industrial cone calibration. It cannot anchor the absolute numbers: it has no throw, speed, ore properties or power, its machines
+  are an HP400 and a CH660 and its size data are plots only (Table 1, p. 9; Figures 4 to 9). The case CK1 is a synthetic
+  control, and the anchor is the HP500 lane of Rocha et al. 2024.

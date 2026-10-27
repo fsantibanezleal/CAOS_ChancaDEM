@@ -13,6 +13,7 @@ from __future__ import annotations
 import math
 
 from .breakage import breakage_matrix, phi_from_t10, specific_energy, t10_calibrated, t10_of
+from .bounds import check_bounds
 from .capacity import bond_power, calibrated_power, nip_angle, nip_limit, throughput
 from .classification import classification_params, classify
 from .envelope import check_envelope
@@ -110,6 +111,11 @@ def evaluate(op: Operating) -> CrusherResult:
             flags.append(code)
     if env.implausible:
         valid = False
+
+    # sourced warnings, never invalid: a setting below the vendor minimum, a reduction ratio above the typical ceiling
+    for code in check_bounds(op.machine, op.css_mm, reduction_ratio):
+        if code not in flags:
+            flags.append(code)
 
     return CrusherResult(
         op=op, feed=feed, product=product,

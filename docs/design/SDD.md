@@ -205,8 +205,9 @@ approximates, Cleary and Sinnott 2015; Quist and Evertsson 2016), stated on the 
 - Tertiary crushing: T01 and T02 (tertiary cone, fine feed; hard and closed), H01 and H02 (short-head, the finest product;
   hard and choke-fed).
 - Controls: CP1 (pass-through: a setting wider than the feed's F80, a reduction ratio near 1, flagged), CI1 (invalid: a
-  setting wider than the feed top size, flagged and marked invalid, never a confident number), CK1 (the calibration anchor
-  for the Duarte et al. 2021 industrial data; synthetic, its fit not executed in this release, and labelled so).
+  setting wider than the feed top size, flagged and marked invalid, never a confident number), CK1 (a synthetic control for
+  absolute numbers; the product's absolute anchor is the calibrated HP500 lane, Rocha et al. 2024, and Duarte et al. 2021
+  cannot serve as an anchor because it gives no throw, speed, ore properties or power and its size data are plots only).
 - Real surveys: HP500-01 to HP500-10, the ten measured surveys of a Metso HP500 secondary cone at Minas Rio (Rocha et al.
   2024, CC BY 4.0), each at its measured setting and feed f80, scored against its measured throughput and power.
 

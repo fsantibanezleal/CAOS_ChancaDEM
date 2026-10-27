@@ -33,7 +33,8 @@ code has them, where it runs, tests, what it is not, references.
 | [DEM landscape](07_dem_pbm_landscape/dem-pbm.md) | frontier | Cleary and Sinnott 2015, Delaney et al. 2015, Quist and Evertsson 2016 |
 
 Real-data calibration and validation anchor: Rocha et al. 2024 (Minerals 14(9):919,
-[doi:10.3390/min14090919](https://doi.org/10.3390/min14090919), CC BY 4.0), the ten HP500 surveys; second cone anchor,
-Duarte et al. 2021 ([doi:10.3390/min11111256](https://doi.org/10.3390/min11111256)). The citations the site shows are in
+[doi:10.3390/min14090919](https://doi.org/10.3390/min14090919), CC BY 4.0), the ten HP500 surveys; Duarte et al. 2021
+([doi:10.3390/min11111256](https://doi.org/10.3390/min11111256)) is a second industrial cone fit that cannot serve as an
+anchor (no throw, speed, ore properties or power; size data as plots only). The citations the site shows are in
 `frontend/src/content/citations/core.ts`. Two print-only society papers the earlier cards named (Narayanan and Whiten 1988,
 Karra 1982) have no open landing page and are not cited; the linked works that reproduce their methods are.

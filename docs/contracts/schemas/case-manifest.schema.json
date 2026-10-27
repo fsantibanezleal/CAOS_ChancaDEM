@@ -285,7 +285,7 @@
     },
     "flags": {
       "type": "array",
-      "description": "Stable codes of the engine's flags and envelope codes for this case, in the engine's order: css_ge_feed_top (nothing is gripped), pass_through (CSS at or above F80), negligible_reduction (reduction ratio near 1), ill_conditioned (the solve's conditioning guard), and the envelope codes css_nonpositive, feed_nonpositive, f80_lt_css, css_outside_calibrated, f80_outside_calibrated. The web maps each code to its bilingual text.",
+      "description": "Stable codes of the engine's flags and envelope codes for this case, in the engine's order: css_ge_feed_top (nothing is gripped), pass_through (CSS at or above F80), negligible_reduction (reduction ratio near 1), ill_conditioned (the solve's conditioning guard), the envelope codes css_nonpositive, feed_nonpositive, f80_lt_css, css_outside_calibrated, f80_outside_calibrated, and two sourced warnings that never make a case invalid: css_below_vendor_minimum (the setting is below the vendor minimum of the machine type) and reduction_ratio_above_typical (F80/P80 is above the typical ceiling of one stage). The web maps each code to its bilingual text.",
       "items": {
         "enum": [
           "css_ge_feed_top",
@@ -296,7 +296,9 @@
           "feed_nonpositive",
           "f80_lt_css",
           "css_outside_calibrated",
-          "f80_outside_calibrated"
+          "f80_outside_calibrated",
+          "css_below_vendor_minimum",
+          "reduction_ratio_above_typical"
         ]
       },
       "uniqueItems": true

@@ -12,7 +12,7 @@ calibrated lane at a measured setting and feed size, beside the measured through
 | Primary crushing | G01, G02, J01, J02 | coarse run-of-mine feed, wide settings, slow; gyratory and jaw |
 | Secondary cone | S01 to S06 | the workhorse; S01 is the reference choke optimum (the default case); soft and hard ore, coarse and fine feed, under and over the capacity hump |
 | Tertiary crushing | T01, T02, H01, H02 | fine feed, tight settings, fast; the short-head cone gives the finest product |
-| Controls | CP1, CI1, CK1 | CP1 pass-through (negative), CI1 setting above the feed top size (invalid), CK1 calibration anchor |
+| Controls | CP1, CI1, CK1 | CP1 pass-through (negative), CI1 setting above the feed top size (invalid), CK1 absolute-number control (the absolute anchor is the calibrated HP500 lane) |
 | Real surveys: Metso HP500 at Minas Rio | HP500-01 to HP500-10 | the ten measured surveys of Table A1 of Rocha et al. 2024 (CC BY 4.0) |
 
 ## The 17 circuit cases
@@ -38,7 +38,7 @@ percent is "at the optimum". The setting column also gives CSS over the feed's F
 | H02 | Short-head tertiary, hard ore, choke feed | cone-short-head | tertiary | 10 (0.24 of F80) | 470 (at the optimum) | x63 30, m 1.5 | A*b 36, Wi 18 | no | synthetic | Choke feed on hard ore gives the tightest classification and a high specific energy: P80 between 6.5 and 11 mm, between 230 and 370 t/h and a reduction ratio between 4 and 6.2. |
 | CP1 | Pass-through, negative control | cone-sec | control | 160 (1.27 of F80) | 360 (at the optimum) | x63 90, m 1.2 | A*b 55, Wi 14 | negative | synthetic | A setting wider than the F80: the material passes mostly ungripped, with P80 between 100 and 126 mm, a reduction ratio between 1 and 1.3 and between 1900 and 2900 t/h. |
 | CI1 | Setting above the feed top size, invalid control | cone-sec | control | 280 (2.22 of F80) | 360 (at the optimum) | x63 90, m 1.2 | A*b 55, Wi 14 | invalid | synthetic | A setting wider than the 256 mm top size of the feed is physically meaningless: P80 between 120 and 130 mm and a reduction ratio between 0.95 and 1.05. |
-| CK1 | Calibration anchor, HP-class cone | cone-sec | control | 25 (0.22 of F80) | 350 (at the optimum) | x63 80, m 1.15 | A*b 52, Wi 15 | calibration | synthetic | An operating point chosen as the anchor for absolute-number calibration against published industrial cone data: P80 between 17 and 28 mm, between 450 and 650 t/h and a reduction ratio between 4 and 6.5. |
+| CK1 | Absolute-number control, HP-class cone | cone-sec | control | 25 (0.22 of F80) | 350 (at the optimum) | x63 80, m 1.15 | A*b 52, Wi 15 | calibration | synthetic | A synthetic control at a typical operating point of an HP-class secondary cone, kept to check absolute numbers: P80 between 17 and 28 mm, between 450 and 650 t/h and a reduction ratio between 4 and 6.5. |
 
 ## The 10 real cases
 
@@ -78,9 +78,19 @@ nothing and the invalid control being flagged; a planted change of the setting t
   ratio near one and flag `pass_through`, not a pretty plot.
 * **CI1 (invalid):** the setting (280 mm) is wider than the 256 mm feed top size, so the engine must flag the point
   invalid (`css_ge_feed_top`). Contract 1 accepts and flags it so it is baked and shown.
-* **CK1 (calibration anchor):** the operating point chosen as the anchor for absolute-number calibration against published
-  industrial cone data (Duarte et al. 2021, DOI 10.3390/min11111256); the fit to that data is pending, so its ranges come
-  from the crushing relation, not from that data.
+* **CK1 (absolute-number control):** a synthetic operating point of an HP-class secondary cone. The product's absolute
+  anchor is the calibrated HP500 lane (Rocha et al. 2024, CrusherCal, the ten measured surveys), not this point, and CK1 is
+  not fitted to it; its ranges come from the crushing relation of the setting. Duarte et al. 2021 (DOI
+  10.3390/min11111256) cannot serve as the anchor: the paper gives only the setting, throughput and feed F80 of seven
+  points of an HP400 and a CH660 (Table 1, p. 9), with no eccentric throw, speed, ore properties or power, and its feed
+  and product size distributions are plots only (Figures 4 to 9, pp. 10 to 16). CK1 reduction ratio (5.35) is above the
+  typical ceiling of 5 for one secondary-cone stage, so it carries the warning `reduction_ratio_above_typical`.
+
+The sourced setting and reduction-ratio warnings (`css_below_vendor_minimum`, `reduction_ratio_above_typical`; bounds and
+sources in the [envelope card](../frameworks/15_envelope-gate/envelope.md)) never make a case invalid. Of the 17 synthetic
+cases, CK1 (ratio 5.35), S05 (5.51), S06 (9.80), T01 (5.48), T02 (4.67), H01 (6.55) and H02 (4.86) carry
+`reduction_ratio_above_typical`, and S06 (setting 12 mm against a 16 mm minimum) also carries `css_below_vendor_minimum`;
+the ten HP500 surveys (ratios 2.2 to 3.2) carry neither.
 
 G02 is not a control but sits at the same edge: its setting (195 mm) is at the feed's F80, so the engine flags it
 `pass_through` and its band says so.
