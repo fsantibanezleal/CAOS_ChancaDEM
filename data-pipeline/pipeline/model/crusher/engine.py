@@ -23,7 +23,7 @@ from .types import CrusherResult, Operating
 from .whiten import whiten_solve
 
 TOP_MM = 256        # sieve top size [mm]
-K = 28              # sieve classes (square-root-of-two series, 256 mm down to about 0.4 mm)
+K = 28              # sieve classes (square-root-of-two series, 256 mm down to 256 / 2^14 = 0.0156 mm)
 READOUT_SIZES = (1, 4, 8, 16, 32)
 
 _EDGES = make_grid(TOP_MM, K)

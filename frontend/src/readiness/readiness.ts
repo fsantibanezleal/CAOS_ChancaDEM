@@ -46,6 +46,23 @@ export function unavailableRow(doc: Readiness | null, path: string): ReadinessEn
 
 export const isUnavailable = (doc: Readiness | null, path: string): boolean => unavailableRow(doc, path) !== null;
 
+/** The row `id` when the document marks it missing (the document is absent from this build): the reason is the row's. */
+export function rowUnavailable(doc: Readiness | null, id: string): ReadinessEntry | null {
+  const row = entryFor(doc, id);
+  return row?.state === 'missing' ? row : null;
+}
+
+/**
+ * Which model answers a slot (catalog rows surrogate-model and anomaly-model): the released graph, or the slot's baseline (the
+ * engine for the surrogate, the envelope gate for the anomaly view) while the readiness says the slot is `training` or the
+ * contract is missing. A baseline slot is not loaded. An unreadable document or a document without the row leaves the
+ * released model to answer, and the load of its contract and graph decides.
+ */
+export function modelAnswers(doc: Readiness | null, slot: string): 'released' | 'baseline' {
+  const row = entryFor(doc, slot);
+  return row && (row.state === 'training' || row.state === 'missing') ? 'baseline' : 'released';
+}
+
 let cached: Promise<Readiness | null> | null = null;
 
 /** Forgets the fetched document (a test starts clean; a page load never needs it). */

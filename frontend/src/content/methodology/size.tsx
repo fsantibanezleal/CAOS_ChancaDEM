@@ -1,7 +1,7 @@
 // Topic 1 of the Methodology: the feed and product size distributions on the engine's sieve grid.
 import { Callout, Cite, DocSection, Equation, Figure } from '@fasl-work/caos-app-shell';
 import { P, useT } from '../bi';
-import { SizeFigure } from './figures';
+import { SizeFigure, FlowDiagram } from './figures';
 
 export function Size() {
   const t = useT();
@@ -23,8 +23,11 @@ export function Size() {
         tex={String.raw`R(x) = 1 - \exp\!\left[-\left(\frac{x}{x_{63}}\right)^{m}\right], \qquad f_i = \frac{R(e_i) - R(e_{i+1})}{\sum_k \big(R(e_k) - R(e_{k+1})\big)}`}
         caption={t('The Rosin-Rammler feed: R(x) is the fraction passing size x (mm), x63 the size at 63.2 % passing (mm), m the uniformity exponent (higher m, a narrower feed) and f_i the mass fraction of class i after renormalisation.', 'El alimento de Rosin-Rammler: R(x) es la fracción que pasa el tamaño x (mm), x63 el tamaño al 63,2 % pasante (mm), m el exponente de uniformidad (m mayor, alimento más estrecho) y f_i la fracción de masa de la clase i tras la renormalización.')}
       />
-      <Figure caption={t('Feed and product passing curves of the reference point (cone secondary, CSS 32 mm, throw 30 mm, 360 rpm, feed x63 90 mm and m 1.2), computed by the engine; the dashed lines mark F80 and P80 where each curve crosses 80 %.', 'Curvas de pasante del alimento y del producto del punto de referencia (cono secundario, CSS 32 mm, carrera 30 mm, 360 rpm, alimento x63 90 mm y m 1,2), calculadas por el motor; las líneas segmentadas marcan F80 y P80 donde cada curva cruza 80 %.')}>
+      <Figure caption={t('Feed and product passing curves of the reference point (cone secondary, CSS 32 mm, throw 30 mm, 360 rpm, feed x63 90 mm and m 1.2), computed by the engine; the marks show F80 and P80 where each curve crosses 80 %.', 'Curvas de pasante del alimento y del producto del punto de referencia (cono secundario, CSS 32 mm, carrera 30 mm, 360 rpm, alimento x63 90 mm y m 1,2), calculadas por el motor; las marcas muestran F80 y P80 donde cada curva cruza 80 %.')}>
         <SizeFigure />
+      </Figure>
+      <Figure caption={t('The steps from the two feed numbers to the gradation readouts.', 'Los pasos desde los dos números del alimento hasta las lecturas de granulometría.')}>
+        <FlowDiagram topic="size" />
       </Figure>
       <P
         en="The passing curve is built from the mass vector by a cumulative sum from the finest class upward: the passing at an edge is the mass finer than that edge, normalised by the total. Every gradation number the interface shows is read from this curve. F80 is the size at 80 percent passing of the feed, and P80, P50 and P20 are the sizes at 80, 50 and 20 percent passing of the product; the reduction ratio is F80 divided by P80."

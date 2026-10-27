@@ -1,7 +1,7 @@
 // Topics 5 and 6 of the Methodology: capacity and the nip angle, and the power models.
 import { Callout, Cite, DocSection, Equation, Figure, useFormat } from '@fasl-work/caos-app-shell';
 import { P, useT } from '../bi';
-import { CapacityFigure, PowerFigure } from './figures';
+import { CapacityFigure, PowerFigure, FlowDiagram } from './figures';
 
 export function Capacity() {
   const t = useT();
@@ -55,6 +55,9 @@ export function Capacity() {
       <Figure caption={t('Throughput of the reference secondary cone (CSS 32 mm) against eccentric speed for three throws, computed by the engine; the peak sits at the optimum speed of 360 rpm and a larger throw raises the whole curve.', 'Capacidad del cono secundario de referencia (CSS 32 mm) frente a la velocidad excéntrica con tres carreras, calculada por el motor; el máximo está en la velocidad óptima de 360 rpm y una carrera mayor levanta toda la curva.')}>
         <CapacityFigure />
       </Figure>
+      <Figure caption={t('The steps from the operating point to the throughput.', 'Los pasos desde el punto de operación hasta la capacidad.')}>
+        <FlowDiagram topic="capacity" />
+      </Figure>
       <P
         en={<>The opening factor is the effective discharge gap, the closed-side setting plus half the throw (the mean gap over a revolution), divided by the reference gap of the machine, so a wider setting or a longer throw raises the capacity. The throw enters at half weight, a deliberate simplification: the engine does not carry a residence-time term, so its sensitivity to throw is milder than the spread of manufacturer figures. The optimum speed is a fixed constant of each machine and does not shift with the throw.</>}
         es={<>El factor de apertura es el espacio efectivo de descarga, el lado cerrado más la mitad de la carrera (el espacio medio durante una vuelta), dividido por el espacio de referencia de la máquina, de modo que un ajuste mayor o una carrera más larga elevan la capacidad. La carrera entra con medio peso, una simplificación deliberada: el motor no lleva un término de tiempo de residencia, así que su sensibilidad a la carrera es más suave que la dispersión de las cifras de los fabricantes. La velocidad óptima es una constante fija de cada máquina y no se desplaza con la carrera.</>}
@@ -92,6 +95,9 @@ export function Power() {
       />
       <Figure caption={t('Bond specific energy against the product size P80 for three work indices, with the feed F80 fixed at 100 mm, computed by the engine; the energy rises steeply as the product gets finer.', 'Energía específica de Bond frente al tamaño del producto P80 con tres índices de trabajo, con el F80 del alimento fijo en 100 mm, calculada por el motor; la energía sube con fuerza a medida que el producto se vuelve más fino.')}>
         <PowerFigure />
+      </Figure>
+      <Figure caption={t('The steps from the gradation to the power draw.', 'Los pasos desde la granulometría hasta el consumo de potencia.')}>
+        <FlowDiagram topic="power" />
       </Figure>
       <P
         en={<>Bond's law was calibrated for grinding and is a known poor descriptor of coarse crushing duty, and the size-specific energy of Morrell is the documented alternative <Cite id="morrell2009" />. The engine keeps Bond because it is the classical baseline of the method: it is cheap, it needs one ore parameter and it is the reference against which a better power model has to be judged. Its draw is net, with no no-load power, and it is zero when the product is not finer than the feed.</>}
