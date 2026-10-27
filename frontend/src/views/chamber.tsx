@@ -4,10 +4,10 @@
 // not the plant's own drawing, and the card says so; the numbers (the settings, the nip angle, the grip limit) are the engine's.
 // The 3D chamber is added to this group by the main session (unit U2b-2 writes views/chamber3d/).
 import { PlotCard, Stage, useShellLang, useWorkbenchState } from '@fasl-work/caos-app-shell';
+import { lazy, Suspense } from 'react';
 import { chamberProfile, jawProfile, machineGeom, profilePolylines } from '../engine/chamber';
 import type { Operating } from '../engine/types';
 import { Fill, Labels, LabelText, Stack, TOKEN } from './draw';
-import { ChamberView } from './chamber3d';
 import { GroupFrame, Pending, provenanceOf, useNum, useT, useView, type Sub } from './shared';
 
 const STRUCTURE_NOTE = {
@@ -250,11 +250,19 @@ function NipView() {
   );
 }
 
+// three.js is about half of the App's code: the 3D view is fetched only when its sub-view opens, so the workbench chunk
+// stays under 500 KB and a reader who never opens it never downloads it.
+const ChamberView = lazy(() => import('./chamber3d').then((m) => ({ default: m.ChamberView })));
+
 /** The 3D chamber (unit U2b-2): a kinematic view of the selected case's chamber, driven by the live engine's values. */
 function Chamber3DView() {
   const { sel } = useView();
   if (!sel) return <Pending />;
-  return <ChamberView op={sel.op} p80Mm={sel.result.p80} f80Mm={sel.result.f80} provenance={provenanceOf(sel)} />;
+  return (
+    <Suspense fallback={<Pending />}>
+      <ChamberView op={sel.op} p80Mm={sel.result.p80} f80Mm={sel.result.f80} provenance={provenanceOf(sel)} />
+    </Suspense>
+  );
 }
 
 export function ChamberGroup() {
