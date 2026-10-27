@@ -77,7 +77,8 @@ def run(models_dir: Path, *, version: str, seed: int = 12345, n_per_machine: int
     np.random.seed(seed)
 
     train = sweep.label(sweep.draw(n_per_machine, seed))
-    n_test = len(sweep.label(sweep.draw(test_n_per_machine, test_seed)))
+    held = sweep.label(sweep.draw(test_n_per_machine, test_seed))
+    n_test = len(held)
 
     # standardisation statistics from the TRAINING draw only; the encodings are the browser's (encoding.py)
     cont = np.array([[getattr(r.op, k) for k in sweep.CONTINUOUS] for r in train])
@@ -125,6 +126,22 @@ def run(models_dir: Path, *, version: str, seed: int = 12345, n_per_machine: int
                       output_names=["xr"], dynamic_axes={"x": {0: "n"}, "xr": {0: "n"}}, opset_version=OPSET)
     quantize_dynamic(str(paths["surrogate.onnx"]), str(paths["surrogate.int8.onnx"]), weight_type=QuantType.QInt8)
 
+    # export parity, measured while the trained modules still exist: the trained torch module against the exported
+    # float32 graph through onnxruntime, on the held-out draw (standardised outputs, maximum absolute difference)
+    import onnxruntime as ort
+
+    def _ort(path: Path):
+        return ort.InferenceSession(str(path), providers=["CPUExecutionProvider"])
+
+    xh = np.array([encode_input(r.op, in_mean, in_std) for r in held], np.float32)
+    ah = np.array([ae_input(ae_feats(r), ae_mean, ae_std) for r in held], np.float32)
+    with torch.no_grad():
+        sur_torch, ae_torch = sur(torch.tensor(xh)).numpy(), ae(torch.tensor(ah)).numpy()
+    sur_onnx = _ort(paths["surrogate.onnx"]).run(None, {"x": xh})[0]
+    ae_onnx = _ort(paths["psd-ae.onnx"]).run(None, {"x": ah})[0]
+    sur_parity = float(np.max(np.abs(sur_torch.astype(np.float64) - sur_onnx)))
+    ae_parity = float(np.max(np.abs(ae_torch.astype(np.float64) - ae_onnx)))
+
     torch_version = torch.__version__.split("+")[0]
     ranges = "; ".join(f"{m}: " + ", ".join(f"{k} {lo:g} to {hi:g}" for k, (lo, hi) in sweep.RANGES[m].items())
                        for m in sweep.MACHINES)
@@ -141,7 +158,7 @@ def run(models_dir: Path, *, version: str, seed: int = 12345, n_per_machine: int
                         f"(seed {seed}, mulberry32), each machine over its own ranges ({ranges}); ore_wi = clamp(8 + "
                         f"(120 - ore_axb) * 0.09, 8, 20); degenerate draws dropped; the held-out draw is an independent "
                         f"second Latin-hypercube draw of {test_n_per_machine} points per machine (seed {test_seed})"),
-            "torch_version": torch_version},
+            "torch_version": torch_version, "export_parity_max_abs": float(f"{sur_parity:.6g}")},
     }
     anomaly_doc = {
         "schema": "chancadem.anomaly/v1", "engine_version": version, "feature_order": FEATURE_ORDER,
@@ -150,7 +167,8 @@ def run(models_dir: Path, *, version: str, seed: int = 12345, n_per_machine: int
         "graph": _graph_record(paths["psd-ae.onnx"], derived, "x", "xr"),
         "architecture": f"{AE_ARCH}; Adam 2e-3, weight decay 1e-5, {EPOCHS_AE} full-batch epochs, MSE on the input noised "
                         f"by Gaussian noise of std {NOISE_STD}",
-        "training": {"seed": seed, "n_train": len(train), "noise_std": NOISE_STD, "torch_version": torch_version},
+        "training": {"seed": seed, "n_train": len(train), "noise_std": NOISE_STD, "torch_version": torch_version,
+                     "export_parity_max_abs": float(f"{ae_parity:.6g}")},
     }
     write_json(models_dir / "surrogate.json", surrogate_doc)
     write_json(models_dir / "psd-ae.json", anomaly_doc)
@@ -158,4 +176,5 @@ def run(models_dir: Path, *, version: str, seed: int = 12345, n_per_machine: int
                                                      "surrogate.json": str(models_dir / "surrogate.json"),
                                                      "psd-ae.json": str(models_dir / "psd-ae.json")},
             "n_train": len(train), "n_test": n_test, "threshold_p99": anomaly_doc["threshold_p99"],
+            "export_parity_max_abs": {"surrogate": surrogate_doc["training"]["export_parity_max_abs"], "anomaly": anomaly_doc["training"]["export_parity_max_abs"]},
             "seconds": round(time.time() - t0, 1)}

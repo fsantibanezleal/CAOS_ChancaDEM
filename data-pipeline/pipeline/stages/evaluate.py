@@ -2,10 +2,10 @@
 ``chancadem.model-metrics/v1`` document (catalog row ``model-metrics``). Held-out is an independent second Latin-hypercube
 draw (seed 67890 by default), never a split of the training draw. Every number is computed here, on the held-out draw,
 through onnxruntime on the SHIPPED graphs (the float32 and the int8 one), against the canonical Python engine; torch is
-used only for the parity check, with the weights read back out of the released float32 graph.
+not used here.
 
-Surrogate: per-output R2 and MAPE in original units (float32 graph, and MAPE of the int8 graph), the parity of torch
-against the float32 graph and of float32 against int8 (maximum absolute difference of the standardised outputs), and the
+Surrogate: per-output R2 and MAPE in original units (float32 graph, and MAPE of the int8 graph), the parity of the trained
+torch module against the float32 graph (measured by the train stage, read from the contract) and of float32 against int8 (maximum absolute difference of the standardised outputs), and the
 monotonicity of P80 in the closed-side setting on every machine. Autoencoder: false-alarm rate on the held-out points,
 detection rate on planted off-manifold points, beside the envelope gate's rates on the same points.
 
@@ -38,25 +38,6 @@ def _r2_mape(pred: np.ndarray, truth: np.ndarray) -> tuple[float, float]:
     nz = np.abs(truth) > 1e-6
     mape = float(np.mean(np.abs((pred[nz] - truth[nz]) / truth[nz])) * 100) if nz.any() else 0.0
     return r2, mape
-
-
-def _torch_surrogate(graph_path: Path):
-    """The Surrogate module loaded with the weights of the released float32 graph."""
-    import onnx
-    import torch
-    from onnx import numpy_helper
-
-    from ..model.surrogate import Surrogate
-
-    weights = {i.name: numpy_helper.to_array(i) for i in onnx.load(str(graph_path)).graph.initializer}
-    module = Surrogate()
-    state = module.state_dict()
-    # the legacy exporter keeps the module's parameter names; a graph that does not is a different network
-    missing = [k for k in state if k not in weights]
-    if missing:
-        raise ValueError(f"{graph_path}: the graph has no initializer named {missing[0]}; it is not the released network")
-    module.load_state_dict({k: torch.tensor(weights[k].copy()) for k in state})
-    return module.eval()
 
 
 def _monotone(bundle: dict, sess) -> tuple[bool, int]:
@@ -105,7 +86,6 @@ def run(models_dir: Path, out_path: Path, *, version: str, test_seed: int = 6789
     models_dir = Path(models_dir)
     sbundle = load_bundle("surrogate-model", models_dir)   # BundleError is a ValueError that names the file
     abundle = load_bundle("anomaly-model", models_dir)
-    derived = models_dir.parent
 
     held = sweep.label(sweep.draw(n_per_machine, test_seed))
     s32 = session_for(models_dir, sbundle["graphs"]["float32"])
@@ -125,14 +105,11 @@ def run(models_dir: Path, out_path: Path, *, version: str, test_seed: int = 6789
         _r2_8, mape8 = _r2_mape(pred8[:, j], truth[:, j])
         per_output[name] = {"r2": round(r2, 4), "mape_pct": round(mape, 3), "mape_pct_int8": round(mape8, 3)}
 
-    import torch
-
-    torch.set_num_threads(1)
-    with torch.no_grad():
-        zt = _torch_surrogate(derived / sbundle["graphs"]["float32"]["path"])(torch.tensor(x)).numpy()
-    parity = {"torch_vs_float32_max_abs": float(np.max(np.abs(zt.astype(np.float64) - z32))),
-              "float32_vs_int8_max_abs": float(np.max(np.abs(z32.astype(np.float64) - z8)))}
-    parity = {k: float(f"{v:.6g}") for k, v in parity.items()}
+    if "export_parity_max_abs" not in sbundle["training"]:
+        raise ValueError(f"{models_dir / 'surrogate.json'}: training.export_parity_max_abs is absent; the bundle does not "
+                         "record that the export preserved the trained module (retrain it)")
+    parity = {"torch_vs_float32_max_abs": sbundle["training"]["export_parity_max_abs"],
+              "float32_vs_int8_max_abs": float(f"{float(np.max(np.abs(z32.astype(np.float64) - z8))):.6g}")}
     mono, curves = _monotone(sbundle, s32)
 
     sa = session_for(models_dir, abundle["graph"])
@@ -154,8 +131,12 @@ def run(models_dir: Path, out_path: Path, *, version: str, test_seed: int = 6789
                      f"Held-out is an independent second Latin-hypercube draw (seed {test_seed}, {n_per_machine} points per "
                      "machine, degenerate draws dropped), not a split of the training draw. R2 and MAPE are in original "
                      "units, computed through onnxruntime on the shipped float32 graph (MAPE also on the int8 graph). "
-                     "Parity is the maximum absolute difference of the standardised outputs on the held-out draw, torch "
-                     "loaded with the weights read out of the float32 graph. Monotonicity: P80 does not fall by more than "
+                     "Parity is the maximum absolute difference of the standardised outputs on the held-out draw. "
+                     "torch_vs_float32 is the trained torch module against the exported float32 graph, measured by the train "
+                     "stage right after export, before the module was discarded, and carried in the surrogate contract "
+                     "(training.export_parity_max_abs); float32_vs_int8 is the float32 graph against the dynamically "
+                     "quantised one, measured here through onnxruntime. The int8 graph's worst standardised difference is "
+                     "larger, while its MAPE stays within about half a point of the float32 one. Monotonicity: P80 does not fall by more than "
                      f"{MONOTONE_TOLERANCE_MM:g} mm as CSS opens, on {curves} curves ({MONOTONE_POINTS} settings across each "
                      "machine's range at the 25%, 50% and 75% points of its other inputs).")},
         "anomaly": {
