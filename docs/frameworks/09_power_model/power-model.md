@@ -1,59 +1,70 @@
-# Method, the power model, Bond vs the calibrated form, and an honest negative
+# Method, the power model: Bond, the paper's form, and an honest negative (M7)
 
-**What this card is:** the power path, and the adversarial finding that the calibrated power model does not
-reproduce the measured power on the 10 HP500 surveys. This card exists so the negative is documented, not buried.
+## What it is
 
-## Bond's law (the classical draw)
+The power path of the engine, and the finding that the calibrated power form does not reproduce the measured power of
+the ten HP500 surveys. The card exists so the negative is documented, not buried.
 
-The engine computes the Bond net comminution draw (`capacity.ts`, `bondPower`):
+## Bond's law, the classical draw
 
-```
-W = 10·Wi·(1/√P80 − 1/√F80)   [kWh/t]   (sizes in micrometres)
-draw [kW] = W · Q [t/h]
-```
+`bond_power` in `capacity.py` computes the Bond net comminution draw (Bond 1952), with sizes in micrometres:
 
-with Wi the Bond work index and Q the throughput. Bond's law is calibrated for grinding, and is known to be a
-poor descriptor of coarse crushing duty; Morrell's size-specific energy (Mic, [doi:10.1016/j.mineng.2009.01.005](https://doi.org/10.1016/j.mineng.2009.01.005))
-is the documented SOTA alternative.
+$$W = 10\,W_i\left(\frac{1}{\sqrt{P_{80}}} - \frac{1}{\sqrt{F_{80}}}\right)\ [\mathrm{kWh/t}], \qquad P = W\,Q\ [\mathrm{kW}]$$
 
-## The paper's calibrated form (Rocha 2024, Table 5)
+with $W_i$ the work index and $Q$ the throughput; the draw is floored at 0. On the synthetic lane this is the power. At
+case S01 it gives 287.4 kW (`data/derived/manifests/S01.json`). Bond's law was developed for grinding and is a poor
+descriptor of coarse crushing duty; Morrell's size-specific energy ($M_{ic}$,
+[doi:10.1016/j.mineng.2009.01.005](https://doi.org/10.1016/j.mineng.2009.01.005)) is the documented alternative and is not
+implemented.
 
-The paper reports a linear power model `Pc = ζ·Pd + Pn` with ζ = 1.30 and a no-load Pn = 110 kW, where **Pd is a
-size-specific net power from the paper's own model**, not the classical Bond draw.
+## The paper's calibrated form
 
-## The honest finding (measured over the 10 surveys)
+On the calibrated lane `calibrated_power` applies $P_c = 1.30\,P_d + 110$ kW with $P_d$ the Bond draw, the engine's
+reading of the current-based form of Rocha et al. (2024). In the paper $P_d$ is a size-specific net power from the
+paper's own model, not the classical Bond draw, so the constants 1.30 and 110 do not transfer (the backbone document says
+so in its `note`; the paper's own text was not re-read in this unit, UNVERIFIED).
 
-Grading each power estimate against the measured kW (from `data/derived/hp500/loo.json`, `power_parity`):
+## The finding, measured over the ten surveys
 
-| power estimate | MAPE vs measured | what it shows |
-|---|---|---|
-| bare Bond draw | ~27% | nearly flat (~196 to 237 kW); does not track the measured 187 to 355 kW spread |
-| `Pc = 1.30·Pd + 110` on our Bond Pd | ~48% | overshoots; the paper's ζ,Pn are for the paper's Pd, not the Bond draw |
-| refit `Pc = ζ·Pd + Pn` on our Pd | ~19% | best the form can do; collapses toward the survey mean |
-| constant-mean baseline | ~24% | the Bond backbone is no better than this |
+In sample, against the ten measured values (187 to 355 kW), from `data/derived/hp500/loo.json`, `power_parity`:
 
-**Conclusion.** The engine's Bond draw carries little information about the measured power variation (the
-measured power tracks CSS more than the Bond draw, because as CSS tightens the finer product raises kWh/t while
-the lower throughput cancels it in tonnes). So:
+| Power estimate | MAPE (percent) | R2 | What it shows |
+|---|---|---|---|
+| bare Bond draw | 26.88 | -1.29 | nearly flat, 196 to 237 kW; it does not track the measured spread |
+| $P_c = 1.30\,P_d + 110$ on the Bond $P_d$ | 47.58 | -3.64 | overshoots: the paper's constants are for the paper's $P_d$ |
+| refit $P_c = \zeta P_d + P_n$ on the ten | 19.28 | 0.21 | the best the form can do; the fit has $\zeta = -2.41$ and $P_n = 828.6$ kW, a negative slope that collapses toward the mean |
+| constant mean | 22.03 | 0.00 | the baseline |
 
-- the dossier's premise that the calibrated model "removes a Bond ~2x coarse-duty overprediction" is **not
-  supported** by the engine's numbers, and is reported as a corrected finding;
-- no 2x-overprediction removal is claimed anywhere;
-- on the App's real lane the **measured** power is the shown reference (the mis-scaled model kW is never surfaced
-  as a prediction);
-- the genuine at-bar result is the t/h parity (see the calibration/validation card), not the power.
+Out of sample the picture is the same (strict LOO, kW: backbone 25.94 percent against the constant mean 24.48; see the
+[CrusherCal card](../08_calibration_validation/calibration-validation.md)). The Bond draw carries little information about
+the measured power variation: an explanation recorded in earlier releases (not re-derived here) is that the measured power
+tracks the setting more than the draw does, because as the setting tightens the finer product raises kWh/t while the
+lower throughput cancels it in tonnes. So:
 
-## What this is and is not
+- no overprediction removal is claimed anywhere;
+- on the real lane the App shows the measured power as the reference, and does not present the modelled kW as a
+  prediction of that survey;
+- the genuine result is the throughput parity, not the power.
 
-- **Is:** an honest, transparent contrast of three power estimates against measured data, with the negative
-  stated plainly and the corrected finding recorded.
-- **Is not:** a validated power surrogate. Reconstructing the paper's size-specific Pd (to apply ζ,Pn correctly)
-  or digitizing the paper's PSD figures for an independent P80 would be the next step; until then the power path
-  is documented as a known limitation, not a result.
+## Where it runs
 
-## References (DOI-verified)
+Both lanes (`capacity.py`, `frontend/src/engine/capacity.ts`). The units gate bounds power at 0 to 3000 kW as a unit-error
+ceiling (`core/unit_gate.py`), not as an accuracy claim.
 
-- Bond 1952 (pre-DOI), [open on OneMine](https://onemine.org/documents/the-third-theory-of-comminution); Napier-Munn et al. 1996 (JKMRC monograph), [WorldCat](https://search.worldcat.org/title/37081193)
+## Tests
+
+- `tests/test_crusher_engine.py::test_throughput_and_power_are_positive_and_finite_for_a_valid_point` and
+  `tests/contracts/test_hp500_validation.py::test_loo_validates` (the gates of M7).
+
+## What it is not
+
+- Not a validated power model. Reconstructing the paper's size-specific $P_d$ so that its constants apply, or a
+  size-specific energy model, would be the next step; until then power is a documented limitation.
+
+## References
+
+- Bond 1952, *The third theory of comminution*, [OneMine](https://onemine.org/documents/the-third-theory-of-comminution)
+- Napier-Munn et al. 1996, [WorldCat](https://search.worldcat.org/title/37081193)
 - Morrell 2009, [doi:10.1016/j.mineng.2009.01.005](https://doi.org/10.1016/j.mineng.2009.01.005)
 - Rocha et al. 2024, [doi:10.3390/min14090919](https://doi.org/10.3390/min14090919)
 - Gröndahl et al. 2018, [doi:10.1016/j.mineng.2018.07.008](https://doi.org/10.1016/j.mineng.2018.07.008) (real power-draw signatures)

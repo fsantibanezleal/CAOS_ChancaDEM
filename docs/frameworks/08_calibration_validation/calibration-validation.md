@@ -1,87 +1,87 @@
-# Method, CrusherCal, calibration + held-out (LOO) validation + uncertainty
+# Method, CrusherCal: leave-one-survey-out validation with controls and a predictive band (M10)
 
-**What this card is:** the protocol behind the "physics is real" claim. The engine is calibrated to open
-industrial data, and that calibration is validated out of sample (leave-one-survey-out) with negative controls
-and a calibrated uncertainty band. Every number is computed offline (`data-pipeline/pipeline/hp500/loo.py`,
-numpy-only, seeded) from the committed backbone bridge and surfaced in the Benchmark page. None is asserted.
+## What it is
 
-## The calibration (Rocha et al. 2024, Table 5)
+The protocol behind the claim that the calibrated engine is held out of sample. The [HP500 fit](../16_hp500-calibration/hp500-calibration.md)
+is evaluated on ten surveys by leave-one-survey-out (LOO) with identical folds for several models, negative controls and
+an 80 percent predictive band. Every number is computed offline by `data-pipeline/pipeline/hp500/loo.py` (numpy,
+seeded) from the committed backbone and written to `data/derived/hp500/loo.json` (`chancadem.hp500.loo/v1`); none is
+asserted.
 
-The `cone-sec` machine is calibrated to 10 real surveys of a Metso HP500 secondary cone at Minas Rio (itabirite
-iron ore), via the published Andersen-Whiten fit, linear in CSS and the feed f80 (both mm):
+## The models, on the two measured targets (t/h and kW)
 
-```
-K1 = 0.23·CSS + 0.30·f80
-K2 = 12 + 0.55·CSS + 0.40·f80
-K3 = 2.3
-t10[%] = 64 - 0.12·CSS - 0.23·f80        (capped at the Austin appearance max, 0.1^γ ≈ 0.447)
-QT ≈ 647 t/h                              (capacity base, so the curve overlays the measured 813-1639 t/h band)
-Pc = 1.30·Pd + 110 kW                     (the paper's current-based power form; see the honest finding below)
-```
+For survey $i$ the models are fitted on the other nine:
 
-Provenance: Rocha, Campos, Silva & Tavares (2024), *Fit-for-Purpose Model of HP500 Cone Crusher in Size Reduction
-of Itabirite Iron Ore*, Minerals 14(9):919, [doi:10.3390/min14090919](https://doi.org/10.3390/min14090919) (CC BY 4.0). Table A1 = the 10 measured
-surveys; Table 5 = the fit; Table 1 = the ore drop-weight A,b and Bond Wi.
+- **M0, calibrated backbone.** The engine with its global scalar refit on the nine: for throughput
+  $Q = Q_T \cdot s_i$, with $s_i$ the engine's capacity factor and $Q_T$ the least-squares scalar
+  $Q_T = \sum s m / \sum s^2$; for power the paper's form $P_c = \zeta P_d + P_n$ with $(\zeta, P_n)$ refit by ordinary
+  least squares.
+- **M1, backbone plus a bounded residual.** A ridge regression ($\lambda = 1$) of the residual on the standardised
+  setting and $f_{80}$, clipped to $\pm 20$ percent of the backbone value, added to M0.
+- **M2, free-form.** Ordinary least squares on setting and $f_{80}$ predicting the raw target, with no physics.
 
-## The held-out validation (leave-one-survey-out)
+The controls: a **constant-mean** baseline (the mean of the nine); a **label-shuffle** (M1 trained on permuted residual
+targets, seeded) that must not beat the backbone; and a **leaky** variant (fit on all ten) beside the strict one, to show
+the optimism gap. P80 is reported as a self-consistency target only. The 80 percent band is
+$M_0 \pm 1.2816\,\sigma$, with $\sigma$ the sample standard deviation of the strict held-out residual of M0; with ten
+surveys its empirical coverage is a coarse estimate. Constants: `RESID_CLIP_FRAC` 0.20, `RIDGE_LAMBDA` 1.0, seed 42.
 
-For the two measured targets t/h and kW (P80 is a model output, reported as self-consistency only), for each
-survey i we predict from the other 9, refitting the backbone's global scalars per fold. Three models on identical
-folds:
+## The results
 
-- **M0, calibrated backbone.** The physics with its scalar(s) refit on the 9 (capacity base QT for t/h; the
-  paper power form `Pc = ζ·Pd + Pn` refit by OLS for kW).
-- **M1, backbone + bounded residual (the CrusherCal proposal).** A ridge residual on standardized `[CSS, f80]`,
-  clipped to ±20% of the backbone value (a physical bound, not a free-form fit), added on top of M0.
-- **M2, free-form.** An unconstrained OLS on `[CSS, f80]` predicting the raw target, the overfit strawman.
+From `data/derived/hp500/loo.json` (MAPE in percent), strict folds:
 
-Reported for each: MAPE, RMSE, R², max deviation, in strict folds and in a leaky variant (fit on all 10) so the
-optimism gap is visible.
+| Target | M0 backbone | M1 residual | M2 free-form | constant mean | M1 label-shuffle |
+|---|---|---|---|---|---|
+| t/h | 12.09 | 13.45 | 12.18 | 18.29 | 25.04 |
+| kW | 25.94 | 25.37 | 14.03 | 24.48 | 40.19 |
 
-## Negative controls (all must pass, or the result is void)
+Leaky folds (fit on all ten): t/h 10.95, 8.51 and 8.24 for M0, M1 and M2; kW 19.28, 12.00 and 9.46.
 
-1. **Label-shuffle.** Train M1 on permuted residual targets; it must not beat M0. If it did, there is leakage.
-2. **Constant-mean.** M0 must beat predicting the survey mean to claim any skill.
-3. **Leaky vs strict fold.** The free-form models must look better leaky than strict (the overfitting the LOO
-   exposes); the calibrated backbone must be stable across both.
-4. **Envelope gate.** Implausible inputs (f80 < CSS, CSS ≤ 0, feed ≤ 0) or points outside the calibrated support
-   (CSS 38-55 mm, f80 47-140 mm) are flagged, never answered with a confident number (`physics/envelope.ts`).
+The band: t/h half-width 238.5 t/h (20.8 percent of the mean), empirical coverage 0.90 against 0.80 nominal; kW half-width
+105.1 kW (36.5 percent), coverage 0.90.
 
-## Uncertainty (UQ)
+What this says, as the data stand:
 
-An 80% predictive interval is built from the held-out residual spread, `M0 ± 1.2816·σ`, and its empirical
-coverage is checked against the 80% nominal. With n=10 the coverage estimate is coarse; that is stated. The band
-is shown on the App's real-lane t/h and kW gauges.
+- **t/h, a genuine win over the baseline.** The strict LOO MAPE of the backbone, 12.09 percent, sits inside the 15
+  percent band the HP500 paper reports for its own fit (a figure carried from earlier releases, UNVERIFIED here), beats the
+  constant mean (18.29) and the label-shuffle control (25.04). The in-sample figure is 11.55 percent, so the held-out
+  number is not an in-sample artifact. The free-form model M2 is equally good on throughput (12.18); the backbone matches
+  a two-parameter regression with one fitted scalar and a physical shape.
+- **kW, an honest negative for the backbone.** The strict MAPE of M0, 25.94 percent, is no better than the constant mean
+  (24.48). The free-form model M2, at 14.03 percent, does better on power, against the expectation written in the
+  protocol that M2 is the strawman that loses; it is reported as it came out. The reason the engine's power does not carry
+  the signal is in the [power card](../09_power_model/power-model.md).
+- **M1, a null.** The bounded residual does not beat the backbone out of sample (13.45 against 12.09 on t/h, 25.37 against
+  25.94 on kW, marginal), and its large leaky-versus-strict gap (t/h 8.51 against 13.45) is the overfitting that ten
+  surveys invite. The product ships the backbone with its empirical band, not the residual, and says so.
+- The band's coverage of 0.90 against 0.80 nominal is within what ten points allow and is reported, not tuned.
 
-## The results (honest, from the 10 surveys)
+## Where it runs
 
-- **t/h, a genuine at-bar win.** The calibrated capacity backbone reproduces the measured throughput at about 12%
-  strict-LOO MAPE, inside the paper's ~15% band, beating the constant-mean baseline (~18%) and passing the
-  label-shuffle control. Real calibrated-capacity skill.
-- **kW, an honest negative.** The engine's classical Bond draw is nearly flat (about 196 to 237 kW) and carries
-  little information about the measured 187 to 355 kW spread, so the backbone (~26% MAPE) is no better than the
-  survey mean (~24%). See the power-model card for why.
-- **M1 residual, a pre-registered null.** The bounded residual does not beat the backbone out-of-sample (t/h ~13%
-  vs ~12%; kW marginal), and its large leaky-vs-strict gap confirms overfitting at n=10. We ship the backbone
-  with empirical bands, not an overfit residual, and say so in-app.
+Offline (`run.py hp500` or the bake); the browser draws the documents in the Validation group and the Benchmark page and
+shows the measured value beside the model on the real-survey gauges, with the band when the document is present.
 
-## What this is and is not
+## Tests
 
-- **Is:** a held-out (LOO), uncertainty-quantified recalibration of an open industrial cone model, delivered live
-  in the browser, a validation + UQ + delivery combination absent from the DEM / phenomenological SOTA.
-- **Is not:** a claim of lower error than the DEM or the paper's in-sample fit. The novelty is methodological.
+`tests/test_hp500_loo.py`: `test_label_shuffle_control_does_not_beat_backbone`, `test_tph_backbone_has_real_skill`,
+`test_overfit_optimism_gap_is_exposed` (the gates of M10); `tests/contracts/test_hp500_validation.py::test_loo_validates`.
+
+## What it is not
+
+- Not a claim of lower error than the paper's in-sample fit or than DEM. The contribution is the out-of-sample
+  validation, the controls and the predictive band, delivered in the browser.
+- Not a significance test: ten surveys of one machine and one ore.
 
 ## Reproduce
 
 ```
-node --import tsx data-pipeline/pipeline/sweep/bake_hp500.mjs   # bridge the TS engine -> backbone.json
-python -m pipeline.hp500.loo                                    # -> data/derived/hp500/loo.json
-python data-pipeline/run.py all                                 # rebuilds loo.json from the committed backbone
-pytest tests/test_hp500_loo.py                                   # invariants + negative-control behaviour
+python data-pipeline/run.py hp500                       # backbone.json and loo.json from the survey table
+python data-pipeline/pipeline/hp500/loo.py --out <dir>  # the same two documents into a sandbox, with a printed summary
+python -m pytest tests/test_hp500_loo.py tests/contracts/test_hp500_validation.py
 ```
 
-## References (DOI-verified)
+## References
 
-- Rocha et al. 2024, [doi:10.3390/min14090919](https://doi.org/10.3390/min14090919) (the real data + fit)
-- Duarte et al. 2021, [doi:10.3390/min11111256](https://doi.org/10.3390/min11111256) (second cone anchor)
-- Johansson et al. 2017, [doi:10.1016/j.mineng.2016.09.015](https://doi.org/10.1016/j.mineng.2016.09.015) (the DEM-vs-experiment validation template)
+- Rocha et al. 2024, [doi:10.3390/min14090919](https://doi.org/10.3390/min14090919) (the data and the fit)
+- Johansson et al. 2017, [doi:10.1016/j.mineng.2016.09.015](https://doi.org/10.1016/j.mineng.2016.09.015) (the DEM versus
+  experiment validation the design mirrors)
