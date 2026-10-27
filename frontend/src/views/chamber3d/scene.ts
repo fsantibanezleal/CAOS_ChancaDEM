@@ -157,7 +157,7 @@ export function createChamberScene(o: SceneOptions): ChamberScene {
   };
 
   const fit = () => {
-    const f = fitCamera(chamber.box, FOV, camera.aspect);
+    const f = fitCamera(chamber.points, FOV, camera.aspect);
     applying = true;
     controls.target.copy(f.target);
     camera.position.copy(f.position);
