@@ -1,5 +1,5 @@
-// Group 3, Performance: the result table above the capacity hump, the setting trade-off, the power draw, and the comparison of
-// the three variants. Each chart draws the live engine at the rail's values (solid) and the committed sweep of the replay
+// Group 3, Performance: the result table above the capacity hump, the setting trade-off, the power draw, the comparison of
+// the three variants, and the campaign view (hours until the P80 target is exceeded against the drift rate of the setting; campaign.tsx). Each chart draws the live engine at the rail's values (solid) and the committed sweep of the replay
 // (dashed), with the current setting marked. On a real survey the measured throughput and power are reference lines, with the
 // CrusherCal 80 percent predictive band (the strict leave-one-survey-out folds) and the pre-registered null stated in the note.
 import { PlotCard, ViewsRow, useShellLang, useWorkbenchState, type BiText } from '@fasl-work/caos-app-shell';
@@ -10,6 +10,7 @@ import { evaluate } from '../engine/engine';
 import type { Operating } from '../engine/types';
 import type { Text } from '../lib/contract.types';
 import { bandHalfWidth, syntheticBand, selectionOf, VARIANTS, type SyntheticBand } from '../workbench/model';
+import { CampaignView } from './campaign';
 import { Fill, Stack } from './draw';
 import { bare, GroupFrame, Pending, provenanceOf, REGIME_TEXT, useNum, useT, useView, type Sub } from './shared';
 import { asc, finAll, LIVE_COLOR, linSpace, REPLAY_COLOR, REPLAY_DASH } from './series';
@@ -371,6 +372,7 @@ export function PerformanceGroup() {
     { id: 'setting', label: { en: 'Setting trade-off', es: 'Efecto de la abertura' }, content: <SettingView /> },
     { id: 'power', label: { en: 'Power', es: 'Potencia' }, content: <PowerView /> },
     { id: 'compare', label: { en: 'Compare variants', es: 'Comparar variantes' }, content: <CompareView /> },
+    { id: 'campaign', label: { en: 'Campaign', es: 'Campaña' }, content: <CampaignView /> },
   ];
   return <GroupFrame group="performance" ariaLabel={{ en: 'Performance views', es: 'Vistas de desempeño' }} tabs={tabs} />;
 }
