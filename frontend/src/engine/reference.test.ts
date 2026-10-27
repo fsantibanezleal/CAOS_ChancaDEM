@@ -130,18 +130,14 @@ export function referencePoints(): RefPoint[] {
 }
 
 // ---- the feature encodings of surrogate.ts (not exported there: its module imports the ONNX runtime) ----
-// The frozen scaler of the surrogate (data/derived/scaler.json: inMean, inStd) and of the autoencoder
-// (data/derived/ae_scaler.json: mean, std), embedded in the fixture so both engines encode with the same numbers.
-const SCALER = {
-  inMean: [59.12966537475586, 26.003122329711914, 355.6756896972656, 188.49363708496094, 1.313321590423584, 70.57135009765625],
-  inStd: [56.631683349609375, 10.287561416625977, 135.84506225585938, 198.72792053222656, 0.33907583355903625, 22.795068740844727],
-  aeMean: [1.467167615890503, 1.1436902284622192, 0.448967844247818, 0.15786579251289368, 0.3134826123714447, 0.44715023040771484,
-    0.593015193939209, 0.6932022571563721, 1062.06591796875, 175.29615783691406, 4.3613409996032715, 1.9716603755950928,
-    0.7934262156486511, 1.313321590423584],
-  aeStd: [0.547846794128418, 0.5997057557106018, 0.715634822845459, 0.11960113048553467, 0.23100346326828003, 0.31256452202796936,
-    0.3597903251647949, 0.3327787518501282, 1354.9217529296875, 87.6966781616211, 4.075794219970703, 0.31735119223594666,
-    0.2958548963069916, 0.33907583355903625],
-};
+// The encoding statistics of the released model contracts (data/derived/models/surrogate.json: in_mean, in_std; psd-ae.json:
+// mean, std), embedded in the fixture so both engines encode with the same numbers. A retrain changes them: the check below
+// then fails until the fixture is regenerated with CHANCADEM_WRITE_REFERENCE=1, so the reference always encodes with the
+// statistics the shipped graphs were trained with.
+const MODELS = new URL('../../../data/derived/models/', import.meta.url);
+const SUR = JSON.parse(readFileSync(new URL('surrogate.json', MODELS), 'utf8')) as { in_mean: number[]; in_std: number[] };
+const AE = JSON.parse(readFileSync(new URL('psd-ae.json', MODELS), 'utf8')) as { mean: number[]; std: number[] };
+const SCALER = { inMean: SUR.in_mean, inStd: SUR.in_std, aeMean: AE.mean, aeStd: AE.std };
 const ENC_MACHINES: Machine[] = ['cone-sec', 'cone-tert', 'jaw', 'cone-short-head', 'gyratory'];
 const CONT: (keyof Operating)[] = ['cssMm', 'throwMm', 'speedRpm', 'feedX63Mm', 'feedM', 'oreAxb'];
 
