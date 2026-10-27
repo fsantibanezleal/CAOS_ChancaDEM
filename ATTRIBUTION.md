@@ -1,6 +1,6 @@
 # Attribution, models & methods
 
-## Physics models (DOI-verified, see `frontend/src/data/citations.ts`)
+## Physics models (DOI-verified, see `frontend/src/content/citations/core.ts`)
 
 | Model | Reference |
 |---|---|
