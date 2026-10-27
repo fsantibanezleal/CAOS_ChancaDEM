@@ -138,7 +138,20 @@ versions were read at the package registries on 2026-10-26 (the sizing record li
 
 ## Resources
 
-RESOURCES_TABLE
+What each stage needs on the development workstation (Windows 11, Python 3.13, Node 24.14.1; measured 2026-10-27 with
+`tools/audit/measure_command.py` of CAOS_MANAGE on a `git archive` copy of the release branch: the wall time, the peak memory
+of the whole process tree polled every 20 ms, and the bytes left). The commands and the raw output are in
+[`measured-resources.md`](measured-resources.md). No stage needs a GPU or a network after the install.
+
+| stage | memory | disk | time | where it runs |
+|---|---|---|---|---|
+| bake (`data-pipeline/run.py all`: 27 cases, the HP500 backbone and CrusherCal, the index, readiness) | 67 MB peak | 286 KB of artifacts in `data/derived/` (285,678 bytes, 65 files) | 7.3 s | workstation, never CI |
+| training (`data-pipeline/run.py models`: the LHS sweeps of the engine, the surrogate and the autoencoder, ONNX export, held-out evaluation) | 453 MB peak | 58 KB of graphs and contracts in `data/derived/models/` (58,120 bytes, 5 files) | 48 s on the CPU | workstation, never CI |
+| tests (pytest, the whole suite) | 268 MB peak | temporary trees under the temp root (`--basetemp`), removed after | 962 s | workstation; the planted-defect suite `tests/adversarial` also runs in CI |
+| install (`npm ci`) | 644 MB peak | 328 MB in `node_modules` (11,422 files) | 25 s | workstation and CI web job |
+| build (`npm run build`) | 567 MB peak | 16.8 MB in `frontend/dist` (16,820,928 bytes, 159 files), of which 13.5 MB is the ONNX Runtime WASM | 12 s | workstation and CI web job |
+| web unit tests (`npm test`, 309 tests) | 1951 MB peak (vitest's worker pool) | none | 10 s | workstation and CI web job |
+| deploy payload (GitHub Pages) | none | 16.8 MB uploaded | one Pages deploy | CI after main |
 
 ## Lanes
 
@@ -153,7 +166,7 @@ RESOURCES_TABLE
   2.3e-12) and to the baked traces by `frontend/src/engine/crusher.parity.test.ts`; the two ONNX models run in the
   browser through onnxruntime-web 1.27.0 with its WASM served by the site. The basis for the live lane is measured: the
   lane gate (`data-pipeline/pipeline/core/gate.py`) judges each case's engine time against 1500 ms and its trace against
-  256 KiB, and every case is live-eligible (LANES_MEASURE).
+  256 KiB, and every case is live-eligible (the canonical engine evaluates a case in 1.34 ms, the median over the 27 cases of the median of seven warmed runs, at most 2.03 ms; the largest trace is 4,127 bytes; [`measured-resources.md`](measured-resources.md)).
 
 ## Method ladder
 
@@ -228,7 +241,7 @@ None of these is a model judging a model.
 ## Deploy driver
 
 GitHub Pages at chancadem.fasl-work.com: a static site with every artifact committed, no secret and no server, for a public
-repository. The measurement behind it is the lane gate (every case is live-eligible) and the site size (DEPLOY_MEASURE).
+repository. The measurement behind it is the lane gate (every case is live-eligible) and the site size (16.8 MB of site files, 13.5 MB of it the self-hosted ONNX Runtime WASM, and 286 KB of artifacts, [`measured-resources.md`](measured-resources.md)).
 The target is written in `deploy/TARGET` and checked by `scripts/check_deploy_place.py`.
 
 ## Risks and kill criteria
