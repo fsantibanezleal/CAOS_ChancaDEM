@@ -34,7 +34,7 @@ CHECK = load("check_notebooks")
 LEVELS = {
     "01-getting-started": [1, 2],
     "02-size-distributions": [1, 2],
-    "03-breakage-and-classification": [1, 2, 3],
+    "03-breakage-and-classification": [1, 2, 2],
     "04-capacity-and-power": [1, 2],
     "05-real-surveys": [1, 2, 3],
     "06-crushercal": [1, 2, 4],
