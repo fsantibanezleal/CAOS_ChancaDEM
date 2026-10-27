@@ -394,3 +394,76 @@ def _with(op: Operating, **changes: Any) -> Operating:
     from dataclasses import replace
 
     return replace(op, **changes)
+
+
+# ---- I1 (BL-019): the sourced setting and reduction-ratio warnings ------------------------------------------------
+
+CSS_CODE = "css_below_vendor_minimum"
+RATIO_CODE = "reduction_ratio_above_typical"
+
+
+def test_i1_cone_sec_at_one_millimetre_warns_with_both_codes_and_stays_valid() -> None:
+    """The defect point of BL-019: a secondary cone at CSS 1 mm with F80 126 mm was reported valid and unflagged."""
+    r = evaluate(Operating("cone-sec", 1, 30, 360, 90, 1.2, 55, 14))
+    assert r.valid is True and r.implausible is False and r.out_of_envelope is False
+    assert CSS_CODE in r.flags and RATIO_CODE in r.flags
+    assert r.envelope_codes == ()        # a warning is not an envelope code
+
+
+def test_i1_cone_sec_at_the_vendor_minimum_16_mm_gets_no_css_code() -> None:
+    r = evaluate(Operating("cone-sec", 16, 30, 360, 40, 1.2, 55, 14))
+    assert r.reduction_ratio <= 5.0
+    assert CSS_CODE not in r.flags and RATIO_CODE not in r.flags
+    assert CSS_CODE in evaluate(Operating("cone-sec", 15.99, 30, 360, 40, 1.2, 55, 14)).flags
+
+
+def test_i1_jaw_at_39_mm_warns_and_at_40_mm_does_not() -> None:
+    assert CSS_CODE in evaluate(Operating("jaw", 39, 38, 290, 200, 1.2, 55, 14)).flags
+    assert CSS_CODE not in evaluate(Operating("jaw", 40, 38, 290, 200, 1.2, 55, 14)).flags
+
+
+@pytest.mark.parametrize("css", [1, 20, 100, 165])
+def test_i1_gyratory_has_no_css_bound(css: float) -> None:
+    assert CSS_CODE not in evaluate(Operating("gyratory", css, 30, 150, 600, 1.2, 55, 14)).flags
+
+
+@pytest.mark.parametrize("machine", ["cone-tert", "cone-short-head"])
+def test_i1_fine_cones_use_the_short_head_minimum_of_6_mm(machine: str) -> None:
+    assert CSS_CODE in evaluate(Operating(machine, 5.99, 16, 450, 28, 1.5, 55, 14)).flags
+    assert CSS_CODE not in evaluate(Operating(machine, 6, 16, 450, 28, 1.5, 55, 14)).flags
+
+
+def test_i1_bounds_are_strict_and_per_machine() -> None:
+    from pipeline.model.crusher.bounds import (
+        MAX_TYPICAL_REDUCTION_RATIO,
+        MIN_VENDOR_CSS_MM,
+        check_bounds,
+    )
+
+    assert MIN_VENDOR_CSS_MM == {"cone-sec": 16, "cone-tert": 6, "cone-short-head": 6, "jaw": 40}
+    assert MAX_TYPICAL_REDUCTION_RATIO == {"cone-sec": 5, "cone-tert": 4, "cone-short-head": 4, "jaw": 4, "gyratory": 4}
+    for machine, ceiling in MAX_TYPICAL_REDUCTION_RATIO.items():
+        assert RATIO_CODE not in check_bounds(machine, 1000.0, ceiling), machine            # exactly at the ceiling
+        assert RATIO_CODE in check_bounds(machine, 1000.0, ceiling + 1e-9), machine         # strictly above
+    assert check_bounds("cone-sec", 16.0, 5.0) == ()
+    assert check_bounds("cone-sec", 15.9, 5.1) == (CSS_CODE, RATIO_CODE)
+
+
+def test_i1_a_warned_point_stays_valid_on_every_machine() -> None:
+    for machine, css, x63 in [("cone-sec", 1, 90), ("cone-tert", 2, 28), ("cone-short-head", 2, 28), ("jaw", 10, 350), ("gyratory", 2, 600)]:
+        r = evaluate(Operating(machine, css, 20, 300, x63, 1.2, 55, 14))
+        assert RATIO_CODE in r.flags, machine
+        assert r.valid is True, (machine, r.flags)
+
+
+def test_i1_the_calibrated_lane_gets_the_same_checks() -> None:
+    r = evaluate(operating_from_survey(48, 88))
+    assert CSS_CODE not in r.flags         # every survey CSS is inside [38, 55] mm, above 16 mm
+    assert (RATIO_CODE in r.flags) == (r.reduction_ratio > 5.0)
+
+
+def test_i1_manifest_flag_codes_pass_the_new_codes_through_in_order() -> None:
+    from pipeline.core.manifest import flag_codes
+
+    r = evaluate(Operating("cone-sec", 1, 30, 360, 90, 1.2, 55, 14))
+    assert flag_codes(r) == [CSS_CODE, RATIO_CODE]
