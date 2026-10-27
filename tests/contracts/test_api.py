@@ -1,4 +1,4 @@
-"""Catalog row api 1.0.0: the dormant FastAPI app serves every committed document as docs/contracts/api.openapi.json
+"""Catalog row api 1.0.1: the dormant FastAPI app serves every committed document as docs/contracts/api.openapi.json
 declares, answers 503 with the declared state when a document is absent, 404 for an unknown case or artifact, and never
 leaves the derived root. DATA_DIR selects the tree (the swap test runs the same assertions on the provider fixture tree
 and on the bake)."""
