@@ -77,7 +77,7 @@ export interface paths {
         };
         /**
          * An artifact a manifest names (catalog row trace), by its path under data/derived.
-         * @description rel_path may contain slashes (for example EX02_epidemic/trace.json); only a path an indexed manifest names is served; anything else is not found, and an artifact that cannot be read is unavailable.
+         * @description rel_path may contain slashes (for example S01/trace.json); only a path an indexed manifest names is served; anything else is not found, and an artifact that cannot be read is unavailable.
          */
         get: operations["getArtifact"];
         put?: never;
