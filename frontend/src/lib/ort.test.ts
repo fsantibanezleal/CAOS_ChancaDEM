@@ -234,7 +234,7 @@ describe('F1: the learned models answer only where they apply', () => {
     const text = notApplicableText(op, sur, applicability(op, sur), { en: 'the engine', es: 'el motor' });
     expect(text.en).toContain('setting 120.5 lies outside the trained range 6 to 90');
     expect(text.es).toContain('abertura 120,5 queda fuera del rango entrenado 6 a 90');
-    for (const t of [calibrated, text]) expect(`${t.en} ${t.es}`).not.toMatch(/[—→]/u);
+    for (const t of [calibrated, text]) expect(`${t.en} ${t.es}`).not.toMatch(/[\u2014\u2192]/u);
   });
 });
 
