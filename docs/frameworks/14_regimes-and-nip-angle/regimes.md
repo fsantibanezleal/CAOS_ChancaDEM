@@ -15,6 +15,9 @@ Let $F_{80}$ be the engine's feed 80 percent passing size and $e_0 = 256$ mm the
   `choke`) and flag `negligible_reduction`.
 - If the conditioning proxy is not finite or exceeds $10^6$: invalid, flag `ill_conditioned`.
 - If $\mathrm{CSS} \ge e_0$: regime `invalid`.
+- Two sourced warnings never change the regime or `valid`: `css_below_vendor_minimum` (the setting is below the vendor
+  minimum of the machine type) and `reduction_ratio_above_typical` ($F_{80}/P_{80}$ above the typical ceiling of one
+  stage). Their bounds and sources are in the [envelope card](../15_envelope-gate/envelope.md).
 
 The nip angle (`nip_angle`) is $\alpha = \alpha_0 + 6\,(\mathrm{CSS}/g_{ref} - 1)/2$ degrees with $\alpha_0 = 22$ (19 for
 the jaw), rising modestly with the setting. The grip limit is $2\arctan\mu$ with $\mu = 0.35$, that is 38.2 degrees

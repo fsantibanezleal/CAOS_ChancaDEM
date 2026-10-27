@@ -26,7 +26,7 @@ export const ROWS: { id: string; version: string; schema: string; governs: [stri
   },
   {
     id: 'case-manifest',
-    version: '1.0.0',
+    version: '1.1.0',
     schema: 'chancadem.manifest/v1',
     governs: ['One baked case: operating point, measured survey, lane verdict, metrics, expected ranges, context and source.', 'Un caso precalculado: punto de operación, muestreo medido, veredicto de carril, métricas, rangos esperados, contexto y fuente.'],
     missing: ['Partial: the selector marks the case not available yet and the other cases work.', 'Parcial: el selector marca el caso como aún no disponible y los demás casos funcionan.'],

@@ -15,9 +15,9 @@
     "sha256": "b711399d6bc7e9ee78e7d4e39ca2a96683f67f6e89c80e42a3b4272d4f85fd55"
   },
   "case-manifest": {
-    "version": "1.0.0",
+    "version": "1.1.0",
     "schema": "docs/contracts/schemas/case-manifest.schema.json",
-    "sha256": "a70aa9d6a6df65329b13ed723a6bebf2e72b191443d8f7e4740418f39df201bb"
+    "sha256": "8c15d447186751e0851a7dfdf054191839f822e4d0579a5de551699973696bc6"
   },
   "trace": {
     "version": "1.0.0",

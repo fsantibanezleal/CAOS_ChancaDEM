@@ -18,7 +18,8 @@ ENGINE_MODEL = ("Whiten population balance with Andersen classification, JKMRC t
                 "Evertsson capacity and Bond power")
 CALIBRATED_NOTE = " (HP500 calibration of Rocha et al. 2024)"
 
-# the engine's flag texts to the stable codes of the manifest schema (the envelope codes are already codes)
+# the engine's flag texts to the stable codes of the manifest schema (the envelope codes and the two sourced warnings of
+# model/crusher/bounds.py are already codes)
 FLAG_CODES = {
     "CSS ≥ feed top size, nothing is gripped": "css_ge_feed_top",
     "CSS ≥ F80, little size reduction (pass-through regime)": "pass_through",
@@ -28,7 +29,7 @@ FLAG_CODES = {
 
 
 def flag_codes(r: CrusherResult) -> list[str]:
-    """The stable codes of the engine's flags and envelope codes, in the engine's order."""
+    """The stable codes of the engine's flags, envelope codes and sourced warnings, in the engine's order."""
     out: list[str] = []
     for f in r.flags:
         code = FLAG_CODES.get(f, f)

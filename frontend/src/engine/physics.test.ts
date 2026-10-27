@@ -9,6 +9,7 @@ import { breakageMatrix, phiFromT10 } from './breakage';
 import { throughput } from './capacity';
 import { makeFeed, rosinRammlerSizeAt } from './feed';
 import { checkEnvelope } from './envelope';
+import { checkBounds, MIN_VENDOR_CSS_MM, MAX_TYPICAL_REDUCTION_RATIO } from './bounds';
 import type { Operating } from './types';
 
 const base: Operating = {
@@ -171,4 +172,52 @@ test('envelope gate: checkEnvelope takes the declared F80 as a third argument, d
   assert.deepEqual(checkEnvelope(op, 100).codes, []);
   assert.deepEqual(checkEnvelope(op, 100, 180).codes, ['f80_outside_calibrated']);
   assert.deepEqual(checkEnvelope(op, 100, 100).codes, []);
+});
+
+// I1 (BL-019): the sourced setting and reduction-ratio warnings, the mirror of tests/test_crusher_engine.py.
+const CSS_CODE = 'css_below_vendor_minimum';
+const RATIO_CODE = 'reduction_ratio_above_typical';
+const pt = (machine: Operating['machine'], cssMm: number, feedX63Mm: number): Operating => ({
+  ...base, machine, cssMm, throwMm: 30, speedRpm: 360, feedX63Mm, feedM: 1.2,
+});
+
+test('setting bounds: a cone-sec at CSS 1 mm warns with both codes and stays valid', () => {
+  const r = evaluate(pt('cone-sec', 1, 90));
+  assert.equal(r.valid, true);
+  assert.equal(r.implausible, false);
+  assert.equal(r.outOfEnvelope, false);
+  assert.ok(r.flags.includes(CSS_CODE) && r.flags.includes(RATIO_CODE), `flags ${r.flags}`);
+  assert.deepEqual(r.envelopeCodes, []);
+});
+
+test('setting bounds: the minimum is strict, per machine, and the gyratory has none', () => {
+  assert.ok(!evaluate(pt('cone-sec', 16, 40)).flags.includes(CSS_CODE));
+  assert.ok(evaluate(pt('cone-sec', 15.99, 40)).flags.includes(CSS_CODE));
+  assert.ok(evaluate(pt('jaw', 39, 200)).flags.includes(CSS_CODE));
+  assert.ok(!evaluate(pt('jaw', 40, 200)).flags.includes(CSS_CODE));
+  for (const m of ['cone-tert', 'cone-short-head'] as const) {
+    assert.ok(evaluate(pt(m, 5.99, 28)).flags.includes(CSS_CODE), m);
+    assert.ok(!evaluate(pt(m, 6, 28)).flags.includes(CSS_CODE), m);
+  }
+  for (const css of [1, 20, 100, 165]) assert.ok(!evaluate(pt('gyratory', css, 600)).flags.includes(CSS_CODE), `gyratory ${css}`);
+});
+
+test('setting bounds: the ceilings are strict and sourced per machine', () => {
+  assert.deepEqual(MIN_VENDOR_CSS_MM, { 'cone-sec': 16, 'cone-tert': 6, 'cone-short-head': 6, jaw: 40 });
+  assert.deepEqual(MAX_TYPICAL_REDUCTION_RATIO, { 'cone-sec': 5, 'cone-tert': 4, 'cone-short-head': 4, jaw: 4, gyratory: 4 });
+  for (const [m, ceiling] of Object.entries(MAX_TYPICAL_REDUCTION_RATIO)) {
+    assert.ok(!checkBounds(m as Operating['machine'], 1000, ceiling).includes(RATIO_CODE), `${m} at the ceiling`);
+    assert.ok(checkBounds(m as Operating['machine'], 1000, ceiling + 1e-9).includes(RATIO_CODE), `${m} above the ceiling`);
+  }
+  assert.deepEqual(checkBounds('cone-sec', 16, 5), []);
+  assert.deepEqual(checkBounds('cone-sec', 15.9, 5.1), [CSS_CODE, RATIO_CODE]);
+});
+
+test('setting bounds: a warned point stays valid on every machine', () => {
+  const cases: Array<[Operating['machine'], number, number]> = [['cone-sec', 1, 90], ['cone-tert', 2, 28], ['cone-short-head', 2, 28], ['jaw', 10, 350], ['gyratory', 2, 600]];
+  for (const [m, css, x63] of cases) {
+    const r = evaluate({ ...pt(m, css, x63), throwMm: 20, speedRpm: 300 });
+    assert.ok(r.flags.includes(RATIO_CODE), m);
+    assert.equal(r.valid, true, `${m}: ${r.flags}`);
+  }
 });
