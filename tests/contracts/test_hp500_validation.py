@@ -1,0 +1,119 @@
+"""Contracts hp500-backbone and hp500-loo (catalog rows 1.0.0): the documents the pipeline builds from the survey
+table validate against their schemas, are computed by the canonical engine, are deterministic and equal the
+provider tree (the documents of release 0.09.003 mapped to the new field names) within 1e-9 relative."""
+from __future__ import annotations
+
+import math
+from typing import Any
+
+import contract_schemas as cs
+import pytest
+from pipeline.hp500 import backbone, loo
+from pipeline.hp500.surveys import SURVEYS_CSV, read_surveys
+from pipeline.model.crusher import evaluate, operating_from_survey
+from pipeline.model.crusher.capacity import bond_power, calibrated_power
+
+VERSION = "0.09.003"
+FIXTURE = cs.FIXTURE_ROOT / "data" / "derived" / "hp500"
+COMMITTED = cs.ROOT / "data" / "derived" / "hp500"
+
+
+@pytest.fixture(scope="module")
+def bb() -> dict:
+    return backbone.build(read_surveys(SURVEYS_CSV).accepted, VERSION)
+
+
+@pytest.fixture(scope="module")
+def lo(bb: dict) -> dict:
+    return loo.build(bb, VERSION)
+
+
+def assert_close(a: Any, b: Any, path: str = "", worst: list[float] | None = None) -> None:
+    """Equal structure, equal text, numbers within 1e-9 relative; engine_version and the backbone note (rewritten for the Python engine) are
+    the free fields."""
+    if isinstance(a, dict):
+        assert isinstance(b, dict) and a.keys() == b.keys(), path
+        for k in a:
+            if k != "engine_version" and f"{path}/{k}" != "backbone/note":
+                assert_close(a[k], b[k], f"{path}/{k}", worst)
+    elif isinstance(a, list):
+        assert isinstance(b, list) and len(a) == len(b), path
+        for i, (x, y) in enumerate(zip(a, b)):
+            assert_close(x, y, f"{path}[{i}]", worst)
+    elif isinstance(a, (int, float)) and not isinstance(a, bool):
+        assert isinstance(b, (int, float)), path
+        rel = abs(a - b) / max(abs(b), 1e-300) if a != b else 0.0
+        if worst is not None:
+            worst.append(rel)
+        assert rel <= 1e-9 or math.isclose(a, b, abs_tol=1e-12), (path, a, b)
+    else:
+        assert a == b, path
+
+
+def test_backbone_validates(bb: dict) -> None:
+    errors = list(cs.validator("hp500-backbone").iter_errors(bb))
+    assert not errors, errors
+    assert bb["n"] == len(bb["surveys"]) == 10
+    assert [s["n"] for s in bb["surveys"]] == list(range(1, 11))
+    assert [s["id"] for s in bb["surveys"]] == [f"HP500-{i:02d}" for i in range(1, 11)]
+    assert bb["engine_version"] == VERSION
+    assert "TypeScript" in bb["note"] and "engine-reference.json" in bb["note"] and "Table 5" in bb["note"]
+
+
+def test_backbone_is_the_engine(bb: dict) -> None:
+    """Must refute a backbone that is not the engine: survey 1 recomputed with the engine."""
+    r = evaluate(operating_from_survey(54, 88))
+    s1 = bb["surveys"][0]["backbone"]
+    assert s1["throughput_tph"] == round(r.throughput_tph, 2)
+    assert s1["p80_mm"] == round(r.p80, 2)
+    assert s1["f80_model_mm"] == round(r.f80, 2)
+    pd = bond_power(r.throughput_tph, r.f80, r.p80, 9.0)
+    assert s1["bond_power_kw"] == round(pd, 2)
+    assert s1["calibrated_power_kw"] == round(calibrated_power(pd), 2) == round(r.power_kw, 2)
+    assert s1["throughput_tph"] == 1208.87
+    assert bb["surveys"][0]["measured"] == {"css_mm": 54, "f80_mm": 88, "feed_tph": 1639, "power_kw": 209}
+
+
+def test_backbone_empty_set_raises() -> None:
+    with pytest.raises(ValueError, match="no accepted survey"):
+        backbone.build([], VERSION)
+
+
+def test_backbone_equals_the_provider_tree(bb: dict) -> None:
+    worst: list[float] = []
+    assert_close(bb, cs.load_json(FIXTURE / "backbone.json"), "backbone", worst)
+    assert max(worst) <= 1e-9
+
+
+def test_loo_validates(lo: dict) -> None:
+    errors = list(cs.validator("hp500-loo").iter_errors(lo))
+    assert not errors, errors
+    n = lo["n"]
+    assert n == 10 and lo["engine_version"] == VERSION and lo["seed"] == 42
+    for target in ("tph", "kW", "p80"):
+        t = lo["loo"][target]
+        assert len(t["measured"]) == n
+        for tag in ("strict", "leaky"):
+            for m in ("M0", "M1", "M2"):
+                assert len(t[tag]["pred"][m]) == n, (target, tag, m)
+    strict = lo["loo"]["tph"]["strict"]
+    assert strict["M1_label_shuffle"]["mape_pct"] > strict["M0_backbone"]["mape_pct"]
+    assert len(lo["power_parity"]["per_survey"]) == len(lo["tph_parity"]["per_survey"]) == n
+
+
+def test_loo_equals_the_provider_tree(lo: dict) -> None:
+    worst: list[float] = []
+    assert_close(lo, cs.load_json(FIXTURE / "loo.json"), "loo", worst)
+    assert max(worst) <= 1e-9
+
+
+def test_committed_documents_equal_the_provider_tree() -> None:
+    for name in ("backbone", "loo"):
+        committed = cs.load_json(COMMITTED / f"{name}.json")
+        assert not list(cs.validator(f"hp500-{name}").iter_errors(committed))
+        assert_close(committed, cs.load_json(FIXTURE / f"{name}.json"), name)
+
+
+def test_main_writes_only_to_the_given_root(tmp_path) -> None:
+    assert loo.main(["--out", str(tmp_path), "--version", VERSION]) == 0
+    assert sorted(p.name for p in tmp_path.iterdir()) == ["backbone.json", "loo.json"]

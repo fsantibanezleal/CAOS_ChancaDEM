@@ -2,6 +2,17 @@
 
 ChancaDEM depends on the following open-source components. Each retains its own license.
 
+## Data and derived files
+
+| File family | Licence | Source |
+|---|---|---|
+| `data/examples/hp500-surveys.csv` | CC BY 4.0 | Table A1 of Rocha, Campos, Silva and Tavares (2024), Minerals 14(9), 919, https://doi.org/10.3390/min14090919 |
+| `data/derived/hp500/*.json` (backbone, CrusherCal validation) | CC BY 4.0 (derived from the survey table) | the same paper; attribution in `ATTRIBUTION.md` |
+| `data/derived/manifests/HP500-*.json`, `data/derived/HP500-*/trace.json` (ten real cases) | CC BY 4.0 (derived from the survey table) | the same paper; attribution in `ATTRIBUTION.md` |
+| `data/examples/params.csv`, `data/examples/operating.csv`, synthetic cases and their traces | MIT | the product's own work |
+| `models/` (surrogate and autoencoder trained on the engine sweeps) | MIT | the product's own work |
+| code, notebooks and documentation | MIT | `LICENSE` |
+
 ## Offline lane (Python, `requirements*.txt`)
 
 | Package | License |
