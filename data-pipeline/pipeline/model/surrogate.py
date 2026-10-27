@@ -1,13 +1,16 @@
 """The population-balance SURROGATE MLP: operating parameters (5 machine one-hots + 6 continuous = 11) -> 10 outputs
 (P80/P50/P20, %-passing at {1,4,8,16,32} mm, throughput, power). It emulates the cheap analytic Whiten/Evertsson/
 Bond engine in a single differentiable forward pass (an instant what-if the closed-form grid cannot give live).
-Requires torch (the heavy precompute lane only); the deployed live lane runs the EXPORTED ONNX in onnxruntime-web."""
+Requires torch (the heavy precompute lane only); the deployed live lane runs the EXPORTED ONNX in onnxruntime-web.
+Trained by ``stages/train.py`` on a Latin-hypercube sweep of the canonical Python engine; the contract is the catalog
+row ``surrogate-model``."""
 from __future__ import annotations
 
 import torch.nn as nn
 
 NIN = 11   # 5 machine one-hots + 6 continuous (z-scored)
 NOUT = 10
+ARCHITECTURE = "11-64-64-32-10 MLP, GELU"   # recorded in the contract (surrogate.json, field architecture)
 
 
 class Surrogate(nn.Module):
