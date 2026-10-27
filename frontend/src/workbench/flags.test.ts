@@ -24,7 +24,8 @@ describe('the flag codes', () => {
       for (const lang of ['en', 'es'] as const) {
         const t = flagText(code, lang);
         expect(t.length, `${code} ${lang}`).toBeGreaterThan(12);
-        expect(t, `${code} ${lang}`).not.toMatch(/[—→←↔⇒]|--/);
+        // no em-dash, arrow or double hyphen (ADR-0067); the characters are named by code so this file holds none of them
+        expect([...t].some((c) => [0x2014, 0x2192, 0x2190, 0x2194, 0x21d2].includes(c.codePointAt(0) ?? 0)) || t.includes('--'), `${code} ${lang}`).toBe(false);
       }
       expect(flagText(code, 'es'), code).not.toBe(flagText(code, 'en'));
     }
