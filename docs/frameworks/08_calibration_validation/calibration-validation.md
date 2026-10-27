@@ -63,6 +63,13 @@ What this says, as the data stand:
 Offline (`run.py hp500` or the bake); the browser draws the documents in the Validation group and the Benchmark page and
 shows the measured value beside the model on the real-survey gauges, with the band when the document is present.
 
+On the synthetic secondary-cone (`cone-sec`) cases the same document gives a band of a different kind, drawn the same way
+and labelled in both languages as a lower bound: at least `band_rel_pct` of the engine's value for the target shown
+(`uq.band_rel_pct` of the strict folds, read at run time from `loo.json`, never copied into code), the held-out error of
+the same model family once calibrated on the ten surveys; an uncalibrated case cannot be more accurate. The other
+machines (`cone-tert`, `cone-short-head`, `jaw`, `gyratory`) have no measured data, so they show no band and say why;
+when the document is missing the case shows no band and the readiness message.
+
 ## Tests
 
 `tests/test_hp500_loo.py`: `test_label_shuffle_control_does_not_beat_backbone`, `test_tph_backbone_has_real_skill`,

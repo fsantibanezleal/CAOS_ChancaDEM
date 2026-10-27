@@ -40,6 +40,10 @@ export function Metrics() {
           'El intervalo predictivo del 80 por ciento y su cobertura: la y con acento y exponente (-i) es la predicción del muestreo i por el modelo ajustado sin él, r_i el residuo retenido, la r con barra su media, sigma_r la desviación estándar muestral, h la semianchura de la banda, en la unidad del objetivo, y c la cobertura empírica, dentro de la muestra porque sigma_r sale de los mismos residuos, para leer frente a 0,80.',
         )}
       />
+      <P
+        en="On the synthetic secondary-cone cases of the App the same document gives a band, but of a different kind and labelled as such: at least the relative half-width of this band for the target shown (the held-out error of the same model family once calibrated on the ten surveys), because an uncalibrated case cannot be more accurate. It is a lower bound, not a band of the case. The other machine types have no measured data, so they show no band and say why."
+        es="En los casos sintéticos de cono secundario de la App el mismo documento da una banda, pero de otra clase y rotulada como tal: al menos la semianchura relativa de esta banda para la magnitud que se muestra (el error reservado de la misma familia de modelos una vez calibrada con los diez muestreos), porque un caso sin calibrar no puede ser más preciso. Es una cota inferior, no una banda del caso. Los demás tipos de máquina no tienen datos medidos, así que no muestran banda y dicen por qué."
+      />
       <Equation
         tex={String.raw`\hat q_i = Q_T^{(-i)}\, s_i, \quad Q_T^{(-i)} = \frac{\sum_{k \ne i} s_k\, m_k}{\sum_{k \ne i} s_k^{2}}, \qquad P_d = 10\,W_i\left(\frac{1}{\sqrt{P_{80}}} - \frac{1}{\sqrt{F_{80}}}\right) Q, \qquad P_c = \zeta\,P_d + P_n`}
         caption={t(
