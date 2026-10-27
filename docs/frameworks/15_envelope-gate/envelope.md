@@ -15,7 +15,7 @@ anomaly model slot (the catalog row `anomaly-model`).
 | `feed_nonpositive` | $x_{63}$ is not above 0 | implausible, invalid |
 | `f80_lt_css` | $F_{80} > 0$ and CSS is at or above $F_{80}$ | implausible, invalid |
 | `css_outside_calibrated` | calibrated cone-sec lane and CSS outside 38 to 55 mm | extrapolating |
-| `f80_outside_calibrated` | calibrated cone-sec lane and $F_{80}$ outside 47 to 140 mm | extrapolating |
+| `f80_outside_calibrated` | calibrated cone-sec lane and the declared feed $F_{80}$ (the untruncated Rosin-Rammler value, not the grid-truncated one) outside 47 to 140 mm | extrapolating |
 
 The calibrated support is the range of the ten surveys of Rocha et al. 2024 on itabirite iron ore
 (`HP500_ENVELOPE_CSS_MM`, `HP500_ENVELOPE_F80_MM`). An implausible code makes the result invalid; an extrapolation code
