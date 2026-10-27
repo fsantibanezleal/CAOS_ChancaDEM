@@ -36,7 +36,8 @@
         "seed": {"type": "integer"},
         "n_train": {"type": "integer", "minimum": 1},
         "noise_std": {"type": "number", "minimum": 0},
-        "torch_version": {"type": "string", "minLength": 1}
+        "torch_version": {"type": "string", "minLength": 1},
+        "export_parity_max_abs": {"type": "number", "minimum": 0, "description": "The maximum absolute difference between the trained torch module's reconstruction and the exported graph's (run through onnxruntime) on the held-out draw, in standardised features, measured by train.py right after export; evidence the export preserved the trained module."}
       }
     }
   }
