@@ -15,10 +15,14 @@ import json
 import math
 from functools import lru_cache
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from jsonschema import Draft202012Validator
 
 from .crusher import CrusherResult, Operating, evaluate
+
+if TYPE_CHECKING:  # the annotations only; numpy is imported where a model runs
+    import numpy as np
 
 # numpy and the encodings (which round to float32 with numpy) are imported inside the functions that run a model: the
 # readiness document calls released_slots, and scripts/check_readiness.py runs in CI without the pipeline's dependencies.

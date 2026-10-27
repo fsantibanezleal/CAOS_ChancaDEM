@@ -93,7 +93,48 @@ one schema file, an example, a test on each side, its missing-data behavior, a p
 
 ## Technology and versions
 
-TECHNOLOGY_TABLE
+Every pinned dependency of `requirements-precompute.txt` (through `data-pipeline/requirements.txt`), `requirements-dev.txt`,
+`notebooks/requirements.txt` and `frontend/package.json`, with the version installed; `scripts/check_tech_matrix.py` fails when a
+pin and this table disagree. A package.json range is recorded at the version `frontend/package-lock.json` resolves it to. The
+versions were read at the package registries on 2026-10-26 (the sizing record lists the sources). Runtimes: Python 3.13
+(the workstation; CI uses the template's Python 3.12) and Node 24 (the workstation; CI uses the template's Node 22).
+
+| component | package | version | use | alternative considered |
+|---|---|---|---|---|
+| engine | numpy | 2.4.6 | the canonical crusher engine (the Whiten solve, the sieve grid, the capacity and power), the bake, CrusherCal and the notebooks | scipy.linalg for the solve, rejected: the engine ports the TypeScript LU line for line so the two engines agree to 2.3e-12 |
+| models | torch | 2.12.1 | trains the surrogate MLP and the denoising autoencoder on the CPU (`data-pipeline/run.py models`, local only) | scikit-learn MLP, rejected: no ONNX export of the same network with its standardisation and seeds |
+| models | onnx | 1.22.0 | writes the two networks as ONNX graphs and quantises the surrogate to int8 | TorchScript, rejected: the browser runs ONNX, not TorchScript |
+| models | onnxruntime | 1.27.0 | evaluates the shipped graphs held out and checks the export parity; the same release as the web's onnxruntime-web | evaluating in torch, rejected: the metrics must come from the graphs the site runs |
+| notebooks | matplotlib | 3.11.2 | the figures of the notebooks | none: the notebooks need a plotting library, and the web's charts run in the browser only |
+| notebooks | nbclient | 0.11.0 | executes a notebook top to bottom in a fresh kernel (`scripts/run_notebooks.py`) | nbconvert --execute, rejected: a heavier install for the same execution |
+| notebooks | nbformat | 5.11.1 | reads and writes the notebook format | none: the format's own library |
+| notebooks | ipykernel | 7.4.0 | the Python kernel the notebooks run in | none: nbclient needs a kernel |
+| tests | pytest | 9.1.1 | the engine, pipeline, contract, guard and adversarial tests | unittest, rejected: no parametrisation or fixtures |
+| lint | ruff | 0.15.18 | lint of data-pipeline, tests, scripts and app | flake8 plus isort, rejected: two tools for one |
+| contracts | jsonschema | 4.26.0 | validates every committed document against its schema file | fastjsonschema, rejected: no support for the draft the schemas declare |
+| contracts | openapi-spec-validator | 0.9.0 | validates `docs/contracts/api.openapi.json` | none: the maintained validator for OpenAPI 3.1 |
+| API | fastapi | 0.143.0 | the dormant `app/`, run by the API contract tests | flask, rejected: no response models to compare with the OpenAPI document |
+| API | httpx | 0.28.1 | the test client of the dormant `app/` | requests, rejected: FastAPI's test client needs httpx |
+| shell | @fasl-work/caos-app-shell | 0.19.2 | the shared app shell, its workbench, charts, gate (pinned exactly, ADR-0078) | a hand-rolled shell, forbidden by ADR-0078 |
+| web | react | 19.3.0 | the UI | none: the shell requires it |
+| web | react-dom | 19.3.0 | the UI renderer | none: the shell requires it |
+| web | react-router | 8.4.0 | the routes and the forward of the old focus links | none: the shell requires it |
+| web | zustand | 5.0.15 | the store the template's workbench pattern uses | redux, rejected: a store of a few keys |
+| web | katex | 0.19.1 | typeset equations on the pages | MathJax, rejected: heavier and slower to render |
+| web | lucide-react | 1.52.0 | icons | the shell's own set where it has one |
+| web | uplot | 1.6.32 | the interactive curves under the shell's `UPlotChart` | a static SVG, rejected: no hover, zoom or data table (G20) |
+| web | onnxruntime-web | 1.27.0 | runs the two ONNX graphs in the browser (WASM, single thread, the WASM served by the site) | TensorFlow.js, rejected: the models are exported to ONNX and the release must match the Python onnxruntime |
+| web | three | 0.186.1 | the 3D chamber view (a kinematic view of the chamber geometry) | a 2D drawing only, rejected: the chamber is a surface of revolution whose gap changes around the mantle; the 2D section is kept beside it |
+| build | vite | 8.3.5 | bundler and dev server | webpack, rejected: slower and needs more configuration |
+| build | @vitejs/plugin-react | 6.1.1 | the React transform for vite | none |
+| build | typescript | 5.9.3 | type check of the web and the generated contract types | none |
+| build | openapi-typescript | 7.13.0 | generates `contract.gen.ts` from the OpenAPI document | hand-written types, rejected: they drift (the build checks them) |
+| build | @types/node | 24.19.1 | types of the build scripts and the reference writer | none |
+| build | @types/react | 19.3.0 | types of React | none |
+| build | @types/react-dom | 19.3.0 | types of React DOM | none |
+| build | @types/three | 0.186.0 | types of three.js | none |
+| tests | vitest | 5.0.3 | the web unit tests: contracts both ways, engine reference and parity, the model encodings, the views | jest, rejected: needs a transform for the vite config |
+| gate | playwright | 1.63.0 | the measured UI gate (`npm run gate`), local only | cypress, rejected: heavier install |
 
 ## Resources
 
@@ -132,7 +173,7 @@ criterion below holds in the TypeScript port because the shared reference holds 
 | M7 | Bond power (Bond 1952) and the current-based power form of Rocha et al. 2024 | classical | positive and finite at every valid point; the honest negative of the current-based form on the engine's Bond draw is reported, not hidden | `tests/test_crusher_engine.py::test_throughput_and_power_are_positive_and_finite_for_a_valid_point`, `tests/contracts/test_hp500_validation.py::test_loo_validates` |
 | M8 | The Andersen-Whiten fit calibrated to the ten HP500 surveys (Rocha et al. 2024 Table 5) | classical, calibrated | the calibrated engine at each survey equals the backbone document; the surveys are physically plausible | `tests/contracts/test_hp500_validation.py::test_backbone_is_the_engine`, `tests/test_crusher_engine.py::test_envelope_gate_the_ten_real_hp500_surveys_are_physically_plausible` |
 | M9 | The envelope gate: implausible and out-of-calibrated-support inputs flagged, never answered with a confident number | classical | an implausible point is flagged and invalid; a calibrated point outside the HP500 support is flagged as extrapolating | `tests/test_crusher_engine.py::test_envelope_gate_an_implausible_point_is_flagged_and_marked_invalid`, `tests/test_crusher_engine.py::test_envelope_gate_calibrated_lane_flags_out_of_support_as_extrapolating` |
-| M10 | CrusherCal: leave-one-survey-out validation of the backbone (M0), a bounded ridge residual (M1) and a free-form fit (M2), with a constant-mean baseline, a label-shuffle control and an 80 percent predictive band | classical, validation | the label-shuffle control does not beat the backbone; the backbone beats the constant mean on throughput; the leaky-strict optimism gap is exposed; the band's coverage is reported | `tests/test_hp500_loo.py::test_label_shuffle_control_does_not_beat_backbone`, `tests/test_hp500_loo.py::test_tph_backbone_has_real_skill`, `tests/test_hp500_loo.py::test_overfit_optimism_gap_is_exposed` |
+| M10 | CrusherCal: leave-one-survey-out validation of the backbone (M0), a bounded ridge residual (M1) and a free-form fit (M2), with a constant-mean baseline, a label-shuffle control and an 80 percent predictive band | classical, validation | the label-shuffle control does not beat the backbone; the backbone beats the constant mean on throughput; the leaky-strict optimism gap is exposed; the band's coverage is reported | `tests/test_hp500_loo.py::test_adversarial_the_label_shuffle_control_does_not_beat_the_backbone`, `tests/test_hp500_loo.py::test_tph_backbone_has_real_skill`, `tests/test_hp500_loo.py::test_adversarial_the_leaky_folds_expose_the_optimism_gap` |
 | M11 | The surrogate MLP 11-64-64-32-10 trained on a Latin-hypercube sweep of the engine; baseline: the engine itself | learned | held out on an independent draw, every output's R2 is computed from the shipped graph through onnxruntime; P80 monotone in CSS on every machine; with an invalid bundle the engine answers, labelled | `tests/contracts/test_models.py::test_metrics_validate`, `tests/contracts/test_models.py::test_adversarial_swap_engine_baseline_and_surrogate` |
 | M12 | The denoising autoencoder 14-16-6-16-14 as an extrapolation score; baseline: the envelope gate | learned | false-alarm and detection rates on the held-out draw and on planted off-manifold points, beside the envelope gate's on the same points | `tests/contracts/test_models.py::test_metrics_report_the_anomaly_comparison_and_the_planted_points`, `tests/contracts/test_models.py::test_adversarial_swap_envelope_baseline_and_autoencoder` |
 
