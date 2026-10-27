@@ -240,7 +240,10 @@ None of these is a model judging a model.
   residual's failure to beat the backbone out of sample (13.45 percent) is reported as the pre-registered null it is. The
   paper's own in-sample error figure is not carried by this repository (its tables are figures and the publisher page could
   not be opened by the documenting sessions), so no comparison with a band of the paper is claimed: the held-out error
-  is set beside the in-sample error of the same backbone computed here. Covered by a level 4 notebook in each language
+  is set beside the in-sample error of the same backbone computed here. The synthetic secondary-cone cases of the App
+  carry the relative half-width of that band as a labelled lower bound (the held-out error of the same model family once
+  calibrated, read from the committed document at run time); the other machine types have no measured data and show no
+  band. Covered by a level 4 notebook in each language
   (`notebooks/*/06-crushercal/`).
 
 ## Deploy driver

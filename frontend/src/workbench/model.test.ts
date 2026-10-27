@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import type { CaseData } from '../api/artifacts';
 import { evaluate } from '../engine/engine';
-import type { CaseIndex, CaseManifest, Trace } from '../lib/contract.types';
+import type { CaseIndex, CaseManifest, Hp500Loo, Trace } from '../lib/contract.types';
 import {
   GROUP_ORDER,
   GROUP_ROWS,
@@ -17,6 +17,7 @@ import {
   rowsFor,
   railOf,
   selectionOf,
+  syntheticBand,
   VARIANTS,
 } from './model';
 
@@ -153,5 +154,58 @@ describe('live against replay', () => {
       const live = evaluate(operatingOf(d.manifest.params)).product.passing;
       expect(parityOf(live, d.trace!.product_passing).worst).toBeLessThan(5e-6);
     }
+  });
+});
+
+describe('the lower-bound band of a synthetic case (BL-017)', () => {
+  const looDoc = read<Hp500Loo>('hp500/loo.json');
+  const ready = { state: 'ready' as const, data: looDoc };
+  const unavailable = { state: 'unavailable' as const, reason: { en: 'The validation document is not in this build.', es: 'El documento de validación no está en esta versión.' } };
+
+  it('a cone-sec throughput band is the value times the relative half-width read from the document, labelled as a lower bound in both languages', () => {
+    const rel = looDoc.loo.tph.strict.uq.band_rel_pct;
+    const b = syntheticBand('cone-sec', ready, 'tph', 1234.5);
+    expect(b.kind).toBe('band');
+    if (b.kind !== 'band') return;
+    expect(b.halfWidth).toBeCloseTo((1234.5 * rel) / 100, 9);
+    expect(b.relPct).toBe(rel);
+    expect(b.label.en).toMatch(/at least/i);
+    expect(b.label.en).toContain(rel.toFixed(1));
+    expect(b.label.en).toMatch(/calibrated/i);
+    expect(b.label.es).toMatch(/al menos/i);
+    expect(b.label.es).toContain(rel.toFixed(1).replace('.', ','));
+    expect(b.label.es).toMatch(/calibrad/i);
+  });
+  it('the power band reads the power target of the document, not the throughput one', () => {
+    const b = syntheticBand('cone-sec', ready, 'kW', 500);
+    expect(b.kind === 'band' && b.halfWidth).toBeCloseTo((500 * looDoc.loo.kW.strict.uq.band_rel_pct) / 100, 9);
+    expect(looDoc.loo.kW.strict.uq.band_rel_pct).not.toBe(looDoc.loo.tph.strict.uq.band_rel_pct);
+  });
+  it('a document with other numbers moves the band: nothing is copied into code', () => {
+    const other = JSON.parse(JSON.stringify(looDoc)) as { loo: { tph: { strict: { uq: { band_rel_pct: number } } } } };
+    other.loo.tph.strict.uq.band_rel_pct = 7.5;
+    const b = syntheticBand('cone-sec', { state: 'ready', data: other as unknown as Hp500Loo }, 'tph', 200);
+    expect(b.kind === 'band' && b.halfWidth).toBeCloseTo(15, 9);
+  });
+  it.each(['jaw', 'gyratory', 'cone-tert', 'cone-short-head'] as const)('%s never shows a band, and says there are no measured data for the machine type', (m) => {
+    const b = syntheticBand(m, ready, 'tph', 1000);
+    expect(b.kind).toBe('none');
+    if (b.kind !== 'none') return;
+    expect(b.reason.en).toMatch(/no measured data/i);
+    expect(b.reason.es).toMatch(/no hay datos medidos/i);
+  });
+  it('a missing or stale document gives no band and the reason of the readiness', () => {
+    const b = syntheticBand('cone-sec', unavailable, 'tph', 1000);
+    expect(b.kind).toBe('none');
+    if (b.kind !== 'none') return;
+    expect(b.reason.en).toContain('validation document is not in this build');
+    expect(b.reason.es).toContain('documento de validación');
+    expect(syntheticBand('cone-sec', null, 'tph', 1000).kind).toBe('none');
+    expect(syntheticBand('cone-sec', { state: 'loading' }, 'tph', 1000).kind).toBe('none');
+    expect(syntheticBand('cone-sec', { state: 'error', error: 'x' }, 'tph', 1000).kind).toBe('none');
+  });
+  it('the readiness rows of a banded synthetic case include the HP500 validation', () => {
+    expect(rowsFor('performance', false, true)).toContain('hp500-loo');
+    expect(rowsFor('performance', false, false)).not.toContain('hp500-loo');
   });
 });
