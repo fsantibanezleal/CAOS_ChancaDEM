@@ -27,6 +27,7 @@ code has them, where it runs, tests, what it is not, references.
 | [Power model](09_power_model/power-model.md) | M7 | Bond 1952; the paper's form; a documented negative |
 | [HP500 calibration](16_hp500-calibration/hp500-calibration.md) | M8 | Rocha et al. 2024 |
 | [Envelope gate](15_envelope-gate/envelope.md) | M9 | the engine's rules, the HP500 support |
+| [Campaign view](17_campaign/campaign.md) | M13 | Ma, Fan and He 2016 (the form of a liner wear model, not its parameters) |
 | [CrusherCal](08_calibration_validation/calibration-validation.md) | M10 | leave-one-survey-out, controls, predictive band |
 | [Surrogate MLP](05_surrogate/surrogate.md) | M11 | a population-balance emulator (Koh et al. 2021 as the state of the art) |
 | [Denoising autoencoder](06_denoising-ae/denoising-ae.md) | M12 | reconstruction error as an extrapolation score |

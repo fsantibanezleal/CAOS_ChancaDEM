@@ -4,8 +4,9 @@ path (ADR-0057), not a package with a distribution name. Import with ``data-pipe
 
     from pipeline.model.crusher import evaluate, Operating
 """
+from .campaign import css_at_p80_target, hours_to_target
 from .engine import evaluate, grid_edges, grid_mid
 from .hp500 import operating_from_survey
 from .types import CrusherResult, Operating, PSD
 
-__all__ = ["evaluate", "Operating", "CrusherResult", "PSD", "grid_edges", "grid_mid", "operating_from_survey"]
+__all__ = ["evaluate", "Operating", "CrusherResult", "PSD", "grid_edges", "grid_mid", "operating_from_survey", "css_at_p80_target", "hours_to_target"]
