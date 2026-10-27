@@ -343,7 +343,7 @@ export interface components {
         };
         /**
          * SurrogateModel
-         * @description Model slot, catalog row surrogate-model 1.0.0: the inference contract of the surrogate MLP that emulates the crusher engine, written by data-pipeline/pipeline/stages/train.py to data/derived/models/surrogate.json beside the ONNX graphs data/derived/models/surrogate.onnx (float32) and data/derived/models/surrogate.int8.onnx (dynamically quantised). The input is 11 values: a one-hot of the machine in machine_order, then the continuous inputs in input_order standardised as (value - in_mean) / in_std. The graph's input is named x with shape [1, 11]; its output y has shape [1, 10], standardised: value = y * out_std + out_mean, then 10 ** value where out_log is true, in output_order. Trained on an LHS sweep of the canonical Python engine (pipeline.model.crusher); the held-out metrics are the model-metrics row. The engine itself is the slot's baseline: it answers every query exactly, at a cost the surrogate avoids. Rules the schema cannot state, checked by the producer test: in_mean and in_std have the length of input_order, the out arrays the length of output_order, every std is positive, and the ONNX files named in graphs exist with the sha256 given.
+         * @description Model slot, catalog row surrogate-model 1.0.0: the inference contract of the surrogate MLP that emulates the crusher engine, written by data-pipeline/pipeline/stages/train.py to data/derived/models/surrogate.json beside the ONNX graphs data/derived/models/surrogate.onnx (float32) and data/derived/models/surrogate.int8.onnx (dynamically quantised). The input is 11 values: a one-hot of the machine in machine_order, then the continuous inputs in input_order standardised as (value - in_mean) / in_std. The graph's input is named x with shape [1, 11]; its output y has shape [1, 10], standardised: value = y * out_std + out_mean, then 10 ** value where out_log is true, in output_order. Trained on an LHS sweep of the canonical Python engine (pipeline.model.crusher); the held-out metrics are the model-metrics row. The engine itself is the slot's baseline: it answers every query exactly, at a cost the surrogate avoids. Applicability: training.input_ranges is the model's domain; it answers only a point that is not calibrated and inside those ranges, else the engine answers with the reason. Rules the schema cannot state, checked by the producer test: in_mean and in_std have the length of input_order, the out arrays the length of output_order, every std is positive, and the ONNX files named in graphs exist with the sha256 given.
          */
         SurrogateModel: {
             /** @constant */
@@ -394,6 +394,7 @@ export interface components {
                 n_test: number;
                 /** @description How the operating points were drawn, with the bounds per input; the test draw is independent of the training draw. */
                 sampler: string;
+                input_ranges: components["schemas"]["inputRanges"];
                 torch_version: string;
                 /** @description The maximum absolute difference between the trained torch module and the exported float32 graph (run through onnxruntime) on the held-out draw, in standardised outputs, measured by train.py right after export; evidence the export preserved the trained module. */
                 export_parity_max_abs?: number;
@@ -437,6 +438,24 @@ export interface components {
         version: string;
         series: number[];
         fractions: number[];
+        /** @description The training range of every continuous input, per machine: [low, high] of the training draw, inclusive, written by train.py from sweep.RANGES with no rounding. The applicability rule of both sides reads it: a model answers an operating point only when the point is not calibrated and every continuous input lies inside its machine's range; otherwise the slot's baseline answers, labelled with the reason (calibrated_case, or outside_training_range:<input>). */
+        inputRanges: {
+            "cone-sec": components["schemas"]["machineRanges"];
+            "cone-tert": components["schemas"]["machineRanges"];
+            jaw: components["schemas"]["machineRanges"];
+            "cone-short-head": components["schemas"]["machineRanges"];
+            gyratory: components["schemas"]["machineRanges"];
+        };
+        machineRanges: {
+            css_mm: components["schemas"]["range"];
+            throw_mm: components["schemas"]["range"];
+            speed_rpm: components["schemas"]["range"];
+            feed_x63_mm: components["schemas"]["range"];
+            feed_m: components["schemas"]["range"];
+            ore_axb: components["schemas"]["range"];
+        };
+        /** @description [low, high], low below high. */
+        range: number[];
         graph: {
             /** @description Relative to data/derived. */
             path: string;

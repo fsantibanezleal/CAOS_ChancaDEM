@@ -10,7 +10,7 @@
 // asked at run time. A call to one model waits for the previous call to that model (onnxruntime-web forbids concurrent
 // run() on one session; React StrictMode and rapid knob moves would otherwise trigger it).
 import type { CrusherResult, Operating } from '../engine/types';
-import type { AnomalyModel, SurrogateModel } from './contract.types';
+import type { AnomalyModel, SurrogateModel, Text } from './contract.types';
 
 export type SurrogateInput = SurrogateModel['input_order'][number];
 export type SurrogateOutput = SurrogateModel['output_order'][number];
@@ -114,6 +114,96 @@ export interface AnomalyReading {
   anomalous: boolean;
 }
 
+// ---- applicability: where a learned model answers (one rule, the same as pipeline.model.bundles.applicability) ----
+
+/** A continuous input a model is trained over, and the field of an operating point it reads. */
+export type ModelInput = SurrogateInput;
+
+/** The field of an operating point each continuous input reads. */
+export const INPUT_FIELD: Record<ModelInput, 'cssMm' | 'throwMm' | 'speedRpm' | 'feedX63Mm' | 'feedM' | 'oreAxb'> = {
+  css_mm: 'cssMm',
+  throw_mm: 'throwMm',
+  speed_rpm: 'speedRpm',
+  feed_x63_mm: 'feedX63Mm',
+  feed_m: 'feedM',
+  ore_axb: 'oreAxb',
+};
+
+/** How each continuous input is written, with its unit, in both languages. */
+export const INPUT_LABEL: Record<ModelInput, Text> = {
+  css_mm: { en: 'setting', es: 'abertura' },
+  throw_mm: { en: 'throw', es: 'carrera' },
+  speed_rpm: { en: 'speed', es: 'velocidad' },
+  feed_x63_mm: { en: 'feed x63', es: 'x63 de la alimentación' },
+  feed_m: { en: 'feed m', es: 'm de la alimentación' },
+  ore_axb: { en: 'ore A times b', es: 'A por b del mineral' },
+};
+
+/** The verdict of the rule: whether the models apply to an operating point, and the reason codes when they do not (`calibrated_case`, or `outside_training_range:<input>` per input, in the contract's input order). */
+export interface Applicability {
+  applies: boolean;
+  reasons: string[];
+}
+
+/**
+ * The applicability rule, read from the contract: a model applies to an operating point when the point is not calibrated
+ * (the models emulate the uncalibrated engine) and every continuous input lies inside its machine's training range
+ * (`training.input_ranges`, inclusive). A calibrated point is refused for that reason alone. A value that is not a number
+ * is outside. Both model contracts carry the same ranges.
+ */
+export function applicability(op: Operating, c: SurrogateModel | AnomalyModel): Applicability {
+  if (op.calibrated) return { applies: false, reasons: ['calibrated_case'] };
+  const ranges = (c.training.input_ranges as Record<string, Record<ModelInput, [number, number]> | undefined>)[op.machine];
+  if (!ranges) return { applies: false, reasons: ['outside_training_range:machine'] };
+  const reasons = (Object.keys(INPUT_FIELD) as ModelInput[])
+    .filter((name) => {
+      const v = op[INPUT_FIELD[name]];
+      return !(v >= ranges[name][0] && v <= ranges[name][1]);
+    })
+    .map((name) => `outside_training_range:${name}`);
+  return { applies: reasons.length === 0, reasons };
+}
+
+/** A refused call: the model does not apply to the operating point, so no graph number is produced. */
+export class NotApplicableError extends Error {
+  constructor(readonly reasons: string[]) {
+    super(`the learned model does not apply (${reasons.join(', ')})`);
+    this.name = 'NotApplicableError';
+  }
+}
+
+const g = (v: number): string => String(Number(v.toPrecision(4)));
+const gEs = (v: number): string => g(v).replace('.', ',');
+
+/**
+ * The statement the views make where the models do not apply, in both languages: why, and that the slot's baseline answers
+ * (`baseline`: the engine for the surrogate, the envelope gate for the autoencoder).
+ */
+export function notApplicableText(op: Operating, c: SurrogateModel | AnomalyModel, a: Applicability, baseline: { en: string; es: string }): Text {
+  const ranges = (c.training.input_ranges as Record<string, Record<ModelInput, [number, number]> | undefined>)[op.machine];
+  if (a.reasons.includes('calibrated_case')) {
+    return {
+      en: `The learned models emulate the uncalibrated engine; this measured survey runs the calibrated fit, so they do not apply and ${baseline.en} answers.`,
+      es: `Los modelos aprendidos emulan el motor sin calibrar; este muestreo medido corre el ajuste calibrado, así que no aplican y responde ${baseline.es}.`,
+    };
+  }
+  const parts = a.reasons
+    .map((r) => r.slice('outside_training_range:'.length) as ModelInput)
+    .filter((name) => ranges && INPUT_FIELD[name])
+    .map((name) => {
+      const v = op[INPUT_FIELD[name]];
+      const [lo, hi] = ranges![name];
+      return {
+        en: `${INPUT_LABEL[name].en} ${g(v)} lies outside the trained range ${g(lo)} to ${g(hi)}`,
+        es: `${INPUT_LABEL[name].es} ${gEs(v)} queda fuera del rango entrenado ${gEs(lo)} a ${gEs(hi)}`,
+      };
+    });
+  return {
+    en: `The learned models were trained on a limited range of this machine: ${parts.map((p) => p.en).join('; ') || 'the point is outside it'}. They do not apply, and ${baseline.en} answers.`,
+    es: `Los modelos aprendidos se entrenaron en un rango acotado de esta máquina: ${parts.map((p) => p.es).join('; ') || 'el punto queda fuera de él'}. No aplican, y responde ${baseline.es}.`,
+  };
+}
+
 // ---- the runtime: loaded on first use ----
 
 type Ort = typeof import('onnxruntime-web');
@@ -186,13 +276,17 @@ export function runAutoencoder(x14: Float32Array, graph: GraphRef = ANOMALY_GRAP
   return run(graph, x14);
 }
 
-/** The released surrogate's prediction at an operating point, from its contract and the graph the contract names. */
+/** The released surrogate's prediction at an operating point, from its contract and the graph the contract names; throws `NotApplicableError` where the rule says the model does not apply. */
 export async function predictSurrogate(c: SurrogateModel, op: Operating): Promise<Record<SurrogateOutput, number>> {
+  const a = applicability(op, c);
+  if (!a.applies) throw new NotApplicableError(a.reasons);
   return decodeSurrogate(await runSurrogate(encodeSurrogate(op, c), c.graphs.float32), c);
 }
 
-/** The released autoencoder's reading of an engine result, from its contract and the graph the contract names. */
+/** The released autoencoder's reading of an engine result, from its contract and the graph the contract names; throws `NotApplicableError` where the rule says the model does not apply. */
 export async function readAnomaly(c: AnomalyModel, r: CrusherResult): Promise<AnomalyReading> {
+  const a = applicability(r.op, c);
+  if (!a.applies) throw new NotApplicableError(a.reasons);
   const { input } = encodeAnomaly(r, c);
   const score = anomalyScoreOf(input, await runAutoencoder(input, c.graph));
   return { score, threshold: c.threshold_p99, ratio: score / c.threshold_p99, anomalous: score > c.threshold_p99 };

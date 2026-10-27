@@ -7,6 +7,11 @@ sha256 and the byte size the contract records. Anything else (a missing, unparsa
 missing or altered graph) makes the slot invalid: the bake records provenance ``baseline`` for it, readiness says
 ``training``, and the engine (surrogate) or the envelope gate (autoencoder) answers. This module is that whole
 decision; the encodings come from ``pipeline.model.crusher.encoding`` and nowhere else.
+
+A released slot answers only where its model APPLIES (``applicability``): the models emulate the uncalibrated engine over
+the training ranges the contracts record (``training.input_ranges``), so a calibrated real case, or a point with an input
+outside its machine's range, is answered by the slot's baseline, exactly as for an invalid bundle. The web side
+(``frontend/src/lib/ort.ts``) applies the same rule; both run the same table of points in their tests.
 """
 from __future__ import annotations
 
@@ -124,21 +129,45 @@ def decode_outputs(z: np.ndarray, bundle: dict) -> np.ndarray:
     return v
 
 
-def surrogate_predict(op: Operating, models_dir: Path) -> tuple[dict, str]:
-    """The ten decoded outputs and provenance ``real`` when the surrogate slot is released; the engine's own values
-    and ``baseline`` when it is not."""
+def applicability(op: Operating, bundle: dict) -> tuple[bool, list[str]]:
+    """Whether the models apply to ``op`` and, when they do not, the reason codes. One rule, identical on the web side: a
+    calibrated point is refused with ``["calibrated_case"]`` (the models emulate the uncalibrated engine); an uncalibrated
+    point is refused with one ``"outside_training_range:<input>"`` per continuous input outside its machine's inclusive
+    ``training.input_ranges`` entry, in the contract's order (a value that is not a number is outside)."""
+    if op.calibrated:
+        return False, ["calibrated_case"]
+    ranges = bundle["training"]["input_ranges"].get(op.machine)
+    if ranges is None:
+        return False, ["outside_training_range:machine"]
+    reasons = [f"outside_training_range:{name}" for name, (lo, hi) in ranges.items()
+               if not lo <= getattr(op, name) <= hi]
+    return not reasons, reasons
+
+
+def surrogate_graph(op: Operating, bundle: dict, models_dir: Path) -> dict[str, float]:
+    """The released graph's ten decoded outputs at ``op``, with NO applicability check: the network's raw answer, for
+    showing what it does outside its domain (notebook 07-03). The views and the bake never call this; they call
+    ``surrogate_predict``, which refuses a point the rule does not cover."""
     import numpy as np
 
     from .crusher.encoding import encode_input
 
+    x = np.array([encode_input(op, bundle["in_mean"], bundle["in_std"])], np.float32)
+    z = session_for(models_dir, bundle["graphs"]["float32"]).run(None, {"x": x})[0]
+    values = decode_outputs(z, bundle)[0]
+    return {k: float(v) for k, v in zip(bundle["output_order"], values)}
+
+
+def surrogate_predict(op: Operating, models_dir: Path) -> tuple[dict, str]:
+    """The ten decoded outputs and provenance ``real`` when the surrogate slot is released and the model applies to ``op``;
+    the engine's own values and ``baseline`` when the slot is not released or the point is outside the model's domain."""
     try:
         bundle = load_bundle("surrogate-model", Path(models_dir))
     except BundleError:
         return engine_outputs(evaluate(op)), "baseline"
-    x = np.array([encode_input(op, bundle["in_mean"], bundle["in_std"])], np.float32)
-    z = session_for(models_dir, bundle["graphs"]["float32"]).run(None, {"x": x})[0]
-    values = decode_outputs(z, bundle)[0]
-    return {k: float(v) for k, v in zip(bundle["output_order"], values)}, "real"
+    if not applicability(op, bundle)[0]:
+        return engine_outputs(evaluate(op)), "baseline"
+    return surrogate_graph(op, bundle, Path(models_dir)), "real"
 
 
 def reconstruction_score(feats: list[float], bundle: dict, sess) -> float:
@@ -152,22 +181,30 @@ def reconstruction_score(feats: list[float], bundle: dict, sess) -> float:
     return float(np.mean((xr.astype(np.float64) - x.astype(np.float64)) ** 2))
 
 
-def anomaly_score(result: CrusherResult, models_dir: Path) -> tuple[dict, str]:
-    """``{"score", "threshold", "is_anomaly"}`` with provenance ``real`` when the anomaly slot is released (a score
-    that is not finite, from a result with no finite feature, counts as anomalous); otherwise the envelope gate's
-    verdict ``{"is_anomaly": out_of_envelope}`` with ``baseline``."""
+def anomaly_graph(result: CrusherResult, bundle: dict, models_dir: Path) -> dict:
+    """``{"score", "threshold", "is_anomaly"}`` from the released graph, with NO applicability check (a score that is not
+    finite, from a result with no finite feature, counts as anomalous): the autoencoder's raw reading, for showing what it
+    does outside its domain (notebook 07-03). The views and the bake call ``anomaly_score``."""
     from .crusher.encoding import AE_FEATURES, ae_feats
 
+    assert len(bundle["mean"]) == AE_FEATURES
+    score = reconstruction_score(ae_feats(result), bundle, session_for(models_dir, bundle["graph"]))
+    threshold = bundle["threshold_p99"]
+    return {"score": score, "threshold": threshold, "is_anomaly": bool(not math.isfinite(score) or score > threshold)}
+
+
+def anomaly_score(result: CrusherResult, models_dir: Path) -> tuple[dict, str]:
+    """``{"score", "threshold", "is_anomaly"}`` with provenance ``real`` when the anomaly slot is released and the model
+    applies to the result's operating point; otherwise the envelope gate's verdict ``{"is_anomaly": out_of_envelope}``
+    with ``baseline`` (the slot is not released, the point is calibrated, or an input is outside the training range)."""
     try:
         bundle = load_bundle("anomaly-model", Path(models_dir))
     except BundleError:
         return {"is_anomaly": bool(result.out_of_envelope)}, "baseline"
-    assert len(bundle["mean"]) == AE_FEATURES
-    score = reconstruction_score(ae_feats(result), bundle, session_for(models_dir, bundle["graph"]))
-    threshold = bundle["threshold_p99"]
-    return {"score": score, "threshold": threshold,
-            "is_anomaly": bool(not math.isfinite(score) or score > threshold)}, "real"
+    if not applicability(result.op, bundle)[0]:
+        return {"is_anomaly": bool(result.out_of_envelope)}, "baseline"
+    return anomaly_graph(result, bundle, Path(models_dir)), "real"
 
 
-__all__ = ["BundleError", "anomaly_score", "decode_outputs", "engine_outputs", "load_bundle", "released_slots",
-           "surrogate_predict"]
+__all__ = ["BundleError", "anomaly_graph", "anomaly_score", "applicability", "decode_outputs", "engine_outputs", "load_bundle", "released_slots",
+           "surrogate_graph", "surrogate_predict"]

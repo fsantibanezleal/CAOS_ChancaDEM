@@ -27,6 +27,12 @@ FEATURE_ORDER = ["log10_p80_mm", "log10_p50_mm", "log10_p20_mm", "pass_1", "pass
                  "throughput_tph", "power_kw", "reduction_ratio", "log10_f80_mm", "specific_energy_kwh_t", "feed_m"]
 
 
+def input_ranges() -> dict:
+    """The training ranges the contracts record (``training.input_ranges``): for each machine, each continuous input's
+    ``[low, high]`` of the training draw, exactly ``sweep.RANGES`` (the same numbers, no rounding)."""
+    return {m: {k: [sweep.RANGES[m][k][0], sweep.RANGES[m][k][1]] for k in sweep.CONTINUOUS} for m in sweep.MACHINES}
+
+
 def _zstats(m: np.ndarray) -> tuple[list[float], list[float]]:
     """Column mean and standard deviation of the TRAINING matrix, as float32 values (the web stores float32)."""
     mu = m.mean(0)
@@ -158,7 +164,8 @@ def run(models_dir: Path, *, version: str, seed: int = 12345, n_per_machine: int
                         f"(seed {seed}, mulberry32), each machine over its own ranges ({ranges}); ore_wi = clamp(8 + "
                         f"(120 - ore_axb) * 0.09, 8, 20); degenerate draws dropped; the held-out draw is an independent "
                         f"second Latin-hypercube draw of {test_n_per_machine} points per machine (seed {test_seed})"),
-            "torch_version": torch_version, "export_parity_max_abs": float(f"{sur_parity:.6g}")},
+            "input_ranges": input_ranges(), "torch_version": torch_version,
+            "export_parity_max_abs": float(f"{sur_parity:.6g}")},
     }
     anomaly_doc = {
         "schema": "chancadem.anomaly/v1", "engine_version": version, "feature_order": FEATURE_ORDER,
@@ -167,7 +174,8 @@ def run(models_dir: Path, *, version: str, seed: int = 12345, n_per_machine: int
         "graph": _graph_record(paths["psd-ae.onnx"], derived, "x", "xr"),
         "architecture": f"{AE_ARCH}; Adam 2e-3, weight decay 1e-5, {EPOCHS_AE} full-batch epochs, MSE on the input noised "
                         f"by Gaussian noise of std {NOISE_STD}",
-        "training": {"seed": seed, "n_train": len(train), "noise_std": NOISE_STD, "torch_version": torch_version,
+        "training": {"seed": seed, "n_train": len(train), "noise_std": NOISE_STD, "input_ranges": input_ranges(),
+                     "torch_version": torch_version,
                      "export_parity_max_abs": float(f"{ae_parity:.6g}")},
     }
     write_json(models_dir / "surrogate.json", surrogate_doc)

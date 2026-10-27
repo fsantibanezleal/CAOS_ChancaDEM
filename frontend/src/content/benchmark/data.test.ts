@@ -5,8 +5,10 @@ import { describe, expect, it } from 'vitest';
 import { HP500_ENVELOPE } from '../../engine/envelope';
 import type { Hp500Backbone, Hp500Loo, SurrogateModel } from '../../lib/contract.types';
 import { operatingOf } from '../../workbench/model';
-import { envelopeDistance, errPct, optimismGap, outsideRanges, robustnessPoints, scoresOf, spearman, trainingRanges } from './data';
-import { engineReadings } from './runs';
+import { applicability, NotApplicableError, notApplicableText, predictSurrogate } from '../../lib/ort';
+import type { CaseManifest } from '../../lib/contract.types';
+import { envelopeDistance, errPct, optimismGap, robustnessPoints, scoresOf, spearman } from './data';
+import { engineReadings, runSurvey } from './runs';
 
 const read = <T>(rel: string): T => JSON.parse(readFileSync(fileURLToPath(new URL(`../../../../data/derived/${rel}`, import.meta.url)), 'utf8')) as T;
 const loo = read<Hp500Loo>('hp500/loo.json');
@@ -52,15 +54,26 @@ describe('the Benchmark arithmetic', () => {
     expect(spearman([1, 2, 2, 3], [1, 2, 3, 4])).not.toBeNull();
   });
 
-  it('reads the training ranges of every machine from the contract and flags a survey whose ore competence is outside them', () => {
-    for (const machine of surrogate.machine_order) expect(trainingRanges(surrogate.training.sampler, machine)).not.toBeNull();
-    expect(trainingRanges(surrogate.training.sampler, 'no-such-machine')).toBeNull();
-    const ranges = trainingRanges(surrogate.training.sampler, 'cone-sec');
-    expect(ranges).not.toBeNull();
-    const params = { machine: 'cone-sec' as const, css_mm: 40, throw_mm: 34, speed_rpm: 360, feed_x63_mm: 80, feed_m: 0.9, ore_axb: 677.3, ore_wi: 9, calibrated: true };
-    const op = operatingOf(params as Parameters<typeof operatingOf>[0]);
-    expect(outsideRanges(op, ranges as NonNullable<typeof ranges>)).toContain('ore_axb');
-    expect(outsideRanges({ ...op, oreAxb: (ranges as NonNullable<typeof ranges>).ore_axb[0] }, ranges as NonNullable<typeof ranges>)).not.toContain('ore_axb');
+  it('adversarial: every measured survey is a calibrated case the surrogate does not apply to, so the page computes no surrogate number for it', async () => {
+    for (let n = 1; n <= 10; n++) {
+      const id = `HP500-${String(n).padStart(2, '0')}`;
+      const manifest = read<CaseManifest>(`manifests/${id}.json`);
+      const run = await runSurvey(manifest, surrogate);
+      expect(run.rule, id).toEqual({ applies: false, reasons: ['calibrated_case'] });
+      expect(Object.keys(run), id).not.toContain('surrogate');
+      await expect(predictSurrogate(surrogate, run.op), id).rejects.toBeInstanceOf(NotApplicableError);
+      const text = notApplicableText(run.op, surrogate, run.rule as NonNullable<typeof run.rule>, { en: 'the engine', es: 'el motor' });
+      expect(text.en).toContain('do not apply and the engine answers');
+      expect(text.es).toContain('muestreo');
+    }
+    expect((await runSurvey(read<CaseManifest>('manifests/HP500-01.json'), null)).rule).toBeNull();
+  });
+
+  it('the same survey, uncalibrated, is refused for its ore competence: the range of the contract decides', () => {
+    const run = read<CaseManifest>('manifests/HP500-01.json');
+    const { calibrated: _calibrated, ...op } = operatingOf(run.params);
+    void _calibrated;
+    expect(applicability(op, surrogate)).toEqual({ applies: false, reasons: ['outside_training_range:ore_axb'] });
   });
 
   it('the live engine reproduces the committed backbone at each survey (calibrated lane) and the generic lane differs from it', () => {
