@@ -14,7 +14,7 @@ if ($apiActive) {
 if (Test-Path frontend/package.json) {
   Set-Location frontend
   if (-not (Test-Path node_modules)) { npm install }
-  node copy-data.mjs
+  # npm run dev copies the declared artifacts first (predev: scripts/copy-data.mjs)
   npm run dev
 } else {
   Write-Host "[dev] no frontend/ -- web lane dormant for this product."

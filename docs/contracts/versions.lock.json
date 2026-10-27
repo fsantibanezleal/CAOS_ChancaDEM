@@ -1,0 +1,62 @@
+{
+  "params-record": {
+    "version": "1.0.0",
+    "schema": "docs/contracts/schemas/params-record.schema.json",
+    "sha256": "7331d2884a78c86f40f9aead737d60589db63e8e5c7c68f919031508c02b0da7"
+  },
+  "hp500-survey": {
+    "version": "1.0.0",
+    "schema": "docs/contracts/schemas/hp500-survey.schema.json",
+    "sha256": "d85549838b8f6138d1c6a688f0d090b2ff32721faea4f7c2b2c1a055afce1abe"
+  },
+  "case-index": {
+    "version": "1.0.0",
+    "schema": "docs/contracts/schemas/case-index.schema.json",
+    "sha256": "b711399d6bc7e9ee78e7d4e39ca2a96683f67f6e89c80e42a3b4272d4f85fd55"
+  },
+  "case-manifest": {
+    "version": "1.0.0",
+    "schema": "docs/contracts/schemas/case-manifest.schema.json",
+    "sha256": "a70aa9d6a6df65329b13ed723a6bebf2e72b191443d8f7e4740418f39df201bb"
+  },
+  "trace": {
+    "version": "1.0.0",
+    "schema": "docs/contracts/schemas/trace.schema.json",
+    "sha256": "31a8aefa92c3343ca0cc2d7dbe097a24c152071db98c777a0014ea1ef0e7bca7"
+  },
+  "hp500-backbone": {
+    "version": "1.0.0",
+    "schema": "docs/contracts/schemas/hp500-backbone.schema.json",
+    "sha256": "704cc5f306c72ed1d8f4cfaae9e65ab7d80ef5dbd32b328ed95cc79328285125"
+  },
+  "hp500-loo": {
+    "version": "1.1.0",
+    "schema": "docs/contracts/schemas/hp500-loo.schema.json",
+    "sha256": "fd760e83b7c35a840ea7b5eebde4bd8254ca951c8436e22ffb607ab541a264c2"
+  },
+  "surrogate-model": {
+    "version": "1.0.0",
+    "schema": "docs/contracts/schemas/surrogate-model.schema.json",
+    "sha256": "51d3838052d8fa27ad8c36d0079fb32c5ce8c81d6c902fa0fee46cfa7ef330e6"
+  },
+  "anomaly-model": {
+    "version": "1.0.0",
+    "schema": "docs/contracts/schemas/anomaly-model.schema.json",
+    "sha256": "57f23ddb34cbbcf44939ac01c04b9d03ed08c153cad1ff5d96d6820da4a8d492"
+  },
+  "model-metrics": {
+    "version": "1.0.0",
+    "schema": "docs/contracts/schemas/model-metrics.schema.json",
+    "sha256": "f4dd8d73d930b78df6c44d5e955ca693b82afded2aaaa93a2ab92541ae386cfa"
+  },
+  "readiness": {
+    "version": "1.0.0",
+    "schema": "docs/contracts/schemas/readiness.schema.json",
+    "sha256": "c12cefa7d5ecac1f06569756b128bccaddbfc03815f33c3e57bd27342033eff5"
+  },
+  "api": {
+    "version": "1.0.1",
+    "schema": "docs/contracts/api.openapi.json",
+    "sha256": "7cdcb5d0df1cf262cb3acba835381f0dc249b9c8b2251c51175645d218c98dc4"
+  }
+}

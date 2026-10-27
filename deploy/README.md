@@ -1,7 +1,7 @@
 # deploy/
 
-- **`pages.md`**, the DEFAULT: GitHub Pages static deploy (ADR-0055). Driven by
-  `.github/workflows/deploy-pages.yml`. This is what almost every product uses.
-- **`fasl-<slug>.service` / `<domain>.nginx` / `setup.sh` / `update.sh`**, DORMANT templates for the VPS path,
-  used ONLY when the `app/` backend is activated (an ADR-0002 trigger). **This solution does not require them at
-  the moment**, they are kept as a one-switch on-ramp. Rename `<slug>`/`<domain>` and fill when you activate.
+`TARGET` names the product's one deploy place: `pages` or `vps` (`scripts/check_deploy_place.py`).
+
+- `pages.md`: GitHub Pages, a static site, driven by `.github/workflows/deploy-pages.yml`.
+- `fasl-slug.service` and `domain.nginx`: the VPS unit and site templates, for a product with an active backend
+  (`app/`). `scripts/instantiate.py` keeps the files of the chosen place only, and fills the slug and the domain.

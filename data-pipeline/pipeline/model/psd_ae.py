@@ -1,11 +1,13 @@
 """The denoising AUTOENCODER over the product-gradation signature (14 features). Its reconstruction error is an
 operating-anomaly score that DOUBLES as the surrogate's out-of-distribution guard: a query far from the training
 manifold reconstructs poorly -> "the surrogate is extrapolating, distrust it". Requires torch (the heavy precompute
-lane only); the deployed live lane runs the EXPORTED ONNX in onnxruntime-web."""
+lane only); the deployed live lane runs the EXPORTED ONNX in onnxruntime-web. Trained by ``stages/train.py``; the
+contract is the catalog row ``anomaly-model``."""
 from __future__ import annotations
 
 import torch.nn as nn
 
+ARCHITECTURE = "14-16-6-16-14 denoising autoencoder, GELU"   # the contract adds the training noise
 N_FEAT = 14   # the product-gradation signature (p80L/p50L/p20L, %-passing×5, tph, kW, reduction, f80L, ecs, feedM)
 
 

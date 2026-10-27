@@ -1,16 +1,34 @@
-# scripts/, environment + pipeline orchestration (cross-platform)
+# scripts/
 
-Local scripts so **anyone** can configure the env and run the flow. Provide every script in BOTH `*.sh`
-(macOS/Linux/Git-Bash) and `*.ps1` (Windows PowerShell, since Felipe runs PS).
+Environment and pipeline scripts in both `*.sh` and `*.ps1`, and the guards CI runs (each runs locally too, with the
+standard library only).
 
-## How to populate
+## Environment and pipeline
 
-| Script | What it must do |
+| Script | What it does |
 |---|---|
-| `setup.sh` / `setup.ps1` | create `.venv`, upgrade pip, install `requirements.txt -r requirements-dev.txt -r requirements-precompute.txt`; print the next commands. GPU/API lanes installed only on demand. |
-| `precompute.sh` / `precompute.ps1` | run the staged pipeline: `python -m productlab.pipeline "$@"` (all cases, or one). |
-| `fetch-data.sh` / `fetch-data.ps1` | (optional) stage raw inputs into `data/raw/` (gitignored). Never commit raw. |
-| `serve-api.sh` / `serve-api.ps1` | (optional, only if `api/` is active) `uvicorn api.main:app --reload`. |
+| `setup.sh` / `setup.ps1` | creates `.venv-pipeline` and installs the pinned pipeline requirements; `--notebooks` (`-Notebooks`) builds `.venv-notebooks` from `notebooks/requirements.txt` instead |
+| `run_notebooks.py` | executes the notebooks top to bottom in a fresh kernel and writes the outputs in place; `--check` runs copies and writes nothing; `--only <path>` runs one (a local release gate, never CI) |
+| `precompute.sh` / `precompute.ps1` | the canonical bake: `python data-pipeline/run.py all` (a release operation, never CI); `run.py models` is the heavy training lane, `run.py fixtures` regenerates the provider tree |
+| `dev.sh` / `dev.ps1`, `smoke.sh` / `smoke.ps1` | local development and a sandboxed smoke run |
+| `instantiate.py` | makes a product from the template (identity, licence, version, deploy place) |
 
-Rules: idempotent; detect `.venv/bin/python` vs `.venv/Scripts/python.exe`; never use global Python/Node.
-Pin nothing here, versions live in `requirements-*.txt`.
+## Guards
+
+| Script | What it enforces |
+|---|---|
+| `check_artifacts.py` | contracts 2 and 3: the index, manifests and traces agree (bytes, sha256); each lane matches its gate; every metric is inside its expected range; the units gate holds |
+| `check_unit_constants.py` | contract 3b: every float literal of the engine declares the quantity it is measured in (`.unit_constants_allow.json`) |
+| `check_version_coherence.py` | VERSION is the only source; the package, the changelog and the tags agree with it |
+| `check_notebooks.py` | the notebooks: layout, the English and Spanish mirror, levels and the SDD's `BS-` claims, anatomy, metadata, cleanliness, pins (static; the execution is `run_notebooks.py --check`) |
+| `check_readme_areas.py` | the README states the repository by areas, each active or dormant, every folder link present |
+| `check_sdd.py` | the SDD has its sections; every requirement names a gate that exists |
+| `check_template_residue.py` | an instantiated product carries none of the example |
+| `check_doc_paths.py` | every repository path a document names exists |
+| `check_web_baseline.py` | the web's tokens, classes, numbers, images and animation loops |
+| `check_svg_animation.py` | an animated SVG carries its reduced-motion block and plays ten seconds at most (the shell's own analysis; needs `npm ci`) |
+| `check_deploy_place.py` | one deploy place, and only its files |
+| `check_live.py` | after a deploy, the live site is this build (run by the deploy workflow) |
+| `check_base_integrity.py` | no real `.env`, venv, native or heavy binary, raw data or machine path is tracked; a model file (`.pt`, `.pth`, `.onnx`) passes only when a catalog row's `documents` names it, at most 5 MB each and 50 MB together |
+| `check_content_standards.py` | no em-dash and no emoji in tracked content (ADR-0067); a pinned third-party notice listed with its digest in `.content_standards_allow` is skipped while the digest matches |
+| `check_ci_budget.py` | CI runs cheap checks only, on the trunks (ADR-0074) |

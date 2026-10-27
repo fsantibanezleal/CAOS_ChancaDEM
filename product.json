@@ -1,0 +1,14 @@
+{
+  "name": "ChancaDEM",
+  "slug": "chancadem",
+  "tagline": {
+    "en": "A crusher-comminution studio: set the machine, the closed-side setting and the feed, and read the product size, the throughput and the power.",
+    "es": "Un estudio de chancado: ajuste la máquina, la abertura de descarga y la alimentación, y lea el tamaño del producto, la capacidad y la potencia."
+  },
+  "repo": "https://github.com/fsantibanezleal/CAOS_ChancaDEM",
+  "visibility": "public",
+  "license": "MIT",
+  "holder": "Felipe Santibáñez-Leal",
+  "year": 2026,
+  "method_packages": []
+}

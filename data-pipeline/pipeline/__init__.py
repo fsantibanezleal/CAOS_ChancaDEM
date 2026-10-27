@@ -1,14 +1,8 @@
-"""pipeline, the offline+live engine for ChancaDEM (instantiated from the CAOS product-repo archetype, ADR-0057).
+"""pipeline, the offline engine of ChancaDEM (ADR-0057): the two data contracts, the staged pipeline, the lane gate, the
+manifest and trace, the units gate and the cases-by-category registry, on the canonical crusher engine in
+``pipeline/model/crusher``. A module folder run by path (``python data-pipeline/run.py``), not a distribution."""
 
-The CORE is real and SOTA-pinned: a pure-TypeScript Whiten population-balance + Evertsson capacity + Bond power
-engine runs live in the browser; a surrogate MLP (emulating that engine) and a denoising autoencoder (operating
-anomaly / OOD score) are trained OFFLINE on a Latin-hypercube sweep of the engine and exported to ONNX. The base
-around it (the two data contracts, the staged pipeline, the lane gate, the manifest/trace, the cases-by-category
-registry) is the FROZEN archetype, instantiated here, not redesigned.
+from pathlib import Path
 
-Offline lane is two-language: a Node sweep (`sweep/gen_sweep.mjs`, the SAME TS engine, no Python re-port) produces
-the labels; Python (`stages/train.py`) fits the ONNX models. The default pipeline is numpy-only and rebuilds the
-per-case replay from the committed artifacts.
-"""
-
-__version__ = "0.06.000"  # display X.XX.XXX; PEP 440 form in pyproject.toml (0.6.0)
+# VERSION at the repository root is the only place the version is written (T4); every manifest records it.
+__version__ = (Path(__file__).resolve().parents[2] / "VERSION").read_text(encoding="utf-8").strip()

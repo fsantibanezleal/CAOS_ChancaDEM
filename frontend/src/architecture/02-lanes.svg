@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="900" class="arch-svg" role="img" aria-label="The three lanes: offline, replay and live, and what each one runs">
+  <!-- Hand-authored; shell tokens only; both languages in one file (ADR-0058). -->
+  <style>
+    .arch-svg text { font-family: var(--font-sans); }
+    .arch-svg .mono { font-family: var(--font-mono); }
+    .arch-svg .bx { fill: var(--color-surface-2); stroke: var(--color-border); stroke-width: 1; }
+    .arch-svg .ln-off { fill: none; stroke: var(--color-magenta); stroke-width: 1.4; }
+    .arch-svg .ln-rep { fill: none; stroke: var(--color-good); stroke-width: 1.4; }
+    .arch-svg .ln-live { fill: none; stroke: var(--color-accent); stroke-width: 1.4; }
+    .arch-svg .ttl { fill: var(--color-fg); font-size: 15px; font-weight: 700; }
+    .arch-svg .t-off { fill: var(--color-magenta); font-size: 12.5px; font-weight: 700; }
+    .arch-svg .t-rep { fill: var(--color-good); font-size: 12.5px; font-weight: 700; }
+    .arch-svg .t-live { fill: var(--color-accent); font-size: 12.5px; font-weight: 700; }
+    .arch-svg .it { fill: var(--color-fg); font-size: 11px; }
+    .arch-svg .sub { fill: var(--color-fg-subtle); font-size: 10.5px; }
+    .arch-svg .cd { fill: var(--color-fg-subtle); font-size: 10px; }
+    .arch-svg .flow { fill: none; stroke: var(--color-fg-faint); stroke-width: 1.4; }
+  </style>
+  <defs>
+    <marker id="ln2-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L8,4 L0,8 z" fill="var(--color-fg-faint)"/>
+    </marker>
+  </defs>
+
+  <text class="ttl l-en" x="20" y="30">Three lanes: where each number is computed</text>
+  <text class="ttl l-es" x="20" y="30">Tres carriles: dónde se calcula cada número</text>
+
+  <!-- offline -->
+  <rect class="ln-off" x="20" y="50" width="270" height="350" rx="10"/>
+  <text class="t-off l-en" x="36" y="76">OFFLINE, on a workstation</text>
+  <text class="t-off l-es" x="36" y="76">FUERA DE LÍNEA, en una estación</text>
+  <rect class="bx" x="36" y="92" width="238" height="70" rx="6"/>
+  <text class="it l-en" x="48" y="112">The bake of the cases</text>
+  <text class="it l-es" x="48" y="112">El precálculo de los casos</text>
+  <text class="cd mono" x="48" y="130">python data-pipeline/run.py all</text>
+  <text class="sub l-en" x="48" y="148">expected ranges and units fail it</text>
+  <text class="sub l-es" x="48" y="148">rangos y unidades lo hacen fallar</text>
+  <rect class="bx" x="36" y="174" width="238" height="70" rx="6"/>
+  <text class="it l-en" x="48" y="194">HP500 validation</text>
+  <text class="it l-es" x="48" y="194">Validación HP500</text>
+  <text class="cd mono" x="48" y="212">run.py hp500</text>
+  <text class="sub l-en" x="48" y="230">backbone and CrusherCal, leave-one-out</text>
+  <text class="sub l-es" x="48" y="230">esqueleto y CrusherCal, uno fuera</text>
+  <rect class="bx" x="36" y="256" width="238" height="70" rx="6"/>
+  <text class="it l-en" x="48" y="276">Training of the two models</text>
+  <text class="it l-es" x="48" y="276">Entrenamiento de los dos modelos</text>
+  <text class="cd mono" x="48" y="294">run.py models</text>
+  <text class="sub l-en" x="48" y="312">torch on the CPU, exported to ONNX</text>
+  <text class="sub l-es" x="48" y="312">torch en CPU, exportado a ONNX</text>
+  <text class="sub l-en" x="36" y="360">Run on a workstation at a release;</text>
+  <text class="sub l-es" x="36" y="360">Se corre en una estación al publicar;</text>
+  <text class="sub l-en" x="36" y="376">never in CI, never in the browser.</text>
+  <text class="sub l-es" x="36" y="376">nunca en CI, nunca en el navegador.</text>
+
+  <!-- replay -->
+  <rect class="ln-rep" x="315" y="50" width="270" height="350" rx="10"/>
+  <text class="t-rep l-en" x="331" y="76">REPLAY, committed</text>
+  <text class="t-rep l-es" x="331" y="76">REPRODUCCIÓN, comprometida</text>
+  <rect class="bx" x="331" y="92" width="238" height="70" rx="6"/>
+  <text class="it l-en" x="343" y="112">Case documents</text>
+  <text class="it l-es" x="343" y="112">Documentos de caso</text>
+  <text class="cd mono" x="343" y="130">index, manifest, trace</text>
+  <text class="sub l-en" x="343" y="148">small, reviewable, in git</text>
+  <text class="sub l-es" x="343" y="148">pequeños, revisables, en git</text>
+  <rect class="bx" x="331" y="174" width="238" height="70" rx="6"/>
+  <text class="it l-en" x="343" y="194">Copied into the site</text>
+  <text class="it l-es" x="343" y="194">Copiados al sitio</text>
+  <text class="cd mono" x="343" y="212">copy-data.mjs</text>
+  <text class="sub l-en" x="343" y="230">exactly what the index declares</text>
+  <text class="sub l-es" x="343" y="230">exactamente lo que declara el índice</text>
+  <rect class="bx" x="331" y="256" width="238" height="70" rx="6"/>
+  <text class="it l-en" x="343" y="276">Fetched as JSON</text>
+  <text class="it l-es" x="343" y="276">Pedidos como JSON</text>
+  <text class="cd mono" x="343" y="294">data/...json?v=VERSION</text>
+  <text class="sub l-en" x="343" y="312">an HTML answer is an error</text>
+  <text class="sub l-es" x="343" y="312">una respuesta HTML es un error</text>
+  <text class="sub l-en" x="331" y="360">The web reads them; nothing baked</text>
+  <text class="sub l-es" x="331" y="360">La web los lee; nada de lo</text>
+  <text class="sub l-en" x="331" y="376">is recomputed here.</text>
+  <text class="sub l-es" x="331" y="376">precalculado se recalcula aquí.</text>
+
+  <!-- live -->
+  <rect class="ln-live" x="610" y="50" width="270" height="350" rx="10"/>
+  <text class="t-live l-en" x="626" y="76">LIVE, in the browser</text>
+  <text class="t-live l-es" x="626" y="76">EN VIVO, en el navegador</text>
+  <rect class="bx" x="626" y="92" width="238" height="70" rx="6"/>
+  <text class="it l-en" x="638" y="112">The engine, in TypeScript</text>
+  <text class="it l-es" x="638" y="112">El motor, en TypeScript</text>
+  <text class="cd mono" x="638" y="130">evaluate(operating point)</text>
+  <text class="sub l-en" x="638" y="148">re-runs on every control change</text>
+  <text class="sub l-es" x="638" y="148">recalcula con cada cambio de control</text>
+  <rect class="bx" x="626" y="174" width="238" height="70" rx="6"/>
+  <text class="it l-en" x="638" y="194">Held to the Python engine</text>
+  <text class="it l-es" x="638" y="194">Sujeto al motor de Python</text>
+  <text class="cd mono" x="638" y="212">shared reference, tolerance 1e-9</text>
+  <text class="sub l-en" x="638" y="230">and to every trace, to six digits</text>
+  <text class="sub l-es" x="638" y="230">y a cada traza, a seis cifras</text>
+  <rect class="bx" x="626" y="256" width="238" height="70" rx="6"/>
+  <text class="it l-en" x="638" y="276">Learned models in the browser</text>
+  <text class="it l-es" x="638" y="276">Modelos aprendidos en el navegador</text>
+  <text class="cd mono" x="638" y="294">onnxruntime-web 1.27.0, WASM</text>
+  <text class="sub l-en" x="638" y="312">opened with the Learned group</text>
+  <text class="sub l-es" x="638" y="312">se abren con el grupo Aprendido</text>
+  <text class="sub l-en" x="626" y="360">A case is live only if it passes the</text>
+  <text class="sub l-es" x="626" y="360">Un caso es en vivo solo si pasa la</text>
+  <text class="sub l-en" x="626" y="376">gate: 1500 ms, 256 KiB, numpy only.</text>
+  <text class="sub l-es" x="626" y="376">compuerta: 1500 ms, 256 KiB, solo numpy.</text>
+
+  <path class="flow" d="M274,127 H329" marker-end="url(#ln2-arrow)"/>
+  <path class="flow" d="M274,209 H329" marker-end="url(#ln2-arrow)"/>
+  <path class="flow" d="M274,291 H329" marker-end="url(#ln2-arrow)"/>
+  <path class="flow" d="M569,127 H624" marker-end="url(#ln2-arrow)"/>
+  <path class="flow" d="M569,291 H624" marker-end="url(#ln2-arrow)"/>
+  <text class="sub l-en" x="450" y="430" text-anchor="middle">artifacts flow left to right; the shared reference and the parity test tie the live lane to the others</text>
+  <text class="sub l-es" x="450" y="430" text-anchor="middle">los artefactos fluyen de izquierda a derecha; la referencia compartida y la prueba de paridad atan el carril en vivo a los demás</text>
+</svg>

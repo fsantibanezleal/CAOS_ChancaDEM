@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "params-record.schema.json",
+  "title": "ParamsRecord",
+  "description": "Contract 1 (ingestion), catalog row params-record 1.0.0: one crusher operating point as accepted by data-pipeline/pipeline/io/contract.py validate_rows from the table data/examples/params.csv (columns case_id, machine, css_mm, throw_mm, speed_rpm, feed_x63_mm, feed_m, ore_axb, ore_wi). Values arrive as text and are parsed, never coerced: a row that fails a rule below is rejected with a reason. A physically meaningful but unusual row is accepted and flagged with the engine's own codes: a closed-side setting at or above the feed's 80 percent passing size (pass-through), or at or above the feed top size of 256 mm (invalid control); the bounds below are wide on purpose so the negative and invalid control cases are accepted, flagged and baked, never dropped. Sizes in millimetres, speed in revolutions per minute, the Bond work index in kWh per tonne.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["case_id", "machine", "css_mm", "throw_mm", "speed_rpm", "feed_x63_mm", "feed_m", "ore_axb", "ore_wi"],
+  "properties": {
+    "case_id": {"type": "string", "pattern": "^[A-Z][A-Z0-9-]{1,15}$", "description": "The case identifier, for example S01 or HP500-01."},
+    "machine": {"enum": ["cone-sec", "cone-tert", "cone-short-head", "gyratory", "jaw"], "description": "The crusher kind; the engine's per-machine constants follow it."},
+    "css_mm": {"type": "number", "exclusiveMinimum": 0, "maximum": 600, "description": "Closed-side setting, the narrowest gap between the mantle and the concave (or the jaws), mm."},
+    "throw_mm": {"type": "number", "minimum": 1, "maximum": 100, "description": "Eccentric throw, the open-side setting minus the closed-side setting, mm."},
+    "speed_rpm": {"type": "number", "minimum": 50, "maximum": 1000, "description": "Eccentric (gyration) speed, revolutions per minute."},
+    "feed_x63_mm": {"type": "number", "exclusiveMinimum": 0, "maximum": 2000, "description": "Rosin-Rammler characteristic size of the feed (63.2 percent passing), mm."},
+    "feed_m": {"type": "number", "minimum": 0.3, "maximum": 4, "description": "Rosin-Rammler uniformity exponent of the feed, dimensionless."},
+    "ore_axb": {"type": "number", "minimum": 10, "maximum": 1000, "description": "JKMRC drop-weight ore competence A times b, dimensionless; lower is harder."},
+    "ore_wi": {"type": "number", "minimum": 2, "maximum": 40, "description": "Bond work index of the ore, kWh per tonne."}
+  }
+}

@@ -1,7 +1,8 @@
-"""CrusherCal: the leave-one-survey-out (LOO) validation of the calibrated HP500 backbone + a bounded residual.
+"""The HP500 real lane: the survey table contract (surveys), the calibrated backbone on the canonical Python engine
+(backbone) and CrusherCal, the leave-one-survey-out validation of that backbone with a bounded residual (loo).
 
-The backbone predictions are produced by the SAME live TypeScript engine the browser runs (bridged to
-data/derived/hp500/backbone.json by sweep/bake_hp500.mjs); this package only VALIDATES them out-of-sample and
-quantifies uncertainty. No accuracy claim is made in code; the committed JSON traces report whatever the 10
-real surveys show, including null results.
+Data: Rocha, Campos, Silva and Tavares (2024), Minerals 14(9), 919, https://doi.org/10.3390/min14090919, CC BY 4.0.
+The backbone predictions are produced by pipeline.model.crusher, the same physics the browser engine runs; this
+module folder validates them out-of-sample and quantifies uncertainty. No accuracy claim is made in code; the
+committed JSON documents report whatever the ten real surveys show, including null results.
 """
