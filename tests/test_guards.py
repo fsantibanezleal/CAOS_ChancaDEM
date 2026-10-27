@@ -38,30 +38,8 @@ def _git_tree(tmp: Path) -> Path:
     return tree
 
 
-def test_check_artifacts_reads_one_or_many_artifacts_and_the_index_files(tmp_path):
-    d = tmp_path / "data" / "derived"
-    n_single = _put(d, "A/trace.json", {"t": [0, 1]})
-    n_v1 = _put(d, "B/v1.json", {"x": 1})
-    n_v2 = _put(d, "B/v2.json", {"x": 22})
-    _put(d, "contract/index.json", {"families": []})
-    gate = {"lane": "live"}
-    _put(d, "manifests/A.json", {"artifact": {"path": "A/trace.json", "bytes": n_single}, "lane": "live", "gate": gate})
-    _put(d, "manifests/B.json", {"artifacts": [{"path": "B/v1.json", "bytes": n_v1, "lane": "live", "gate": gate},
-                                               {"path": "B/v2.json", "bytes": n_v2, "lane": "live", "gate": gate}]})
-    index = {"files": ["contract/index.json"], "cases": [{"case_id": "A", "manifest_path": "manifests/A.json"},
-                                                         {"case_id": "B", "manifest_path": "manifests/B.json"}]}
-    _put(d, "manifests/index.json", index)
-    ok = _run("check_artifacts.py", str(tmp_path))
-    assert ok.returncode == 0 and "2 cases, 3 artifacts" in ok.stdout, ok.stdout
-    # drift in the second variant, a lane that disagrees with its gate, a declared file gone
-    _put(d, "manifests/B.json", {"artifacts": [{"path": "B/v1.json", "bytes": n_v1, "lane": "live", "gate": gate},
-                                               {"path": "B/v2.json", "bytes": n_v2 + 1, "lane": "precompute", "gate": gate}]})
-    (d / "contract" / "index.json").unlink()
-    bad = _run("check_artifacts.py", str(tmp_path))
-    assert bad.returncode == 1
-    assert "byte drift" in bad.stdout and "B/v2.json" in bad.stdout
-    assert "lane/gate mismatch: B B/v2.json" in bad.stdout
-    assert "declared by the index but missing or empty" in bad.stdout
+# scripts/check_artifacts.py is the product's own (one trace per case, sha256, expected ranges, the units gate): its
+# planted-defect tests are tests/test_check_artifacts.py.
 
 
 REQ = """# Requirements: a unit not built yet

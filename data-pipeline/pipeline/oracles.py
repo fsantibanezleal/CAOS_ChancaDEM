@@ -1,31 +1,53 @@
-"""Oracles: independent solutions the engine and the notebooks are checked against.
+"""Oracles: independent closed-form checks the engine, the baked artifacts and the notebooks are held to.
 
-An oracle shares no code with the engine's integrator (``pipeline/model/``): it solves the closed relation the model must
-agree with, so a disagreement is a finding about one of the two. The notebooks import it, as they import every method
-(CAOS_MANAGE ``conventions/product-notebooks.md`` section 1); none defines its own copy.
+An oracle shares no code with the engine (``pipeline/model/``): it states a relation the product must agree with, so a
+disagreement is a finding about one of the two. The notebooks import it, as they import every method (CAOS_MANAGE
+``conventions/product-notebooks.md`` section 1); none defines its own copy. Standard library only.
 
-Final size of an epidemic (Kermack and McKendrick 1927; Miller 2012, https://doi.org/10.1007/s11538-012-9749-6): the
-fraction ``z`` ever infected solves ``1 - z = (1 - i0) exp(-R0 z)``, which for a vanishing initial infection is
-``z = 1 - exp(-R0 z)``. It does not depend on the time course, only on ``R0`` (and ``i0``).
+- Rosin-Rammler (1933): the cumulative passing is ``1 - exp(-(x / x63)^m)``, so at ``x = x63`` it equals ``1 - 1/e`` for
+  every ``m``; the 80 percent passing size is ``x63 * ln(5)^(1/m)``.
+- Bond (1952): the energy to reduce a feed of size F80 to a product of size P80 is
+  ``W = 10 Wi (1 / sqrt(P80) - 1 / sqrt(F80))`` kWh/t with the sizes in micrometres and the work index Wi in kWh/t.
+- Mass closure: a crusher neither creates nor destroys mass, so the product gradation sums to the feed gradation.
 """
 from __future__ import annotations
 
 import math
 
+UM_PER_MM = 1000.0   # micrometres in a millimetre, converts the engine's mm sizes to the micrometres of the Bond relation
 
-def final_size(r0: float, i0: float = 0.0, tolerance: float = 1e-12, trace: list[float] | None = None, max_iterations: int = 100_000) -> float:
-    """The fraction ever infected: the fixed point of ``z -> 1 - (1 - i0) exp(-R0 z)`` found from ``z = 1``.
 
-    ``i0`` is the initial infected fraction (0 for the relation ``z = 1 - exp(-R0 z)``). The iteration stops when two
-    consecutive values differ by less than ``tolerance``; ``trace``, when given, receives every iterate. For ``R0`` at or
-    below 1 and ``i0 = 0`` the only solution is zero, which the iteration approaches.
-    """
-    z = 1.0
-    for _ in range(max_iterations):
-        z_next = 1.0 - (1.0 - i0) * math.exp(-r0 * z)
-        if trace is not None:
-            trace.append(z_next)
-        if abs(z_next - z) < tolerance:
-            return z_next
-        z = z_next
-    return z
+def rosin_rammler_passing(x_mm: float, x63_mm: float, m: float) -> float:
+    """Cumulative fraction passing size ``x_mm`` of a Rosin-Rammler feed with characteristic size ``x63_mm`` and exponent ``m``."""
+    if x_mm <= 0:
+        return 0.0
+    return 1.0 - math.exp(-((x_mm / x63_mm) ** m))
+
+
+def rosin_rammler_x63_passing() -> float:
+    """The passing fraction at x = x63 for every m: 1 - 1/e = 0.6321..."""
+    return 1.0 - 1.0 / math.e
+
+
+def rosin_rammler_size_at(fraction: float, x63_mm: float, m: float) -> float:
+    """The size [mm] at a cumulative passing ``fraction`` in (0, 1): the inverse of the Rosin-Rammler law."""
+    if not 0.0 < fraction < 1.0:
+        raise ValueError(f"fraction {fraction} must lie strictly between 0 and 1")
+    return x63_mm * (-math.log(1.0 - fraction)) ** (1.0 / m)
+
+
+def bond_energy_kwh_t(f80_mm: float, p80_mm: float, wi_kwh_t: float) -> float:
+    """Bond energy [kWh/t] for a reduction from ``f80_mm`` to ``p80_mm`` at work index ``wi_kwh_t``; zero for no reduction."""
+    if f80_mm <= 0 or p80_mm <= 0:
+        return 0.0
+    return max(0.0, 10.0 * wi_kwh_t * (1.0 / math.sqrt(p80_mm * UM_PER_MM) - 1.0 / math.sqrt(f80_mm * UM_PER_MM)))
+
+
+def bond_power_kw(throughput_tph: float, f80_mm: float, p80_mm: float, wi_kwh_t: float) -> float:
+    """Bond draw [kW]: the energy per tonne times the tonnes per hour."""
+    return bond_energy_kwh_t(f80_mm, p80_mm, wi_kwh_t) * throughput_tph
+
+
+def mass_closure(feed_mass: list[float], product_mass: list[float]) -> float:
+    """The absolute difference between the product and the feed mass (both fractions summing to one): zero when closed."""
+    return abs(sum(product_mass) - sum(feed_mass))

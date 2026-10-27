@@ -1,6 +1,5 @@
 # PRECOMPUTE lane, the heavy, research-chosen SOTA engines, in the .venv-pipeline (local-only, never deployed).
 # THIS is where the deep research becomes binding: every engine pinned here is documented in docs/frameworks/<tool>/
-# and actually used by data-pipeline/pipeline/stages/. The EXAMPLE engine (SIR) is numpy-only on purpose so the
-# template installs instantly with no native build; a real product adds e.g. yade / pychrono / ortools / mintpy /
-# torch here, each PINNED to the version it installs+verifies.
+# and actually used by data-pipeline/pipeline/stages/. The canonical crusher engine is pure Python; numpy serves the
+# model encodings and the HP500 validation, and the heavy lane (torch, onnx, onnxruntime) is requirements-precompute.txt.
 numpy==2.4.6

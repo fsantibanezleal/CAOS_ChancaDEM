@@ -106,7 +106,7 @@ def test_swap_fixture_tree_and_bake(monkeypatch):
 def test_adversarial_503_when_documents_are_absent(monkeypatch, tmp_path):
     c = client(monkeypatch, tmp_path)
     for path, template, reason in (("/api/cases", "/api/cases", UNAVAILABLE_INDEX),
-                                   ("/api/cases/EX01_subcritical/manifest", "/api/cases/{case_id}/manifest",
+                                   ("/api/cases/S01/manifest", "/api/cases/{case_id}/manifest",
                                     UNAVAILABLE_INDEX),
                                    ("/api/readiness", "/api/readiness", UNAVAILABLE_READINESS)):
         body = get_checked(c, path, template, 503)
@@ -120,14 +120,14 @@ def test_adversarial_404_bodies_and_nothing_outside_the_root(monkeypatch):
     for bad in ("..%5Cindex", ".hidden", "..", "%2e%2e"):
         r = c.get(f"/api/cases/{bad}/manifest")
         assert r.status_code == 404 and response_errors("/api/cases/{case_id}/manifest", "get", 404, r.json()) == [], bad
-    for rel in ("EX01_subcritical/nope.json", "../../VERSION", "..%2F..%2FVERSION", "%2e%2e/%2e%2e/package.json",
+    for rel in ("S01/nope.json", "../../VERSION", "..%2F..%2FVERSION", "%2e%2e/%2e%2e/package.json",
                 "..%5C..%5CVERSION", "manifests/..%2F..%2F..%2FVERSION", "manifests/.gitkeep", "manifests",
-                "EX01_subcritical", "readiness.json.txt"):
+                "S01", "readiness.json.txt"):
         r = c.get(f"/api/artifacts/{rel}")
         assert r.status_code == 404, rel
         assert r.json() == {"detail": "no such artifact"} or response_errors(
             "/api/artifacts/{rel_path}", "get", 404, r.json()) == [], rel
-    assert c.get("/api/artifacts/EX01_subcritical/trace.json").status_code == 200
+    assert c.get("/api/artifacts/S01/trace.json").status_code == 200
 
 
 def test_get_only(monkeypatch):
@@ -140,7 +140,7 @@ def test_adversarial_only_indexed_documents_are_served(monkeypatch):
     """The declared bodies of /api/artifacts are traces and of /api/cases/{id}/manifest manifests: a document that is
     neither (the readiness, the index, a manifest read as an artifact, the index read as a case) is a 404."""
     c = client(monkeypatch, DERIVED_ROOTS["bake"])
-    for rel in ("readiness.json", "manifests/index.json", "manifests/EX02_epidemic.json"):
+    for rel in ("readiness.json", "manifests/index.json", "manifests/S02.json"):
         body = get_checked(c, f"/api/artifacts/{rel}", "/api/artifacts/{rel_path}", 404)
         assert body == {"detail": "no such artifact"}, rel
     body = get_checked(c, "/api/cases/index/manifest", "/api/cases/{case_id}/manifest", 404)
@@ -178,24 +178,24 @@ def unreadable(rel: str) -> dict:
 
 def test_adversarial_an_unreadable_index_is_a_503(monkeypatch, tmp_path):
     c = client(monkeypatch, corrupt_copy(tmp_path, "manifests/index.json"))
-    for path, template in (("/api/cases", "/api/cases"), ("/api/cases/EX01_subcritical/manifest", "/api/cases/{case_id}/manifest"),
-                           ("/api/artifacts/EX01_subcritical/trace.json", "/api/cases")):  # see the note below
+    for path, template in (("/api/cases", "/api/cases"), ("/api/cases/S01/manifest", "/api/cases/{case_id}/manifest"),
+                           ("/api/artifacts/S01/trace.json", "/api/cases")):  # see the note below
         assert get_checked(c, path, template, 503) == unreadable("manifests/index.json"), path
 
 
 def test_an_unreadable_manifest_is_a_503(monkeypatch, tmp_path):
-    c = client(monkeypatch, corrupt_copy(tmp_path, "manifests/EX01_subcritical.json"))
-    body = get_checked(c, "/api/cases/EX01_subcritical/manifest", "/api/cases/{case_id}/manifest", 503)
-    assert body == unreadable("manifests/EX01_subcritical.json")
-    assert c.get("/api/cases/EX02_epidemic/manifest").status_code == 200  # the other cases work
+    c = client(monkeypatch, corrupt_copy(tmp_path, "manifests/S01.json"))
+    body = get_checked(c, "/api/cases/S01/manifest", "/api/cases/{case_id}/manifest", 503)
+    assert body == unreadable("manifests/S01.json")
+    assert c.get("/api/cases/S02/manifest").status_code == 200  # the other cases work
 
 
 def test_an_unreadable_artifact_is_a_503(monkeypatch, tmp_path):
-    c = client(monkeypatch, corrupt_copy(tmp_path, "EX01_subcritical/trace.json"))
+    c = client(monkeypatch, corrupt_copy(tmp_path, "S01/trace.json"))
     # api.openapi.json declares no 503 for /api/artifacts/{rel_path} (a docs gap reported to the main session): the
     # body is held to the Unavailable response every other route declares
-    body = get_checked(c, "/api/artifacts/EX01_subcritical/trace.json", "/api/cases", 503)
-    assert body == unreadable("EX01_subcritical/trace.json")
+    body = get_checked(c, "/api/artifacts/S01/trace.json", "/api/cases", 503)
+    assert body == unreadable("S01/trace.json")
 
 
 def test_an_unreadable_readiness_is_a_503(monkeypatch, tmp_path):

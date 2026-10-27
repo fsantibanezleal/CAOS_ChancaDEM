@@ -1,9 +1,8 @@
-"""Stage 4, infer: run the (research-chosen) engine for a case's params. EXAMPLE = the SIR simulate()."""
+"""Stage 2, infer: run the canonical crusher engine (``pipeline.model.crusher``) at an operating point."""
 from __future__ import annotations
 
-from ..io.schema import SIRParams, SIRResult
-from ..model.sir import simulate
+from ..model.crusher import CrusherResult, Operating, evaluate
 
 
-def run(params: SIRParams) -> SIRResult:
-    return simulate(params)
+def run(op: Operating) -> CrusherResult:
+    return evaluate(op)
