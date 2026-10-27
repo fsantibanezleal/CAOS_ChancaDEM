@@ -29,6 +29,8 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
+from statistics import NormalDist
+from typing import NamedTuple
 
 import numpy as np
 
@@ -46,35 +48,48 @@ RESID_CLIP_FRAC = 0.20   # bounded residual: |residual| <= 20% of the backbone v
 RIDGE_LAMBDA = 1.0       # ridge penalty on the standardized residual features (keeps the tiny-n fit humble)
 
 
+K80 = 1.2816   # normal 80% two-sided half-width factor (the constant of the committed document)
+
+
 # --------------------------------------------------------------------------------------------------------------
-# metrics (all reported, none asserted)
+# metrics (all reported, none asserted). Public: the notebooks and the stages call these, not private copies.
 # --------------------------------------------------------------------------------------------------------------
-def _mape(y: np.ndarray, yhat: np.ndarray) -> float:
+def mape(y: np.ndarray, yhat: np.ndarray) -> float:
+    """Mean absolute percentage error [%] of ``yhat`` against ``y``."""
     return float(np.mean(np.abs((yhat - y) / y)) * 100.0)
 
 
-def _rmse(y: np.ndarray, yhat: np.ndarray) -> float:
+def rmse(y: np.ndarray, yhat: np.ndarray) -> float:
     return float(np.sqrt(np.mean((yhat - y) ** 2)))
 
 
-def _r2(y: np.ndarray, yhat: np.ndarray) -> float:
+def r2(y: np.ndarray, yhat: np.ndarray) -> float:
+    """Coefficient of determination; 0 when ``y`` has no variance."""
     ss_res = float(np.sum((y - yhat) ** 2))
     ss_tot = float(np.sum((y - np.mean(y)) ** 2))
     return float(1.0 - ss_res / ss_tot) if ss_tot > 0 else 0.0
 
 
-def _maxdev(y: np.ndarray, yhat: np.ndarray) -> float:
+def maxdev(y: np.ndarray, yhat: np.ndarray) -> float:
+    """Largest absolute percentage deviation [%]."""
     return float(np.max(np.abs((yhat - y) / y)) * 100.0)
 
 
-def _stats(y: np.ndarray, yhat: np.ndarray) -> dict:
-    return {"mape_pct": round(_mape(y, yhat), 2), "rmse": round(_rmse(y, yhat), 2),
-            "r2": round(_r2(y, yhat), 3), "maxdev_pct": round(_maxdev(y, yhat), 2)}
+def stats(y: np.ndarray, yhat: np.ndarray) -> dict:
+    """The four scores of the document: MAPE [%], RMSE, R squared and the largest deviation [%]."""
+    return {"mape_pct": round(mape(y, yhat), 2), "rmse": round(rmse(y, yhat), 2),
+            "r2": round(r2(y, yhat), 3), "maxdev_pct": round(maxdev(y, yhat), 2)}
 
 
 # --------------------------------------------------------------------------------------------------------------
-# the models (each returns a held-out prediction for the left-out index i, fit on the other rows)
+# the folds and the models. Each ``fit_*`` fits on the train rows; each ``predict_*`` (or the fit that returns the
+# held-out value) gives the prediction for the left-out row.
 # --------------------------------------------------------------------------------------------------------------
+def fold_indices(n: int, i: int, leaky: bool) -> np.ndarray:
+    """Train indices for fold i: all-but-i (strict) or all rows incl. i (leaky, exposes the optimism)."""
+    return np.arange(n) if leaky else np.array([k for k in range(n) if k != i])
+
+
 def _fit_ridge(X: np.ndarray, y: np.ndarray, lam: float) -> np.ndarray:
     """Ridge on standardized features with an unpenalized intercept. Returns coefficients incl. intercept."""
     n, d = X.shape
@@ -91,44 +106,107 @@ def _standardize(train_X: np.ndarray, x: np.ndarray) -> tuple[np.ndarray, np.nda
     return (train_X - mu) / sd, (x - mu) / sd
 
 
-def _m0_tph(shape: np.ndarray, meas: np.ndarray, i: int, idx: np.ndarray) -> float:
-    """Backbone t/h: Q = QT * shape_i (shape = engine capacity factor). Refit QT (1 scalar) on the train rows."""
-    s, m = shape[idx], meas[idx]
-    qt = float(np.sum(s * m) / np.sum(s * s))  # least-squares 1-parameter fit
+def fit_capacity_base(shape: np.ndarray, measured: np.ndarray, train_idx: np.ndarray) -> float:
+    """Backbone t/h, M0: Q = QT * shape (shape = the engine capacity factor). QT, the one scalar, is the least-squares fit
+    on the train rows: QT = sum(s m) / sum(s s)."""
+    s, m = shape[train_idx], measured[train_idx]
+    return float(np.sum(s * m) / np.sum(s * s))
+
+
+def predict_capacity(qt: float, shape: np.ndarray, i: int) -> float:
+    """The capacity backbone for row i: QT * shape_i."""
     return qt * shape[i]
 
 
-def _m0_kw(pd_: np.ndarray, meas: np.ndarray, i: int, idx: np.ndarray) -> float:
-    """Backbone kW via the paper power FORM Pc = zeta*Pd + Pn, (zeta, Pn) refit by OLS on the train rows."""
-    A = np.vstack([pd_[idx], np.ones(idx.size)]).T
-    coef, *_ = np.linalg.lstsq(A, meas[idx], rcond=None)
-    return float(coef[0] * pd_[i] + coef[1])
+def fit_power_form(pd: np.ndarray, measured: np.ndarray, train_idx: np.ndarray) -> tuple[float, float]:
+    """Backbone kW, M0, via the paper power FORM Pc = zeta*Pd + Pn: (zeta, Pn) by OLS on the train rows."""
+    A = np.vstack([pd[train_idx], np.ones(train_idx.size)]).T
+    coef, *_ = np.linalg.lstsq(A, measured[train_idx], rcond=None)
+    return float(coef[0]), float(coef[1])
 
 
-def _m1_residual(feat: np.ndarray, backbone_pred: np.ndarray, meas: np.ndarray,
-                 i: int, idx: np.ndarray, resid_target: np.ndarray | None = None) -> float:
-    """Backbone + bounded ridge residual on standardized [CSS, f80]. resid_target overrides the residual (for the
-    label-shuffle control). The residual is clipped to +-RESID_CLIP_FRAC of the backbone value (physical bound)."""
-    r = (meas - backbone_pred) if resid_target is None else resid_target
-    trX, xi = _standardize(feat[idx], feat[i])
-    coef = _fit_ridge(trX, r[idx], RIDGE_LAMBDA)
-    dr = float(coef[0] + xi @ coef[1:])
+def fit_freeform(features: np.ndarray, measured: np.ndarray, train_idx: np.ndarray) -> np.ndarray:
+    """M2: unconstrained OLS on [CSS, f80] predicting the raw target (no physics), the overfit strawman. Returns the
+    coefficients, the intercept first."""
+    A = np.hstack([np.ones((train_idx.size, 1)), features[train_idx]])
+    coef, *_ = np.linalg.lstsq(A, measured[train_idx], rcond=None)
+    return coef
+
+
+def predict_freeform(coef: np.ndarray, x: np.ndarray) -> float:
+    """The free-form prediction for one feature row: intercept + x . slopes."""
+    return float(coef[0] + x @ coef[1:])
+
+
+class ResidualFit(NamedTuple):
+    """The ridge residual of M1 for one fold: its coefficients on the standardized features (intercept first), the residual
+    it predicts for the left-out row and the same residual clipped to the physical band."""
+    coef: np.ndarray
+    raw: float
+    clipped: float
+
+
+def fit_residual(features: np.ndarray, backbone_pred: np.ndarray, measured: np.ndarray, train_idx: np.ndarray, i: int,
+                 resid_target: np.ndarray | None = None) -> ResidualFit:
+    """M1: a ridge regression of the residual on standardized [CSS, f80] fitted on the train rows, evaluated at row i.
+    ``resid_target`` overrides the residual (the label-shuffle control). The residual is clipped to +-RESID_CLIP_FRAC of the
+    backbone value at row i (a physical bound); M1 is ``backbone_pred[i] + clipped``."""
+    r = (measured - backbone_pred) if resid_target is None else resid_target
+    trX, xi = _standardize(features[train_idx], features[i])
+    coef = _fit_ridge(trX, r[train_idx], RIDGE_LAMBDA)
+    raw = float(coef[0] + xi @ coef[1:])
     bound = RESID_CLIP_FRAC * abs(backbone_pred[i])
-    dr = max(-bound, min(bound, dr))
-    return backbone_pred[i] + dr
-
-
-def _m2_freeform(feat: np.ndarray, meas: np.ndarray, i: int, idx: np.ndarray) -> float:
-    """Unconstrained OLS on [CSS, f80] predicting the raw target (no physics). The overfit strawman."""
-    A = np.hstack([np.ones((idx.size, 1)), feat[idx]])
-    coef, *_ = np.linalg.lstsq(A, meas[idx], rcond=None)
-    return float(coef[0] + feat[i] @ coef[1:])
+    return ResidualFit(coef, raw, max(-bound, min(bound, raw)))
 
 
 # --------------------------------------------------------------------------------------------------------------
-def _loo_indices(n: int, i: int, leaky: bool) -> np.ndarray:
-    """Train indices for fold i: all-but-i (strict) or all rows incl. i (leaky, exposes the optimism)."""
-    return np.arange(n) if leaky else np.array([k for k in range(n) if k != i])
+# the 80% predictive band and its coverage
+# --------------------------------------------------------------------------------------------------------------
+def band_factor(level: float = 0.8) -> float:
+    """The two-sided normal factor of a central ``level`` (1.2816 at 0.8), to four decimals as the document carries it."""
+    return K80 if level == 0.8 else round(NormalDist().inv_cdf(0.5 + level / 2.0), 4)
+
+
+def predictive_band(residuals: np.ndarray, level: float = 0.8) -> dict:
+    """The band M0 +- halfwidth from a set of held-out residuals: ``sigma`` their sample standard deviation (ddof 1) and
+    ``halfwidth`` = factor(level) * sigma."""
+    sigma = float(np.std(residuals, ddof=1))
+    return {"sigma": sigma, "halfwidth": band_factor(level) * sigma}
+
+
+def nested_band_coverage(residuals: np.ndarray, level: float = 0.8) -> dict:
+    """The out-of-sample coverage of the band: for each survey i, sigma comes from the held-out residuals of the OTHER
+    surveys only, and survey i is covered when its own residual lies within factor(level) * sigma_i. The in-sample
+    coverage of the document checks the residuals against a sigma computed from the very same residuals. Returns the
+    per-survey ``sigma``, the per-survey ``covered`` verdicts and the ``coverage`` fraction."""
+    residuals = np.asarray(residuals, dtype=float)
+    n = residuals.size
+    sigmas, covered = [], []
+    for i in range(n):
+        band = predictive_band(residuals[fold_indices(n, i, leaky=False)], level)
+        sigmas.append(band["sigma"])
+        covered.append(bool(abs(residuals[i]) <= band["halfwidth"]))
+    return {"sigma": sigmas, "covered": covered, "coverage": float(np.mean(covered))}
+
+
+NESTED_NOTE = ("empirical_coverage is in sample: sigma comes from the same ten held-out residuals it is checked against. "
+               "nested_coverage is out of sample: for each survey, sigma comes from the held-out residuals of the other nine "
+               "surveys only, and the survey is covered when its residual lies within 1.2816 times that sigma. n=10 makes "
+               "both coarse: one survey moves a coverage by 0.1.")
+
+
+# --------------------------------------------------------------------------------------------------------------
+# the names of the first release, kept as thin aliases so its notebooks still run until they call the public ones
+# --------------------------------------------------------------------------------------------------------------
+_mape, _r2, _stats, _loo_indices = mape, r2, stats, fold_indices
+
+
+def _m0_tph(shape: np.ndarray, meas: np.ndarray, i: int, idx: np.ndarray) -> float:
+    return predict_capacity(fit_capacity_base(shape, meas, idx), shape, i)
+
+
+def _m2_freeform(feat: np.ndarray, meas: np.ndarray, i: int, idx: np.ndarray) -> float:
+    return predict_freeform(fit_freeform(feat, meas, idx), feat[i])
 
 
 def _run_target(name: str, meas: np.ndarray, feat: np.ndarray,
@@ -149,29 +227,30 @@ def _run_target(name: str, meas: np.ndarray, feat: np.ndarray,
         shuffled = meas.copy()
         rng.shuffle(shuffled)  # label-shuffle control: permuted measured values (seeded)
         for i in range(n):
-            idx = _loo_indices(n, i, leaky)
+            idx = fold_indices(n, i, leaky)
             if name == "tph":
-                bb[i] = _m0_tph(shape, meas, i, idx)
+                bb[i] = predict_capacity(fit_capacity_base(shape, meas, idx), shape, i)
             elif name == "kW":
-                bb[i] = _m0_kw(pd_, meas, i, idx)
+                zeta, pn = fit_power_form(pd_, meas, idx)
+                bb[i] = zeta * pd_[i] + pn
             else:
                 bb[i] = backbone_full[i]  # p80: derived, no scalar to refit
             m0[i] = bb[i]
             const[i] = float(np.mean(meas[idx]))
-            m2[i] = _m2_freeform(feat, meas, i, idx)
+            m2[i] = predict_freeform(fit_freeform(feat, meas, idx), feat[i])
         # M1 residual uses the per-fold backbone bb as its base
         for i in range(n):
-            idx = _loo_indices(n, i, leaky)
-            m1[i] = _m1_residual(feat, bb, meas, i, idx)
+            idx = fold_indices(n, i, leaky)
+            m1[i] = bb[i] + fit_residual(feat, bb, meas, idx, i).clipped
             # shuffle control: residual computed against SHUFFLED labels (must not help)
-            m1_shuf[i] = _m1_residual(feat, bb, shuffled, i, idx, resid_target=(shuffled - bb))
+            m1_shuf[i] = bb[i] + fit_residual(feat, bb, shuffled, idx, i, resid_target=(shuffled - bb)).clipped
 
         block = {
-            "M0_backbone": _stats(meas, m0),
-            "M1_residual": _stats(meas, m1),
-            "M2_freeform": _stats(meas, m2),
-            "constant_mean": _stats(meas, const),
-            "M1_label_shuffle": _stats(meas, m1_shuf),
+            "M0_backbone": stats(meas, m0),
+            "M1_residual": stats(meas, m1),
+            "M2_freeform": stats(meas, m2),
+            "constant_mean": stats(meas, const),
+            "M1_label_shuffle": stats(meas, m1_shuf),
             "pred": {"M0": [round(float(v), 2) for v in m0],
                      "M1": [round(float(v), 2) for v in m1],
                      "M2": [round(float(v), 2) for v in m2]},
@@ -179,10 +258,10 @@ def _run_target(name: str, meas: np.ndarray, feat: np.ndarray,
         # UQ: 80% predictive interval from the strict held-out residual spread of M0 (backbone is what we ship)
         if not leaky:
             resid = meas - m0
-            sigma = float(np.std(resid, ddof=1))
-            k80 = 1.2816  # normal 80% two-sided half-width factor
-            half = k80 * sigma
+            band = predictive_band(resid)
+            sigma, half = band["sigma"], band["halfwidth"]
             covered = np.mean(np.abs(resid) <= half)
+            nested = nested_band_coverage(resid)
             block["uq"] = {
                 "sigma": round(sigma, 2),
                 "band_halfwidth": round(half, 2),
@@ -190,6 +269,10 @@ def _run_target(name: str, meas: np.ndarray, feat: np.ndarray,
                 "empirical_coverage": round(float(covered), 3),
                 "band_rel_pct": round(float(half / np.mean(meas) * 100.0), 2),
                 "note": "80% interval = M0 +- 1.2816*sigma(held-out residual). n=10 makes coverage a coarse estimate.",
+                "nested_coverage": round(nested["coverage"], 3),
+                "nested_covered": nested["covered"],
+                "nested_sigma": [round(v, 2) for v in nested["sigma"]],
+                "nested_note": NESTED_NOTE,
             }
         out[tag] = block
     return out
@@ -219,9 +302,8 @@ def build(backbone: dict, version: str, seed: int = SEED) -> dict:
 
     # ---- power parity contrast (in-sample, honest): measured vs each modeled power estimate ----
     # refit the paper form Pc = zeta*Pd + Pn on all 10 (best the Bond-Pd-driven form can do in-sample)
-    A = np.vstack([bb_pd, np.ones(bb_pd.size)]).T
-    coef, *_ = np.linalg.lstsq(A, meas_kw, rcond=None)
-    refit_pc = coef[0] * bb_pd + coef[1]
+    zeta, pn = fit_power_form(bb_pd, meas_kw, np.arange(meas_kw.size))
+    refit_pc = zeta * bb_pd + pn
     power_parity = {
         "note": "In-sample power-parity contrast vs the 10 MEASURED kW. Adversarial finding: the engine Bond draw "
                 "is nearly flat (it carries little information about the measured power spread), so neither the "
@@ -231,10 +313,10 @@ def build(backbone: dict, version: str, seed: int = SEED) -> dict:
                 "claimed; the honest at-bar win is the t/h parity, not the power.",
         "bond_pd_range_kw": [round(float(bb_pd.min()), 1), round(float(bb_pd.max()), 1)],
         "measured_range_kw": [round(float(meas_kw.min()), 1), round(float(meas_kw.max()), 1)],
-        "bare_bond": _stats(meas_kw, bb_pd),
-        "engine_pc_1p30_110": _stats(meas_kw, bb_calkw),
-        "refit_pc": {**_stats(meas_kw, refit_pc), "zeta": round(float(coef[0]), 4), "pn": round(float(coef[1]), 1)},
-        "constant_mean": _stats(meas_kw, np.full_like(meas_kw, meas_kw.mean())),
+        "bare_bond": stats(meas_kw, bb_pd),
+        "engine_pc_1p30_110": stats(meas_kw, bb_calkw),
+        "refit_pc": {**stats(meas_kw, refit_pc), "zeta": round(zeta, 4), "pn": round(pn, 1)},
+        "constant_mean": stats(meas_kw, np.full_like(meas_kw, meas_kw.mean())),
         "per_survey": [{"n": surveys[i]["n"], "css": float(css[i]), "measured": float(meas_kw[i]),
                         "bare_bond": round(float(bb_pd[i]), 1), "engine_pc": round(float(bb_calkw[i]), 1),
                         "refit_pc": round(float(refit_pc[i]), 1)} for i in range(len(surveys))],
@@ -245,7 +327,7 @@ def build(backbone: dict, version: str, seed: int = SEED) -> dict:
         "note": "In-sample t/h parity: the calibrated Evertsson capacity backbone vs the 10 MEASURED t/h. This is "
                 "the concrete, real at-bar result; the held-out (strict LOO) M0 t/h number above confirms it is "
                 "not an in-sample artifact.",
-        "backbone": _stats(meas_tph, bb_tph),
+        "backbone": stats(meas_tph, bb_tph),
         "per_survey": [{"n": surveys[i]["n"], "css": float(css[i]), "measured": float(meas_tph[i]),
                         "backbone": round(float(bb_tph[i]), 1)} for i in range(len(surveys))],
     }

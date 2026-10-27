@@ -251,7 +251,9 @@ export function parityOf(live: readonly number[], committed: readonly number[]):
   return { worst, at, ok: worst <= PARITY_TOLERANCE };
 }
 
-/** The half-width of CrusherCal's 80 percent predictive band for a measured quantity (strict leave-one-out folds). */
+/** The half-width of CrusherCal's 80 percent predictive band for a measured quantity (strict leave-one-out folds). Its spread
+ *  comes from the ten strict residuals, so a survey checked against it is checked in sample; the document's nested_coverage
+ *  is the out-of-sample check of the same band. */
 export const bandHalfWidth = (loo: Hp500Loo, target: 'tph' | 'kW'): number => loo.loo[target].strict.uq.band_halfwidth;
 
 /** The groups of the App, in the order of the tab row. The write-up is the tab after them. */

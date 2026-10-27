@@ -233,9 +233,14 @@ None of these is a model judging a model.
   (https://doi.org/10.3390/min14090919), and the learned surrogates of comminution models (Koh et al. 2021,
   https://doi.org/10.1016/j.mineng.2021.107026) report no held-out industrial parity and no uncertainty. Evidence, from the
   committed `data/derived/hp500/loo.json`: the calibrated capacity backbone reproduces the measured throughput with a strict
-  leave-one-survey-out error inside the paper's own band and below the constant-mean baseline, the label-shuffle control
-  does not beat it, the 80 percent band's empirical coverage is reported, and the bounded residual's failure to beat the
-  backbone out of sample is reported as the pre-registered null it is. Covered by a level 4 notebook in each language
+  leave-one-survey-out MAPE of 12.09 percent, against 11.55 percent in sample for the same backbone (`tph_parity`) and
+  18.29 percent for the constant-mean baseline; the label-shuffle control (25.04 percent) does not beat it; the 80 percent
+  band's coverage is reported twice, in sample (0.90 on throughput, sigma taken from the same ten residuals) and nested out
+  of sample (0.80 on throughput and 0.90 on power, sigma of each survey taken from the other nine only); and the bounded
+  residual's failure to beat the backbone out of sample (13.45 percent) is reported as the pre-registered null it is. The
+  paper's own in-sample error figure is not carried by this repository (its tables are figures and the publisher page could
+  not be opened by the documenting sessions), so no comparison with a band of the paper is claimed: the held-out error
+  is set beside the in-sample error of the same backbone computed here. Covered by a level 4 notebook in each language
   (`notebooks/*/06-crushercal/`).
 
 ## Deploy driver

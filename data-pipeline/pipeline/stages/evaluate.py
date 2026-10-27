@@ -23,7 +23,7 @@ from ..model import sweep
 from ..model.bundles import decode_outputs, load_bundle, reconstruction_score, session_for
 from ..model.crusher import CrusherResult, Operating, evaluate
 from ..model.crusher.encoding import ae_feats, encode_input
-from .train import _target
+from .train import target_vector
 
 MONOTONE_POINTS = 16          # closed-side settings per machine and base point
 MONOTONE_TOLERANCE_MM = 1e-3  # a P80 may not fall by more than this when CSS opens (float noise of the graph)
@@ -31,7 +31,9 @@ BASE_QUANTILES = (0.25, 0.5, 0.75)   # the other five inputs sit at these fracti
 PLANT_FACTOR = 0.5            # upward move: this fraction of the range width beyond the upper bound; downward: this fraction of the lower bound
 
 
-def _r2_mape(pred: np.ndarray, truth: np.ndarray) -> tuple[float, float]:
+def r2_mape(pred: np.ndarray, truth: np.ndarray) -> tuple[float, float]:
+    """R squared and MAPE [%] of ``pred`` against ``truth``; R squared is 0 when ``truth`` has no variance, and the MAPE is
+    taken over the points where ``truth`` is not zero."""
     ss_res = float(np.sum((pred - truth) ** 2))
     ss_tot = float(np.sum((truth - truth.mean()) ** 2))
     r2 = 1 - ss_res / ss_tot if ss_tot > 0 else 0.0
@@ -40,7 +42,7 @@ def _r2_mape(pred: np.ndarray, truth: np.ndarray) -> tuple[float, float]:
     return r2, mape
 
 
-def _monotone(bundle: dict, sess) -> tuple[bool, int]:
+def monotonicity_check(bundle: dict, sess) -> tuple[bool, int]:
     """P80 must not fall as CSS opens: per machine, at three base points of the other inputs, over a grid of CSS across
     the machine's range. Returns the verdict and the number of curves checked."""
     cont = list(sweep.CONTINUOUS)
@@ -61,7 +63,7 @@ def _monotone(bundle: dict, sess) -> tuple[bool, int]:
     return True, curves
 
 
-def _planted(results: list[CrusherResult]) -> list[Operating]:
+def planted_points(results: list[CrusherResult]) -> list[Operating]:
     """One planted off-manifold point per held-out point: its operating inputs moved outside THAT machine's training
     range, by a rule that cycles over 18 patterns by held-out index: (0..5) one input moved above the upper bound,
     (6..11) one input moved below the lower bound, (12..17) two neighbouring inputs, the first above and the second below.
@@ -80,6 +82,9 @@ def _planted(results: list[CrusherResult]) -> list[Operating]:
     return out
 
 
+_r2_mape, _monotone, _planted = r2_mape, monotonicity_check, planted_points   # the names of the first release, until its notebooks call the public ones
+
+
 def run(models_dir: Path, out_path: Path, *, version: str, test_seed: int = 67890, n_per_machine: int = 480) -> dict:
     """Write and return the ``chancadem.model-metrics/v1`` document for the bundles in ``models_dir``. Raises
     ``ValueError`` naming the file when a slot's bundle is invalid (nothing is written then)."""
@@ -94,15 +99,15 @@ def run(models_dir: Path, out_path: Path, *, version: str, test_seed: int = 6789
     z32 = s32.run(None, {"x": x})[0]
     z8 = s8.run(None, {"x": x})[0]
     pred32, pred8 = decode_outputs(z32, sbundle), decode_outputs(z8, sbundle)
-    raw = np.array([_target(r) for r in held])
+    raw = np.array([target_vector(r) for r in held])
     truth = raw.copy()
     log = np.array(sbundle["out_log"], dtype=bool)
     truth[:, log] = np.power(10.0, raw[:, log])
 
     per_output = {}
     for j, name in enumerate(sbundle["output_order"]):
-        r2, mape = _r2_mape(pred32[:, j], truth[:, j])
-        _r2_8, mape8 = _r2_mape(pred8[:, j], truth[:, j])
+        r2, mape = r2_mape(pred32[:, j], truth[:, j])
+        _r2_8, mape8 = r2_mape(pred8[:, j], truth[:, j])
         per_output[name] = {"r2": round(r2, 4), "mape_pct": round(mape, 3), "mape_pct_int8": round(mape8, 3)}
 
     if "export_parity_max_abs" not in sbundle["training"]:
@@ -110,13 +115,13 @@ def run(models_dir: Path, out_path: Path, *, version: str, test_seed: int = 6789
                          "record that the export preserved the trained module (retrain it)")
     parity = {"torch_vs_float32_max_abs": sbundle["training"]["export_parity_max_abs"],
               "float32_vs_int8_max_abs": float(f"{float(np.max(np.abs(z32.astype(np.float64) - z8))):.6g}")}
-    mono, curves = _monotone(sbundle, s32)
+    mono, curves = monotonicity_check(sbundle, s32)
 
     sa = session_for(models_dir, abundle["graph"])
     threshold = abundle["threshold_p99"]
     scores = np.array([reconstruction_score(ae_feats(r), abundle, sa) for r in held])
     alarm = ~np.isfinite(scores) | (scores > threshold)
-    planted = [evaluate(op) for op in _planted(held)]
+    planted = [evaluate(op) for op in planted_points(held)]
     planted = [r for r in planted if all(np.isfinite(ae_feats(r)))]
     pscores = np.array([reconstruction_score(ae_feats(r), abundle, sa) for r in planted])
     detected = ~np.isfinite(pscores) | (pscores > threshold)

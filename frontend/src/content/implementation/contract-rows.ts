@@ -47,7 +47,7 @@ export const ROWS: { id: string; version: string; schema: string; governs: [stri
   },
   {
     id: 'hp500-loo',
-    version: '1.0.0',
+    version: '1.1.0',
     schema: 'chancadem.hp500.loo/v1',
     governs: ['CrusherCal: the leave-one-survey-out validation with its controls and predictive bands.', 'CrusherCal: la validación dejando un muestreo fuera, con sus controles y bandas predictivas.'],
     missing: ['Missing: the real-survey gauges show the measured values without a band and say why.', 'Ausente: los indicadores de muestreos reales muestran los valores medidos sin banda y dicen por qué.'],
