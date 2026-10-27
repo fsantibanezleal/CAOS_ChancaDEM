@@ -1,78 +1,115 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="900" class="arch-svg" role="img" aria-label="The SIR model, its threshold and its final size">
-  <!-- Hand-authored; shell tokens only; both languages in one file (ADR-0058). Replace with the product's science. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 460" width="900" class="arch-svg" role="img" aria-label="The science: the feed, the classification, the breakage, the Whiten solve, the readouts, the capacity, the power and the engine checks">
+  <!-- Hand-authored; shell tokens only; both languages in one file (ADR-0058). Formulas are language-neutral, written once. -->
   <style>
     .arch-svg text { font-family: var(--font-sans); }
     .arch-svg .mono { font-family: var(--font-mono); }
-    .arch-svg .cS { fill: var(--color-surface-2); stroke: var(--color-accent); stroke-width: 2; }
-    .arch-svg .cI { fill: var(--color-surface-2); stroke: var(--color-bad); stroke-width: 2; }
-    .arch-svg .cR { fill: var(--color-surface-2); stroke: var(--color-good); stroke-width: 2; }
-    .arch-svg .bx { fill: var(--color-surface); stroke: var(--color-border); stroke-width: 1; }
+    .arch-svg .bx { fill: var(--color-surface-2); stroke: var(--color-border); stroke-width: 1; }
+    .arch-svg .s-in { fill: var(--color-surface-2); stroke: var(--color-accent-2); stroke-width: 1.4; }
+    .arch-svg .s-mid { fill: var(--color-surface-2); stroke: var(--color-accent); stroke-width: 1.4; }
+    .arch-svg .s-out { fill: var(--color-surface-2); stroke: var(--color-magenta); stroke-width: 1.4; }
+    .arch-svg .s-chk { fill: var(--color-surface-2); stroke: var(--color-warn); stroke-width: 1.4; }
     .arch-svg .ttl { fill: var(--color-fg); font-size: 15px; font-weight: 700; }
-    .arch-svg .big { fill: var(--color-fg); font-size: 22px; font-weight: 700; }
-    .arch-svg .h { fill: var(--color-fg); font-size: 12px; font-weight: 700; }
-    .arch-svg .eq { fill: var(--color-fg); font-size: 13px; }
+    .arch-svg .it { fill: var(--color-fg); font-size: 11.5px; font-weight: 700; }
+    .arch-svg .fm { fill: var(--color-fg); font-size: 10px; }
     .arch-svg .sub { fill: var(--color-fg-subtle); font-size: 10.5px; }
-    .arch-svg .rate { fill: var(--color-magenta); font-size: 12px; font-weight: 600; }
-    .arch-svg .flow { fill: none; stroke: var(--color-fg-faint); stroke-width: 1.6; }
-    .arch-svg .curve { fill: none; stroke: var(--color-accent); stroke-width: 2; }
-    .arch-svg .ax { stroke: var(--color-fg-faint); stroke-width: 1; }
+    .arch-svg .flow { fill: none; stroke: var(--color-fg-faint); stroke-width: 1.4; }
   </style>
   <defs>
-    <marker id="sc4-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+    <marker id="sc4-arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
       <path d="M0,0 L8,4 L0,8 z" fill="var(--color-fg-faint)"/>
     </marker>
   </defs>
 
-  <text class="ttl l-en" x="20" y="30">The example science: SIR, its threshold and its final size</text>
-  <text class="ttl l-es" x="20" y="30">La ciencia del ejemplo: SIR, su umbral y su tamaño final</text>
+  <text class="ttl l-en" x="20" y="26">The science: one operating point to a product, a capacity and a power</text>
+  <text class="ttl l-es" x="20" y="26">La ciencia: un punto de operación hasta un producto, una capacidad y una potencia</text>
 
-  <rect class="cS" x="60" y="70" width="140" height="80" rx="10"/>
-  <text class="big" x="122" y="118">S</text>
-  <rect class="cI" x="380" y="70" width="140" height="80" rx="10"/>
-  <text class="big" x="444" y="118">I</text>
-  <rect class="cR" x="700" y="70" width="140" height="80" rx="10"/>
-  <text class="big" x="762" y="118">R</text>
-  <path class="flow" d="M200,110 H378" marker-end="url(#sc4-arrow)"/>
-  <path class="flow" d="M520,110 H698" marker-end="url(#sc4-arrow)"/>
-  <text class="rate" x="250" y="100">β S I / N</text>
-  <text class="rate" x="590" y="100">γ I</text>
-  <text class="sub l-en" x="218" y="134">infection by homogeneous contact</text>
-  <text class="sub l-es" x="218" y="134">contagio por contacto homogéneo</text>
-  <text class="sub l-en" x="560" y="134">recovery, mean period 1/γ</text>
-  <text class="sub l-es" x="560" y="134">recuperación, período medio 1/γ</text>
+  <!-- row 1 -->
+  <rect class="s-in" x="20" y="44" width="270" height="96" rx="6"/>
+  <text class="it l-en" x="32" y="64">Feed: Rosin-Rammler on 28 classes</text>
+  <text class="it l-es" x="32" y="64">Alimento: Rosin-Rammler en 28 clases</text>
+  <text class="fm mono" x="32" y="84">R(x) = 1 - exp(-(x / x63)^m)</text>
+  <text class="sub l-en" x="32" y="104">class mass = R(upper edge) - R(lower edge)</text>
+  <text class="sub l-es" x="32" y="104">masa de clase = R(borde sup.) - R(borde inf.)</text>
+  <text class="sub l-en" x="32" y="122">256 mm down to 0.0156 mm, sqrt(2) series</text>
+  <text class="sub l-es" x="32" y="122">de 256 mm a 0,0156 mm, serie raíz de 2</text>
 
-  <rect class="bx" x="20" y="180" width="420" height="120" rx="8"/>
-  <text class="h l-en" x="34" y="204">The threshold</text>
-  <text class="h l-es" x="34" y="204">El umbral</text>
-  <text class="eq mono" x="34" y="230">R0 = β / γ        Rt = R0 · S / N</text>
-  <text class="eq mono" x="34" y="254">p_c = 1 - 1 / R0</text>
-  <text class="sub l-en" x="34" y="278">infections grow while Rt &gt; 1; immunising more than p_c</text>
-  <text class="sub l-es" x="34" y="278">los contagios crecen mientras Rt &gt; 1; inmunizar más que p_c</text>
-  <text class="sub l-en" x="34" y="292">prevents the outbreak</text>
-  <text class="sub l-es" x="34" y="292">impide el brote</text>
+  <rect class="s-mid" x="315" y="44" width="270" height="96" rx="6"/>
+  <text class="it l-en" x="327" y="64">Classification C(d), per class</text>
+  <text class="it l-es" x="327" y="64">Clasificación C(d), por clase</text>
+  <text class="fm mono" x="327" y="84">C = 1 - ((K2 - d) / (K2 - K1))^K3</text>
+  <text class="sub l-en" x="327" y="104">0 under K1, 1 over K2; K1 follows the setting</text>
+  <text class="sub l-es" x="327" y="104">0 bajo K1, 1 sobre K2; K1 sigue el ajuste</text>
+  <text class="sub l-en" x="327" y="122">K2 follows the open side, CSS + throw</text>
+  <text class="sub l-es" x="327" y="122">K2 sigue el lado abierto, CSS + carrera</text>
 
-  <rect class="bx" x="460" y="180" width="420" height="260" rx="8"/>
-  <text class="h l-en" x="474" y="204">The final size, an independent check</text>
-  <text class="h l-es" x="474" y="204">El tamaño final, una verificación independiente</text>
-  <text class="eq mono" x="474" y="230">z = 1 - exp(-R0 · z)</text>
-  <line class="ax" x1="510" y1="410" x2="860" y2="410"/>
-  <line class="ax" x1="510" y1="250" x2="510" y2="410"/>
-  <path class="curve" d="M510,410 L566,410 C590,380 610,330 650,296 S760,262 860,256"/>
-  <circle cx="690" cy="278" r="5" fill="var(--color-magenta)"/>
-  <circle cx="842" cy="257" r="5" fill="var(--color-magenta)"/>
-  <circle cx="568" cy="372" r="5" fill="var(--color-magenta)"/>
-  <text class="sub" x="555" y="428">1</text>
-  <text class="sub" x="845" y="428">6</text>
-  <text class="sub" x="672" y="428">R0</text>
-  <text class="sub l-en" x="600" y="384">cases as baked, at their horizon</text>
-  <text class="sub l-es" x="600" y="384">casos precalculados, en su horizonte</text>
+  <rect class="s-mid" x="610" y="44" width="270" height="96" rx="6"/>
+  <text class="it l-en" x="622" y="64">Breakage B, from the energy</text>
+  <text class="it l-es" x="622" y="64">Fractura B, desde la energía</text>
+  <text class="fm mono" x="622" y="82">t10 = A (1 - exp(-b Ecs))</text>
+  <text class="fm mono" x="622" y="98">B(u) = phi u^0.35 + (1 - phi) u^4.2</text>
+  <text class="sub l-en" x="622" y="116">phi fixes B(1/10) = t10; columns sum to 1</text>
+  <text class="sub l-es" x="622" y="116">phi fija B(1/10) = t10; columnas suman 1</text>
+  <text class="sub l-en" x="622" y="132">calibrated lane: t10 from the HP500 fit</text>
+  <text class="sub l-es" x="622" y="132">vía calibrada: t10 del ajuste HP500</text>
 
-  <rect class="bx" x="20" y="320" width="420" height="120" rx="8"/>
-  <text class="h l-en" x="34" y="344">How it is integrated</text>
-  <text class="h l-es" x="34" y="344">Cómo se integra</text>
-  <text class="eq mono" x="34" y="370">x(k+1) = max(0, x(k) + f(x(k)) · Δt),  Δt = 0.25 d</text>
-  <text class="sub l-en" x="34" y="394">explicit Euler, first order; the same operations in Python</text>
-  <text class="sub l-es" x="34" y="394">Euler explícito, de primer orden; las mismas operaciones en Python</text>
-  <text class="sub l-en" x="34" y="408">and TypeScript, held together by the parity test</text>
-  <text class="sub l-es" x="34" y="408">y TypeScript, unidas por la prueba de paridad</text>
+  <path class="flow" d="M290,92 H313" marker-end="url(#sc4-arrow)"/>
+  <path class="flow" d="M585,92 H608" marker-end="url(#sc4-arrow)"/>
+  <path class="flow" d="M745,140 V158 H155 V172" marker-end="url(#sc4-arrow)"/>
+
+  <!-- row 2 -->
+  <rect class="s-mid" x="20" y="174" width="270" height="96" rx="6"/>
+  <text class="it l-en" x="32" y="194">The Whiten solve</text>
+  <text class="it l-es" x="32" y="194">La solución de Whiten</text>
+  <text class="fm mono" x="32" y="214">(I - BC) x = f</text>
+  <text class="fm mono" x="32" y="230">p = (I - C) x</text>
+  <text class="sub l-en" x="32" y="248">LU with partial pivoting; mass closure kept</text>
+  <text class="sub l-es" x="32" y="248">LU, pivoteo parcial; cierre de masa guardado</text>
+  <text class="sub l-en" x="32" y="262">kappa over 1e6: the point is not valid</text>
+  <text class="sub l-es" x="32" y="262">kappa sobre 1e6: el punto no es válido</text>
+
+  <rect class="s-out" x="315" y="174" width="270" height="96" rx="6"/>
+  <text class="it l-en" x="327" y="194">Product readouts</text>
+  <text class="it l-es" x="327" y="194">Lecturas del producto</text>
+  <text class="fm mono" x="327" y="214">P80, P50, P20; F80 / P80</text>
+  <text class="sub l-en" x="327" y="234">log interpolation on the passing curve</text>
+  <text class="sub l-es" x="327" y="234">interpolación log en la curva de pasante</text>
+  <text class="sub l-en" x="327" y="250">passing at 1, 4, 8, 16 and 32 mm</text>
+  <text class="sub l-es" x="327" y="250">pasante a 1, 4, 8, 16 y 32 mm</text>
+
+  <rect class="s-out" x="610" y="174" width="270" height="96" rx="6"/>
+  <text class="it l-en" x="622" y="194">Power</text>
+  <text class="it l-es" x="622" y="194">Potencia</text>
+  <text class="fm mono" x="622" y="214">Pd = 10 Wi (1/sqrt(P80) - 1/sqrt(F80)) Q</text>
+  <text class="fm mono" x="622" y="230">P = 1.30 Pd + 110</text>
+  <text class="sub l-en" x="622" y="248">the second form on the calibrated cone only;</text>
+  <text class="sub l-es" x="622" y="248">la segunda forma solo en el cono calibrado;</text>
+  <text class="sub l-en" x="622" y="262">sizes in micrometres inside the formula</text>
+  <text class="sub l-es" x="622" y="262">tamaños en micrones dentro de la fórmula</text>
+
+  <path class="flow" d="M290,222 H313" marker-end="url(#sc4-arrow)"/>
+  <path class="flow" d="M585,222 H608" marker-end="url(#sc4-arrow)"/>
+
+  <!-- row 3 -->
+  <rect class="s-in" x="610" y="304" width="270" height="96" rx="6"/>
+  <text class="it l-en" x="622" y="324">Capacity, from the machine alone</text>
+  <text class="it l-es" x="622" y="324">Capacidad, solo desde la máquina</text>
+  <text class="fm mono" x="622" y="344">Q = Qref (CSS + T/2) / g * s e^(1-s)</text>
+  <text class="sub l-en" x="622" y="364">s = n / n_opt; the hump peaks at s = 1</text>
+  <text class="sub l-es" x="622" y="364">s = n / n_opt; máximo de la joroba en s = 1</text>
+  <text class="sub l-en" x="622" y="380">Qref = 647 t/h on the HP500 cone</text>
+  <text class="sub l-es" x="622" y="380">Qref = 647 t/h en el cono HP500</text>
+  <path class="flow" d="M745,304 V272" marker-end="url(#sc4-arrow)"/>
+
+  <rect class="s-chk" x="20" y="304" width="565" height="96" rx="6"/>
+  <text class="it l-en" x="32" y="324">Checks and flags on every evaluation</text>
+  <text class="it l-es" x="32" y="324">Verificaciones y marcas en cada evaluación</text>
+  <text class="sub l-en" x="32" y="344">CSS at or above F80: pass-through, flagged. CSS at or above 256 mm: invalid.</text>
+  <text class="sub l-es" x="32" y="344">CSS en el F80 o sobre él: paso directo, marcado. CSS en 256 mm o sobre: inválido.</text>
+  <text class="sub l-en" x="32" y="362">Reduction ratio under 1.05: flagged. Proxy kappa over 1e6: not valid.</text>
+  <text class="sub l-es" x="32" y="362">Razón de reducción bajo 1,05: marcada. Indicador kappa sobre 1e6: no válido.</text>
+  <text class="sub l-en" x="32" y="380">Envelope gate on the HP500 cone: CSS 38 to 55 mm, F80 47 to 140 mm.</text>
+  <text class="sub l-es" x="32" y="380">Compuerta de envolvente en el cono HP500: CSS 38 a 55 mm, F80 47 a 140 mm.</text>
+
+  <text class="sub l-en" x="20" y="428">CSS: closed-side setting; T: throw; n: eccentric speed; Wi: Bond work index; A times b: ore competence.</text>
+  <text class="sub l-es" x="20" y="428">CSS: abertura de lado cerrado; T: carrera; n: velocidad excéntrica; Wi: índice de Bond; A por b: competencia del mineral.</text>
 </svg>
