@@ -395,6 +395,8 @@ export interface components {
                 /** @description How the operating points were drawn, with the bounds per input; the test draw is independent of the training draw. */
                 sampler: string;
                 torch_version: string;
+                /** @description The maximum absolute difference between the trained torch module and the exported float32 graph (run through onnxruntime) on the held-out draw, in standardised outputs, measured by train.py right after export; evidence the export preserved the trained module. */
+                export_parity_max_abs?: number;
             };
         };
         /**
