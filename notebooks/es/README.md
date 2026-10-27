@@ -2,11 +2,11 @@
 
 El índice del árbol en español. Los temas van de lo simple a lo complejo; dentro de un tema el orden de lectura es el
 número del notebook y el nivel nunca baja. La contraparte en inglés de cada notebook está en la misma ruta bajo
-[`../en/`](../en/README.md). Cómo correrlos está en [`../README.md`](../README.md).
+[`../en/`](../en/README.md). Cómo ejecutarlos está en [`../README.md`](../README.md).
 
 Niveles: 1 fundamentos, 2 el método en la práctica, 3 estado del arte, 4 más allá del estado del arte.
 
-Cada notebook responde una pregunta del problema del producto, corre el pipeline propio del producto sobre sus datos
+Cada notebook responde una pregunta del problema del producto, ejecuta el pipeline propio del producto sobre sus datos
 versionados, y lee sus figuras en el texto que las sigue. ChancaDEM no publica un paquete: los notebooks importan el motor,
 los oráculos, la vía HP500 y los paquetes de modelos desde `data-pipeline/pipeline/` por su ruta y nunca definen un método
 propio.
@@ -20,7 +20,7 @@ Un tema sin un notebook de nivel 3 dice por qué en su fila.
 | [01-getting-started](01-getting-started/) | ninguno, es el tema de entrada | Sin nivel 3: el tema enseña las entradas del motor y la matriz de casos, y el estado del arte que nombra la base de investigación es el asunto de los temas 03 y 07 |
 | [02-size-distributions](02-size-distributions/) | tema 01-getting-started | Sin nivel 3: la ley de Rosin-Rammler y la interpolación de tamices son métodos de texto, y la base de investigación no nombra un rival para ellos |
 | [03-breakage-and-classification](03-breakage-and-classification/) | tema 02-size-distributions | Sin nivel 3: el estado del arte de la cámara es la simulación de elementos discretos, que no es un método de este lanzamiento (SDD, sección Method ladder), y el repositorio no tiene ni un código de elementos discretos ni sus datos para ejecutar; el notebook 03, de nivel 2, muestra el balance como la esperanza de la regla de reemplazo de partículas que usan esos modelos |
-| [04-capacity-and-power](04-capacity-and-power/) | tema 03-breakage-and-classification | Sin nivel 3: los dossiers nombran la energía específica por tamaño de Morrell como alternativa a Bond, pero su fuente queda fuera de la base de investigación del SDD y el producto no corre ninguna implementación de ella |
+| [04-capacity-and-power](04-capacity-and-power/) | tema 03-breakage-and-classification | Sin nivel 3: los dossiers nombran la energía específica por tamaño de Morrell como alternativa a Bond, pero su fuente queda fuera de la base de investigación del SDD y el producto no ejecuta ninguna implementación de ella |
 | [05-real-surveys](05-real-surveys/) | temas 01-getting-started y 04-capacity-and-power | Sin nivel 3: el ajuste dentro de la muestra del artículo fuente es el estado del arte de CrusherCal, que enseña el tema 06, y el motor calibrado de este tema no tiene otro rival en la base de investigación; se ejecuta como nivel 3 del tema 06 |
 | [06-crushercal](06-crushercal/) | tema 05-real-surveys | [03-the-in-sample-fit-of-the-paper](06-crushercal/03-the-in-sample-fit-of-the-paper.ipynb) |
 | [07-learned-models](07-learned-models/) | temas 01-getting-started y 05-real-surveys | [03-the-surrogate-against-the-plant](07-learned-models/03-the-surrogate-against-the-plant.ipynb) |
@@ -39,13 +39,13 @@ Un tema sin un notebook de nivel 3 dice por qué en su fila.
 | [04-capacity-and-power/01-capacity-hump-and-nip-geometry.ipynb](04-capacity-and-power/01-capacity-hump-and-nip-geometry.ipynb) | 1 | la ley de capacidad de Evertsson y su joroba de velocidad, la respuesta de capacidad, potencia y P80 a la velocidad, y el ángulo de apriete frente al límite de agarre |
 | [04-capacity-and-power/02-setting-throw-and-the-bond-oracle.ipynb](04-capacity-and-power/02-setting-throw-and-the-bond-oracle.ipynb) | 2 | la ley de Bond y su oráculo de forma cerrada, la abertura y la carrera como dos palancas, y la mejor combinación para un P80 requerido |
 | [05-real-surveys/01-the-ten-surveys-and-the-calibrated-engine.ipynb](05-real-surveys/01-the-ten-surveys-and-the-calibrated-engine.ipynb) | 1 | los diez muestreos del HP500, qué toma de ellos la vía calibrada, la capacidad del motor en cada uno, qué hace con el f80 y el soporte de la calibración |
-| [05-real-surveys/02-measured-against-modelled.ipynb](05-real-surveys/02-measured-against-modelled.ipynb) | 2 | la compuerta de expectativas de los casos reales, los residuos de capacidad, la potencia que no sigue a la planta, qué cambia la calibración y la energía específica |
+| [05-real-surveys/02-measured-against-modelled.ipynb](05-real-surveys/02-measured-against-modelled.ipynb) | 2 | el filtro de expectativas de los casos reales, los residuos de capacidad, la potencia que no sigue a la planta, qué cambia la calibración y la energía específica |
 | [06-crushercal/01-holding-a-survey-out.ipynb](06-crushercal/01-holding-a-survey-out.ipynb) | 1 | el pliegue de dejar un muestreo fuera, la base de capacidad reajustada, el tonelaje retenido del modelo calibrado frente a la media de los otros nueve, y la regresión libre retenida junto a ellos |
 | [06-crushercal/02-held-out-models-and-the-controls.ipynb](06-crushercal/02-held-out-models-and-the-controls.ipynb) | 2 | los cuatro modelos con retención en ambos objetivos, la línea base de media constante, el residuo acotado seguido a través de su recorte como una hipótesis nula preregistrada, y el control de barajado con 200 semillas, que prueba el residuo y no la habilidad del modelo |
 | [06-crushercal/03-the-in-sample-fit-of-the-paper.ipynb](06-crushercal/03-the-in-sample-fit-of-the-paper.ipynb) | 3 | el protocolo dentro de la muestra del artículo fuente ejecutado con las funciones de CrusherCal y puesto junto al protocolo con retención en los mismos diez muestreos: los modelos ajustados con las diez filas, un coeficiente de potencia con el signo equivocado, y el optimismo por modelo y objetivo |
 | [06-crushercal/04-held-out-validation-beyond-the-in-sample-fit.ipynb](06-crushercal/04-held-out-validation-beyond-the-in-sample-fit.ipynb) | 4 | la afirmación BS-1 medida: dos conclusiones del protocolo dentro de la muestra revertidas, la habilidad sobre los 120 subconjuntos de siete muestreos, y la banda predictiva de 80 por ciento medida dentro de la muestra y anidada fuera de ella |
 | [07-learned-models/01-the-surrogate-against-the-engine.ipynb](07-learned-models/01-the-surrogate-against-the-engine.ipynb) | 1 | el sustituto publicado con onnxruntime: validación del paquete, codificación, decodificación, el error por salida, la barrida y la respuesta de línea base rotulada |
-| [07-learned-models/02-held-out-draw-and-the-anomaly-guard.ipynb](07-learned-models/02-held-out-draw-and-the-anomaly-guard.ipynb) | 2 | la muestra retenida independiente, R cuadrado y MAPE por salida, el grafo de 8 bits, la monotonía, y el autoencoder frente a la compuerta de envolvente con puntos plantados |
+| [07-learned-models/02-held-out-draw-and-the-anomaly-guard.ipynb](07-learned-models/02-held-out-draw-and-the-anomaly-guard.ipynb) | 2 | la muestra retenida independiente, R cuadrado y MAPE por salida, el grafo de 8 bits, la monotonía, y el autoencoder frente al control de envolvente con puntos plantados |
 | [07-learned-models/03-the-surrogate-against-the-plant.ipynb](07-learned-models/03-the-surrogate-against-the-plant.ipynb) | 3 | el enfoque del sustituto aprendido frente a la planta: el sustituto en los diez muestreos, su extrapolación fuera del rango de entrenamiento, la ceguera del autoencoder ante ella en la barrida sin calibrar, y a qué responden sus alarmas en los muestreos |
 
 ## Más allá del estado del arte
