@@ -1,0 +1,286 @@
+{
+  "data-pipeline/pipeline/model/crusher/breakage.py::0.0": {
+    "reason": "DIMENSIONLESS: the lower bound of a fraction (t10 as a fraction 0 to 1) and of a cumulative breakage; identities of a clamp, comparable to no measured quantity.",
+    "source": "return jmax(0.0, jmin(0.44, (a * (1 - jexp(-b * ecs_kwh_t))) / 100))"
+  },
+  "data-pipeline/pipeline/model/crusher/breakage.py::0.02": {
+    "reason": "DIMENSIONLESS: the lower clamp of the Austin shape weight phi, a weight in (0, 1) that keeps the appearance function representable.",
+    "source": "return jmax(0.02, jmin(0.98, phi))"
+  },
+  "data-pipeline/pipeline/model/crusher/breakage.py::0.033": {
+    "reason": "IN kWh/t PER MILLIMETRE OF DESIGN THROW at the reference speed: the coefficient of the specific comminution energy Ecs = 0.033 x throw [mm] x (speed / 350 rpm), result in kWh/t.",
+    "source": "return 0.033 * ref_throw_mm * (speed_rpm / speed_ref)"
+  },
+  "data-pipeline/pipeline/model/crusher/breakage.py::0.1": {
+    "reason": "DIMENSIONLESS: the relative size u = x/y = 1/10 at which t10 is defined (fraction of the parent size).",
+    "source": "ug = jpow(0.1, GAMMA)"
+  },
+  "data-pipeline/pipeline/model/crusher/breakage.py::0.12": {
+    "reason": "IN PERCENT t10 PER MILLIMETRE OF CSS: the HP500 fit coefficient of the closed-side setting in t10 (%) = 64 - 0.12 CSS - 0.23 f80 (Rocha et al. 2024, Table 5).",
+    "source": "return jmax(0.0, jmin(0.44, (64 - 0.12 * css_mm - 0.23 * f80_mm) / 100))"
+  },
+  "data-pipeline/pipeline/model/crusher/breakage.py::0.23": {
+    "reason": "IN PERCENT t10 PER MILLIMETRE OF F80: the HP500 fit coefficient of the feed f80 in t10 (%) (Rocha et al. 2024, Table 5).",
+    "source": "return jmax(0.0, jmin(0.44, (64 - 0.12 * css_mm - 0.23 * f80_mm) / 100))"
+  },
+  "data-pipeline/pipeline/model/crusher/breakage.py::0.35": {
+    "reason": "DIMENSIONLESS: the Austin fines slope gamma of the appearance function B(u) = phi u^gamma + (1 - phi) u^beta.",
+    "source": "GAMMA = 0.35"
+  },
+  "data-pipeline/pipeline/model/crusher/breakage.py::0.44": {
+    "reason": "DIMENSIONLESS: the cap of t10 as a fraction (0.44), just under the largest value 0.1^gamma = 0.447 the Austin function can represent.",
+    "source": "return jmax(0.0, jmin(0.44, (a * (1 - jexp(-b * ecs_kwh_t))) / 100))"
+  },
+  "data-pipeline/pipeline/model/crusher/breakage.py::0.98": {
+    "reason": "DIMENSIONLESS: the upper clamp of the Austin shape weight phi.",
+    "source": "return jmax(0.02, jmin(0.98, phi))"
+  },
+  "data-pipeline/pipeline/model/crusher/breakage.py::1.0": {
+    "reason": "DIMENSIONLESS: the cumulative breakage of a parent-size particle, B(1) = 1.",
+    "source": "return 1.0"
+  },
+  "data-pipeline/pipeline/model/crusher/breakage.py::4.2": {
+    "reason": "DIMENSIONLESS: the Austin coarse-end slope beta, within the literature range 3 to 6.",
+    "source": "BETA = 4.2   # coarse-end slope, within 3 to 6"
+  },
+  "data-pipeline/pipeline/model/crusher/capacity.py::0.0": {
+    "reason": "IN t/h: the floor of the throughput (a capacity cannot be negative); also the zero of a power draw in kW, the identity of a clamp.",
+    "source": "return jmax(0.0, q_ref * open_factor * hump)"
+  },
+  "data-pipeline/pipeline/model/crusher/capacity.py::0.35": {
+    "reason": "DIMENSIONLESS: the particle-to-steel friction coefficient mu in the grip limit 2 atan(mu) (result in degrees).",
+    "source": "def nip_limit(mu: float = 0.35) -> float:"
+  },
+  "data-pipeline/pipeline/model/crusher/capacity.py::0.5": {
+    "reason": "DIMENSIONLESS: the half factor of the nip-angle slope; the term 6 x (CSS / reference gap - 1) x 0.5 is in degrees (the 6 is an integer, the factor is the fraction of that slope applied).",
+    "source": "return base + 6 * (css_mm / m.ref_gap_mm - 1) * 0.5"
+  },
+  "data-pipeline/pipeline/model/crusher/capacity.py::1.3": {
+    "reason": "DIMENSIONLESS (kW per kW): the slope of the HP500 current-based power Pc = 1.30 Pd + 110 kW against the Bond draw Pd (Rocha et al. 2024, Table 5).",
+    "source": "return 1.3 * bond_pd_kw + 110"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::0.0": {
+    "reason": "DIMENSIONLESS: the probability of selection for a particle at or below K1.",
+    "source": "return 0.0"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::0.1": {
+    "reason": "IN MILLIMETRES: the intercept k1a of K1 = k1a + k1b x CSS for the tertiary cone and the short-head cone.",
+    "source": "\"cone-tert\": KModel(0.1, 0.85, 3.0, 1.75, 2.5),"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::0.2": {
+    "reason": "IN MILLIMETRES: the intercept k1a of K1 for the secondary cone.",
+    "source": "\"cone-sec\": KModel(0.2, 0.90, 6.0, 1.95, 2.3),"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::0.23": {
+    "reason": "DIMENSIONLESS (mm of K1 per mm of CSS): the HP500 slope of K1 on the closed-side setting, K1 = 0.23 CSS + 0.30 f80 (Rocha et al. 2024, Table 5).",
+    "source": "k1 = 0.23 * css_mm + 0.3 * f80_mm"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::0.3": {
+    "reason": "DIMENSIONLESS (mm of K1 per mm of F80): the HP500 slope of K1 on the feed f80.",
+    "source": "k1 = 0.23 * css_mm + 0.3 * f80_mm"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::0.4": {
+    "reason": "DIMENSIONLESS (mm of K2 per mm of F80): the HP500 slope of K2 on the feed f80, K2 = 12.0 + 0.55 CSS + 0.40 f80.",
+    "source": "k2 = 12.0 + 0.55 * css_mm + 0.4 * f80_mm"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::0.5": {
+    "reason": "DIMENSIONLESS: the fraction of the throw deviation added to K2 as a multiple of the K2 slope (the mean-gap convention CSS + throw/2).",
+    "source": "K2_THROW_FRAC = 0.5"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::0.55": {
+    "reason": "DIMENSIONLESS (mm of K2 per mm of CSS): the HP500 slope of K2 on the closed-side setting.",
+    "source": "k2 = 12.0 + 0.55 * css_mm + 0.4 * f80_mm"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::0.6": {
+    "reason": "IN MILLIMETRES: the intercept k1a of K1 for the gyratory primary.",
+    "source": "\"gyratory\": KModel(0.6, 0.95, 10.0, 2.10, 2.0),          # coarse primary, OSS-controlled"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::0.82": {
+    "reason": "DIMENSIONLESS (mm of K1 per mm of CSS): the slope k1b of the short-head cone.",
+    "source": "\"cone-short-head\": KModel(0.1, 0.82, 2.4, 1.65, 2.7),   # tighter classification (longer parallel zone)"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::0.85": {
+    "reason": "DIMENSIONLESS (mm of K1 per mm of CSS): the slope k1b of the tertiary cone.",
+    "source": "\"cone-tert\": KModel(0.1, 0.85, 3.0, 1.75, 2.5),"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::0.9": {
+    "reason": "DIMENSIONLESS (mm of K1 per mm of CSS): the slope k1b of the secondary cone.",
+    "source": "\"cone-sec\": KModel(0.2, 0.90, 6.0, 1.95, 2.3),"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::0.95": {
+    "reason": "DIMENSIONLESS (mm of K1 per mm of CSS): the slope k1b of the gyratory and of the jaw.",
+    "source": "\"gyratory\": KModel(0.6, 0.95, 10.0, 2.10, 2.0),          # coarse primary, OSS-controlled"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::1.0": {
+    "reason": "DIMENSIONLESS: the probability of selection for a particle at or above K2.",
+    "source": "return 1.0"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::1.05": {
+    "reason": "DIMENSIONLESS: the minimum ratio K2/K1 (K2 is kept at least 5 percent above K1 so the classification curve is defined).",
+    "source": "return Classification(k1=k1, k2=jmax(k2, k1 * 1.05), k3=2.3)"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::1.65": {
+    "reason": "DIMENSIONLESS (mm of K2 per mm of CSS): the slope k2b of the short-head cone.",
+    "source": "\"cone-short-head\": KModel(0.1, 0.82, 2.4, 1.65, 2.7),   # tighter classification (longer parallel zone)"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::1.75": {
+    "reason": "DIMENSIONLESS (mm of K2 per mm of CSS): the slope k2b of the tertiary cone.",
+    "source": "\"cone-tert\": KModel(0.1, 0.85, 3.0, 1.75, 2.5),"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::1.95": {
+    "reason": "DIMENSIONLESS (mm of K2 per mm of CSS): the slope k2b of the secondary cone.",
+    "source": "\"cone-sec\": KModel(0.2, 0.90, 6.0, 1.95, 2.3),"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::10.0": {
+    "reason": "IN MILLIMETRES: the intercept k2a of K2 for the gyratory primary.",
+    "source": "\"gyratory\": KModel(0.6, 0.95, 10.0, 2.10, 2.0),          # coarse primary, OSS-controlled"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::12.0": {
+    "reason": "IN MILLIMETRES: the intercept of the HP500 K2 = 12.0 + 0.55 CSS + 0.40 f80 (Rocha et al. 2024, Table 5).",
+    "source": "k2 = 12.0 + 0.55 * css_mm + 0.4 * f80_mm"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::2.0": {
+    "reason": "MIXED, both declared: DIMENSIONLESS as the exponent k3 of the gyratory (K3 = 2.0), and IN MILLIMETRES as the intercept k1a of the jaw.",
+    "source": "\"gyratory\": KModel(0.6, 0.95, 10.0, 2.10, 2.0),          # coarse primary, OSS-controlled"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::2.1": {
+    "reason": "DIMENSIONLESS: the slope k2b (mm of K2 per mm of CSS) of the gyratory, and the exponent k3 of the jaw (K3 = 2.1).",
+    "source": "\"gyratory\": KModel(0.6, 0.95, 10.0, 2.10, 2.0),          # coarse primary, OSS-controlled"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::2.3": {
+    "reason": "MIXED, all dimensionless: the exponent K3 of the secondary cone and of the HP500 fit (2.3), and the slope k2b of the jaw (mm of K2 per mm of CSS).",
+    "source": "\"cone-sec\": KModel(0.2, 0.90, 6.0, 1.95, 2.3),"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::2.4": {
+    "reason": "IN MILLIMETRES: the intercept k2a of K2 for the short-head cone.",
+    "source": "\"cone-short-head\": KModel(0.1, 0.82, 2.4, 1.65, 2.7),   # tighter classification (longer parallel zone)"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::2.5": {
+    "reason": "DIMENSIONLESS: the exponent k3 of the tertiary cone.",
+    "source": "\"cone-tert\": KModel(0.1, 0.85, 3.0, 1.75, 2.5),"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::2.7": {
+    "reason": "DIMENSIONLESS: the exponent k3 of the short-head cone.",
+    "source": "\"cone-short-head\": KModel(0.1, 0.82, 2.4, 1.65, 2.7),   # tighter classification (longer parallel zone)"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::20.0": {
+    "reason": "IN MILLIMETRES: the intercept k2a of K2 for the jaw.",
+    "source": "\"jaw\": KModel(2.0, 0.95, 20.0, 2.30, 2.1),"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::3.0": {
+    "reason": "IN MILLIMETRES: the intercept k2a of K2 for the tertiary cone.",
+    "source": "\"cone-tert\": KModel(0.1, 0.85, 3.0, 1.75, 2.5),"
+  },
+  "data-pipeline/pipeline/model/crusher/classification.py::6.0": {
+    "reason": "IN MILLIMETRES: the intercept k2a of K2 for the secondary cone.",
+    "source": "\"cone-sec\": KModel(0.2, 0.90, 6.0, 1.95, 2.3),"
+  },
+  "data-pipeline/pipeline/model/crusher/encoding.py::0.0": {
+    "reason": "DIMENSIONLESS: the zero of a one-hot machine column.",
+    "source": "x = [0.0] * (len(MACHINES) + len(_CONT))"
+  },
+  "data-pipeline/pipeline/model/crusher/encoding.py::1.0": {
+    "reason": "DIMENSIONLESS: the hot value of a one-hot machine column.",
+    "source": "x[idx] = 1.0"
+  },
+  "data-pipeline/pipeline/model/crusher/encoding.py::1e-06": {
+    "reason": "IN THE UNIT OF THE LOGGED FEATURE (mm for a size): the floor applied before log10 so the logarithm exists; a unit-error floor, far below any sieve size.",
+    "source": "m = jmax(x, 1e-6)"
+  },
+  "data-pipeline/pipeline/model/crusher/engine.py::0.0": {
+    "reason": "DIMENSIONLESS: the reduction ratio reported when P80 is not positive.",
+    "source": "reduction_ratio = f80 / p80 if p80 > 0 else 0.0"
+  },
+  "data-pipeline/pipeline/model/crusher/engine.py::0.2": {
+    "reason": "DIMENSIONLESS: the cumulative passing fraction of P20 (20 percent passing).",
+    "source": "p20 = size_at_passing(product, 0.2)"
+  },
+  "data-pipeline/pipeline/model/crusher/engine.py::0.5": {
+    "reason": "DIMENSIONLESS: the cumulative passing fraction of P50 (50 percent passing).",
+    "source": "p50 = size_at_passing(product, 0.5)"
+  },
+  "data-pipeline/pipeline/model/crusher/engine.py::0.8": {
+    "reason": "DIMENSIONLESS: the cumulative passing fraction of F80 and P80 (80 percent passing).",
+    "source": "f80 = size_at_passing(feed, 0.8)"
+  },
+  "data-pipeline/pipeline/model/crusher/engine.py::1.05": {
+    "reason": "DIMENSIONLESS: the reduction ratio below which the engine flags negligible breakage (F80/P80 under 1.05).",
+    "source": "if reduction_ratio < 1.05 and valid:"
+  },
+  "data-pipeline/pipeline/model/crusher/engine.py::1000000.0": {
+    "reason": "DIMENSIONLESS: the conditioning number of (I - B C) above which the solve is flagged ill-conditioned.",
+    "source": "if not math.isfinite(w.cond) or w.cond > 1e6:"
+  },
+  "data-pipeline/pipeline/model/crusher/feed.py::0.0": {
+    "reason": "DIMENSIONLESS: the cumulative passing fraction at a non-positive size, and the floor of a class mass fraction.",
+    "source": "return 0.0"
+  },
+  "data-pipeline/pipeline/model/crusher/feed.py::1.0": {
+    "reason": "DIMENSIONLESS: the cumulative passing fraction at and above the top size (Gaudin-Schuhmann).",
+    "source": "return 1.0"
+  },
+  "data-pipeline/pipeline/model/crusher/hp500.py::0.9": {
+    "reason": "DIMENSIONLESS: the Rosin-Rammler uniformity exponent m of the feed reconstructed from the measured f80 (the documented assumption).",
+    "source": "HP500_FEED_M = 0.9             # Rosin-Rammler uniformity of the reconstructed feed"
+  },
+  "data-pipeline/pipeline/model/crusher/hp500.py::10.5": {
+    "reason": "IN t/kWh: the JKMRC b of the compact itabirite (Table 1 of Rocha et al. 2024), b = (A*b)/A with Ecs in kWh/t.",
+    "source": "\"compact\": {\"A\": 64.5, \"b\": 10.5, \"axb\": 677.3, \"wi_kwh_t\": 7.2},"
+  },
+  "data-pipeline/pipeline/model/crusher/hp500.py::10.6": {
+    "reason": "IN kWh/t: the Bond work index of the supercompact itabirite (Table 1).",
+    "source": "\"supercompact\": {\"A\": 56.1, \"b\": 2.2, \"axb\": 123.4, \"wi_kwh_t\": 10.6},"
+  },
+  "data-pipeline/pipeline/model/crusher/hp500.py::123.4": {
+    "reason": "DIMENSIONLESS: the JKMRC A*b of the supercompact itabirite (Table 1).",
+    "source": "\"supercompact\": {\"A\": 56.1, \"b\": 2.2, \"axb\": 123.4, \"wi_kwh_t\": 10.6},"
+  },
+  "data-pipeline/pipeline/model/crusher/hp500.py::2.2": {
+    "reason": "IN t/kWh: the JKMRC b of the supercompact itabirite (Table 1).",
+    "source": "\"supercompact\": {\"A\": 56.1, \"b\": 2.2, \"axb\": 123.4, \"wi_kwh_t\": 10.6},"
+  },
+  "data-pipeline/pipeline/model/crusher/hp500.py::56.1": {
+    "reason": "IN PERCENT t10: the JKMRC A (maximum t10) of the supercompact itabirite (Table 1).",
+    "source": "\"supercompact\": {\"A\": 56.1, \"b\": 2.2, \"axb\": 123.4, \"wi_kwh_t\": 10.6},"
+  },
+  "data-pipeline/pipeline/model/crusher/hp500.py::64.5": {
+    "reason": "IN PERCENT t10: the JKMRC A (maximum t10) of the compact itabirite (Table 1).",
+    "source": "\"compact\": {\"A\": 64.5, \"b\": 10.5, \"axb\": 677.3, \"wi_kwh_t\": 7.2},"
+  },
+  "data-pipeline/pipeline/model/crusher/hp500.py::677.3": {
+    "reason": "DIMENSIONLESS: the JKMRC A*b of the compact itabirite (Table 1); metadata only on the calibrated lane.",
+    "source": "\"compact\": {\"A\": 64.5, \"b\": 10.5, \"axb\": 677.3, \"wi_kwh_t\": 7.2},"
+  },
+  "data-pipeline/pipeline/model/crusher/hp500.py::7.2": {
+    "reason": "IN kWh/t: the Bond work index of the compact itabirite (Table 1).",
+    "source": "\"compact\": {\"A\": 64.5, \"b\": 10.5, \"axb\": 677.3, \"wi_kwh_t\": 7.2},"
+  },
+  "data-pipeline/pipeline/model/crusher/hp500.py::9.0": {
+    "reason": "IN kWh/t: the representative blend Bond work index of the HP500 power readout.",
+    "source": "HP500_BLEND_WI_KWH_T = 9.0     # representative blend Wi of the modeled Bond power parity readout"
+  },
+  "data-pipeline/pipeline/model/crusher/jsmath.py::1.0": {
+    "reason": "DIMENSIONLESS: the unit magnitude whose sign is copied in the JavaScript-compatible division.",
+    "source": "return math.copysign(math.inf, a) * math.copysign(1.0, b)"
+  },
+  "data-pipeline/pipeline/model/crusher/linalg.py::0.0": {
+    "reason": "DIMENSIONLESS: the zero initial value of a solution vector component (the unit of the system it solves).",
+    "source": "z = [0.0] * n"
+  },
+  "data-pipeline/pipeline/model/crusher/sieve.py::0.0": {
+    "reason": "DIMENSIONLESS: the zero cumulative passing fraction (the finest edge, and the initial array).",
+    "source": "passing = [0.0] * (k + 1)"
+  },
+  "data-pipeline/pipeline/model/crusher/sieve.py::1.0": {
+    "reason": "DIMENSIONLESS: the cumulative passing fraction at and above the top size.",
+    "source": "return 1.0"
+  },
+  "data-pipeline/pipeline/model/crusher/types.py::0.0": {
+    "reason": "IN THE UNIT OF THE FIELD: the default of the result fields (t/h, kW, kWh/t, degrees, dimensionless), zero before the engine fills them.",
+    "source": "throughput_tph: float = 0.0"
+  },
+  "data-pipeline/pipeline/model/crusher/whiten.py::0.0": {
+    "reason": "DIMENSIONLESS: the zero initial value of an entry of the (I - B C) matrix.",
+    "source": "m = [0.0] * (n * n)"
+  }
+}

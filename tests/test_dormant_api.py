@@ -42,7 +42,7 @@ def test_an_absent_index_is_none_not_an_empty_index(tmp_path, monkeypatch):
     monkeypatch.setenv("DATA_DIR", str(tmp_path))
     assert content.load_index() is None
     assert content.load_readiness() is None
-    assert content.load_manifest("EX01_subcritical") is None
+    assert content.load_manifest("S01") is None
 
 
 def test_readiness_is_the_committed_document_with_the_api_row_available():

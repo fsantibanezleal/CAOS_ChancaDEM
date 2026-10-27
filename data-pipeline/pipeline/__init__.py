@@ -1,9 +1,6 @@
-"""pipeline, the offline+live engine for the CAOS product-repo template (ADR-0057).
-
-Rename this package to `pipeline` per product and replace the EXAMPLE engine (model/ + the stage bodies) with the
-deep-research-chosen SOTA engine. Everything else (the two data contracts, the staged pipeline, the lane gate, the
-manifest/trace, the cases-by-category registry) is the FROZEN base, instantiate it, do not redesign it.
-"""
+"""pipeline, the offline engine of ChancaDEM (ADR-0057): the two data contracts, the staged pipeline, the lane gate, the
+manifest and trace, the units gate and the cases-by-category registry, on the canonical crusher engine in
+``pipeline/model/crusher``. A module folder run by path (``python data-pipeline/run.py``), not a distribution."""
 
 from pathlib import Path
 

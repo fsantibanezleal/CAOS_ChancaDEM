@@ -5,6 +5,7 @@ frontend/src/lib/contract.test.ts, which runs the same assertions on the same ro
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 import subprocess
 import sys
@@ -53,13 +54,37 @@ def cross_field_errors(root: Path) -> list[str]:
             continue
         if apath.stat().st_size != m["artifact"]["bytes"]:
             out.append(f"{entry['case_id']}: artifact.bytes {m['artifact']['bytes']} differs from the file size {apath.stat().st_size}")
+        if hashlib.sha256(apath.read_bytes()).hexdigest() != m["artifact"]["sha256"]:
+            out.append(f"{entry['case_id']}: artifact.sha256 differs from the file")
         t = cs.load_json(apath)
         out += [f"{entry['case_id']} trace {e}" for e in cs.errors("trace", t)]
-        if t.get("case_id") != entry["case_id"]:
-            out.append(f"{entry['case_id']}: trace case_id is {t.get('case_id')!r}")
-        lengths = {k: len(t.get(k, [])) for k in ("t", "S", "I", "R")}
+        out += trace_rule_errors(entry["case_id"], t, m)
+    return out
+
+
+def trace_rule_errors(case_id: str, t: dict, m: dict) -> list[str]:
+    """The rules the trace schema cannot state."""
+    out: list[str] = []
+    if t.get("case_id") != case_id:
+        out.append(f"{case_id}: trace case_id is {t.get('case_id')!r}")
+    sieve, mid = t.get("sieve_mm", []), t.get("mid_mm", [])
+    if sieve != sorted(sieve, reverse=True) or len(set(sieve)) != len(sieve) or len(sieve) != len(mid) + 1:
+        out.append(f"{case_id}: sieve_mm is not strictly descending or is not one longer than mid_mm")
+    for k in ("feed_passing", "product_passing"):
+        p = t.get(k, [])
+        if len(p) != len(sieve) or any(b > a + 1e-9 for a, b in zip(p, p[1:])):
+            out.append(f"{case_id}: {k} has the wrong length or increases along the grid")
+    for k in ("feed_mass", "product_mass", "classification"):
+        if len(t.get(k, [])) != len(mid):
+            out.append(f"{case_id}: {k} lengths differ from mid_mm")
+    for sweep in ("speed_sweep", "css_sweep"):
+        lengths = {k: len(v) for k, v in t.get(sweep, {}).items()}
         if len(set(lengths.values())) != 1:
-            out.append(f"{entry['case_id']}: t, S, I, R lengths differ: {lengths}")
+            out.append(f"{case_id}: {sweep} lengths differ: {lengths}")
+    summary = t.get("summary", {})
+    for k, v in m.get("metrics", {}).items():
+        if k in summary and summary[k] != v:
+            out.append(f"{case_id}: summary.{k}={summary[k]} differs from the manifest metric {v}")
     return out
 
 
@@ -123,8 +148,7 @@ def test_traces_validate(fresh_bake: Path) -> None:
             assert path.is_file(), f"{label}: missing {path}"
             t = cs.load_json(path)
             assert cs.errors("trace", t) == [], f"{label} {entry['case_id']}"
-            assert t["case_id"] == entry["case_id"], label
-            assert len({len(t[k]) for k in ("t", "S", "I", "R")}) == 1, f"{label} {entry['case_id']}: series lengths"
+            assert trace_rule_errors(entry["case_id"], t, m) == [], f"{label} {entry['case_id']}"
 
 
 def test_every_root_passes_the_cross_field_rules(fresh_bake: Path) -> None:
@@ -176,10 +200,10 @@ def test_adversarial_drifted_documents_are_rejected() -> None:
         assert cs.errors(name, missing), f"{name}: a missing key is accepted"
     # a boolean is not a number
     wrong = copy.deepcopy(trace)
-    wrong["summary"]["peak_I"] = True
+    wrong["summary"]["p80_mm"] = True
     assert cs.errors("trace", wrong)
     wrong = copy.deepcopy(manifest)
-    wrong["params"]["beta"] = True
+    wrong["params"]["css_mm"] = True
     assert cs.errors("case-manifest", wrong)
     # a state that contradicts its reason
     wrong = copy.deepcopy(docs["readiness"])
@@ -197,7 +221,8 @@ def test_adversarial_cross_field_rules_catch_what_the_schema_cannot(tmp_path: Pa
     assert cross_field_errors(root) == []
     trace_path = next(root.glob("*/trace.json"))
     t = cs.load_json(trace_path)
-    t["S"] = t["S"][:-1]
+    t["product_passing"] = t["product_passing"][:-1]
     trace_path.write_text(json.dumps(t), encoding="utf-8")
     problems = cross_field_errors(root)
-    assert any("lengths differ" in p for p in problems) and any("artifact.bytes" in p for p in problems)
+    assert any("wrong length" in p for p in problems) and any("artifact.bytes" in p for p in problems)
+    assert any("sha256" in p for p in problems)

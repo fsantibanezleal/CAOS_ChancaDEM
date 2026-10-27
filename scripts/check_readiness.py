@@ -1,6 +1,6 @@
 """The committed readiness document (data/derived/readiness.json) is a pure function of docs/contracts/catalog.md and
 the repository: recompute it and compare. Exit 0 and ``readiness: current`` when it matches; exit 1 naming each
-differing entry and the command that regenerates it. Stdlib only (CI runs it with nothing installed; ADR-0074).
+differing entry and the command that regenerates it. Needs numpy and jsonschema (the model slots are judged by pipeline.model.bundles); everything else is the standard library.
 
 Usage: python scripts/check_readiness.py [repo_root]"""
 from __future__ import annotations
@@ -12,7 +12,12 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(HERE / "data-pipeline"))
 
-from pipeline.core import readiness  # noqa: E402
+try:
+    from pipeline.core import readiness  # noqa: E402
+except ImportError as exc:   # the model slots are judged by pipeline.model.bundles, which needs numpy and jsonschema
+    print(f"readiness: cannot judge the model slots: {exc}")
+    print("  fix: pip install numpy jsonschema")
+    sys.exit(1)
 
 FIX = "python data-pipeline/run.py readiness"
 
@@ -43,7 +48,7 @@ def main() -> int:
     derived = root / "data" / "derived"
     path = derived / "readiness.json"
     try:
-        fresh = readiness.compute(repo_root=root, derived_root=derived, models_dir=root / "models")
+        fresh = readiness.compute(repo_root=root, derived_root=derived, models_dir=derived / "models")
     except ValueError as exc:  # a catalog the rules do not accept: nothing can be published from it
         print(f"readiness: invalid catalog\n  {exc}")
         return 1

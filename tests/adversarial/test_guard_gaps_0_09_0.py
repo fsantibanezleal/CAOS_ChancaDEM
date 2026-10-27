@@ -123,7 +123,7 @@ def test_a_declared_csv_table_passes_with_a_test_and_fails_without_one(docs: Pat
 
 
 def test_a_json_document_is_still_validated_against_its_schema(docs: Path) -> None:
-    path = docs / "data/derived/EX01_subcritical/trace.json"
+    path = docs / "data/derived/S01/trace.json"
     doc = json.loads(path.read_text(encoding="utf-8"))
     doc["points"] = []
     path.write_text(json.dumps(doc), encoding="utf-8")
@@ -132,7 +132,7 @@ def test_a_json_document_is_still_validated_against_its_schema(docs: Path) -> No
 
 
 def test_a_json_file_with_a_json_suffix_that_is_not_json_still_fails(docs: Path) -> None:
-    (docs / "data/derived/EX01_subcritical/trace.json").write_text("not json at all", encoding="utf-8")
+    (docs / "data/derived/S01/trace.json").write_text("not json at all", encoding="utf-8")
     r = guard(docs, "check_documents.py")
     assert r.returncode == 1 and "not readable as JSON" in r.stdout, r.stdout
 
