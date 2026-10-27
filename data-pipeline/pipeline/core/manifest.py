@@ -27,10 +27,10 @@ FLAG_CODES = {
 }
 
 
-def flag_codes(r: CrusherResult, extra: list[str] | None = None) -> list[str]:
-    """The stable codes of the engine's flags, in the engine's order, then any contract-1 code not yet present."""
+def flag_codes(r: CrusherResult) -> list[str]:
+    """The stable codes of the engine's flags and envelope codes, in the engine's order."""
     out: list[str] = []
-    for f in list(r.flags) + list(extra or []):
+    for f in r.flags:
         code = FLAG_CODES.get(f, f)
         if code not in out:
             out.append(code)

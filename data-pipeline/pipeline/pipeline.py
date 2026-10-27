@@ -33,7 +33,7 @@ from .core.trace import metrics_of, r6
 from .hp500 import backbone as backbone_doc
 from .hp500 import loo as loo_doc
 from .hp500 import surveys as survey_contract
-from .io.contract import PARAMS_CSV, flags_of
+from .io.contract import PARAMS_CSV
 from .io.formats import read_csv_rows, write_json
 from .model.bundles import released_slots
 from .model.crusher import CrusherResult, Operating
@@ -76,10 +76,9 @@ class PipelinePaths:
 
 @dataclass
 class Inputs:
-    """What the two source tables give: the cases to bake, the contract-1 flag codes per case, the accepted surveys."""
+    """What the two source tables give: the cases to bake and the accepted surveys."""
 
     cases: list[Case] = field(default_factory=list)
-    extra_flags: dict[str, list[str]] = field(default_factory=dict)
     surveys: list[survey_contract.Survey] = field(default_factory=list)
 
 
@@ -95,7 +94,6 @@ def load_inputs(paths: PipelinePaths) -> Inputs:
             if rec is None:
                 continue
             out.cases.append(dataclasses.replace(c, op=rec.operating()))
-            out.extra_flags[c.id] = flags_of(rec)
     else:
         out.cases = circuit
     if paths.surveys_csv.is_file():
@@ -138,7 +136,7 @@ def _bake(case: Case, inputs: Inputs, paths: PipelinePaths, seed: int, models: d
     observed = [dataclasses.asdict(s) for s in inputs.surveys] if case.measured is not None else None
     unit_gate.enforce(case.id, {k: v for k, v in metrics.items() if k in unit_gate.PHYSICAL_DOMAIN},
                       unit_gate.ranges_for(case.op.machine, observed))   # CONTRACT 3: the units
-    flags = flag_codes(result, inputs.extra_flags.get(case.id))
+    flags = flag_codes(result)   # the engine's own flags and envelope codes, as the web's live engine states them
     return export.run(case=case, result=result, seed=seed, run_ms=_engine_ms(case.op), flags=flags, metrics=metrics,
                       models=models, expect=ranges, derived_dir=str(paths.root), manifests_dir=str(paths.manifests))
 
