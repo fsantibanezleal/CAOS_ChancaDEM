@@ -21,19 +21,25 @@ HONESTY. n = 10 is tiny. The pre-registered expectation is that M1 gives margina
 that is an acceptable, reported outcome. The value is the VALIDATION + UQ, not a lower error than the paper's
 in-sample fit. Every number below is computed from the real surveys; none is asserted or hand-set.
 
-Run:  python -m pipeline.hp500.loo        # rebuild data/derived/hp500/loo.json from the committed backbone.json
+Run:  python data-pipeline/pipeline/hp500/loo.py [--out DIR] [--version X.XX.XXX]
+      # rebuild backbone.json and loo.json from data/examples/hp500-surveys.csv (default DIR: data/derived/hp500)
 """
 from __future__ import annotations
 
-import json
+import argparse
+import sys
 from pathlib import Path
 
 import numpy as np
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+if __package__ in (None, ""):   # run by path (ADR-0057): make the pipeline importable
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+
+from pipeline.hp500 import backbone as backbone_mod
+from pipeline.hp500.surveys import REPO_ROOT, SURVEYS_CSV, read_surveys
+from pipeline.io.formats import write_json
+
 HP500_DIR = REPO_ROOT / "data" / "derived" / "hp500"
-BACKBONE = HP500_DIR / "backbone.json"
-OUT = HP500_DIR / "loo.json"
 
 SEED = 42
 RESID_CLIP_FRAC = 0.20   # bounded residual: |residual| <= 20% of the backbone value (physical, not free-form)
@@ -189,16 +195,17 @@ def _run_target(name: str, meas: np.ndarray, feat: np.ndarray,
     return out
 
 
-def run(backbone: dict, seed: int = SEED) -> dict:
+def build(backbone: dict, version: str, seed: int = SEED) -> dict:
+    """The ``chancadem.hp500.loo/v1`` document from a ``chancadem.hp500.backbone/v1`` document. Pure: no file I/O."""
     surveys = backbone["surveys"]
-    css = np.array([s["measured"]["cssMm"] for s in surveys], float)
-    f80 = np.array([s["measured"]["f80Mm"] for s in surveys], float)
-    meas_tph = np.array([s["measured"]["tph"] for s in surveys], float)
-    meas_kw = np.array([s["measured"]["kW"] for s in surveys], float)
-    bb_tph = np.array([s["backbone"]["tph"] for s in surveys], float)
-    bb_pd = np.array([s["backbone"]["bondPd"] for s in surveys], float)
-    bb_calkw = np.array([s["backbone"]["calibratedKw"] for s in surveys], float)
-    bb_p80 = np.array([s["backbone"]["p80"] for s in surveys], float)
+    css = np.array([s["measured"]["css_mm"] for s in surveys], float)
+    f80 = np.array([s["measured"]["f80_mm"] for s in surveys], float)
+    meas_tph = np.array([s["measured"]["feed_tph"] for s in surveys], float)
+    meas_kw = np.array([s["measured"]["power_kw"] for s in surveys], float)
+    bb_tph = np.array([s["backbone"]["throughput_tph"] for s in surveys], float)
+    bb_pd = np.array([s["backbone"]["bond_power_kw"] for s in surveys], float)
+    bb_calkw = np.array([s["backbone"]["calibrated_power_kw"] for s in surveys], float)
+    bb_p80 = np.array([s["backbone"]["p80_mm"] for s in surveys], float)
 
     feat = np.column_stack([css, f80])
     # the true engine capacity factor: backbone.tph = QT_engine * factor with QT_engine = 647 (HP500_QREF)
@@ -246,6 +253,7 @@ def run(backbone: dict, seed: int = SEED) -> dict:
     return {
         "schema": "chancadem.hp500.loo/v1",
         "source": backbone["source"],
+        "engine_version": version,
         "n": len(surveys),
         "seed": seed,
         "config": {"resid_clip_frac": RESID_CLIP_FRAC, "ridge_lambda": RIDGE_LAMBDA,
@@ -256,16 +264,24 @@ def run(backbone: dict, seed: int = SEED) -> dict:
     }
 
 
-def main() -> int:
-    if not BACKBONE.exists():
-        raise SystemExit(f"missing {BACKBONE}. Bake it first: "
-                         f"node --import tsx data-pipeline/pipeline/sweep/bake_hp500.mjs")
-    backbone = json.loads(BACKBONE.read_text(encoding="utf-8"))
-    res = run(backbone)
-    OUT.write_text(json.dumps(res, indent=2) + "\n", encoding="utf-8")
+def main(argv: list[str] | None = None) -> int:
+    """Manual rebuild of both documents from the survey table into an output root."""
+    ap = argparse.ArgumentParser(description="Rebuild the HP500 backbone and CrusherCal LOO documents.")
+    ap.add_argument("--out", type=Path, default=HP500_DIR, help="output root (default data/derived/hp500)")
+    ap.add_argument("--version", default=(REPO_ROOT / "VERSION").read_text(encoding="utf-8").strip())
+    ap.add_argument("--surveys", type=Path, default=SURVEYS_CSV)
+    args = ap.parse_args(argv)
+    report = read_surveys(args.surveys)
+    for row, why in report.rejected:
+        print(f"rejected survey row {row}: {why}", file=sys.stderr)
+    bb = backbone_mod.build(report.accepted, args.version)
+    res = build(bb, args.version)
+    args.out.mkdir(parents=True, exist_ok=True)
+    for name, doc in (("backbone.json", bb), ("loo.json", res)):
+        write_json(args.out / name, doc)   # compact, the committed form of the artifacts
     tph = res["loo"]["tph"]["strict"]
     kw = res["loo"]["kW"]["strict"]
-    print(f"CrusherCal LOO -> {OUT}")
+    print(f"CrusherCal LOO -> {args.out}")
     print(f"  t/h  strict LOO  M0={tph['M0_backbone']['mape_pct']}%  M1={tph['M1_residual']['mape_pct']}%  "
           f"M2={tph['M2_freeform']['mape_pct']}%  const={tph['constant_mean']['mape_pct']}%")
     print(f"  kW   strict LOO  M0={kw['M0_backbone']['mape_pct']}%  M1={kw['M1_residual']['mape_pct']}%  "
