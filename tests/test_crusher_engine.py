@@ -326,6 +326,46 @@ def test_envelope_gate_the_ten_real_hp500_surveys_are_physically_plausible() -> 
         assert r.implausible is False, (css, f80)
 
 
+def test_envelope_gate_tests_the_declared_untruncated_f80_not_the_grid_truncated_one() -> None:
+    """N1: a calibrated point whose declared feed F80 is 180 mm is outside the HP500 support of 47 to 140 mm, although the
+    256 mm grid truncates the engine's own F80 to about 136 mm (review 05-01 cell 25)."""
+    from pipeline.model.crusher.feed import rosin_rammler_size_at
+
+    op = operating_from_survey(48, 180)
+    assert rosin_rammler_size_at(0.8, op.feed_x63_mm, op.feed_m) == pytest.approx(180.0, abs=1e-6)
+    r = evaluate(op)
+    assert r.f80 < 140.0, "the truncated grid F80 stays inside the support (the model's own value is kept)"
+    assert "f80_outside_calibrated" in r.envelope_codes
+    assert r.out_of_envelope is True and r.implausible is False
+
+
+def test_envelope_gate_the_ten_surveys_keep_their_codes_with_the_declared_f80() -> None:
+    """The declared F80 of a survey is its measured f80 (up to float noise): survey 7 sits exactly on the 140 mm edge of the
+    support and must stay inside it; survey 3 (f80 47 against CSS 48) stays implausible."""
+    surveys = [(54, 88), (54, 84), (48, 47), (48, 88), (48, 62), (40, 79), (38, 140), (44, 123), (40, 81), (55, 81)]
+    for css, f80 in surveys:
+        codes = evaluate(operating_from_survey(css, f80)).envelope_codes
+        assert "f80_outside_calibrated" not in codes, (css, f80)
+        assert ("f80_lt_css" in codes) == (css >= f80), (css, f80)
+
+
+def test_check_envelope_takes_the_declared_f80_as_a_third_argument_defaulting_to_the_engine_one() -> None:
+    from pipeline.model.crusher.envelope import check_envelope
+
+    op = operating_from_survey(48, 88)
+    assert check_envelope(op, 100.0).codes == ()
+    assert check_envelope(op, 100.0, 180.0).codes == ("f80_outside_calibrated",)
+    assert check_envelope(op, 100.0, 100.0).codes == ()
+
+
+def test_rosin_rammler_size_at_inverts_the_passing_law() -> None:
+    from pipeline.model.crusher.feed import rosin_rammler_passing, rosin_rammler_size_at
+
+    for frac in (0.2, 0.5, 0.8):
+        x = rosin_rammler_size_at(frac, 90.0, 1.2)
+        assert rosin_rammler_passing(x, 90.0, 1.2) == pytest.approx(frac)
+
+
 # ---- the port never raises where the TypeScript engine returns a flagged result -----------------------------------
 
 

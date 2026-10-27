@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "hp500-loo.schema.json",
   "title": "Hp500Loo",
-  "description": "Catalog row hp500-loo 1.0.0: CrusherCal, the leave-one-survey-out validation of the calibrated backbone on the ten HP500 surveys, written by data-pipeline/pipeline/hp500/loo.py to data/derived/hp500/loo.json. Per target (throughput tph and power kW measured; P80 a model output reported as self-consistency), strict folds (every fitted scalar refit without the held-out survey) and leaky folds (fitted on all ten) grade M0 the calibrated backbone, M1 the backbone plus a bounded ridge residual, M2 a free-form least-squares fit, a constant-mean baseline and a label-shuffle negative control; the strict folds carry an 80 percent predictive interval and its empirical coverage. The two parity blocks are in-sample contrasts of the power forms and of the capacity backbone against the measured values. Deterministic for a seed. Derived from data licensed CC BY 4.0 (https://doi.org/10.3390/min14090919). Rules the schema cannot state, checked by the producer test: every measured and pred list has n values in survey order; the label-shuffle control does not beat M0 on throughput.",
+  "description": "Catalog row hp500-loo 1.1.0: CrusherCal, the leave-one-survey-out validation of the calibrated backbone on the ten HP500 surveys, written by data-pipeline/pipeline/hp500/loo.py to data/derived/hp500/loo.json. Per target (throughput tph and power kW measured; P80 a model output reported as self-consistency), strict folds (every fitted scalar refit without the held-out survey) and leaky folds (fitted on all ten) grade M0 the calibrated backbone, M1 the backbone plus a bounded ridge residual, M2 a free-form least-squares fit, a constant-mean baseline and a label-shuffle negative control; the strict folds carry an 80 percent predictive interval, its empirical coverage (in sample: sigma comes from the same residuals the coverage checks) and its nested coverage (out of sample: for each survey, sigma from the held-out residuals of the other surveys only). The two parity blocks are in-sample contrasts of the power forms and of the capacity backbone against the measured values. Deterministic for a seed. Derived from data licensed CC BY 4.0 (https://doi.org/10.3390/min14090919). Rules the schema cannot state, checked by the producer test: every measured and pred list has n values in survey order; the label-shuffle control does not beat M0 on throughput; nested_covered and nested_sigma have n values in survey order and nested_coverage is the share of true entries of nested_covered.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -364,6 +364,31 @@
             },
             "note": {
               "type": "string"
+            },
+            "nested_coverage": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1,
+              "description": "Out-of-sample coverage of the 80 percent band: the share of surveys whose held-out residual lies within the factor times the sigma of the other surveys' residuals."
+            },
+            "nested_covered": {
+              "type": "array",
+              "items": {
+                "type": "boolean"
+              },
+              "description": "Per survey, in survey order: whether its residual lay within the nested band."
+            },
+            "nested_sigma": {
+              "type": "array",
+              "items": {
+                "type": "number",
+                "minimum": 0
+              },
+              "description": "Per survey, in survey order: the sample standard deviation of the held-out residuals of the other surveys."
+            },
+            "nested_note": {
+              "type": "string",
+              "description": "States which coverage is in sample (empirical_coverage) and which is out of sample (nested_coverage)."
             }
           }
         }

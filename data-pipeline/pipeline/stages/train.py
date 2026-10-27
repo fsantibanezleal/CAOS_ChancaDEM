@@ -41,12 +41,17 @@ def _zstats(m: np.ndarray) -> tuple[list[float], list[float]]:
     return [float(np.float32(v)) for v in mu], [float(np.float32(v)) for v in sd]
 
 
-def _target(r) -> list[float]:
+def target_vector(r) -> list[float]:
+    """The ten training targets of a result, in the surrogate's output order: P80, P50 and P20 in log10, the percent passing
+    at 1, 4, 8, 16 and 32 mm, the throughput and the power."""
     import math
 
     p = r.pct_passing
     raw = [r.p80, r.p50, r.p20, p[1], p[4], p[8], p[16], p[32], r.throughput_tph, r.power_kw]
     return [math.log10(max(v, 1e-6)) if lg else v for v, lg in zip(raw, LOG_OUT)]
+
+
+_target = target_vector   # the name of the first release, until its notebooks call the public one
 
 
 def _graph_record(path: Path, derived: Path, input_name: str, output_name: str) -> dict:
@@ -90,7 +95,7 @@ def run(models_dir: Path, *, version: str, seed: int = 12345, n_per_machine: int
     cont = np.array([[getattr(r.op, k) for k in sweep.CONTINUOUS] for r in train])
     in_mean, in_std = _zstats(cont)
     x = np.array([encode_input(r.op, in_mean, in_std) for r in train], np.float32)
-    y_raw = np.array([_target(r) for r in train])
+    y_raw = np.array([target_vector(r) for r in train])
     out_mean, out_std = _zstats(y_raw)
     y = ((y_raw - np.array(out_mean)) / np.array(out_std)).astype(np.float32)
 

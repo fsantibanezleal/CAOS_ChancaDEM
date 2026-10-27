@@ -33,8 +33,12 @@ class EnvelopeCheck:
     codes: tuple[str, ...]
 
 
-def check_envelope(op: Operating, f80_mm: float) -> EnvelopeCheck:
-    """Gate an operating point. ``f80_mm`` is the engine-computed feed 80%-passing size [mm]."""
+def check_envelope(op: Operating, f80_mm: float, declared_f80_mm: float | None = None) -> EnvelopeCheck:
+    """Gate an operating point. ``f80_mm`` is the engine-computed feed 80%-passing size [mm], read on the 256 mm grid,
+    which truncates a coarse feed. ``declared_f80_mm`` is the F80 the feed declares (the untruncated Rosin-Rammler law of
+    ``feed_x63_mm`` and ``feed_m``); the calibrated-support check tests it, because the support is a range of declared
+    feed sizes (the surveys' measured f80). It defaults to ``f80_mm``."""
+    declared = f80_mm if declared_f80_mm is None else declared_f80_mm
     codes: list[str] = []
     implausible = False
 
@@ -54,7 +58,7 @@ def check_envelope(op: Operating, f80_mm: float) -> EnvelopeCheck:
         f_lo, f_hi = HP500_ENVELOPE_F80_MM
         if op.css_mm < c_lo or op.css_mm > c_hi:
             codes.append("css_outside_calibrated")
-        if f80_mm > 0 and (f80_mm < f_lo or f80_mm > f_hi):
+        if declared > 0 and (declared < f_lo or declared > f_hi):
             codes.append("f80_outside_calibrated")
 
     return EnvelopeCheck(in_envelope=len(codes) == 0, implausible=implausible, codes=tuple(codes))

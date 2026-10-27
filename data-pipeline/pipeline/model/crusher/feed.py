@@ -6,7 +6,7 @@ gives a more uniform feed). Reference: Rosin and Rammler 1933. Gaudin-Schuhmann 
 """
 from __future__ import annotations
 
-from .jsmath import jdiv, jexp, jmax, jpow
+from .jsmath import jdiv, jexp, jlog, jmax, jpow
 from .sieve import to_psd
 from .types import PSD
 
@@ -16,6 +16,13 @@ def rosin_rammler_passing(x_mm: float, x63: float, m: float) -> float:
     if x_mm <= 0:
         return 0.0
     return 1 - jexp(-jpow(jdiv(x_mm, x63), m))
+
+
+def rosin_rammler_size_at(fraction: float, x63: float, m: float) -> float:
+    """The size [mm] at a cumulative passing ``fraction`` of the untruncated Rosin-Rammler law, the inverse of
+    ``rosin_rammler_passing``: x63 * (-ln(1 - fraction))^(1 / m). Unlike ``size_at_passing`` on the grid feed it does not
+    stop at the sieve top size: it is the F80 the feed declares."""
+    return x63 * jpow(-jlog(1 - fraction), jdiv(1, m))
 
 
 def make_feed(edges: list[float], x63: float, m: float) -> PSD:

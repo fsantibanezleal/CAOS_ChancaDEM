@@ -29,8 +29,11 @@ export interface EnvelopeCheck {
   codes: EnvelopeCode[];
 }
 
-/** Gate an operating point. `f80` is the engine-computed feed 80%-passing size [mm] (the real gripped-size scale). */
-export function checkEnvelope(op: Operating, f80Mm: number): EnvelopeCheck {
+/** Gate an operating point. `f80Mm` is the engine-computed feed 80%-passing size [mm] (the real gripped-size scale), read
+ *  on the 256 mm grid, which truncates a coarse feed. `declaredF80Mm` is the F80 the feed declares (the untruncated
+ *  Rosin–Rammler law of its x63 and m); the calibrated-support check tests it, because the support is a range of declared
+ *  feed sizes (the surveys' measured f80). It defaults to `f80Mm`. */
+export function checkEnvelope(op: Operating, f80Mm: number, declaredF80Mm: number = f80Mm): EnvelopeCheck {
   const codes: EnvelopeCode[] = [];
   let implausible = false;
 
@@ -43,7 +46,7 @@ export function checkEnvelope(op: Operating, f80Mm: number): EnvelopeCheck {
     const [cLo, cHi] = HP500_ENVELOPE.cssMm;
     const [fLo, fHi] = HP500_ENVELOPE.f80Mm;
     if (op.cssMm < cLo || op.cssMm > cHi) codes.push('css_outside_calibrated');
-    if (f80Mm > 0 && (f80Mm < fLo || f80Mm > fHi)) codes.push('f80_outside_calibrated');
+    if (declaredF80Mm > 0 && (declaredF80Mm < fLo || declaredF80Mm > fHi)) codes.push('f80_outside_calibrated');
   }
 
   return { inEnvelope: codes.length === 0, implausible, codes };
