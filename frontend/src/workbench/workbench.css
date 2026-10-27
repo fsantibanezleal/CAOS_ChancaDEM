@@ -1,0 +1,46 @@
+/* The product's own widgets only (shell 0.19.3): the stack that puts a table above a drawing, the area a chart or a Stage fills, the
+   table's scroll box and the alert of a flagged point. Every colour and size is a token of the shell; no shell class is restyled. */
+.cdem-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  height: 100%;
+  min-height: 0;
+  min-width: 0;
+}
+
+.cdem-stack > .cdem-tablewrap {
+  flex: none;
+}
+
+.cdem-tablewrap {
+  overflow-x: auto;
+  min-width: 0;
+}
+
+.cdem-fill {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 11rem;
+  min-width: 0;
+}
+
+.cdem-alert {
+  flex: none;
+  border-left: 3px solid var(--color-warn);
+  background: var(--color-surface-2);
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-sm);
+}
+
+.cdem-alert summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+
+.cdem-alert ul {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: var(--text-sm);
+}

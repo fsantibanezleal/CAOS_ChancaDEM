@@ -1,9 +1,8 @@
-# Repo-local tool configuration ONLY. This product declares NO package: per
-# conventions/no-internal-packages.md, a package means a separate repo with a valid PyPI
-# project, consumed as a dependency. The data-pipeline/ folder is scripts, invoked by path.
-# ChancaDEM, the offline engine package (instantiated from the CAOS product-repo archetype, ADR-0057).
-# The DEFAULT pipeline is numpy-only (builds the replay layer from committed artifacts); the heavy lane (torch +
-# the Node sweep of the TS engine) lives in requirements-precompute.txt and is documented in docs/frameworks/.
+# Repo-local tool configuration ONLY. A product declares NO package of its own.
+# See conventions/no-internal-packages.md: if a package is required it is a SEPARATE REPO with a
+# valid PyPI project, published, and consumed as a dependency (milldem, minehaulsim, oreblocks).
+# data-pipeline/ is scripts, invoked by path: python data-pipeline/run.py. Its engines are pinned in
+# data-pipeline/requirements.txt, each with a card in docs/frameworks/ and a verified licence.
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q"
@@ -11,7 +10,8 @@ addopts = "-q"
 [tool.ruff]
 line-length = 110
 target-version = "py311"
-extend-exclude = ["data-pipeline/pipeline/stages/dem.py"]  # the offline DEM tracer (WIP), linted separately
 
 [tool.ruff.lint]
+# E741 (an ambiguous single-letter name such as I) is allowed: domain notation (compartments, matrices, an
+# identity) uses single capitals on purpose.
 ignore = ["E741"]

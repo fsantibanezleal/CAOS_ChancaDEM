@@ -1,3 +1,4 @@
-# GPU lane (OPTIONAL, DORMANT), ChancaDEM training is tiny (a small MLP + AE over a few thousand sweep points,
-# seconds on CPU), so no GPU is required. This solution does not require it at the moment.
-# torch==2.12.1  --index-url https://download.pytorch.org/whl/cu124
+# Optional GPU lane, empty until the offline engine needs CUDA or ROCm: then pin the verified packages here and
+# record the driver and runtime matrix in docs/guides/03_gpu-lane.md. A product without a GPU step deletes this
+# file and that guide.
+-r requirements-precompute.txt

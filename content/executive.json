@@ -1,0 +1,946 @@
+{
+  "title": {
+    "en": "Crushing and comminution: the energy and wear cost of breaking rock in copper mining",
+    "es": "Chancado y conminución: el costo de energía y de desgaste de romper roca en la minería del cobre"
+  },
+  "key_statement": {
+    "en": "As ore grades fall and rock gets harder, copper concentrators use more electricity per tonne of metal, and crushers drift with wear after they are set. The direction proposed is to run crushing as one managed system with the ore and the mill.",
+    "es": "Con leyes más bajas y roca más dura, las concentradoras de cobre usan más electricidad por tonelada de metal, y los chancadores se desvían con el desgaste después de ajustados. La dirección propuesta es operar el chancado como un solo sistema gestionado, junto con el mineral y el molino."
+  },
+  "headline_figures": [
+    {
+      "heading": {
+        "en": "Electricity per tonne of copper",
+        "es": "Electricidad por tonelada de cobre"
+      },
+      "value": {
+        "en": "13,079",
+        "es": "13.079"
+      },
+      "unit": {
+        "en": "megajoules of electricity per tonne of fine copper at Chilean concentrators in 2024, up 46.2 percent since 2010",
+        "es": "megajulios de electricidad por tonelada de cobre fino en las concentradoras chilenas en 2024, un 46,2 por ciento más que en 2010"
+      },
+      "source": "cochilco-energy"
+    },
+    {
+      "heading": {
+        "en": "Power demand outruns output",
+        "es": "La demanda de energía supera a la producción"
+      },
+      "value": {
+        "en": "20.2",
+        "es": "20,2"
+      },
+      "unit": {
+        "en": "percent more electricity projected for Chilean copper mining from 2025 to 2034, against 8.3 percent more fine copper",
+        "es": "por ciento más de electricidad proyectada para la minería chilena del cobre entre 2025 y 2034, frente a un 8,3 por ciento más de cobre fino"
+      },
+      "source": "cochilco-projection"
+    },
+    {
+      "heading": {
+        "en": "Ore grade keeps falling",
+        "es": "La ley del mineral sigue bajando"
+      },
+      "value": {
+        "en": "0.62",
+        "es": "0,62"
+      },
+      "unit": {
+        "en": "percent average copper grade of Chilean ore in 2024, down from 0.75 percent in 2010",
+        "es": "por ciento de ley media de cobre del mineral chileno en 2024, desde 0,75 por ciento en 2010"
+      },
+      "source": "cochilco-energy"
+    }
+  ],
+  "pain": {
+    "key_message": {
+      "en": "Breaking rock takes a growing share of the electricity of copper mining, and a crusher left at its first setting wastes some of it as the liners wear.",
+      "es": "Romper roca consume una parte creciente de la electricidad de la minería del cobre, y un chancador fijo en su primer ajuste desperdicia parte de ella al desgastarse los revestimientos."
+    },
+    "paragraphs": [
+      {
+        "en": "Crushing and grinding sit inside the concentrator, the largest electricity user of a copper mine. In Chile in 2024 the concentrator took 55.7 percent of the electricity of copper mining, and the national copper agency says it goes especially to crushing and grinding. Electricity per tonne of fine copper rose 46.2 percent from 2010 to 2024 while the average ore grade fell from 0.75 to 0.62 percent. The agency links the rise to deeper deposits and harder rock, which directly affect comminution.",
+        "es": "El chancado (trituración) y la molienda están dentro de la planta concentradora, la mayor consumidora de electricidad de una mina de cobre. En Chile, en 2024, la concentradora usó el 55,7 por ciento de la electricidad de la minería del cobre. El organismo nacional del cobre indica que va sobre todo al chancado y la molienda. La electricidad por tonelada de cobre fino subió 46,2 por ciento entre 2010 y 2024, mientras la ley media del mineral bajó de 0,75 a 0,62 por ciento. El organismo atribuye el alza a yacimientos más profundos y roca más dura, que afectan directamente la conminución."
+      },
+      {
+        "en": "Breakage also uses the energy it receives poorly, so a poor setting or a poor balance between stages is costly. A United States study with data for the year 2000 put grinding at 40 percent of the energy of its mining. In a crusher the cost shows as drift, because performance changes as liners wear and a fixed setting cannot follow the feed. Work the crusher does not do passes to the grinding mill, the most energy-intensive step of the circuit.",
+        "es": "La fragmentación también aprovecha mal la energía que recibe, así que un mal ajuste o un mal equilibrio entre etapas sale caro. Un estudio de Estados Unidos con datos del año 2000 situó la molienda en el 40 por ciento de la energía de su minería. En un chancador el costo aparece como deriva, porque el rendimiento cambia con el desgaste de los revestimientos y un ajuste fijo no puede seguir la alimentación. El trabajo que el chancador no hace pasa al molino, la etapa del circuito que más energía consume."
+      }
+    ],
+    "bearers": [
+      {
+        "who": {
+          "en": "Concentrator owners and plant managers",
+          "es": "Dueños y gerentes de plantas concentradoras"
+        },
+        "cost": {
+          "en": "Electricity and steel for breakage, rising per tonne of fine copper",
+          "es": "Electricidad y acero para fragmentar, en alza por tonelada de cobre fino"
+        },
+        "measure": {
+          "en": "Energy per tonne of fine copper",
+          "es": "Energía por tonelada de cobre fino"
+        }
+      },
+      {
+        "who": {
+          "en": "Maintenance and reliability teams",
+          "es": "Equipos de mantenimiento y confiabilidad"
+        },
+        "cost": {
+          "en": "Liner changes, setting drift and stops to reline",
+          "es": "Cambios de revestimientos, deriva del ajuste y detenciones para renovarlos"
+        },
+        "measure": {
+          "en": "Liner life and crusher availability",
+          "es": "Vida de los revestimientos y disponibilidad del chancador"
+        }
+      },
+      {
+        "who": {
+          "en": "The grinding mill and its owners",
+          "es": "El molino de molienda y sus dueños"
+        },
+        "cost": {
+          "en": "A coarser or uneven feed passes work to the most energy-intensive stage",
+          "es": "Una alimentación más gruesa o irregular traspasa trabajo a la etapa que más energía consume"
+        },
+        "measure": {
+          "en": "Specific energy and throughput of the mill",
+          "es": "Energía específica y capacidad de procesamiento del molino"
+        }
+      },
+      {
+        "who": {
+          "en": "The power system and the country",
+          "es": "El sistema eléctrico y el país"
+        },
+        "cost": {
+          "en": "Copper mining takes about one third of national electricity, and demand keeps rising",
+          "es": "La minería del cobre usa cerca de un tercio de la electricidad nacional, y la demanda sigue subiendo"
+        },
+        "measure": {
+          "en": "Terawatt-hours of electricity per year",
+          "es": "Teravatios hora de electricidad por año"
+        }
+      },
+      {
+        "who": {
+          "en": "Mining communities and water users",
+          "es": "Comunidades mineras y usuarios de agua"
+        },
+        "cost": {
+          "en": "Power for seawater desalination and pumping, 11 percent of mining electricity in 2024; the tie to crushing is indirect",
+          "es": "Energía para desalar y bombear agua de mar, 11 por ciento de la electricidad minera en 2024; el vínculo con el chancado es indirecto"
+        },
+        "measure": {
+          "en": "Share of electricity used for seawater",
+          "es": "Participación de la electricidad usada en agua de mar"
+        }
+      }
+    ],
+    "figures": [
+      {
+        "heading": {
+          "en": "Concentrators' share of mining electricity",
+          "es": "Parte de la electricidad minera que usan las concentradoras"
+        },
+        "value": {
+          "en": "55.7",
+          "es": "55,7"
+        },
+        "unit": {
+          "en": "percent of the electricity of Chilean copper mining used by concentrators in 2024",
+          "es": "por ciento de la electricidad de la minería chilena del cobre usado por las concentradoras en 2024"
+        },
+        "source": "cochilco-energy"
+      },
+      {
+        "heading": {
+          "en": "Grinding in an old United States study",
+          "es": "La molienda en un estudio antiguo de Estados Unidos"
+        },
+        "value": {
+          "en": "40",
+          "es": "40"
+        },
+        "unit": {
+          "en": "percent of the energy of United States mining went to grinding, in data for the year 2000, published in 2007",
+          "es": "por ciento de la energía de la minería de Estados Unidos fue a la molienda, con datos del año 2000, publicados en 2007"
+        },
+        "source": "doe-bandwidth"
+      },
+      {
+        "heading": {
+          "en": "Useful work of breakage in the laboratory",
+          "es": "Trabajo útil de la fragmentación en laboratorio"
+        },
+        "value": {
+          "en": "about 3",
+          "es": "cerca de 3"
+        },
+        "unit": {
+          "en": "percent exergy efficiency, a thermodynamic measure of useful work, for central-Chile copper ore in a laboratory dry ball mill, in a 2017 paper",
+          "es": "por ciento de eficiencia exergética, una medida termodinámica del trabajo útil, de mineral de cobre de Chile central en un molino de bolas de laboratorio, según un artículo de 2017"
+        },
+        "source": "exergy"
+      }
+    ],
+    "causes": [
+      {
+        "cause": {
+          "en": "Harder, lower-grade, deeper ore: more rock broken per tonne of metal",
+          "es": "Mineral más duro, de menor ley y más profundo: más roca fragmentada por tonelada de metal"
+        },
+        "weight": 35
+      },
+      {
+        "cause": {
+          "en": "A stage balance fixed at design, so crushing leaves work to grinding",
+          "es": "Un equilibrio entre etapas fijado en el diseño, de modo que el chancado deja trabajo a la molienda"
+        },
+        "weight": 25
+      },
+      {
+        "cause": {
+          "en": "Settings and liners that drift while setpoints stay fixed",
+          "es": "Ajustes y revestimientos que se desvían mientras los valores objetivo siguen fijos"
+        },
+        "weight": 25
+      },
+      {
+        "cause": {
+          "en": "Design knowledge that is not carried into operation",
+          "es": "Conocimiento de diseño que no pasa a la operación"
+        },
+        "weight": 15
+      }
+    ]
+  },
+  "context": {
+    "key_message": {
+      "en": "Falling grades, rising power demand and wear that a fixed setting cannot follow keep the cost of breakage growing.",
+      "es": "La baja de leyes, la demanda creciente de energía y un desgaste que un ajuste fijo no puede seguir mantienen en alza el costo de fragmentar."
+    },
+    "paragraphs": [
+      {
+        "en": "Chilean copper mining is dominated by open-pit mines with a concentrator, and the national agency expects concentrates to take a larger share of production. Their crushers and mills run on a grid that is decarbonising, so the energy of breakage is argued today mainly as a matter of cost, capacity and water.",
+        "es": "La minería chilena del cobre está dominada por minas a cielo abierto con planta concentradora, y el organismo nacional espera que los concentrados tengan una parte mayor de la producción. Sus chancadores y molinos funcionan con una red que se descarboniza, así que la energía de fragmentar se discute sobre todo como un asunto de costo, capacidad y agua."
+      },
+      {
+        "en": "An energy efficiency law obliges the largest energy users to run an energy management system, name an energy manager, report each year and pass an external audit. The agency reports read for this view do not separate the energy of crushing from that of grinding.",
+        "es": "Una ley de eficiencia energética obliga a los grandes usuarios a tener un sistema de gestión de energía, nombrar un gestor energético, informar cada año y pasar una auditoría externa. Los informes del organismo revisados para esta vista no separan la energía del chancado de la de la molienda."
+      }
+    ],
+    "setting": {
+      "en": "The class of operations is the large and medium open-pit copper mine with a concentrator. Its rules are an energy efficiency law and yearly reporting to the national agency. Its data come from an agency survey that covers nearly all national fine copper production. Its technology is gyratory and cone crushers with automatic setting regulation, simulation models and a first wave of artificial intelligence.",
+      "es": "La clase de operaciones es la mina de cobre a cielo abierto, grande y mediana, con planta concentradora. Sus reglas son una ley de eficiencia energética y el informe anual al organismo nacional. Sus datos vienen de un levantamiento del organismo que cubre casi toda la producción nacional de cobre fino. Su tecnología son chancadores giratorios y de cono con regulación automática del ajuste, modelos de simulación y una primera ola de inteligencia artificial."
+    },
+    "forces": [
+      {
+        "force": {
+          "en": "Ore gets lower in grade, harder and deeper",
+          "es": "El mineral es de menor ley, más duro y más profundo"
+        },
+        "direction": "rising"
+      },
+      {
+        "force": {
+          "en": "Electricity demand of concentration grows, with an energy management law behind it",
+          "es": "La demanda eléctrica de la concentración crece, con una ley de gestión de energía detrás"
+        },
+        "direction": "rising"
+      },
+      {
+        "force": {
+          "en": "Water scarcity pushes seawater desalination and pumping, adding power per tonne",
+          "es": "La escasez de agua impulsa la desalación y el bombeo de agua de mar, y suma energía por tonelada"
+        },
+        "direction": "rising"
+      },
+      {
+        "force": {
+          "en": "Ore variability and wear that a fixed setting cannot follow",
+          "es": "Variabilidad del mineral y desgaste que un ajuste fijo no puede seguir"
+        },
+        "direction": "steady"
+      }
+    ],
+    "evidence": [
+      {
+        "statement": {
+          "en": "Copper mining takes about one third of national electricity in Chile, and the agency projects 33.2 terawatt-hours for the sector in 2034.",
+          "es": "La minería del cobre usa cerca de un tercio de la electricidad nacional en Chile, y el organismo proyecta 33,2 teravatios hora para el sector en 2034."
+        },
+        "source": "cochilco-projection"
+      },
+      {
+        "statement": {
+          "en": "In its stated policies scenario, the International Energy Agency finds that announced projects leave an implied 30 percent copper deficit in 2035, citing declining ore grades.",
+          "es": "En su escenario de políticas declaradas, la Agencia Internacional de Energía halla un déficit implícito de cobre de 30 por ciento en 2035 y cita la baja de leyes."
+        },
+        "source": "iea-outlook"
+      },
+      {
+        "statement": {
+          "en": "The energy efficiency law covers about 94 percent of the copper sector, and 98 percent of the covered operations already have an energy management system.",
+          "es": "La ley de eficiencia energética cubre cerca del 94 por ciento del sector cuprífero, y el 98 por ciento de las operaciones cubiertas ya tiene un sistema de gestión energética."
+        },
+        "source": "cochilco-energy"
+      },
+      {
+        "statement": {
+          "en": "Research on cone crushers finds that performance changes through the life of the liners, because the geometry optimised when new changes as it wears.",
+          "es": "La investigación sobre chancadores de cono halla que el rendimiento cambia durante la vida de los revestimientos, porque la geometría optimizada cuando son nuevos cambia con el desgaste."
+        },
+        "source": "liner-wear"
+      }
+    ]
+  },
+  "situation": {
+    "key_message": {
+      "en": "Each role holds part of the picture, and every tool in use needs survey data of the real machine or has been tested outside concentrators.",
+      "es": "Cada rol tiene una parte del cuadro, y cada herramienta en uso necesita datos de la máquina real o se ha probado fuera de las concentradoras."
+    },
+    "roles": [
+      {
+        "role": {
+          "en": "Comminution or process engineer",
+          "es": "Ingeniero de procesos o de conminución"
+        },
+        "decides": {
+          "en": "The crushing and grinding flowsheet, the machines and the settings at design and at each review",
+          "es": "El diagrama de chancado y molienda, las máquinas y los ajustes en el diseño y en cada revisión"
+        },
+        "needs": {
+          "en": "Ore hardness and variability, plant survey data, and a way to compare options before building",
+          "es": "Dureza y variabilidad del mineral, datos de muestreo de la planta y una forma de comparar opciones antes de construir"
+        }
+      },
+      {
+        "role": {
+          "en": "Plant operator and control-room supervisor",
+          "es": "Operador de planta y supervisor de sala de control"
+        },
+        "decides": {
+          "en": "Daily setpoints, when to change a setting or speed, and when to stop",
+          "es": "Los valores objetivo diarios, cuándo cambiar un ajuste o una velocidad y cuándo detener"
+        },
+        "needs": {
+          "en": "Live feed, power and product signals, clear limits and alarms that mean something",
+          "es": "Señales en vivo de alimentación, potencia y producto, límites claros y alarmas que signifiquen algo"
+        }
+      },
+      {
+        "role": {
+          "en": "Maintenance and reliability",
+          "es": "Mantenimiento y confiabilidad"
+        },
+        "decides": {
+          "en": "When to change liners and when to reline or repair",
+          "es": "Cuándo cambiar revestimientos y cuándo renovar o reparar"
+        },
+        "needs": {
+          "en": "The wear state of the liners, the schedule of stops and spare parts",
+          "es": "El estado de desgaste de los revestimientos, el calendario de detenciones y los repuestos"
+        }
+      },
+      {
+        "role": {
+          "en": "Energy manager",
+          "es": "Gestor energético"
+        },
+        "decides": {
+          "en": "Energy targets, indicators and the action plan, and the yearly report",
+          "es": "Las metas de energía, los indicadores y el plan de acción, y el informe anual"
+        },
+        "needs": {
+          "en": "Consumption by stage and per tonne of product, and savings that can be verified",
+          "es": "Consumo por etapa y por tonelada de producto, y ahorros que se puedan verificar"
+        }
+      },
+      {
+        "role": {
+          "en": "Blast and mine-to-mill engineer",
+          "es": "Ingeniero de tronadura y de mina a molino"
+        },
+        "decides": {
+          "en": "The fragmentation that reaches the crusher",
+          "es": "La fragmentación que llega al chancador"
+        },
+        "needs": {
+          "en": "How the crusher and the mill respond to feed size",
+          "es": "Cómo responden el chancador y el molino al tamaño de la alimentación"
+        }
+      }
+    ],
+    "interaction": {
+      "en": "The study sets the crusher for a design ore, the plant runs it as ore and liners change, and the energy manager reports the result once a year.",
+      "es": "El estudio fija el chancador para un mineral de diseño, la planta lo opera mientras cambian mineral y revestimientos, y el gestor energético informa el resultado cada año."
+    },
+    "state_of_the_art": [
+      {
+        "approach": {
+          "en": "Empirical energy laws such as the work index",
+          "es": "Leyes empíricas de energía, como el índice de trabajo"
+        },
+        "achieves": {
+          "en": "A simple, accepted way to size mills and estimate energy, used for 60 years",
+          "es": "Una forma simple y aceptada de dimensionar molinos y estimar energía, usada por 60 años"
+        },
+        "falls_short": {
+          "en": "It gives no full circuit mass balance or size distribution, and changed test procedures shift results",
+          "es": "No da un balance de masa completo del circuito ni la distribución de tamaños, y cambiar los ensayos altera los resultados"
+        },
+        "source": "bond-method"
+      },
+      {
+        "approach": {
+          "en": "Population-balance models of crushers",
+          "es": "Modelos de balance poblacional de chancadores"
+        },
+        "achieves": {
+          "en": "They fit industrial surveys closely once calibrated, in published cases on mine data",
+          "es": "Ajustan de cerca los muestreos industriales una vez calibrados, en casos publicados con datos de mina"
+        },
+        "falls_short": {
+          "en": "They need surveys of the real machine, and describe the stage, not the wear that changes it",
+          "es": "Necesitan muestreos de la máquina real y describen la etapa, no el desgaste que la cambia"
+        },
+        "source": "pbm-calibration"
+      },
+      {
+        "approach": {
+          "en": "Discrete-element simulation of crushers",
+          "es": "Simulación de chancadores por elementos discretos"
+        },
+        "achieves": {
+          "en": "It shows relatively good correspondence with an industrial secondary crusher at two settings",
+          "es": "Muestra una correspondencia relativamente buena con un chancador secundario industrial en dos ajustes"
+        },
+        "falls_short": {
+          "en": "The sources of discrepancy were not identified, and only two settings were tested",
+          "es": "No se identificaron las fuentes de discrepancia, y solo se probaron dos ajustes"
+        },
+        "source": "dem-crusher"
+      },
+      {
+        "approach": {
+          "en": "Automatic setting and speed control of cone crushers",
+          "es": "Control automático de ajuste y velocidad en chancadores de cono"
+        },
+        "achieves": {
+          "en": "A setting algorithm raised the saleable yield of a stage 3.5 percent, and a speed algorithm 4.2 to 6.9 percent",
+          "es": "Un algoritmo de ajuste subió 3,5 por ciento el rendimiento vendible de una etapa, y uno de velocidad entre 4,2 y 6,9 por ciento"
+        },
+        "falls_short": {
+          "en": "Tests were at aggregate plants, not concentrators, and the control theory is not thoroughly scrutinised",
+          "es": "Las pruebas fueron en plantas de áridos, no en concentradoras, y la teoría de control no está bien examinada"
+        },
+        "source": "realtime-control"
+      },
+      {
+        "approach": {
+          "en": "High-pressure grinding rolls as an energy-saving flowsheet",
+          "es": "Rodillos de molienda de alta presión que ahorran energía"
+        },
+        "achieves": {
+          "en": "They saved 25.1 and 30.2 percent of comminution energy in two design cases for hard ores",
+          "es": "Ahorraron 25,1 y 30,2 por ciento de la energía de conminución en dos casos de diseño para minerales duros"
+        },
+        "falls_short": {
+          "en": "The saving fell to 7.7 and 18.4 percent over the complete circuits, because extra equipment is needed",
+          "es": "El ahorro bajó a 7,7 y 18,4 por ciento en los circuitos completos, porque se necesita equipo adicional"
+        },
+        "source": "hpgr-circuits"
+      }
+    ],
+    "status": {
+      "heading": {
+        "en": "Artificial intelligence in large mines",
+        "es": "Inteligencia artificial en la gran minería"
+      },
+      "value": {
+        "en": "44",
+        "es": "44"
+      },
+      "unit": {
+        "en": "percent of large Chilean mining operations implement or pilot artificial intelligence tools in extraction and processing",
+        "es": "por ciento de las grandes operaciones mineras chilenas implementa o pilotea herramientas de inteligencia artificial en extracción y procesamiento"
+      },
+      "date": {
+        "en": "2024",
+        "es": "2024"
+      },
+      "source": "workforce-study"
+    }
+  },
+  "trends": {
+    "key_message": {
+      "en": "Energy reporting is mandatory now, power demand outruns output within ten years, and knowledge of settings and liners is retiring.",
+      "es": "El reporte de energía es obligatorio hoy, la demanda eléctrica supera a la producción en diez años y el conocimiento de ajustes y revestimientos se está jubilando."
+    },
+    "items": [
+      {
+        "trend": {
+          "en": "Mandatory energy management in large end users",
+          "es": "Gestión de energía obligatoria en los grandes usuarios"
+        },
+        "kind": "regulatory",
+        "direction": "rising",
+        "horizon": "now",
+        "signal": {
+          "statement": {
+            "en": "A law of February 2021 and its regulation in force since 2022 cover about 94 percent of the copper sector, with an external audit every three years.",
+            "es": "Una ley de febrero de 2021 y su reglamento vigente desde 2022 cubren cerca del 94 por ciento del sector del cobre, con una auditoría externa cada tres años."
+          },
+          "source": "cochilco-energy"
+        },
+        "effect": {
+          "en": "The energy manager starts asking the process engineer and the control room for energy per tonne by stage.",
+          "es": "El gestor energético empieza a pedir al ingeniero de procesos y a la sala de control la energía por tonelada y por etapa."
+        },
+        "confidence": "high"
+      },
+      {
+        "trend": {
+          "en": "Electricity demand of concentration grows faster than output",
+          "es": "La demanda eléctrica de la concentración crece más rápido que la producción"
+        },
+        "kind": "market",
+        "direction": "rising",
+        "horizon": "ten_years",
+        "signal": {
+          "statement": {
+            "en": "The agency projects sector electricity up from 27.6 to 33.2 terawatt-hours between 2025 and 2034, plus 20.2 percent, against plus 8.3 percent for fine copper.",
+            "es": "Según la proyección del organismo, la electricidad del sector sube 20,2 por ciento entre 2025 y 2034, de 27,6 a 33,2 teravatios hora, y el cobre fino 8,3 por ciento."
+          },
+          "source": "cochilco-projection"
+        },
+        "effect": {
+          "en": "Every concentrator role carries more energy per tonne of metal, process engineers and the energy manager first.",
+          "es": "Todos los roles de la concentradora cargan más energía por tonelada de metal, primero los ingenieros de procesos y el gestor energético."
+        },
+        "confidence": "medium"
+      },
+      {
+        "trend": {
+          "en": "Digital tools reach processing, while digital twins lag",
+          "es": "Las herramientas digitales llegan al procesamiento, y los gemelos digitales van atrás"
+        },
+        "kind": "technological",
+        "direction": "rising",
+        "horizon": "two_years",
+        "signal": {
+          "statement": {
+            "en": "In 2024, 44 percent of large operations used or piloted artificial intelligence in extraction and processing, and 28 percent used or piloted digital twins in processing.",
+            "es": "En 2024, el 44 por ciento de las grandes operaciones usaba o pilotaba inteligencia artificial en extracción y procesamiento, y el 28 por ciento, gemelos digitales en procesamiento."
+          },
+          "source": "workforce-study"
+        },
+        "effect": {
+          "en": "The control-room supervisor and the process engineer get models to decide with, and the operator must trust their output.",
+          "es": "El supervisor de sala de control y el ingeniero de procesos reciben modelos para decidir, y el operador debe confiar en sus resultados."
+        },
+        "confidence": "medium"
+      },
+      {
+        "trend": {
+          "en": "Workforce renewal",
+          "es": "Renovación de la fuerza laboral"
+        },
+        "kind": "practice",
+        "direction": "rising",
+        "horizon": "ten_years",
+        "signal": {
+          "statement": {
+            "en": "The workforce study projects 36,895 new workers needed by 2034, 87.4 percent to replace retirements, including 13,073 maintenance technicians.",
+            "es": "El estudio de fuerza laboral proyecta 36.895 trabajadores nuevos hasta 2034, el 87,4 por ciento para reemplazar jubilaciones, entre ellos 13.073 técnicos de mantenimiento."
+          },
+          "source": "workforce-study"
+        },
+        "effect": {
+          "en": "Knowledge of settings, ore and liners leaves with retirements, and maintenance staff and operators are hit first.",
+          "es": "El conocimiento de ajustes, mineral y revestimientos se va con las jubilaciones, y el personal de mantenimiento y los operadores son los primeros afectados."
+        },
+        "confidence": "medium"
+      },
+      {
+        "trend": {
+          "en": "Energy-saving flowsheets and pre-concentration",
+          "es": "Diagramas que ahorran energía y preconcentración"
+        },
+        "kind": "technological",
+        "direction": "rising",
+        "horizon": "ten_years",
+        "signal": {
+          "statement": {
+            "en": "Two design cases for hard ores found complete-circuit savings of 7.7 and 18.4 percent from high-pressure grinding rolls.",
+            "es": "Dos casos de diseño para minerales duros hallaron ahorros de 7,7 y 18,4 por ciento en el circuito completo con rodillos de molienda de alta presión."
+          },
+          "source": "hpgr-circuits"
+        },
+        "effect": {
+          "en": "The process engineer decides the split between crushing and grinding with more options and more risk, and maintenance faces different wear.",
+          "es": "El ingeniero de procesos decide la división entre chancado y molienda con más opciones y más riesgo, y mantenimiento enfrenta un desgaste distinto."
+        },
+        "confidence": "low"
+      }
+    ]
+  },
+  "proposal": {
+    "key_message": {
+      "en": "Run crushing as one managed system with the ore and the mill, starting with a quarterly survey of the circuit by the process engineer.",
+      "es": "Operar el chancado como un solo sistema gestionado con el mineral y el molino, empezando por un muestreo trimestral del circuito a cargo del ingeniero de procesos."
+    },
+    "paragraphs": [
+      {
+        "en": "Crushing is run today as a machine set once at design. The proposal is to run it as one managed system with the ore and the mill. Measure the feed and the product, and keep the setting and speed following the ore and the liners. Decide the split of work between crushing and grinding with the mill in view.",
+        "es": "Hoy el chancado se opera como una máquina ajustada una vez en el diseño. La propuesta es operarlo como un solo sistema gestionado con el mineral y el molino. Se mide la alimentación y el producto, y se hace que el ajuste y la velocidad sigan al mineral y a los revestimientos. Se decide la división del trabajo entre chancado y molienda con el molino a la vista."
+      },
+      {
+        "en": "Each part answers a cause. Harder ore is met by choosing the stage balance on measured hardness, and a fixed split by comparing flowsheet options with data of the plant before committing. Drift is met by setting control tied to liner state, and the lost hand-off by one record from the design study to the shift.",
+        "es": "Cada parte responde a una causa. El mineral más duro se enfrenta eligiendo el equilibrio entre etapas con la dureza medida. La división fija se enfrenta comparando opciones de diagrama con datos de la planta antes de decidir. La deriva se enfrenta con un control del ajuste atado al estado de los revestimientos. El traspaso perdido se enfrenta con un solo registro desde el estudio de diseño hasta el turno."
+      }
+    ],
+    "four_cs": [
+      {
+        "c": {
+          "en": "Choice",
+          "es": "Elección"
+        },
+        "applies": {
+          "en": "The plant can use an engineering model and a learned model side by side, open or proprietary, and keep the one that predicts its own crusher surveys best.",
+          "es": "La planta puede usar lado a lado un modelo de ingeniería y uno aprendido, abiertos o propietarios, y conservar el que mejor predice los muestreos de su propio chancador."
+        }
+      },
+      {
+        "c": {
+          "en": "Context",
+          "es": "Contexto"
+        },
+        "applies": {
+          "en": "A setting or a speed means something only against the ore hardness, the liner wear, the feed size and what the mill downstream does with the product.",
+          "es": "Un ajuste o una velocidad solo significan algo frente a la dureza del mineral, el desgaste de los revestimientos, el tamaño de alimentación y el molino que recibe el producto."
+        }
+      },
+      {
+        "c": {
+          "en": "Cost",
+          "es": "Costo"
+        },
+        "applies": {
+          "en": "Show what a decision aid costs next to the energy, wear and throughput it changes, per tonne of fine metal.",
+          "es": "Mostrar lo que cuesta una ayuda de decisión junto a la energía, el desgaste y la capacidad que cambia, por tonelada de metal fino."
+        }
+      },
+      {
+        "c": {
+          "en": "Control",
+          "es": "Control"
+        },
+        "applies": {
+          "en": "One governed record of plant data, models and agents, so that any change to a crusher setpoint has an owner, a limit and an audit trail.",
+          "es": "Un registro gobernado de datos de planta, modelos y agentes, de modo que todo cambio al valor objetivo de un chancador tenga responsable, límite y huella de auditoría."
+        }
+      }
+    ],
+    "actions": [
+      {
+        "action": {
+          "en": "Survey the crushing circuit every quarter and calibrate the stage model against it",
+          "es": "Muestrear el circuito de chancado cada trimestre y calibrar con él el modelo de la etapa"
+        },
+        "owner": {
+          "en": "Comminution or process engineer",
+          "es": "Ingeniero de procesos o de conminución"
+        },
+        "horizon": {
+          "en": "Two quarters",
+          "es": "Dos trimestres"
+        },
+        "check": {
+          "en": "Predicted and measured product size and throughput agree to a tolerance the team sets in advance",
+          "es": "El tamaño de producto y la capacidad predichos y medidos coinciden dentro de una tolerancia fijada de antemano por el equipo"
+        }
+      },
+      {
+        "action": {
+          "en": "Tie setting and speed limits to the measured liner state and feed hardness, with the operator approving each change",
+          "es": "Atar los límites de ajuste y velocidad al estado medido de los revestimientos y a la dureza de la alimentación, con el operador aprobando cada cambio"
+        },
+        "owner": {
+          "en": "Plant operator and control-room supervisor",
+          "es": "Operador de planta y supervisor de sala de control"
+        },
+        "horizon": {
+          "en": "Within the next year",
+          "es": "Dentro del próximo año"
+        },
+        "check": {
+          "en": "Share of shifts at a setting inside the limits, and saleable product per hour against the fixed-setting baseline",
+          "es": "Proporción de turnos con un ajuste dentro de los límites, y producto vendible por hora frente a la línea base de ajuste fijo"
+        }
+      },
+      {
+        "action": {
+          "en": "Record the liner wear profile and hours against the setting history, and plan relines from them",
+          "es": "Registrar el perfil de desgaste y las horas de los revestimientos junto al historial de ajustes, y planificar las renovaciones con ellos"
+        },
+        "owner": {
+          "en": "Maintenance and reliability",
+          "es": "Mantenimiento y confiabilidad"
+        },
+        "horizon": {
+          "en": "Within the next year",
+          "es": "Dentro del próximo año"
+        },
+        "check": {
+          "en": "Liner life and unplanned stops per liner set, before and after",
+          "es": "Vida de los revestimientos y detenciones no programadas por juego de revestimientos, antes y después"
+        }
+      },
+      {
+        "action": {
+          "en": "Report energy per tonne by stage, not only for the concentrator as a whole",
+          "es": "Informar la energía por tonelada por etapa, y no solo para la concentradora completa"
+        },
+        "owner": {
+          "en": "Energy manager",
+          "es": "Gestor energético"
+        },
+        "horizon": {
+          "en": "Within the first year",
+          "es": "Dentro del primer año"
+        },
+        "check": {
+          "en": "The yearly energy report lists crushing, grinding and the rest separately",
+          "es": "El informe anual de energía lista por separado el chancado, la molienda y el resto"
+        }
+      },
+      {
+        "action": {
+          "en": "Compare the crushing and grinding split on at least two flowsheet options, with the specific energy of the mill in the case",
+          "es": "Comparar la división entre chancado y molienda en al menos dos opciones de diagrama, con la energía específica del molino incluida"
+        },
+        "owner": {
+          "en": "Comminution or process engineer",
+          "es": "Ingeniero de procesos o de conminución"
+        },
+        "horizon": {
+          "en": "Within the next year",
+          "es": "Dentro del próximo año"
+        },
+        "check": {
+          "en": "The comparison states the saving over the complete circuit, not over one stage alone",
+          "es": "La comparación indica el ahorro en el circuito completo, y no en una sola etapa"
+        }
+      },
+      {
+        "action": {
+          "en": "Pass the feed size distribution from blasting to the crusher team after each blast",
+          "es": "Pasar la distribución de tamaños de la alimentación desde la tronadura al equipo del chancador después de cada tronadura"
+        },
+        "owner": {
+          "en": "Blast and mine-to-mill engineer",
+          "es": "Ingeniero de tronadura y de mina a molino"
+        },
+        "horizon": {
+          "en": "Within the next year",
+          "es": "Dentro del próximo año"
+        },
+        "check": {
+          "en": "Feed size per blast is available at the crusher and used in the review",
+          "es": "El tamaño de alimentación por tronadura está disponible en el chancador y se usa en la revisión"
+        }
+      }
+    ],
+    "risks": [
+      {
+        "en": "Savings in one stage can be lost in the next, so a gain must be judged over the complete circuit.",
+        "es": "Los ahorros de una etapa pueden perderse en la siguiente, así que una ganancia debe juzgarse en el circuito completo."
+      },
+      {
+        "en": "A model that fits a machine in a laboratory or at aggregate plants can fail on the ore of a concentrator.",
+        "es": "Un modelo que ajusta una máquina en laboratorio o en plantas de áridos puede fallar con el mineral de una concentradora."
+      },
+      {
+        "en": "Control changes that raise yield can shorten liner or machine life, because fatigue is a recognised concern.",
+        "es": "Los cambios de control que suben el rendimiento pueden acortar la vida de los revestimientos o de la máquina, porque la fatiga es una preocupación reconocida."
+      },
+      {
+        "en": "Operators and maintenance staff may retire faster than knowledge is recorded.",
+        "es": "Operadores y personal de mantenimiento pueden jubilarse más rápido de lo que se registra el conocimiento."
+      }
+    ],
+    "unknowns": [
+      {
+        "en": "The share of crushing in the energy of Chilean concentrators is not separated in the agency reports read for this view.",
+        "es": "La parte del chancado en la energía de las concentradoras chilenas no está separada en los informes del organismo revisados para esta vista."
+      },
+      {
+        "en": "The cost of liner wear and crusher downtime per tonne at sector level is not published at any primary source found.",
+        "es": "El costo del desgaste de revestimientos y de las detenciones del chancador por tonelada a nivel sectorial no está publicado en ninguna fuente primaria encontrada."
+      },
+      {
+        "en": "The weights of the causes are the author's judgement of relative size, and no source measures them.",
+        "es": "Los pesos de las causas son el juicio del autor sobre su tamaño relativo, y ninguna fuente los mide."
+      },
+      {
+        "en": "How many Chilean plants run an automatic setting regulation on crushers is not counted at any source read.",
+        "es": "Cuántas plantas chilenas operan una regulación automática del ajuste en sus chancadores no está contado en ninguna fuente revisada."
+      }
+    ],
+    "handoff": {
+      "en": "The technical view explores one part of this problem, the setting and speed of a crusher against its feed, showing product size, throughput and power, without modelling liner wear.",
+      "es": "La vista técnica explora una parte del problema, el ajuste y la velocidad de un chancador según su alimentación, con tamaño de producto, capacidad y potencia, sin modelar el desgaste."
+    }
+  },
+  "illustrations": {
+    "pain": {
+      "file": "executive/pain.svg",
+      "caption": {
+        "en": "A hard, low-grade ore meets a crusher with a worn liner and an old setting, so the mill gets a coarse feed and the power meter climbs.",
+        "es": "Un mineral duro de baja ley llega a un chancador con revestimiento gastado y ajuste antiguo, y el molino recibe carga gruesa mientras sube el medidor de potencia."
+      }
+    },
+    "situation": {
+      "file": "executive/situation.svg",
+      "caption": {
+        "en": "Five roles each hold part of the picture, the study reaches the plant as a report, and every tool in use has a gap.",
+        "es": "Cinco roles tienen cada uno una parte del cuadro, el estudio llega a la planta como un informe, y cada herramienta en uso tiene una brecha."
+      }
+    },
+    "proposal": {
+      "file": "executive/proposal.svg",
+      "caption": {
+        "en": "The same circuit with the liner measured and the setting following it: an even product, a lower power meter and a planned reline.",
+        "es": "El mismo circuito con el revestimiento medido y el ajuste siguiéndolo: un producto parejo, un medidor de potencia más bajo y una renovación planificada."
+      }
+    }
+  },
+  "sources": [
+    {
+      "id": "cochilco-energy",
+      "title": {
+        "en": "Chilean Copper Commission (Cochilco), Energy consumption of copper mining in 2024, November 2025",
+        "es": "Comisión Chilena del Cobre (Cochilco), Consumo de energía de la minería del cobre al año 2024, noviembre de 2025"
+      },
+      "url": "https://www.cochilco.cl/web/download/991/2025/15151/consumo-de-energia-en-la-mineria-del-cobre-actualizacion-ano-2024.pdf",
+      "note": {
+        "en": "Executive summary, the sections on the concentrator share and on energy per tonne, and the chapter on the energy law.",
+        "es": "Resumen ejecutivo, las secciones sobre la parte de la concentradora y sobre la energía por tonelada, y el capítulo sobre la ley de energía."
+      }
+    },
+    {
+      "id": "cochilco-projection",
+      "title": {
+        "en": "Chilean Copper Commission, Projection of electricity consumption of copper mining 2025 to 2034, 2026",
+        "es": "Comisión Chilena del Cobre, Proyección de consumo de energía eléctrica de la minería del cobre 2025 a 2034, 2026"
+      },
+      "url": "https://www.cochilco.cl/web/download/1014/2026/15677/proyeccion-de-consumo-de-energia-electrica-de-la-mineria-del-cobre-periodo-2025-2034.pdf",
+      "note": {
+        "en": "Executive summary and introduction; figures are for Chile.",
+        "es": "Resumen ejecutivo e introducción; las cifras son de Chile."
+      }
+    },
+    {
+      "id": "doe-bandwidth",
+      "title": {
+        "en": "United States Department of Energy, Mining Industry Energy Bandwidth Study, 2007",
+        "es": "Departamento de Energía de Estados Unidos, Estudio del margen de energía de la industria minera, 2007"
+      },
+      "url": "https://www.energy.gov/sites/prod/files/2013/11/f4/mining_bandwidth.pdf",
+      "note": {
+        "en": "Data year 2000, so the split is old and shown only as a structure.",
+        "es": "Datos del año 2000, así que la división es antigua y se muestra solo como estructura."
+      }
+    },
+    {
+      "id": "exergy",
+      "title": {
+        "en": "Jacob, Cooper, Gutowski and Ramos-Grez, The efficiency of copper ore comminution: a thermodynamic exergy analysis, Minerals Engineering, 2017",
+        "es": "Jacob, Cooper, Gutowski y Ramos-Grez, La eficiencia de la conminución de mineral de cobre: un análisis termodinámico de exergía, Minerals Engineering, 2017"
+      },
+      "url": "https://ing.uc.cl/?p=49101",
+      "note": {
+        "en": "The faculty record of the paper; laboratory scale.",
+        "es": "El registro de la facultad sobre el artículo; escala de laboratorio."
+      }
+    },
+    {
+      "id": "iea-outlook",
+      "title": {
+        "en": "International Energy Agency, Global Critical Minerals Outlook 2025, outlook for key minerals",
+        "es": "Agencia Internacional de Energía, Perspectivas globales de minerales críticos 2025, perspectivas de minerales clave"
+      },
+      "url": "https://www.iea.org/reports/global-critical-minerals-outlook-2025/outlook-for-key-minerals"
+    },
+    {
+      "id": "liner-wear",
+      "title": {
+        "en": "Lindqvist and Evertsson, Prediction of worn geometry in cone crushers, Minerals Engineering, 2003",
+        "es": "Lindqvist y Evertsson, Predicción de la geometría desgastada en chancadores de cono, Minerals Engineering, 2003"
+      },
+      "url": "https://research.chalmers.se/en/publication/10218"
+    },
+    {
+      "id": "bond-method",
+      "title": {
+        "en": "Lacerda Gomes and colleagues, Development of ball mill test for simulation of industrial circuit, REM Revista Escola de Minas, 2016",
+        "es": "Lacerda Gomes y colegas, Desarrollo de un ensayo de molino de bolas para simular un circuito industrial, REM Revista Escola de Minas, 2016"
+      },
+      "url": "https://www.redalyc.org/pdf/564/56444608012.pdf"
+    },
+    {
+      "id": "pbm-calibration",
+      "title": {
+        "en": "Duarte and colleagues, Calibration and validation of a cone crusher model with industrial data, Minerals, 2021",
+        "es": "Duarte y colegas, Calibración y validación de un modelo de chancador de cono con datos industriales, Minerals, 2021"
+      },
+      "url": "https://doi.org/10.3390/min11111256"
+    },
+    {
+      "id": "dem-crusher",
+      "title": {
+        "en": "Quist and Evertsson, Cone crusher modelling and simulation using the discrete element method, Minerals Engineering, 2016",
+        "es": "Quist y Evertsson, Modelación y simulación de chancadores de cono con el método de elementos discretos, Minerals Engineering, 2016"
+      },
+      "url": "https://research.chalmers.se/en/publication/225456"
+    },
+    {
+      "id": "realtime-control",
+      "title": {
+        "en": "Hulthen, Real-time optimization of cone crushers, doctoral thesis, Chalmers University of Technology, 2010",
+        "es": "Hulthen, Optimización en tiempo real de chancadores de cono, tesis doctoral, Universidad Tecnológica de Chalmers, 2010"
+      },
+      "url": "https://research.chalmers.se/en/publication/128844",
+      "note": {
+        "en": "Full-scale aggregate plants, not concentrators.",
+        "es": "Plantas de áridos a escala real, no concentradoras."
+      }
+    },
+    {
+      "id": "hpgr-circuits",
+      "title": {
+        "en": "Rosario and Hall, Energy requirements of high-pressure grinding rolls and semi-autogenous mill circuits in hard ore applications, Journal of the Southern African Institute of Mining and Metallurgy, 2010",
+        "es": "Rosario y Hall, Energía de circuitos de rodillos de alta presión y de molino semiautógeno en minerales duros, Journal of the Southern African Institute of Mining and Metallurgy, 2010"
+      },
+      "url": "https://www.scielo.org.za/pdf/jsaimm/v110n3/04.pdf"
+    },
+    {
+      "id": "workforce-study",
+      "title": {
+        "en": "Alianza CCM-Eleva, Workforce study of Chilean large-scale mining 2025 to 2034, December 2025",
+        "es": "Alianza CCM-Eleva, Estudio de fuerza laboral de la gran minería chilena 2025 a 2034, diciembre de 2025"
+      },
+      "url": "https://ccm-eleva.cl/wp-content/uploads/2025/12/Estudio-Fuerza-Laboral-de-la-Gran-Mineria-2025-2034.pdf",
+      "note": {
+        "en": "Digital adoption counts of 2024, which include pilots, and the workforce projection to 2034.",
+        "es": "Conteos de adopción digital de 2024, que incluyen pilotos, y la proyección de fuerza laboral a 2034."
+      }
+    }
+  ]
+}
