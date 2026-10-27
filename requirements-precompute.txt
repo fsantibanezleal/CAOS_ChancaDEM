@@ -1,3 +1,9 @@
 # The offline lane. Its engines are pinned in data-pipeline/requirements.txt, one exact pin per engine the research
 # chose, each with a card in docs/frameworks/ and a verified licence.
 -r data-pipeline/requirements.txt
+# The learned tier (stages/train.py trains, stages/evaluate.py scores; the web runs onnxruntime-web 1.27.0, the same
+# runtime version as onnxruntime below). torch comes from the CPU index:
+#   pip install torch==2.12.1 --index-url https://download.pytorch.org/whl/cpu
+torch==2.12.1
+onnx==1.22.0
+onnxruntime==1.27.0
