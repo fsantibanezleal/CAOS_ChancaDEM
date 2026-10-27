@@ -7,6 +7,7 @@ import { BoxGeometry, Group, LatheGeometry, Mesh, MeshBasicMaterial, MeshStandar
 import { chamberProfile, jawProfile, profilePolylines } from '../../engine/chamber';
 import type { Operating } from '../../engine/types';
 import type { ScenePalette } from './palette';
+import { DEFAULT_VIEW_DIR } from './fit';
 import type { Placer } from './rocks';
 
 export interface Disposable {
@@ -17,6 +18,8 @@ export interface Chamber {
   group: Group;
   /** The vertices of the chamber's own meshes at rest (world space), for the camera fit. */
   points: Vector3[];
+  /** From the target to the camera: the view the chamber is framed in. */
+  viewDir: Vector3;
   placer: Placer;
   zTop: number;
   /** Advances the machine's motion by k frames at animation speed spd. */
@@ -82,6 +85,7 @@ function buildRevolution(op: Operating, palette: ScenePalette): Chamber {
   return {
     group,
     points,
+    viewDir: DEFAULT_VIEW_DIR.clone(),
     placer,
     zTop,
     mech: (k, spd) => {
@@ -158,6 +162,8 @@ function buildJaw(op: Operating, palette: ScenePalette): Chamber {
   return {
     group,
     points,
+    // the jaw is two plates of a planar mechanism: a higher, more oblique view opens the V and shows the plates' depth
+    viewDir: new Vector3(0.72, 1.3, 0.43),
     placer,
     zTop,
     mech: (k, spd) => {
