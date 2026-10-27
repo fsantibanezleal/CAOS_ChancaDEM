@@ -13,7 +13,7 @@ import { checkEnvelope } from './envelope';
 import type { Operating, CrusherResult, Regime } from './types';
 
 const TOP_MM = 256;     // sieve top size [mm]
-const K = 28;           // sieve classes (√2 series → covers 256mm → ~0.4mm)
+const K = 28;           // sieve classes (square-root-of-two series from 256 mm down to 256 / 2^14 = 0.0156 mm)
 const READOUT_SIZES = [1, 4, 8, 16, 32];
 
 const EDGES = makeGrid(TOP_MM, K);
