@@ -99,11 +99,24 @@ describe('the point of view', () => {
     const pos = scene.camera.position.clone();
     const target = controls.target.clone();
     scene.setOperating({ ...OP, cssMm: 30 }, 14, 80);
-    scene.setOperating({ ...OP, machine: 'jaw' }, 14, 80);
+    scene.setOperating({ ...OP, throwMm: 30 }, 14, 80);
     expect(scene.camera.position.toArray()).toEqual(pos.toArray());
     expect(controls.target.toArray()).toEqual(target.toArray());
     scene.resetView();
     expect(scene.camera.position.toArray()).not.toEqual(pos.toArray());
+  });
+  it('re-fits on a machine change and not on a CSS change', () => {
+    const { scene, controls } = make();
+    controls.emit('change');
+    scene.camera.position.add(new Vector3(100, 50, 20));
+    const moved = scene.camera.position.clone();
+    scene.setOperating({ ...OP, cssMm: 35 }, 14, 80);
+    expect(scene.camera.position.toArray()).toEqual(moved.toArray());
+    scene.setOperating({ ...OP, cssMm: 35, machine: 'gyratory' }, 14, 80);
+    expect(scene.camera.position.toArray()).not.toEqual(moved.toArray());
+    const fitted = scene.camera.position.clone();
+    scene.setOperating({ ...OP, cssMm: 40, machine: 'gyratory' }, 14, 80);
+    expect(scene.camera.position.toArray()).toEqual(fitted.toArray());
   });
   it('keeps even an untouched view across an operating-point change', () => {
     const { scene } = make();

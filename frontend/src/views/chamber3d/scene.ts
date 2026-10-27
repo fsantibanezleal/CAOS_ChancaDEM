@@ -57,6 +57,8 @@ export interface SceneOptions {
   initialPose?: Pose;
   /** Called when the reader moves the camera. */
   onUserMove?: (pose: Pose) => void;
+  /** Called when the scene re-fits the camera by itself (a machine change), so a stored pose is dropped. */
+  onRefit?: () => void;
 }
 
 export interface ChamberScene {
@@ -215,7 +217,14 @@ export function createChamberScene(o: SceneOptions): ChamberScene {
     render,
     setOperating(next, p80, f80) {
       if (disposed) return;
+      const machineChanged = next.machine !== op.machine;
       build(next, p80, f80);
+      // another machine is another chamber (a gyratory is twice a cone's height): re-fit; any other change keeps the view
+      if (machineChanged) {
+        userMoved = false;
+        fit();
+        o.onRefit?.();
+      }
       render();
     },
     setParams(p) {
