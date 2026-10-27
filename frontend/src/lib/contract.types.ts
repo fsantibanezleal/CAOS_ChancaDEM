@@ -360,7 +360,7 @@ export const SURROGATE_MODEL = {
   out_std: SERIES,
   graphs: { object: { float32: GRAPH('y'), int8: GRAPH('y') } },
   architecture: 'string',
-  training: { object: { seed: 'integer', n_train: 'integer', n_test: 'integer', sampler: 'string', torch_version: 'string' } },
+  training: { object: { seed: 'integer', n_train: 'integer', n_test: 'integer', sampler: 'string', torch_version: 'string', export_parity_max_abs: { optional: 'number' } } },
 } as const satisfies Record<string, Kind>;
 export type SurrogateModel = Of<{ readonly object: typeof SURROGATE_MODEL }>;
 
@@ -394,7 +394,7 @@ export const ANOMALY_MODEL = {
   train_recon_mean: 'number',
   graph: GRAPH('xr'),
   architecture: 'string',
-  training: { object: { seed: 'integer', n_train: 'integer', noise_std: 'number', torch_version: 'string' } },
+  training: { object: { seed: 'integer', n_train: 'integer', noise_std: 'number', torch_version: 'string', export_parity_max_abs: { optional: 'number' } } },
 } as const satisfies Record<string, Kind>;
 export type AnomalyModel = Of<{ readonly object: typeof ANOMALY_MODEL }>;
 
