@@ -3,7 +3,7 @@
 For each requirement of [`requirements.md`](requirements.md), the check that tries to break it: what was planted or
 refuted, and the test that plants it. `scripts/check_sdd.py` fails when a requirement has no row here (or two), when a
 check is empty, and when a gate names a test that does not exist. The guards themselves are attacked in
-`tests/adversarial/test_guards_reject_planted_defects.py`.
+the template's own planted-defect tests, which `scripts/instantiate.py` removes from a product.
 
 | requirement | adversarial check | gate |
 |---|---|---|

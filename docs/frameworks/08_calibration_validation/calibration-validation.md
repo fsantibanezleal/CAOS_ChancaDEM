@@ -37,14 +37,15 @@ From `data/derived/hp500/loo.json` (MAPE in percent), strict folds:
 
 Leaky folds (fit on all ten): t/h 10.95, 8.51 and 8.24 for M0, M1 and M2; kW 19.28, 12.00 and 9.46.
 
-The band: t/h half-width 238.5 t/h (20.8 percent of the mean), empirical coverage 0.90 against 0.80 nominal; kW half-width
-105.1 kW (36.5 percent), coverage 0.90.
+The band: t/h half-width 238.5 t/h (20.8 percent of the mean); kW half-width 105.1 kW (36.5 percent). Coverage against the
+0.80 nominal is measured two ways: in sample (sigma from the same ten residuals it is checked against) 0.90 on t/h and kW;
+nested out of sample (each survey's sigma from the other nine folds' residuals) 0.80 on t/h and 0.90 on kW.
 
 What this says, as the data stand:
 
-- **t/h, a genuine win over the baseline.** The strict LOO MAPE of the backbone, 12.09 percent, sits inside the 15
-  percent band the HP500 paper reports for its own fit (a figure carried from earlier releases, UNVERIFIED here), beats the
-  constant mean (18.29) and the label-shuffle control (25.04). The in-sample figure is 11.55 percent, so the held-out
+- **t/h, a genuine win over the baseline.** The strict LOO MAPE of the backbone, 12.09 percent, beats the
+  constant mean (18.29) and the label-shuffle control (25.04); no comparison with an error band of the paper is claimed,
+  because the repository holds no source for one. The in-sample figure is 11.55 percent, so the held-out
   number is not an in-sample artifact. The free-form model M2 is equally good on throughput (12.18); the backbone matches
   a two-parameter regression with one fitted scalar and a physical shape.
 - **kW, an honest negative for the backbone.** The strict MAPE of M0, 25.94 percent, is no better than the constant mean
@@ -54,7 +55,8 @@ What this says, as the data stand:
 - **M1, a null.** The bounded residual does not beat the backbone out of sample (13.45 against 12.09 on t/h, 25.37 against
   25.94 on kW, marginal), and its large leaky-versus-strict gap (t/h 8.51 against 13.45) is the overfitting that ten
   surveys invite. The product ships the backbone with its empirical band, not the residual, and says so.
-- The band's coverage of 0.90 against 0.80 nominal is within what ten points allow and is reported, not tuned.
+- The in-sample coverage of 0.90 flatters the band; the nested coverage, 0.80 on t/h, is the honest figure, and with ten
+  points either one moves by ten points per survey. Both are reported, not tuned.
 
 ## Where it runs
 
