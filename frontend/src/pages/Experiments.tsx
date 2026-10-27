@@ -1,170 +1,18 @@
-// Every case, read from its committed artifacts and compared with the theory. No number on this page is typed
-// in: the table and the chart are computed from the index, the manifests and the traces at load time (T13).
-import { Callout, Cite, DocPage, DocSection, Equation, Figure, PlotCard, Tabs, formatNumber, useShellLang } from '@fasl-work/caos-app-shell';
-import { UPlotChart } from '@fasl-work/caos-app-shell/chart';
-import { useMemo } from 'react';
-import { loadAllCases, useArtifact, type Loaded } from '../api/artifacts';
-import { finalSize, simulate } from '../engine/sir';
+// The Experiments page. Unit U7 rewrites it for the crusher. Until then the tabs that read the template example's SIR engine and its
+// old contract shapes (the cases, the comparison with the theory, the immunity) are removed (unit U2b-1), so the build holds; the page
+// keeps its frame and its metrics, protocol and datasets tabs.
+import { Callout, Cite, DocPage, DocSection, Equation, Figure, Tabs } from '@fasl-work/caos-app-shell';
 import { FlowFigure } from '../content/figures';
 import { P, useT } from '../content/bi';
-import { ReadinessNote } from '../readiness/ReadinessNote';
-
-const IMMUNE = [0, 0.3, 0.6];
-const ARTIFACT_ROWS = ['case-index', 'case-manifest', 'trace'];
-
-/** What stands where the cases would be: the loading line, the error, or not available yet with the reason. */
-function Pending({ all }: { all: Loaded<{ cases: unknown[] }> }) {
-  const lang = useShellLang();
-  const t = useT();
-  if (all.state === 'unavailable') return <p className="caos-pending" data-state="unavailable">{all.reason[lang]}</p>;
-  if (all.state === 'error') return <p className="caos-pending" data-state="error">{all.error}</p>;
-  if (all.state === 'ready') {
-    return <p className="caos-pending" data-state="unavailable">{t('Not available yet: no case of this build has its artifacts.', 'Aún no disponible: ningún caso de esta versión tiene sus artefactos.')}</p>;
-  }
-  return <p className="caos-pending" data-state="loading">{t('Loading the artifacts', 'Cargando los artefactos')}</p>;
-}
 
 export function Experiments() {
-  const lang = useShellLang();
   const t = useT();
-  const all = useArtifact((s) => loadAllCases(s), []);
-  const rows = useMemo(() => {
-    if (all.state !== 'ready') return null;
-    if (!all.data.cases.length) return null;
-    return all.data.cases.map(({ manifest: m, trace }) => {
-      const r0 = m.params.beta / m.params.gamma;
-      return { m, r0, s: trace.summary, z: finalSize(r0) };
-    });
-  }, [all]);
-  const chart = useMemo(() => {
-    if (!rows) return null;
-    const grid = Array.from({ length: 61 }, (_, k) => Math.round((0.4 + k * 0.1) * 100) / 100);
-    const xs = [...new Set([...grid, ...rows.map((r) => Math.round(r.r0 * 100) / 100)])].sort((a, b) => a - b);
-    const caseAt = new Map(rows.map((r) => [Math.round(r.r0 * 100) / 100, r.s.attack_rate]));
-    return { xs, theory: xs.map(finalSize), cases: xs.map((x) => caseAt.get(x) ?? null) };
-  }, [rows]);
 
   return (
     <DocPage wide title={{ en: 'Experiments', es: 'Experimentos' }} lede={t('The questions the example answers, one per tab: what each case shows, how a run compares with the final-size relation, how much immunity stops an outbreak, and the metrics, the held-out protocol and the data behind them.', 'Las preguntas que responde el ejemplo, una por pestaña: qué muestra cada caso, cómo se compara una corrida con la relación de tamaño final, cuánta inmunidad detiene un brote, y las métricas, el protocolo con datos reservados y los datos detrás de ellas.')}>
       <Tabs
         ariaLabel={t('Experiments', 'Experimentos')}
         tabs={[
-          { id: 'cases', label: t('Cases', 'Casos'), content: <>
-              <DocSection title={{ en: 'The cases', es: 'Los casos' }} area="question" refs={['km1927']}>
-                <P
-                  en="Each row is one case of the registry: its reproduction number, the peak and the attack rate of its committed trace, the share the final-size relation predicts for a fully run epidemic, and what a reader should expect to see."
-                  es="Cada fila es un caso del registro: su número reproductivo, el pico y la tasa de ataque de su traza comprometida, la fracción que predice la relación de tamaño final para una epidemia completa, y lo que el lector debería esperar ver."
-                />
-                <P
-                  en="The question each case answers is different. The sub-critical case asks whether the engine keeps an epidemic from starting below the threshold; the epidemic and the fast-burn cases ask whether it reaches the final size and how early the peak comes; the slow-spread case asks what the horizon hides near the threshold; and the control asks whether nothing happens when nothing is seeded."
-                  es="La pregunta que responde cada caso es distinta. El caso subcrítico pregunta si el motor impide que empiece una epidemia bajo el umbral; los casos de epidemia y de combustión rápida preguntan si se alcanza el tamaño final y cuán temprano llega el pico; el de propagación lenta pregunta qué oculta el horizonte cerca del umbral; y el control pregunta si no pasa nada cuando no se siembra nada."
-                />
-                <ReadinessNote ids={ARTIFACT_ROWS} />
-                {all.state === 'ready' && all.data.absent.map((a) => (
-                  <p key={a.caseId} className="caos-pending" data-state="unavailable">
-                    {a.title[lang]}: {a.reason[lang]}
-                  </p>
-                ))}
-                {rows ? (
-                  <table className="caos-table" data-state="ready">
-                    <thead>
-                      <tr>
-                        <th>{t('Case', 'Caso')}</th>
-                        <th>R0</th>
-                        <th>{t('Peak infected', 'Pico de contagiados')}</th>
-                        <th>{t('Peak day', 'Día del pico')}</th>
-                        <th>{t('Attack rate', 'Tasa de ataque')}</th>
-                        <th>{t('Final size', 'Tamaño final')}</th>
-                        <th className="caos-col-text">{t('Expected', 'Esperado')}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((r) => (
-                        <tr key={r.m.case_id}>
-                          <td>{r.m.title[lang]}</td>
-                          <td>{formatNumber(r.r0, lang, { decimals: 2 })}</td>
-                          <td>{formatNumber(r.s.peak_I, lang, { decimals: 0 })}</td>
-                          <td>{formatNumber(r.s.t_peak, lang, { decimals: 1 })}</td>
-                          <td>{formatNumber(r.s.attack_rate, lang, { percent: true, decimals: 1 })}</td>
-                          <td>{formatNumber(r.z, lang, { percent: true, decimals: 1 })}</td>
-                          <td className="caos-col-text">{r.m.expected_band[lang]}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <Pending all={all} />
-                )}
-              </DocSection>
-          </> },
-          { id: 'theory', label: t('Against the theory', 'Contra la teoría'), content: <>
-              <DocSection title={{ en: 'Against the theory', es: 'Contra la teoría' }} area="question" refs={['km1927', 'miller2012']}>
-                <P
-                  en="The curve is the final-size relation; the points are the cases as baked, at the end of their horizon. A point on the curve is an epidemic that ran to its end. A point below it ran out of time (the slow-spread case, close to the threshold) or never started (the control without an initial infection)."
-                  es="La curva es la relación de tamaño final; los puntos son los casos tal como se precalcularon, al final de su horizonte. Un punto sobre la curva es una epidemia que llegó a su fin. Un punto bajo ella se quedó sin tiempo (el caso de propagación lenta, cerca del umbral) o nunca empezó (el control sin contagio inicial)."
-                />
-                <P
-                  en="The distance between a point and the curve is the answer to the question, case by case. It is zero within the rounding of the trace when the run ended inside its horizon, and it is not a fault of the engine when it is not: the cases that fall short are exactly those the horizon or the threshold explains, and the table of the previous tab says which."
-                  es="La distancia entre un punto y la curva es la respuesta a la pregunta, caso por caso. Es cero dentro del redondeo de la traza cuando la corrida terminó dentro de su horizonte, y no es una falla del motor cuando no lo es: los casos que quedan cortos son exactamente los que el horizonte o el umbral explican, y la tabla de la pestaña anterior dice cuáles."
-                />
-                {chart ? (
-                  <PlotCard title={{ en: 'Attack rate against R0', es: 'Tasa de ataque contra R0' }} lane="replay" provenance="synthetic">
-                    <UPlotChart
-                      title={{ en: 'Attack rate against R0', es: 'Tasa de ataque contra R0' }}
-                      height={320}
-                      x={{ values: chart.xs, label: { en: 'Basic reproduction number', es: 'Número reproductivo básico' } }}
-                      y={{ label: { en: 'Attack rate', es: 'Tasa de ataque' }, range: [0, 1] }}
-                      series={[
-                        { label: { en: 'Final-size relation', es: 'Relación de tamaño final' }, values: chart.theory, color: '--color-accent' },
-                        { label: { en: 'Baked cases', es: 'Casos precalculados' }, values: chart.cases, color: '--color-magenta', mode: 'points' },
-                      ]}
-                    />
-                  </PlotCard>
-                ) : (
-                  <Pending all={all} />
-                )}
-              </DocSection>
-          </> },
-          { id: 'immunity', label: t('Immunity', 'Inmunidad'), content: <>
-              <DocSection title={{ en: 'How much immunity is enough', es: 'Cuánta inmunidad basta' }} area="question" refs={['diekmann1990', 'vdd2002']}>
-                <P
-                  en={<>The question is the one a planner asks: if a share of the population is immune before the outbreak, how much of the rest is still infected? The engine is re-run in this browser for every case with none, thirty and sixty percent of the susceptible moved to the recovered at the start, and the attack rate is shown beside the immune share that the threshold relation says is enough <Cite id="diekmann1990" />.</>}
-                  es={<>La pregunta es la que se hace un planificador: si una fracción de la población es inmune antes del brote, ¿cuánta del resto se contagia aún? El motor se vuelve a correr en este navegador para cada caso con cero, treinta y sesenta por ciento de los susceptibles pasados a recuperados al inicio, y la tasa de ataque se muestra junto a la fracción inmune que la relación de umbral dice que basta <Cite id="diekmann1990" />.</>}
-                />
-                <P
-                  en={<>Below the threshold share the epidemic is smaller but still happens; above it the infection dies out almost at once <Cite id="vdd2002" />. A case whose reproduction number is at or below one needs no immunity at all, so its row reads the same in every column. The numbers are computed on this page from the committed parameters and the live engine, and none is typed in.</>}
-                  es={<>Bajo la fracción umbral la epidemia es menor pero igual ocurre; sobre ella la infección se extingue casi de inmediato <Cite id="vdd2002" />. Un caso cuyo número reproductivo es igual o menor que uno no necesita inmunidad alguna, así que su fila se lee igual en cada columna. Los números se calculan en esta página a partir de los parámetros comprometidos y el motor en vivo, y ninguno está escrito a mano.</>}
-                />
-                {rows ? (
-                  <table className="caos-table" data-state="ready">
-                    <thead>
-                      <tr>
-                        <th>{t('Case', 'Caso')}</th>
-                        <th>R0</th>
-                        <th>{t('Immune share that is enough', 'Fracción inmune suficiente')}</th>
-                        {IMMUNE.map((v) => (
-                          <th key={v}>{t(`Attack rate at ${Math.round(v * 100)}% immune`, `Tasa de ataque con ${Math.round(v * 100)}% inmune`)}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((r) => (
-                        <tr key={r.m.case_id}>
-                          <td>{r.m.title[lang]}</td>
-                          <td>{formatNumber(r.r0, lang, { decimals: 2 })}</td>
-                          <td>{r.r0 > 1 ? formatNumber(1 - 1 / r.r0, lang, { percent: true, decimals: 1 }) : t('none needed', 'ninguna')}</td>
-                          {IMMUNE.map((v) => (
-                            <td key={v}>{formatNumber(simulate({ ...r.m.params, vaccinated: v }).attackRate, lang, { percent: true, decimals: 1 })}</td>
-                          ))}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <Pending all={all} />
-                )}
-              </DocSection>
-          </> },
           { id: 'metrics', label: t('Metrics', 'Métricas'), content: <>
               <DocSection title={{ en: 'The metrics', es: 'Las métricas' }} area="metrics" refs={['km1927']}>
                 <P

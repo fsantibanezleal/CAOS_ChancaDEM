@@ -9,9 +9,10 @@ import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ArtifactUnavailable, loadCase, loadIndex } from '../api/artifacts';
-import { conform, READINESS, type ContractState, type Readiness, type ReadinessEntry } from '../lib/contract.types';
+import { conform, READINESS, SCHEMAS, type ContractState, type Readiness, type ReadinessEntry } from '../lib/contract.types';
 import { NoteLine } from './ReadinessNote';
-import { behavior, entryFor, isUnavailable, loadReadiness, resetReadiness, viewState, SEVERITY } from './readiness';
+import { GROUP_ROWS } from '../workbench/model';
+import { behavior, entryFor, isUnavailable, loadReadiness, modelAnswers, resetReadiness, rowUnavailable, viewState, SEVERITY } from './readiness';
 
 vi.stubGlobal('__APP_VERSION__', 'test-version');
 
@@ -20,12 +21,17 @@ const repo = join(here, '..', '..', '..');
 const read = (rel: string): Readiness => JSON.parse(readFileSync(join(repo, rel), 'utf8'));
 const committed = read('data/derived/readiness.json');
 const fixture = read('docs/contracts/fixtures/data/derived/readiness.json');
+// data/derived holds the template's example bake until unit U3b-1 bakes the product's own: the committed document is
+// checked once it is the product's (its schema is the one this side reads), and the provider tree always.
+const DOCUMENTS: Array<[string, Readiness]> = [['provider tree', fixture], ...(committed.schema === SCHEMAS.readiness ? [['committed bake', committed] as [string, Readiness]] : [])];
 
+// The rows each surface consumes: the five groups of the App (the rows are the ones the workbench names, not a copy), the
+// two research pages that read the cases and the HP500 and model documents, and the implementation page, which lists all.
 const VIEWS: Record<string, string[]> = {
-  workbench: ['case-index', 'case-manifest', 'trace'],
-  experiments: ['case-index', 'case-manifest', 'trace'],
-  benchmark: ['case-index', 'case-manifest', 'trace', 'surrogate-model'],
-  implementation: committed.contracts.map((c) => c.id),
+  ...GROUP_ROWS,
+  experiments: ['case-index', 'case-manifest', 'trace', 'hp500-backbone', 'hp500-loo'],
+  benchmark: ['case-index', 'case-manifest', 'trace', 'hp500-loo', 'surrogate-model', 'anomaly-model', 'model-metrics'],
+  implementation: fixture.contracts.map((c) => c.id),
 };
 
 const entry = (id: string, state: ContractState, over: Partial<ReadinessEntry> = {}): ReadinessEntry => ({
@@ -38,13 +44,13 @@ const entry = (id: string, state: ContractState, over: Partial<ReadinessEntry> =
   missing: state === 'partial' ? ['x/y.json'] : [],
   ...over,
 });
-const doc = (...entries: ReadinessEntry[]): Readiness => ({ schema: 'example.readiness/v1', product_version: '9.9.9', catalog_sha256: '0', contracts: entries });
+const doc = (...entries: ReadinessEntry[]): Readiness => ({ schema: 'chancadem.readiness/v1', product_version: '9.9.9', catalog_sha256: '0', contracts: entries });
 
 describe('the committed documents', () => {
-  it.each([['committed bake', committed], ['provider tree', fixture]])('%s conforms to READINESS', (_n, d) => {
+  it.each(DOCUMENTS)('%s conforms to READINESS', (_n, d) => {
     expect(conform(d, { object: READINESS })).toEqual([]);
   });
-  it.each([['committed bake', committed], ['provider tree', fixture]])('%s gives each view the state its rows say', (_n, d) => {
+  it.each(DOCUMENTS)('%s gives each view the state its rows say', (_n, d) => {
     for (const [view, ids] of Object.entries(VIEWS)) {
       const rows = ids.map((id) => entryFor(d, id)).filter((e): e is ReadinessEntry => !!e);
       const worst = SEVERITY.find((s) => rows.some((r) => r.state === s)) ?? 'available';
@@ -55,12 +61,17 @@ describe('the committed documents', () => {
       }
     }
   });
+  it('every row a surface names is a row of the catalog, in the document of both roots', () => {
+    const ids = new Set(fixture.contracts.map((c) => c.id));
+    expect(ids.size).toBe(11);
+    for (const [view, rows] of Object.entries(VIEWS)) for (const id of rows) expect(ids.has(id), `${view}: ${id}`).toBe(true);
+  });
   it('the provider tree says provider on every artifact row (its api row is missing, by the catalog); the note names the provider from the document', () => {
-    for (const view of ['workbench', 'experiments', 'benchmark']) expect(viewState(fixture, VIEWS[view]).state, view).toBe('provider');
+    for (const view of [...Object.keys(GROUP_ROWS), 'experiments', 'benchmark']) expect(viewState(fixture, VIEWS[view]).state, view).toBe('provider');
     expect(viewState(fixture, VIEWS.implementation).state).toBe('missing');
-    const html = renderToStaticMarkup(createElement(NoteLine, { view: viewState(fixture, VIEWS.workbench), lang: 'en' }));
+    const html = renderToStaticMarkup(createElement(NoteLine, { view: viewState(fixture, VIEWS.chamber), lang: 'en' }));
     expect(html).toContain('data-readiness="provider"');
-    expect(html).toContain(fixture.contracts.find((c) => c.id === 'case-index')!.reason!.en);
+    for (const id of GROUP_ROWS.chamber) expect(html).toContain(fixture.contracts.find((c) => c.id === id)!.reason!.en);
   });
 });
 
@@ -95,9 +106,32 @@ describe('the six states', () => {
   });
 });
 
+describe('which model answers a slot', () => {
+  it.each<[ContractState, 'released' | 'baseline']>([
+    ['available', 'released'],
+    ['provider', 'released'],
+    ['stale', 'released'],
+    ['partial', 'released'],
+    ['training', 'baseline'],
+    ['missing', 'baseline'],
+  ])('adversarial: a slot in state %s is answered by the %s', (state, answer) => {
+    expect(modelAnswers(doc(entry('surrogate-model', state)), 'surrogate-model')).toBe(answer);
+  });
+  it('a document that is absent, or has no row for the slot, leaves the released model to answer; the load decides', () => {
+    expect(modelAnswers(null, 'surrogate-model')).toBe('released');
+    expect(modelAnswers(doc(entry('trace', 'training')), 'surrogate-model')).toBe('released');
+  });
+  it('a document the readiness marks missing is unavailable, with the reason of its row; any other state is not', () => {
+    expect(rowUnavailable(doc(entry('hp500-loo', 'missing')), 'hp500-loo')?.reason?.en).toBe('hp500-loo is missing');
+    expect(rowUnavailable(doc(entry('hp500-loo', 'stale')), 'hp500-loo')).toBeNull();
+    expect(rowUnavailable(doc(entry('hp500-loo', 'training')), 'hp500-loo')).toBeNull();
+    expect(rowUnavailable(null, 'hp500-loo')).toBeNull();
+  });
+});
+
 describe('a missing readiness document', () => {
   it('adversarial: a null document is readiness unknown, in both languages', () => {
-    const view = viewState(null, VIEWS.workbench);
+    const view = viewState(null, VIEWS.chamber);
     expect(view.state).toBe('unknown');
     expect(renderToStaticMarkup(createElement(NoteLine, { view, lang: 'en' }))).toMatch(/data-readiness="unknown".*Readiness unknown/);
     expect(renderToStaticMarkup(createElement(NoteLine, { view, lang: 'es' }))).toMatch(/data-readiness="unknown".*Disponibilidad desconocida/);
@@ -143,14 +177,24 @@ describe('a case the document lists as absent', () => {
     expect(isUnavailable(doc(entry('case-index', 'missing')), 'anything.json')).toBe(true);
     expect(isUnavailable(null, 'C1/trace.json')).toBe(false);
   });
-  it('adversarial: loadCase rejects with ArtifactUnavailable naming the path and the reason, and never fetches the trace', async () => {
+  it('adversarial: a trace the document lists as absent is a case without replay: its reason names the path in both languages, and the trace is never fetched', async () => {
     const fetch = serve(doc(entry('trace', 'partial', { missing: ['C1/trace.json'] })));
+    vi.stubGlobal('__APP_VERSION__', 'test-version');
+    const data = await loadCase('C1');
+    expect(data.manifest.case_id).toBe('C1');
+    expect(data.trace).toBeNull();
+    expect(data.traceReason?.en).toContain('C1/trace.json');
+    expect(data.traceReason?.es).toContain('C1/trace.json');
+    expect(fetch.mock.calls.some((c) => String(c[0]).includes('C1/trace.json'))).toBe(false);
+  });
+  it('adversarial: a manifest the document lists as absent rejects with ArtifactUnavailable naming the path and the reason, and never fetches it', async () => {
+    const fetch = serve(doc(entry('case-manifest', 'partial', { missing: ['manifests/C1.json'] })));
     vi.stubGlobal('__APP_VERSION__', 'test-version');
     const e = await loadCase('C1').catch((x: unknown) => x);
     expect(e).toBeInstanceOf(ArtifactUnavailable);
-    expect((e as ArtifactUnavailable).reason.en).toContain('C1/trace.json');
-    expect((e as ArtifactUnavailable).reason.es).toContain('C1/trace.json');
-    expect(fetch.mock.calls.some((c) => String(c[0]).includes('C1/trace.json'))).toBe(false);
+    expect((e as ArtifactUnavailable).reason.en).toContain('manifests/C1.json');
+    expect((e as ArtifactUnavailable).reason.es).toContain('manifests/C1.json');
+    expect(fetch.mock.calls.some((c) => String(c[0]).includes('manifests/C1.json'))).toBe(false);
   });
   it('loadIndex rejects with ArtifactUnavailable when the case-index row is missing', async () => {
     serve(doc(entry('case-index', 'missing')));
@@ -160,11 +204,11 @@ describe('a case the document lists as absent', () => {
   it('loadCase reads the case when the document lists nothing absent, and when the document is unreadable', async () => {
     serve(doc(entry('trace', 'stale')));
     vi.stubGlobal('__APP_VERSION__', 'test-version');
-    await expect(loadCase('C1')).resolves.toMatchObject({ trace: { case_id: 'C1' } });
+    await expect(loadCase('C1')).resolves.toMatchObject({ trace: { case_id: 'C1' }, traceReason: null });
     resetReadiness();
     serve({ nope: 1 });
     const err = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    await expect(loadCase('C1')).resolves.toMatchObject({ trace: { case_id: 'C1' } });
+    await expect(loadCase('C1')).resolves.toMatchObject({ trace: { case_id: 'C1' }, traceReason: null });
     err.mockRestore();
   });
 });
