@@ -3,7 +3,7 @@
 EARS (Mavin et al., RE'09, doi:10.1109/RE.2009.9). Every requirement names the gate that fails when it is violated.
 The notebooks are the product's didactic layer (CAOS_MANAGE `conventions/product-notebooks.md`, Felipe 2026-10-20): the
 folder `notebooks/` holds two trees, `en/` and `es/`, with the same notebooks at the same relative paths, by topic and from
-simple to complex (level 1 fundamentals, 2 the method in practice, 3 state of the art, 4 beyond it). They import the
+simple to complex (level 1 fundamentals, 2 the method in practice, 3 comparison with published methods, 4 proposed methods). They import the
 product's methods and never re-implement them. The static check is `scripts/check_notebooks.py` (CI and local); the
 execution is `scripts/run_notebooks.py --check`, a local release gate that never runs in CI (ADR-0074). From 0.12.000
 the static check also holds every notebook to the measured floors of the bar (`conventions/product-notebooks.md` section 1,
@@ -35,8 +35,8 @@ thresholds live in `scripts/notebook_bar.json`. The guide is [`docs/guides/08_no
 | NB-056 | THE check SHALL fail a code cell with two statements on one line, a code line over 120 characters or more than 30 lines of logic. | `tests/test_check_notebooks.py::test_nb056_two_statements_on_one_line` |
 | NB-057 | THE first cell of a notebook SHALL state its question, `**Question:**` in the English tree and `**Pregunta:**` in the Spanish one. | `tests/test_check_notebooks.py::test_nb057_the_first_cell_states_the_question_in_each_language` |
 | NB-058 | THE Results section SHALL answer the question (`**Answer:**`, `**Respuesta:**`) and the answer SHALL quote a number that appears in an output of the notebook. | `tests/test_check_notebooks.py::test_nb058_the_answer_quotes_a_number_that_an_output_shows` |
-| NB-059 | A level 3 notebook SHALL run a method cell and show a figure under State of the art. | `tests/test_check_notebooks.py::test_nb059_level_three_runs_the_state_of_the_art_and_draws_it` |
-| NB-060 | A level 4 notebook SHALL show a figure or a table under Beyond the state of the art. | `tests/test_check_notebooks.py::test_nb060_level_four_shows_a_figure_or_a_table_under_beyond` |
+| NB-059 | A level 3 notebook SHALL run a method cell and show a figure under Comparison (Comparación; until 0.13.001 the section carried a tier name). | `tests/test_check_notebooks.py::test_nb059_level_three_runs_the_state_of_the_art_and_draws_it` |
+| NB-060 | A level 4 notebook SHALL show a figure or a table under Evidence (Evidencia; until 0.13.001 the section carried a tier name). | `tests/test_check_notebooks.py::test_nb060_level_four_shows_a_figure_or_a_table_under_beyond` |
 | NB-061 | IF a notebook declares no valid level, THEN THE floors SHALL be those of level 2. | `tests/test_check_notebooks.py::test_nb061_a_notebook_without_a_valid_level_is_measured_at_level_two` |
 | NB-066 | THE Spanish tree SHALL be held to every floor with the Spanish markers and section names. | `tests/test_check_notebooks.py::test_nb057_the_first_cell_states_the_question_in_each_language` |
 | NB-069 | THE floors SHALL resolve the import name of a method package or a pinned reference implementation from `product.json` `import_names`, the static `import_names` map of `scripts/notebook_bar.json` or the distribution name, and never from what is installed, so that the verdict is the same in CI, in the notebook environment and on a clean clone. | `tests/test_check_notebooks.py::test_b2_import_names_are_static_and_never_read_from_the_environment` |

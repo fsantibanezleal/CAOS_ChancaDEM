@@ -31,8 +31,8 @@ function OptimismTables({ loo }: { loo: Hp500Loo }) {
         <table className="caos-table" data-state="ready">
           <caption>
             {t(
-              'The classical backbone against the learned bounded residual, on the same folds. Strict: every scalar and the residual refit without the held-out survey. Leaky: fitted on all ten. The optimism gap is strict MAPE minus leaky MAPE, in points: how much fitting on the survey being predicted flatters the model.',
-              'El esqueleto clásico frente al residuo acotado aprendido, sobre los mismos pliegues. Estricto: cada escalar y el residuo se reajustan sin el muestreo reservado. Con fuga: ajustado con los diez. La brecha de optimismo es el MAPE estricto menos el MAPE con fuga, en puntos: cuánto favorece al modelo ajustarlo con el muestreo que se predice.',
+              'The calibrated backbone against the learned bounded residual, on the same folds. Strict: every scalar and the residual refit without the held-out survey. Leaky: fitted on all ten. The optimism gap is strict MAPE minus leaky MAPE, in points: how much fitting on the survey being predicted flatters the model.',
+              'El esqueleto calibrado frente al residuo acotado aprendido, sobre los mismos pliegues. Estricto: cada escalar y el residuo se reajustan sin el muestreo reservado. Con fuga: ajustado con los diez. La brecha de optimismo es el MAPE estricto menos el MAPE con fuga, en puntos: cuánto favorece al modelo ajustarlo con el muestreo que se predice.',
             )}
           </caption>
           <thead>
@@ -49,7 +49,7 @@ function OptimismTables({ loo }: { loo: Hp500Loo }) {
               (['M0_backbone', 'M1_residual'] as const).map((m) => (
                 <tr key={`${target}-${m}`}>
                   <td className="caos-col-text">{TARGET_LABEL[target][lang]}</td>
-                  <td className="caos-col-text">{m === 'M0_backbone' ? t('M0 calibrated backbone (classical)', 'M0 esqueleto calibrado (clásico)') : t('M1 bounded residual (learned)', 'M1 residuo acotado (aprendido)')}</td>
+                  <td className="caos-col-text">{m === 'M0_backbone' ? t('M0 calibrated backbone (phenomenological)', 'M0 esqueleto calibrado (fenomenológico)') : t('M1 bounded residual (learned)', 'M1 residuo acotado (aprendido)')}</td>
                   <td>{f(scoresOf(loo, target, 'strict', m).mape_pct, { decimals: 1 })}</td>
                   <td>{f(scoresOf(loo, target, 'leaky', m).mape_pct, { decimals: 1 })}</td>
                   <td>{f(optimismGap(loo, target, m), { decimals: 1 })}</td>
@@ -209,16 +209,16 @@ export function Comparison() {
   const { loo } = useBench();
   const t = useT();
   return (
-    <DocSection title={{ en: 'Learned model and classical baseline', es: 'Modelo aprendido y línea base clásica' }} area="comparison" refs={['rocha2024', 'koh2021']}>
+    <DocSection title={{ en: 'Learned residual and the calibrated backbone', es: 'Residuo aprendido y el modelo base calibrado' }} area="comparison" refs={['rocha2024', 'koh2021']}>
       <P
         en={
           <>
-            The classical baseline here is the calibrated backbone, the Whiten and Evertsson engine with the HP500 constants fitted by the source paper <Cite id="rocha2024" />; the learned model is M1, a ridge residual on the setting and the feed f80, clipped to a fraction of the backbone, added on top. Both are scored on the same ten surveys and the same folds. The comparison that matters is the strict one; the leaky column is there to show how much of a learned model&apos;s apparent skill comes from having seen the survey it is asked about.
+            The baseline here is the calibrated backbone, the Whiten and Evertsson engine with the HP500 constants fitted by the source paper <Cite id="rocha2024" />; the learned model is M1, a ridge residual on the setting and the feed f80, clipped to a fraction of the backbone, added on top. Both are scored on the same ten surveys and the same folds. The comparison that matters is the strict one; the leaky column is there to show how much of a learned model&apos;s apparent skill comes from having seen the survey it is asked about.
           </>
         }
         es={
           <>
-            La línea base clásica es aquí el esqueleto calibrado, el motor de Whiten y Evertsson con las constantes HP500 ajustadas por el artículo fuente <Cite id="rocha2024" />; el modelo aprendido es M1, un residuo de regresión ridge sobre la abertura y el f80 de la alimentación, acotado a una fracción del esqueleto y sumado encima. Ambos se califican sobre los mismos diez muestreos y los mismos pliegues. La comparación que importa es la estricta; la columna con fuga está para mostrar cuánto de la habilidad aparente de un modelo aprendido viene de haber visto el muestreo por el que se le pregunta.
+            La línea base es aquí el esqueleto calibrado, el motor de Whiten y Evertsson con las constantes HP500 ajustadas por el artículo fuente <Cite id="rocha2024" />; el modelo aprendido es M1, un residuo de regresión ridge sobre la abertura y el f80 de la alimentación, acotado a una fracción del esqueleto y sumado encima. Ambos se califican sobre los mismos diez muestreos y los mismos pliegues. La comparación que importa es la estricta; la columna con fuga está para mostrar cuánto de la habilidad aparente de un modelo aprendido viene de haber visto el muestreo por el que se le pregunta.
           </>
         }
       />
