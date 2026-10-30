@@ -22,7 +22,7 @@ importan por su ruta porque el producto no publica un paquete.
 
 The two trees hold the same notebooks at the same relative paths (the slugs are English, so the mirror is checkable); each
 notebook is written wholly in its tree's language. Topics run from simple to complex and notebooks inside a topic by level:
-1 fundamentals, 2 the method in practice, 3 state of the art, 4 beyond the state of the art.
+1 fundamentals, 2 the method in practice, 3 comparison with published methods, 4 the product's proposed methods.
 
 Los dos árboles tienen los mismos notebooks en las mismas rutas relativas (los nombres están en inglés, así que el espejo
 se puede comprobar); cada notebook está escrito entero en el idioma de su árbol.
@@ -36,7 +36,7 @@ se puede comprobar); cada notebook está escrito entero en el idioma de su árbo
 | `03-breakage-and-classification` | t10, the appearance function, classification, the Whiten solve and the discrete-element literature / t10, la función de aparición, la clasificación, el cálculo de Whiten y la literatura de elementos discretos |
 | `04-capacity-and-power` | the capacity hump, the setting and the throw, Bond's law and its oracle / la joroba de capacidad, la abertura y la carrera, la ley de Bond y su oráculo |
 | `05-real-surveys` | the ten HP500 surveys, measured against modelled, and the paper's in-sample fit / los diez muestreos del HP500, medido frente a modelado, y el ajuste dentro de la muestra del artículo |
-| `06-crushercal` | leave-one-survey-out validation, the controls and claim BS-1 / la validación dejando un muestreo fuera, los controles y la afirmación BS-1 |
+| `06-crushercal` | leave-one-survey-out validation, the controls and the held-out validation of the calibrated model / la validación dejando un muestreo fuera, los controles y la validación con retención del modelo calibrado |
 | `07-learned-models` | the surrogate and the autoencoder through onnxruntime, against the engine and against the plant / el sustituto y el autoencoder con onnxruntime, frente al motor y frente a la planta |
 
 ## Run them / Correrlos
