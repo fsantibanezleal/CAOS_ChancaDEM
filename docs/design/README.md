@@ -13,6 +13,9 @@ Research, then the executive brief, then sizing, contracts and the units.
    URL), at least three distinct sources (one work cited as a DOI and as its URL counts once; example and localhost
    hosts count for none), and a line starting `UNVERIFIED:` for what stayed unverified (it may say none). Section
    `Research basis` of [`SDD.md`](SDD.md). Checked by `scripts/check_sdd.py`.
+   The research covers the three method tiers every product implements (the classical methods, the state of the art and
+   its own proposals beyond it); the `Method ladder` table gives each method its tier and `Beyond the state of the art`
+   lists at least one proposal `BS-<n>`: [`../guides/09_method-tiers.md`](../guides/09_method-tiers.md).
 2. **Executive view.** The problem space in its real context, framed for a decision maker in executive language, before any
    development, general (never a client, never a pitch): one data file, `content/executive.json`, valid against the
    shell's `executive.schema.json` 2.0.0 (a title, a key statement and headline figures; five sub-tabs: the pain, the
