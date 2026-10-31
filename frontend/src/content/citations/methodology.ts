@@ -20,10 +20,16 @@ export const METHODOLOGY: Citation[] = [
     doi: '10.1111/1467-9868.00294',
   },
   {
-    id: 'goodman2010',
-    label: 'Goodman & Weare 2010',
-    citation: 'Goodman, J., Weare, J. (2010). Ensemble samplers with affine invariance. Communications in Applied Mathematics and Computational Science 5(1), 65–80. The affine-invariant ensemble sampler (the stretch move).',
-    doi: '10.2140/camcos.2010.5.65',
+    id: 'terbraak2006',
+    label: 'ter Braak 2006',
+    citation: 'ter Braak, C.J.F. (2006). A Markov Chain Monte Carlo version of the genetic algorithm Differential Evolution: easy Bayesian computing for real parameter spaces. Statistics and Computing 16, 239-249.',
+    doi: '10.1007/s11222-006-8769-1',
+  },
+  {
+    id: 'terbraak2008',
+    label: 'ter Braak & Vrugt 2008',
+    citation: 'ter Braak, C.J.F., Vrugt, J.A. (2008). Differential Evolution Markov Chain with snooker updater and fewer chains. Statistics and Computing 18, 435-446.',
+    doi: '10.1007/s11222-008-9104-9',
   },
   {
     id: 'foremanmackey2013',
