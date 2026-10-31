@@ -5,6 +5,7 @@ import { pick, useShellLang, type BiText } from '@fasl-work/caos-app-shell';
 import { createContext, useContext, type ReactNode } from 'react';
 import {
   loadHp500Backbone,
+  loadHp500CrusherBayes,
   loadHp500Loo,
   loadIndex,
   loadManifest,
@@ -14,11 +15,12 @@ import {
   type Loaded,
   type ModelSlot,
 } from '../../api/artifacts';
-import type { CaseIndex, CaseManifest, Hp500Backbone, Hp500Loo, ModelMetrics, SurrogateModel } from '../../lib/contract.types';
+import type { CaseIndex, CaseManifest, Hp500Backbone, Hp500CrusherBayes, Hp500Loo, ModelMetrics, SurrogateModel } from '../../lib/contract.types';
 
 export interface BenchData {
   index: Loaded<CaseIndex>;
   loo: Loaded<Hp500Loo>;
+  crusherbayes: Loaded<Hp500CrusherBayes>;
   backbone: Loaded<Hp500Backbone>;
   metrics: Loaded<ModelMetrics>;
   surrogate: Loaded<ModelSlot<SurrogateModel>>;
@@ -49,6 +51,7 @@ function theIndex(): Promise<CaseIndex> {
 export function BenchProvider({ children }: { children: ReactNode }) {
   const index = useArtifact(() => theIndex(), []);
   const loo = useArtifact(async (s) => loadHp500Loo(await theIndex(), s), []);
+  const crusherbayes = useArtifact(async (s) => loadHp500CrusherBayes(await theIndex(), s), []);
   const backbone = useArtifact(async (s) => loadHp500Backbone(await theIndex(), s), []);
   const metrics = useArtifact(async (s) => loadModelMetrics(await theIndex(), s), []);
   const surrogate = useArtifact(async (s) => loadSurrogate(await theIndex(), s), []);
@@ -57,7 +60,7 @@ export function BenchProvider({ children }: { children: ReactNode }) {
     const ids = idx.cases.filter((c) => c.real_or_synthetic === 'real').map((c) => c.case_id);
     return Promise.all(ids.map((id) => loadManifest(id, s)));
   }, []);
-  return <BenchContext.Provider value={{ index, loo, backbone, metrics, surrogate, surveys }}>{children}</BenchContext.Provider>;
+  return <BenchContext.Provider value={{ index, loo, crusherbayes, backbone, metrics, surrogate, surveys }}>{children}</BenchContext.Provider>;
 }
 
 const WAIT: BiText = { en: 'Loading the artifacts', es: 'Cargando los artefactos' };

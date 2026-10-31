@@ -2,7 +2,7 @@
 // ?v=VERSION so a new release never reads an old cached file, and must answer JSON: a static host answering a
 // missing file with its HTML page would otherwise parse as an error far from the cause (failure classes 2, 9).
 import { useEffect, useState } from 'react';
-import type { AnomalyModel, CaseIndex, CaseManifest, Hp500Backbone, Hp500Loo, ModelMetrics, SurrogateModel, Text, Trace } from '../lib/contract.types';
+import type { AnomalyModel, CaseIndex, CaseManifest, Hp500Backbone, Hp500CrusherBayes, Hp500Loo, ModelMetrics, SurrogateModel, Text, Trace } from '../lib/contract.types';
 import { loadReadiness, modelAnswers, rowUnavailable, unavailableRow } from '../readiness/readiness';
 
 export class ArtifactError extends Error {}
@@ -99,6 +99,7 @@ async function loadDeclared<T>(index: CaseIndex, path: string, row: string, sign
 }
 
 export const HP500_LOO_PATH = 'hp500/loo.json';
+export const HP500_CRUSHERBAYES_PATH = 'hp500/crusherbayes.json';
 export const HP500_BACKBONE_PATH = 'hp500/backbone.json';
 export const METRICS_PATH = 'model-metrics.json';
 export const SURROGATE_PATH = 'models/surrogate.json';
@@ -106,6 +107,8 @@ export const ANOMALY_PATH = 'models/psd-ae.json';
 
 /** CrusherCal: the leave-one-survey-out validation of the HP500 backbone, with its predictive bands (catalog row hp500-loo). */
 export const loadHp500Loo = (index: CaseIndex, signal?: AbortSignal) => loadDeclared<Hp500Loo>(index, HP500_LOO_PATH, 'hp500-loo', signal);
+/** CrusherBayes: the Bayesian calibration of the engine with a structural discrepancy, held out on the ten surveys (catalog row hp500-crusherbayes). */
+export const loadHp500CrusherBayes = (index: CaseIndex, signal?: AbortSignal) => loadDeclared<Hp500CrusherBayes>(index, HP500_CRUSHERBAYES_PATH, 'hp500-crusherbayes', signal);
 /** The calibrated engine on each of the ten HP500 surveys (catalog row hp500-backbone). */
 export const loadHp500Backbone = (index: CaseIndex, signal?: AbortSignal) => loadDeclared<Hp500Backbone>(index, HP500_BACKBONE_PATH, 'hp500-backbone', signal);
 /** The held-out evaluation of the two model slots (catalog row model-metrics). */

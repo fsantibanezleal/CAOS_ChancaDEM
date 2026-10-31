@@ -9,6 +9,7 @@ import { P, useT } from '../bi';
 import { INPUT_LABEL } from '../../lib/ort';
 import { TARGET_LABEL, errPct, optimismGap, scoresOf, type Target } from './data';
 import { runSurvey, type SurveyRun } from './runs';
+import { CrusherBayesView } from './crusherbayes';
 import { Pending, Ready, TableWrap, useBench } from './shared';
 import type { Loaded } from '../../api/artifacts';
 
@@ -209,7 +210,7 @@ export function Comparison() {
   const { loo } = useBench();
   const t = useT();
   return (
-    <DocSection title={{ en: 'Learned residual and the calibrated backbone', es: 'Residuo aprendido y el modelo base calibrado' }} area="comparison" refs={['rocha2024', 'koh2021']}>
+    <DocSection title={{ en: 'Learned residual and the calibrated backbone', es: 'Residuo aprendido y el modelo base calibrado' }} area="comparison" refs={['rocha2024', 'koh2021', 'kennedy2001', 'foremanmackey2013']}>
       <P
         en={
           <>
@@ -238,6 +239,7 @@ export function Comparison() {
       />
       <ReadinessNote ids={['surrogate-model', 'case-manifest']} />
       <SurrogateVsEngine />
+      <CrusherBayesView />
       <p className="caos-plot-note">{t('Rows are computed on each load of the page; nothing in them is stored.', 'Las filas se calculan en cada carga de la página; nada de ello se almacena.')}</p>
     </DocSection>
   );

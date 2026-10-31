@@ -2,7 +2,10 @@
 // emulate, what the 3D view is, and what the product is not. It carries no model metric: the learned models are retrained in
 // each release and their held-out figures are stated on the Benchmark page, read from the committed metrics.
 import { Callout, DocSection } from '@fasl-work/caos-app-shell';
+import product from '../../../../product.json';
 import { P, useT } from '../bi';
+
+const REPORT = product.manuscripts[0];
 
 export function Honesty() {
   const t = useT();
@@ -16,6 +19,13 @@ export function Honesty() {
         en="What is illustrative is everything else: the constants of the synthetic machines (the classification windows, the reference capacities and speeds, the nip geometry and the energy per nip) reproduce the direction of each effect, a tighter setting giving a finer product and a wider throw a coarser one, and not the absolute numbers of a plant. The two learned models, a surrogate network and a denoising autoencoder, emulate the engine and not a plant, and every learned view says which model answered. The 3D chamber is a kinematic view of the geometry, the motion and the gradation the engine computes, and it is not a discrete-element simulation, which needs hours of computing per second of operation and runs offline."
         es="Lo ilustrativo es todo lo demás: las constantes de las máquinas sintéticas (las ventanas de clasificación, las capacidades y velocidades de referencia, la geometría de mordida y la energía por mordida) reproducen el sentido de cada efecto, un ajuste más cerrado que da un producto más fino y una carrera mayor que da uno más grueso, y no los números absolutos de una planta. Los dos modelos aprendidos, una red sustituta y un autoencoder de eliminación de ruido, emulan al motor y no a una planta, y cada vista aprendida dice qué modelo respondió. La cámara 3D es una vista cinemática de la geometría, el movimiento y la gradación que calcula el motor, y no es una simulación de elementos discretos, que necesita horas de cómputo por segundo de operación y corre fuera de línea."
       />
+      <p>
+        {t('The technical report of this product, with the methods and the numbers of each release: ', 'El informe técnico de este producto, con los métodos y las cifras de cada versión: ')}
+        <a href={`https://doi.org/${REPORT.concept_doi}`} rel="noopener noreferrer" data-report-doi={REPORT.concept_doi}>
+          doi:{REPORT.concept_doi}
+        </a>
+        {t(' (the concept DOI, which always resolves to the latest version).', ' (el DOI de concepto, que siempre lleva a la última versión).')}
+      </p>
       <Callout variant="honest" title={t('Not a sizing tool, a digital twin or a grinding model', 'No es una herramienta de dimensionamiento, un gemelo digital ni un modelo de molienda')}>
         {t(
           'ChancaDEM does not select or size a crusher, does not mirror a measured plant, and stops at the crusher product: grinding and SAG milling are another product. A reading is a model output for the case shown, labelled with its lane and its data, and the measured value is shown beside it wherever one exists.',

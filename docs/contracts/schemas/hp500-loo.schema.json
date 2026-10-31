@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "hp500-loo.schema.json",
   "title": "Hp500Loo",
-  "description": "Catalog row hp500-loo 1.1.0: CrusherCal, the leave-one-survey-out validation of the calibrated backbone on the ten HP500 surveys, written by data-pipeline/pipeline/hp500/loo.py to data/derived/hp500/loo.json. Per target (throughput tph and power kW measured; P80 a model output reported as self-consistency), strict folds (every fitted scalar refit without the held-out survey) and leaky folds (fitted on all ten) grade M0 the calibrated backbone, M1 the backbone plus a bounded ridge residual, M2 a free-form least-squares fit, a constant-mean baseline and a label-shuffle negative control; the strict folds carry an 80 percent predictive interval, its empirical coverage (in sample: sigma comes from the same residuals the coverage checks) and its nested coverage (out of sample: for each survey, sigma from the held-out residuals of the other surveys only). The two parity blocks are in-sample contrasts of the power forms and of the capacity backbone against the measured values. Deterministic for a seed. Derived from data licensed CC BY 4.0 (https://doi.org/10.3390/min14090919). Rules the schema cannot state, checked by the producer test: every measured and pred list has n values in survey order; the label-shuffle control does not beat M0 on throughput; nested_covered and nested_sigma have n values in survey order and nested_coverage is the share of true entries of nested_covered.",
+  "description": "Catalog row hp500-loo 1.2.0: CrusherCal, the leave-one-survey-out validation of the calibrated backbone on the ten HP500 surveys, written by data-pipeline/pipeline/hp500/loo.py to data/derived/hp500/loo.json. Per target (throughput tph and power kW measured; P80 a model output reported as self-consistency), strict folds (every fitted scalar refit without the held-out survey) and leaky folds (fitted on all ten) grade M0 the calibrated backbone, M1 the backbone plus a bounded ridge residual, M2 a free-form least-squares fit, a constant-mean baseline and a label-shuffle negative control (from 1.2.0 also B_lin, the setting-only least-squares line on CSS, for both measured targets, and for power the two variants of Morrell's size-specific crusher energy, Morrell and Morrell_noload, whose M_ic and no-load power are fitted per fold because the ore's M_ic is not published); the strict folds carry an 80 percent predictive interval, its empirical coverage (in sample: sigma comes from the same residuals the coverage checks) and its nested coverage (out of sample: for each survey, sigma from the held-out residuals of the other surveys only). The two parity blocks are in-sample contrasts of the power forms and of the capacity backbone against the measured values. Deterministic for a seed. Derived from data licensed CC BY 4.0 (https://doi.org/10.3390/min14090919). Rules the schema cannot state, checked by the producer test: B_lin is present for tph and kW and Morrell, Morrell_noload and morrell_fit for kW in every strict and leaky block, and every pred list of them has n values; a held-out survey never enters its own fold (planted-target test); every measured and pred list has n values in survey order; the label-shuffle control does not beat M0 on throughput; nested_covered and nested_sigma have n values in survey order and nested_coverage is the share of true entries of nested_covered.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -72,6 +72,45 @@
           "type": "array",
           "items": {
             "const": "p80"
+          }
+        },
+        "morrell": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "k_s",
+            "k2",
+            "circuit",
+            "inputs",
+            "fitted"
+          ],
+          "properties": {
+            "k_s": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "K_s of the hardness parameter S_c (GMSG B5), 55 for a conventional crusher."
+            },
+            "k2": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "K2 of equation B4, 1.0 closed circuit and 1.19 open circuit."
+            },
+            "circuit": {
+              "enum": [
+                "closed",
+                "open"
+              ]
+            },
+            "inputs": {
+              "type": "string",
+              "minLength": 1,
+              "description": "What the Morrell design column is computed from."
+            },
+            "fitted": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Which scalars are fitted per fold and why."
+            }
           }
         }
       }
@@ -325,6 +364,24 @@
               "items": {
                 "type": "number"
               }
+            },
+            "B_lin": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "Morrell": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "Morrell_noload": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
             }
           }
         },
@@ -389,6 +446,52 @@
             "nested_note": {
               "type": "string",
               "description": "States which coverage is in sample (empirical_coverage) and which is out of sample (nested_coverage)."
+            }
+          }
+        },
+        "B_lin": {
+          "$ref": "#/$defs/scores"
+        },
+        "Morrell": {
+          "$ref": "#/$defs/scores"
+        },
+        "Morrell_noload": {
+          "$ref": "#/$defs/scores"
+        },
+        "morrell_fit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "m_ic_kwh_t",
+            "m_ic_noload_kwh_t",
+            "no_load_kw",
+            "noload_variant_m_ic_positive"
+          ],
+          "description": "The scalars fitted in each fold (survey order, the held-out survey excluded from its own fold): M_ic of the through-origin variant [kWh/t], M_ic and the no-load power of the second variant, and whether that M_ic is positive (a negative M_ic is not Morrell's physics).",
+          "properties": {
+            "m_ic_kwh_t": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "m_ic_noload_kwh_t": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "no_load_kw": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "noload_variant_m_ic_positive": {
+              "type": "array",
+              "items": {
+                "type": "boolean"
+              }
             }
           }
         }
