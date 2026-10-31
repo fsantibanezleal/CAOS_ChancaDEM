@@ -11,7 +11,8 @@ import { P, useT } from '../bi';
 import { IDENTIFIED_BELOW, PRIOR_DOMINATED_FROM, TARGET_LABEL, classifyContraction, convergenceText, intervalPoints, type ContractionClass } from './data';
 import { Ready, TableWrap, useBench } from './shared';
 
-const PARAM_LABEL: Record<string, Text> = {
+/** The reader's name of every sampled scalar and discrepancy coefficient of hp500-crusherbayes (the Methodology figure uses it too). */
+export const PARAM_LABEL: Record<string, Text> = {
   q_ref_tph: { en: 'Capacity base (t/h)', es: 'Base de capacidad (t/h)' },
   wi_kwh_t: { en: 'Bond work index (kWh/t)', es: 'Índice de trabajo de Bond (kWh/t)' },
   zeta: { en: 'Power slope zeta', es: 'Pendiente de potencia zeta' },
@@ -30,7 +31,7 @@ const PARAM_LABEL: Record<string, Text> = {
   discrepancy_kW_f80: { en: 'Discrepancy, power: slope on the feed f80', es: 'Discrepancia, potencia: pendiente en el f80 de alimentación' },
 };
 
-const CLASS_LABEL: Record<ContractionClass, Text> = {
+export const CLASS_LABEL: Record<ContractionClass, Text> = {
   identified: { en: 'identified by the surveys', es: 'identificado por los muestreos' },
   weak: { en: 'weakly identified', es: 'débilmente identificado' },
   prior: { en: 'stays at its prior', es: 'se queda en su a priori' },

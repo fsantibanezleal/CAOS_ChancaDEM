@@ -2,10 +2,15 @@
 // with a structural discrepancy. The equations and the method constants are written here (they are the method); every fitted
 // or sampled number, the priors, the sampler's size, the thresholds of the kill criterion and the fitted work index, is read
 // from the committed documents when the topic opens, never typed.
-import { Callout, Cite, DocSection, Equation, useFormat, useShellLang } from '@fasl-work/caos-app-shell';
+import { BarChart, Callout, Cite, DocSection, Equation, Figure, useFormat, useShellLang } from '@fasl-work/caos-app-shell';
 import { loadHp500CrusherBayes, loadHp500Loo, loadIndex, useArtifact } from '../../api/artifacts';
+import type { Hp500CrusherBayes, Hp500Loo } from '../../lib/contract.types';
+import { CLASS_LABEL, PARAM_LABEL } from '../benchmark/crusherbayes';
+import { IDENTIFIED_BELOW, PRIOR_DOMINATED_FROM, classifyContraction, type ContractionClass } from '../benchmark/data';
+import { contractionBars, morrellHeldOut } from './newdata';
 import { P, useT } from '../bi';
 import { Ready, TableWrap } from '../benchmark/shared';
+import { priorSource, priorUnit } from './priors';
 
 export function Morrell() {
   const t = useT();
@@ -29,7 +34,12 @@ export function Morrell() {
         es={<>La potencia es la energía específica por la tasa de alimentación, W_c en kWh/t por Q en t/h, en kW. La guía define la potencia neta como la potencia del motor menos la potencia en vacío. El índice de trabajo del mineral de Minas Rio no está publicado, así que M_ic es un escalar ajustado, y también la potencia en vacío en la segunda variante: ambos se reajustan con los muestreos de entrenamiento de cada pliegue, con el f80 medido de la alimentación como x_1, el P80 del esqueleto como x_2 (una salida del modelo usada como entrada, nunca como objetivo) y la tasa de alimentación medida como Q. Se reservan dos variantes, una por el origen y otra con un término en vacío.</>}
       />
       <Ready a={loo} wait={{ en: 'Loading the fitted work indices', es: 'Cargando los índices de trabajo ajustados' }}>
-        {(l) => <FitNote loo={l} />}
+        {(l) => (
+          <>
+            <FitNote loo={l} />
+            <MorrellHeldOut loo={l} />
+          </>
+        )}
       </Ready>
       <Callout variant="honest" title={t('What this topic does not claim', 'Lo que este tema no afirma')}>
         {t(
@@ -57,6 +67,81 @@ function FitNote({ loo }: { loo: import('../../lib/contract.types').Hp500Loo }) 
   );
 }
 
+function MorrellHeldOut({ loo }: { loo: Hp500Loo }) {
+  const t = useT();
+  const f = useFormat();
+  const m = morrellHeldOut(loo);
+  if (!m) return null;
+  const d2 = { decimals: 2 } as const;
+  const e = m.mape;
+  const data = m.surveys.flatMap((s) => {
+    const group = { id: `s${s.n}`, label: { en: `Survey ${s.n}`, es: `Muestreo ${s.n}` } };
+    return [
+      { id: `s${s.n}-measured`, group, label: { en: 'Measured', es: 'Medida' }, value: s.measured, tone: 'good' as const },
+      { id: `s${s.n}-morrell`, group, label: { en: 'Morrell', es: 'Morrell' }, value: s.morrell, tone: 'bad' as const },
+      { id: `s${s.n}-noload`, group, label: { en: 'Morrell with no-load', es: 'Morrell con vacío' }, value: s.noload, tone: 'warn' as const },
+      { id: `s${s.n}-blin`, group, label: { en: 'B-lin', es: 'B-lin' }, value: s.blin, tone: 'accent' as const },
+    ];
+  });
+  return (
+    <>
+      <P
+        en={<>Held out on the same folds, the through-origin variant misses the measured power by {f(e.morrell, d2)} percent on average and the variant with the no-load term by {f(e.noload, d2)} percent, against {f(e.blin, d2)} percent for the setting-only line B-lin and {f(e.m0, d2)} percent for Bond&apos;s draw of the calibrated backbone. Both variants are worse than B-lin, so the size-specific energy adds nothing on these ten surveys: the measured power correlates at {f(m.powerThroughputCorr, d2)} with the measured throughput, it falls as the feed rate rises, while every energy law multiplies a specific energy by that feed rate. The plant&apos;s M_ic from an SMC Test and a no-load reading of the motor would settle the fit; until then Morrell is a held-out comparison.</>}
+        es={<>Reservadas en los mismos pliegues, la variante por el origen yerra la potencia medida en {f(e.morrell, d2)} por ciento en promedio y la variante con el término en vacío en {f(e.noload, d2)} por ciento, contra {f(e.blin, d2)} por ciento de la recta solo de la abertura B-lin y {f(e.m0, d2)} por ciento de la potencia de Bond del esqueleto calibrado. Ambas variantes son peores que B-lin, así que la energía específica por tamaño no agrega nada en estos diez muestreos: la potencia medida se correlaciona en {f(m.powerThroughputCorr, d2)} con la capacidad medida, baja cuando sube la tasa de alimentación, mientras toda ley de energía multiplica una energía específica por esa tasa. El M_ic de la planta según un ensayo SMC y una lectura en vacío del motor zanjarían el ajuste; hasta entonces Morrell es una comparación reservada.</>}
+      />
+      <Figure
+        caption={t(
+          `The power of each of the ${loo.n} surveys as measured, as predicted held out by the two Morrell variants and by the setting-only line B-lin, in kW, read from the committed leave-one-survey-out document; each prediction comes from a fit that never saw its survey.`,
+          `La potencia de cada uno de los ${loo.n} muestreos medida, y predicha en reserva por las dos variantes de Morrell y por la recta solo de la abertura B-lin, en kW, leída del documento versionado de dejar un muestreo afuera; cada predicción sale de un ajuste que nunca vio su muestreo.`,
+        )}
+      >
+        <BarChart
+          title={{ en: 'Measured and held-out power per survey', es: 'Potencia medida y reservada por muestreo' }}
+          orientation="horizontal"
+          axis={{ label: { en: 'Power', es: 'Potencia' }, unit: 'kW', format: { decimals: 0 } }}
+          data={data}
+          values={false}
+          legend={[
+            { tone: 'good', label: { en: 'Measured', es: 'Medida' } },
+            { tone: 'bad', label: { en: 'Morrell through the origin', es: 'Morrell por el origen' } },
+            { tone: 'warn', label: { en: 'Morrell with a no-load term', es: 'Morrell con término en vacío' } },
+            { tone: 'accent', label: { en: 'B-lin setting-only line', es: 'B-lin recta solo de la abertura' } },
+          ]}
+        />
+      </Figure>
+    </>
+  );
+}
+
+function ContractionFigure({ cb }: { cb: Hp500CrusherBayes }) {
+  const t = useT();
+  const f = useFormat();
+  const tone: Record<ContractionClass, 'good' | 'warn' | 'neutral'> = { identified: 'good', weak: 'warn', prior: 'neutral' };
+  const data = contractionBars(cb).map((b) => ({
+    id: b.name,
+    label: PARAM_LABEL[b.name] ?? { en: b.name, es: b.name },
+    value: b.contraction,
+    tone: tone[classifyContraction(b.contraction)],
+    hint: { en: `prior sd ${f(b.priorSd, { decimals: 2 })}, posterior sd ${f(b.posteriorSd, { decimals: 2 })}`, es: `desv. a priori ${f(b.priorSd, { decimals: 2 })}, desv. del posterior ${f(b.posteriorSd, { decimals: 2 })}` },
+  }));
+  return (
+    <Figure
+      caption={t(
+        `The contraction of every sampled scalar, noise scale and discrepancy coefficient on the fit to all ${cb.n} surveys: the posterior standard deviation over the prior one, read from the committed document. Below ${f(IDENTIFIED_BELOW, { decimals: 1 })} the surveys identify the parameter; from ${f(PRIOR_DOMINATED_FROM, { decimals: 1 })} on it stays at its prior.`,
+        `La contracción de cada escalar muestreado, escala de ruido y coeficiente de discrepancia en el ajuste con los ${cb.n} muestreos: la desviación estándar del posterior sobre la del a priori, leída del documento versionado. Bajo ${f(IDENTIFIED_BELOW, { decimals: 1 })} los muestreos identifican el parámetro; desde ${f(PRIOR_DOMINATED_FROM, { decimals: 1 })} se queda en su a priori.`,
+      )}
+    >
+      <BarChart
+        title={{ en: 'Posterior over prior standard deviation per parameter', es: 'Desviación del posterior sobre la del a priori por parámetro' }}
+        orientation="horizontal"
+        axis={{ label: { en: 'Contraction', es: 'Contracción' }, format: { decimals: 2 } }}
+        data={data}
+        legend={(['identified', 'weak', 'prior'] as const).map((c) => ({ tone: tone[c], label: CLASS_LABEL[c] }))}
+      />
+    </Figure>
+  );
+}
+
 export function CrusherBayes() {
   const t = useT();
   const cb = useArtifact(async (s) => loadHp500CrusherBayes(await loadIndex(s), s), []);
@@ -74,8 +159,17 @@ export function CrusherBayes() {
         en={<>The discrepancy coefficients d have a Gaussian prior, so given the engine scalars the discrepancy and the noise are Gaussian and the discrepancy is integrated out exactly: y_t is normal with mean f_t(theta) and covariance sigma_t^2 I plus tau_t^2 Z Z^T, with Z the matrix of the three discrepancy regressors. The sampler explores the engine scalars and the two noise scales, and the coefficients d are drawn afterwards from their exact Gaussian conditional <Cite id="kennedy2001" />. The sampler uses the differential-evolution moves of ter Braak <Cite id="terbraak2006" /> and ter Braak and Vrugt <Cite id="terbraak2008" />, as implemented in emcee <Cite id="foremanmackey2013" />.</>}
         es={<>Los coeficientes de discrepancia d tienen un a priori gaussiano, así que dados los escalares del motor la discrepancia y el ruido son gaussianos y la discrepancia se integra de forma exacta: y_t es normal con media f_t(theta) y covarianza sigma_t^2 I más tau_t^2 Z Z^T, con Z la matriz de los tres regresores de discrepancia. El muestreador explora los escalares del motor y las dos escalas de ruido, y los coeficientes d se extraen después de su condicional gaussiana exacta <Cite id="kennedy2001" />. El muestreador usa los movimientos de evolución diferencial de ter Braak <Cite id="terbraak2006" /> y de ter Braak y Vrugt <Cite id="terbraak2008" />, implementados en emcee <Cite id="foremanmackey2013" />.</>}
       />
+      <Equation
+        tex={String.raw`y_t \mid \theta, \sigma_t \sim N\!\left(f_t(\theta),\ \sigma_t^2 I + \tau_t^2 Z Z^{\top}\right), \qquad d_{tj} \sim N(0, \tau_t^2), \qquad Z = \left[\,\mathbf{1},\ z_{\mathrm{CSS}},\ z_{f_{80}}\,\right]`}
+        caption={t('The marginal likelihood the sampler evaluates: with a Gaussian prior of scale tau_t on each discrepancy coefficient d_tj, the discrepancy of target t integrates out exactly, and the vector y_t of the training surveys is normal with the engine at theta as its mean and the noise sigma_t^2 I plus the discrepancy tau_t^2 Z Z^T as its covariance; Z holds a column of ones and the standardized setting and feed f80, one row per survey.', 'La verosimilitud marginal que evalúa el muestreador: con un a priori gaussiano de escala tau_t sobre cada coeficiente de discrepancia d_tj, la discrepancia de la magnitud t se integra de forma exacta, y el vector y_t de los muestreos de entrenamiento es normal con el motor en theta como media y el ruido sigma_t^2 I más la discrepancia tau_t^2 Z Z^T como covarianza; Z tiene una columna de unos y la abertura y el f80 de la alimentación estandarizados, una fila por muestreo.')}
+      />
       <Ready a={cb} wait={{ en: 'Loading the priors and the sampler settings', es: 'Cargando los a priori y la configuración del muestreador' }}>
-        {(d) => <SpecTables cb={d} />}
+        {(d) => (
+          <>
+            <SpecTables cb={d} />
+            <ContractionFigure cb={d} />
+          </>
+        )}
       </Ready>
       <Callout variant="honest" title={t('What this topic does not claim', 'Lo que este tema no afirma')}>
         {t(
@@ -90,6 +184,8 @@ export function CrusherBayes() {
 function SpecTables({ cb }: { cb: import('../../lib/contract.types').Hp500CrusherBayes }) {
   const t = useT();
   const f = useFormat();
+  const lang = useShellLang();
+  const local = (v: number, decimals: number) => f(v, { decimals, grouping: false });
   const m = cb.method;
   const k = cb.kill_criterion;
   const pct = { percent: true, decimals: 0 } as const;
@@ -119,14 +215,14 @@ function SpecTables({ cb }: { cb: import('../../lib/contract.types').Hp500Crushe
             {cb.priors.map((p) => (
               <tr key={p.name}>
                 <td className="caos-col-text">{p.name}</td>
-                <td className="caos-col-text">{p.unit}</td>
+                <td className="caos-col-text">{priorUnit(p.unit, lang)}</td>
                 <td>{f(p.nominal, { decimals: 2 })}</td>
                 <td className="caos-col-text">{p.log ? t('logarithm', 'logaritmo') : t('linear', 'lineal')}</td>
                 <td>{f(p.sd, { decimals: 2 })}</td>
                 <td>
                   {f(p.lo, { decimals: 2 })} {t('to', 'a')} {f(p.hi, { decimals: 2 })}
                 </td>
-                <td className="caos-col-text">{p.source}</td>
+                <td className="caos-col-text">{priorSource(p.name, p.source, lang, local)}</td>
               </tr>
             ))}
           </tbody>
