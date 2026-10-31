@@ -10,6 +10,12 @@ MEASURED targets t/h and kW (P80 is a model output, reported as self-consistency
   M2  free-form                      an unconstrained OLS on [CSS, f80] predicting the raw target (the overfit
                                      strawman, expected to LOSE out-of-sample)
 
+Added in release 0.12.000, held out on the same folds (hp500-loo 1.2.0):
+  B_lin           the setting-only OLS line on CSS (``blin``), for t/h and kW: the classical baseline of the dossier
+  Morrell         Morrell's size-specific crusher energy (GMSG B4 and B5, ``model.crusher.morrell``), kW only, M_ic refit
+                  per fold (never published for this ore), through the origin
+  Morrell_noload  the same with a refit no-load term
+
 Plus, per the pre-registered plan:
   - STRICT folds (everything refit on the 9) AND a LEAKY variant (fit on all 10) so the optimism gap is visible.
   - Negative controls: label-shuffle (permuted residual targets must NOT beat M0) and a constant-mean baseline
@@ -38,6 +44,8 @@ if __package__ in (None, ""):   # run by path (ADR-0057): make the pipeline impo
     sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 from pipeline.hp500 import backbone as backbone_mod
+from pipeline.hp500 import blin, morrell_fit
+from pipeline.model.crusher import morrell
 from pipeline.hp500.surveys import REPO_ROOT, SURVEYS_CSV, read_surveys
 from pipeline.io.formats import write_json
 
@@ -211,7 +219,7 @@ def _m2_freeform(feat: np.ndarray, meas: np.ndarray, i: int, idx: np.ndarray) ->
 
 def _run_target(name: str, meas: np.ndarray, feat: np.ndarray,
                 backbone_full: np.ndarray, shape: np.ndarray | None, pd_: np.ndarray | None,
-                rng: np.random.Generator) -> dict:
+                rng: np.random.Generator, morrell_g: np.ndarray | None = None) -> dict:
     n = meas.size
     out: dict = {"target": name, "measured": [round(float(v), 2) for v in meas]}
 
@@ -222,6 +230,9 @@ def _run_target(name: str, meas: np.ndarray, feat: np.ndarray,
         m2 = np.empty(n)
         m1_shuf = np.empty(n)
         const = np.empty(n)
+        lin = np.empty(n)
+        mor, mor_nl = np.empty(n), np.empty(n)
+        fit_m, fit_m_nl, fit_p_nl = np.empty(n), np.empty(n), np.empty(n)
         # a per-fold backbone (refit scalars) so M1's residual sits on the SAME backbone it will be added to
         bb = np.empty(n)
         shuffled = meas.copy()
@@ -238,6 +249,13 @@ def _run_target(name: str, meas: np.ndarray, feat: np.ndarray,
             m0[i] = bb[i]
             const[i] = float(np.mean(meas[idx]))
             m2[i] = predict_freeform(fit_freeform(feat, meas, idx), feat[i])
+            if name in ("tph", "kW"):
+                lin[i] = blin.predict_line(blin.fit_line(feat[:, 0], meas, idx), feat[i, 0])
+            if name == "kW" and morrell_g is not None:
+                fit_m[i] = morrell_fit.fit_through_origin(morrell_g, meas, idx)
+                fit_m_nl[i], fit_p_nl[i] = morrell_fit.fit_with_no_load(morrell_g, meas, idx)
+                mor[i] = fit_m[i] * morrell_g[i]
+                mor_nl[i] = fit_m_nl[i] * morrell_g[i] + fit_p_nl[i]
         # M1 residual uses the per-fold backbone bb as its base
         for i in range(n):
             idx = fold_indices(n, i, leaky)
@@ -255,6 +273,18 @@ def _run_target(name: str, meas: np.ndarray, feat: np.ndarray,
                      "M1": [round(float(v), 2) for v in m1],
                      "M2": [round(float(v), 2) for v in m2]},
         }
+        if name in ("tph", "kW"):
+            block["B_lin"] = stats(meas, lin)
+            block["pred"]["B_lin"] = [round(float(v), 2) for v in lin]
+        if name == "kW" and morrell_g is not None:
+            block["Morrell"] = stats(meas, mor)
+            block["Morrell_noload"] = stats(meas, mor_nl)
+            block["pred"]["Morrell"] = [round(float(v), 2) for v in mor]
+            block["pred"]["Morrell_noload"] = [round(float(v), 2) for v in mor_nl]
+            block["morrell_fit"] = {"m_ic_kwh_t": [round(float(v), 4) for v in fit_m],
+                                    "m_ic_noload_kwh_t": [round(float(v), 4) for v in fit_m_nl],
+                                    "no_load_kw": [round(float(v), 2) for v in fit_p_nl],
+                                    "noload_variant_m_ic_positive": [bool(v > 0) for v in fit_m_nl]}
         # UQ: 80% predictive interval from the strict held-out residual spread of M0 (backbone is what we ship)
         if not leaky:
             resid = meas - m0
@@ -291,12 +321,13 @@ def build(backbone: dict, version: str, seed: int = SEED) -> dict:
     bb_p80 = np.array([s["backbone"]["p80_mm"] for s in surveys], float)
 
     feat = np.column_stack([css, f80])
+    morrell_g = morrell_fit.design_column(f80, bb_p80, meas_tph)   # kW per kWh/t of M_ic: measured f80 and t/h, backbone P80
     # the true engine capacity factor: backbone.tph = QT_engine * factor with QT_engine = 647 (HP500_QREF)
     shape = bb_tph / 647.0
 
     results = {
         "tph": _run_target("tph", meas_tph, feat, bb_tph, shape, None, np.random.default_rng(seed)),
-        "kW": _run_target("kW", meas_kw, feat, bb_calkw, None, bb_pd, np.random.default_rng(seed + 1)),
+        "kW": _run_target("kW", meas_kw, feat, bb_calkw, None, bb_pd, np.random.default_rng(seed + 1), morrell_g=morrell_g),
         "p80": _run_target("p80", bb_p80, feat, bb_p80, None, None, np.random.default_rng(seed + 2)),
     }
 
@@ -339,7 +370,11 @@ def build(backbone: dict, version: str, seed: int = SEED) -> dict:
         "n": len(surveys),
         "seed": seed,
         "config": {"resid_clip_frac": RESID_CLIP_FRAC, "ridge_lambda": RIDGE_LAMBDA,
-                   "features": ["cssMm", "f80Mm"], "targets_primary": ["tph", "kW"], "target_secondary": ["p80"]},
+                   "features": ["cssMm", "f80Mm"], "targets_primary": ["tph", "kW"], "target_secondary": ["p80"],
+                   "morrell": {"k_s": morrell.K_S_CRUSHER, "k2": morrell.K2_CLOSED, "circuit": "closed",
+                               "inputs": "measured f80, measured feed t/h and the backbone P80 (a model output used as an input)",
+                               "fitted": "M_ic and the no-load power are fitted per fold on the training surveys: the ore's "
+                                         "M_ic is not published"}},
         "loo": results,
         "power_parity": power_parity,
         "tph_parity": tph_parity,

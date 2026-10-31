@@ -11,6 +11,7 @@ import {
   conform,
   FLAG_CODES,
   HP500_BACKBONE,
+  HP500_CRUSHERBAYES,
   HP500_LOO,
   INDEX,
   MANIFEST,
@@ -25,6 +26,7 @@ import {
   type CaseIndex,
   type CaseManifest,
   type Hp500Backbone,
+  type Hp500CrusherBayes,
   type Hp500Loo,
   type ModelMetrics,
   type Readiness,
@@ -100,7 +102,7 @@ for (const [label, root, run, why] of roots) {
 
     it('the files the index declares exist, and name the HP500 documents and the model contracts and graphs', () => {
       for (const rel of index.files) expect(existsSync(new URL(rel, root)), rel).toBe(true);
-      for (const rel of ['hp500/backbone.json', 'hp500/loo.json', 'models/surrogate.json', 'models/psd-ae.json']) expect(index.files, rel).toContain(rel);
+      for (const rel of ['hp500/backbone.json', 'hp500/loo.json', 'hp500/crusherbayes.json', 'models/surrogate.json', 'models/psd-ae.json']) expect(index.files, rel).toContain(rel);
     });
 
     for (const entry of index.cases) {
@@ -157,6 +159,31 @@ for (const [label, root, run, why] of roots) {
       // the band the gauges draw is a half-width of the strict folds: positive for a held-out target
       expect(l.loo.tph.strict.uq.band_halfwidth).toBeGreaterThanOrEqual(0);
       expect(l.loo.kW.strict.uq.band_halfwidth).toBeGreaterThanOrEqual(0);
+      // from 1.2.0: the line on both measured targets, Morrell's two variants on power only, each prediction list of n values
+      for (const k of ['tph', 'kW'] as const) {
+        expect(l.loo[k].strict.B_lin, `${k} B_lin`).toBeDefined();
+        expect(l.loo[k].strict.pred.B_lin?.length, `${k} B_lin pred`).toBe(l.n);
+      }
+      for (const m of ['Morrell', 'Morrell_noload'] as const) {
+        expect(l.loo.kW.strict[m], m).toBeDefined();
+        expect(l.loo.kW.strict.pred[m]?.length, `${m} pred`).toBe(l.n);
+      }
+      expect(l.loo.kW.strict.morrell_fit?.m_ic_noload_kwh_t.length).toBe(l.n);
+      expect(l.config.morrell?.circuit).toBeDefined();
+    });
+
+    it('the CrusherBayes document conforms, ten surveys per target, and its verdict agrees with its own numbers', () => {
+      const c = read('hp500/crusherbayes.json') as Hp500CrusherBayes;
+      expect(conform(c, { object: HP500_CRUSHERBAYES })).toEqual([]);
+      expect(c.schema).toBe(SCHEMAS.crusherbayes);
+      for (const k of ['tph', 'kW'] as const) for (const s of ['measured', 'pred_mean', 'lo80', 'hi80'] as const) expect(c.loo[k][s].length, `${k} ${s}`).toBe(c.n);
+      // one posterior per held-out survey and one from all ten; all_converged is true exactly when every one is
+      expect(c.convergence.folds.length).toBe(c.n + 1);
+      expect(c.convergence.all_converged).toBe(c.convergence.folds.every((f) => f.converged));
+      const k = c.kill_criterion;
+      // the SDD rule: dropped as a predictor only when (a) it neither beats B-lin on power nor M0 on throughput by the margin and (b) a coverage or width fails
+      expect(k.verdict).toBe(k.a_holds && k.b_holds ? 'dropped as a predictor' : 'kept');
+      expect(k.a_holds).toBe(!k.a_power_beats_blin_by_margin && !k.a_tph_beats_m0_by_margin);
     });
 
     it('the model contracts conform and name graphs that exist with the bytes they declare', () => {
@@ -259,7 +286,29 @@ describe('CONTRACT 2: the checker', () => {
   it('the model slots are the catalog rows with a model io cell', () => {
     expect(modelSlots()).toEqual(['surrogate-model', 'anomaly-model']);
   });
-  it('the catalog table is parsed: twelve rows, readiness among them', () => {
+  it('adversarial: a CrusherBayes document that lacks a required field, or breaks a type, is refused and the field is named', () => {
+    const good = JSON.parse(readFileSync(new URL('hp500/crusherbayes.json', PROVIDER), 'utf8')) as Hp500CrusherBayes;
+    expect(conform(good, { object: HP500_CRUSHERBAYES })).toEqual([]);
+    const noVerdict = structuredClone(good) as Record<string, unknown>;
+    delete (noVerdict.kill_criterion as Record<string, unknown>).verdict;
+    expect(conform(noVerdict, { object: HP500_CRUSHERBAYES }).join(' ')).toMatch(/kill_criterion\.verdict: declared by the web, not written/);
+    const noConvergence = structuredClone(good) as Record<string, unknown>;
+    delete noConvergence.convergence;
+    expect(conform(noConvergence, { object: HP500_CRUSHERBAYES }).join(' ')).toMatch(/convergence: declared by the web, not written/);
+    const drifted = structuredClone(good);
+    (drifted.convergence.folds[0] as Record<string, unknown>).converged = 'yes';
+    expect(conform(drifted, { object: HP500_CRUSHERBAYES }).join(' ')).toMatch(/converged/);
+    const unknownVerdict = structuredClone(good) as Record<string, unknown>;
+    (unknownVerdict.kill_criterion as Record<string, unknown>).verdict = 'maybe';
+    expect(conform(unknownVerdict, { object: HP500_CRUSHERBAYES }).join(' ')).toMatch(/expected one of kept, dropped as a predictor/);
+  });
+  it('adversarial: a loo 1.2.0 block with a Morrell score of the wrong type is refused', () => {
+    const l = JSON.parse(readFileSync(new URL('hp500/loo.json', PROVIDER), 'utf8')) as Hp500Loo;
+    const bad = structuredClone(l);
+    (bad.loo.kW.strict.Morrell as Record<string, unknown>).mape_pct = 'x';
+    expect(conform(bad, { object: HP500_LOO }).join(' ')).toMatch(/Morrell\.mape_pct: expected a finite number/);
+  });
+  it('the catalog table is parsed: thirteen rows, readiness among them', () => {
     expect(catalogIds()).toEqual([
       'params-record',
       'hp500-survey',
@@ -268,6 +317,7 @@ describe('CONTRACT 2: the checker', () => {
       'trace',
       'hp500-backbone',
       'hp500-loo',
+      'hp500-crusherbayes',
       'surrogate-model',
       'anomaly-model',
       'model-metrics',

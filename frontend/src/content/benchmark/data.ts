@@ -2,7 +2,7 @@
 // number the page shows is read from hp500/loo.json, hp500/backbone.json, model-metrics.json, the surrogate contract or the
 // manifests; what is computed here is a difference, a rank or a distance of those numbers, never a figure typed in.
 import { HP500_ENVELOPE } from '../../engine/envelope';
-import type { Hp500Backbone, Hp500Loo, Text } from '../../lib/contract.types';
+import type { Hp500Backbone, Hp500CrusherBayes, Hp500Loo, Text } from '../../lib/contract.types';
 
 export type Target = 'tph' | 'kW' | 'p80';
 export type Fold = 'strict' | 'leaky';
@@ -33,6 +33,43 @@ export const TARGET_LABEL: Record<Target, Text> = {
   kW: { en: 'Power (kW)', es: 'Potencia (kW)' },
   p80: { en: 'P80 (mm), self-consistency', es: 'P80 (mm), autoconsistencia' },
 };
+
+/**
+ * The models hp500-loo 1.2.0 adds to the folds, all optional in the document: the setting-only line on both measured targets, Morrell's
+ * two variants on power. A model absent for a target is absent from its rows, never drawn as a zero.
+ */
+export const EXTRA_MODELS = ['B_lin', 'Morrell', 'Morrell_noload'] as const;
+export type ExtraKey = (typeof EXTRA_MODELS)[number];
+export type RowKey = ModelKey | ExtraKey;
+
+export const EXTRA_LABEL: Record<ExtraKey, Text> = {
+  B_lin: { en: 'B-lin setting-only line', es: 'B-lin línea solo de la abertura' },
+  Morrell: { en: 'Morrell size-specific energy', es: 'Morrell energía específica por tamaño' },
+  Morrell_noload: { en: 'Morrell with a no-load term (descriptive line)', es: 'Morrell con término en vacío (línea descriptiva)' },
+};
+export const EXTRA_SHORT: Record<ExtraKey, Text> = {
+  B_lin: { en: 'B-lin', es: 'B-lin' },
+  Morrell: { en: 'Morrell', es: 'Morrell' },
+  Morrell_noload: { en: 'Morrell + no-load', es: 'Morrell + vacío' },
+};
+
+export const ROW_LABEL: Record<RowKey, Text> = { ...MODEL_LABEL, ...EXTRA_LABEL };
+export const ROW_SHORT: Record<RowKey, Text> = { ...MODEL_SHORT, ...EXTRA_SHORT };
+
+/** The scores of an added model on a target and fold; null when the document does not carry it for that target. */
+export function extraScores(loo: Hp500Loo, target: Target, fold: Fold, model: ExtraKey) {
+  return loo.loo[target][fold][model] ?? null;
+}
+
+/** The rows of a target: the five models of the document, then each added model the document carries for that target. */
+export function rowsFor(loo: Hp500Loo, target: Target): RowKey[] {
+  return [...MODELS, ...EXTRA_MODELS.filter((m) => extraScores(loo, target, 'strict', m) !== null)];
+}
+
+/** The strict scores of any row; null for an added model the document lacks for the target. */
+export function strictScores(loo: Hp500Loo, target: Target, row: RowKey) {
+  return (EXTRA_MODELS as readonly string[]).includes(row) ? extraScores(loo, target, 'strict', row as ExtraKey) : scoresOf(loo, target, 'strict', row as ModelKey);
+}
 
 /** The scores of one model on one target and fold. */
 export function scoresOf(loo: Hp500Loo, target: Target, fold: Fold, model: ModelKey) {
@@ -131,4 +168,64 @@ export function spearman(x: readonly number[], y: readonly number[]): number | n
     sbb += (b[i] - mb) ** 2;
   }
   return saa === 0 || sbb === 0 ? null : sab / Math.sqrt(saa * sbb);
+}
+
+/** One survey of the CrusherBayes view: the measurement, the posterior predictive mean with its 80 percent interval, and the CrusherCal band around the backbone. */
+export interface IntervalPoint {
+  n: number;
+  measured: number;
+  mean: number;
+  lo: number;
+  hi: number;
+  /** The CrusherCal strict band, M0 plus and minus the half-width; null when hp500-loo does not carry it for the target. */
+  calLo: number | null;
+  calHi: number | null;
+  insideBayes: boolean;
+}
+
+/** The held-out intervals of one target, per survey. Throws when the two documents disagree on a measurement or on n. */
+export function intervalPoints(cb: Hp500CrusherBayes, loo: Hp500Loo | null, target: 'tph' | 'kW'): IntervalPoint[] {
+  const t = cb.loo[target];
+  if (t.measured.length !== cb.n) throw new Error(`hp500/crusherbayes.json: ${target} holds ${t.measured.length} surveys, n is ${cb.n}`);
+  if (loo && loo.loo[target].measured.some((m, i) => m !== t.measured[i])) {
+    throw new Error(`hp500/crusherbayes.json and hp500/loo.json disagree on the measured ${target}`);
+  }
+  return t.measured.map((measured, i) => {
+    const band = loo ? bandFor(loo, target, i + 1) : null;
+    return {
+      n: i + 1,
+      measured,
+      mean: t.pred_mean[i],
+      lo: t.lo80[i],
+      hi: t.hi80[i],
+      calLo: band ? band.lo : null,
+      calHi: band ? band.hi : null,
+      insideBayes: measured >= t.lo80[i] && measured <= t.hi80[i],
+    };
+  });
+}
+
+/** The posteriors the sampler did not converge on, by held-out survey number (or `all`). Empty when every one converged. */
+export function notConverged(cb: Hp500CrusherBayes): Array<number | 'all'> {
+  return cb.convergence.folds.filter((f) => !f.converged).map((f) => f.fold);
+}
+
+/** The sentence that labels the numbers of a posterior set that did not converge, in one language; null when every posterior converged. */
+export function convergenceText(cb: Hp500CrusherBayes, lang: 'en' | 'es'): string | null {
+  const bad = notConverged(cb);
+  if (!bad.length) return null;
+  const names = bad.map((x) => (x === 'all' ? (lang === 'es' ? 'el ajuste con los diez' : 'the fit to all ten') : String(x))).join(', ');
+  const total = cb.convergence.folds.length;
+  return lang === 'es'
+    ? `Posteriores sin converger: ${bad.length} de ${total} (${names}). Las cifras de CrusherBayes se leen con esa marca.`
+    : `Posteriors not converged: ${bad.length} of ${total} (${names}). Read every CrusherBayes figure with that flag.`;
+}
+
+/** What the surveys identify: a parameter whose posterior is below half its prior in width, per the document's own note (below 0.5). */
+export const IDENTIFIED_BELOW = 0.5;
+/** A parameter the surveys leave at its prior: contraction at or above this. */
+export const PRIOR_DOMINATED_FROM = 0.9;
+export type ContractionClass = 'identified' | 'weak' | 'prior';
+export function classifyContraction(c: number): ContractionClass {
+  return c < IDENTIFIED_BELOW ? 'identified' : c >= PRIOR_DOMINATED_FROM ? 'prior' : 'weak';
 }

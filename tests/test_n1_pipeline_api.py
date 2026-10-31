@@ -257,9 +257,9 @@ def test_replacement_walk_with_nothing_nipped_returns_the_feed() -> None:
 # ---- BS-1 of the SDD quotes what the committed document measures ------------------------------------------------------------
 
 
-def test_sdd_bs1_quotes_the_committed_numbers_and_claims_no_band_of_the_paper() -> None:
+def test_sdd_crushercal_quotes_the_committed_numbers_and_claims_no_band_of_the_paper() -> None:
     sdd = (ROOT / "docs" / "design" / "SDD.md").read_text(encoding="utf-8")
-    start = sdd.index("- BS-1, CrusherCal")
+    start = sdd.index("CrusherCal (M10) is the evaluation protocol")
     bs1 = " ".join(sdd[start:sdd.index("## Deploy driver", start)].split())
     doc = json.loads((ROOT / "data" / "derived" / "hp500" / "loo.json").read_text(encoding="utf-8"))
     tph, kw = doc["loo"]["tph"]["strict"], doc["loo"]["kW"]["strict"]

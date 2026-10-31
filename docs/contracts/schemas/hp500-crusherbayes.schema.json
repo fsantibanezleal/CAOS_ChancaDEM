@@ -1,0 +1,674 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hp500-crusherbayes.schema.json",
+  "title": "Hp500CrusherBayes",
+  "description": "Catalog row hp500-crusherbayes 1.0.0: CrusherBayes, the Bayesian calibration of the crusher engine's fitted scalars with a structural discrepancy per target, held out on the ten HP500 surveys, written by data-pipeline/pipeline/hp500/crusherbayes.py to data/derived/hp500/crusherbayes.json by the offline bake (CI never runs the sampler, ADR-0074: it validates the committed document). One posterior per fold from nine surveys (strict leave-one-survey-out as hp500-loo) and one from all ten for the contraction table; per held-out survey the posterior predictive mean and 80 percent interval for the two measured targets (throughput tph [t/h] and power kW [kW]; P80 is not measured and is never a target); scores beside B_lin, M0 (the CrusherCal band) and M2; the convergence diagnostic of every posterior; the kill criterion of the SDD evaluated into a verdict. Rules the schema cannot state, checked by the producer test: n equals the length of every per-survey list; the verdict equals kill_criterion recomputed from the numbers it carries; convergence.all_converged is true exactly when every fold entry is converged; a posterior that fails its diagnostic is recorded with converged false and is never dropped from the document; the document is byte-identical for the same inputs and seed. Derived from data licensed CC BY 4.0 (https://doi.org/10.3390/min14090919).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source",
+    "engine_version",
+    "n",
+    "seed",
+    "inputs_sha256",
+    "method",
+    "priors",
+    "convergence",
+    "loo",
+    "comparators",
+    "comparators_note",
+    "contraction",
+    "contraction_note",
+    "kill_criterion"
+  ],
+  "properties": {
+    "schema": {
+      "const": "chancadem.hp500.crusherbayes/v1"
+    },
+    "source": {
+      "$ref": "#/$defs/source"
+    },
+    "engine_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$"
+    },
+    "n": {
+      "type": "integer",
+      "minimum": 3
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "inputs_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$",
+      "description": "SHA-256 over the survey table, the sampler size, the seed and the priors the document was sampled from."
+    },
+    "method": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sampler",
+        "sampler_version",
+        "move",
+        "walkers",
+        "steps",
+        "burn_in_steps",
+        "thin",
+        "predictive_draws_per_sample",
+        "likelihood",
+        "discrepancy_prior_sd",
+        "noise_prior",
+        "p80",
+        "interval_80"
+      ],
+      "properties": {
+        "sampler": {
+          "const": "emcee"
+        },
+        "sampler_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "move": {
+          "type": "string",
+          "minLength": 1
+        },
+        "walkers": {
+          "type": "integer",
+          "minimum": 2
+        },
+        "steps": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "burn_in_steps": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "thin": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "predictive_draws_per_sample": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "likelihood": {
+          "type": "string",
+          "minLength": 1
+        },
+        "discrepancy_prior_sd": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tph",
+            "kW"
+          ],
+          "properties": {
+            "tph": {
+              "type": "number"
+            },
+            "kW": {
+              "type": "number"
+            }
+          }
+        },
+        "noise_prior": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "family",
+            "median",
+            "log_sd"
+          ],
+          "properties": {
+            "family": {
+              "type": "string"
+            },
+            "median": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "tph",
+                "kW"
+              ],
+              "properties": {
+                "tph": {
+                  "type": "number"
+                },
+                "kW": {
+                  "type": "number"
+                }
+              }
+            },
+            "log_sd": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "p80": {
+          "type": "string",
+          "minLength": 1
+        },
+        "interval_80": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "priors": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "unit",
+          "nominal",
+          "log",
+          "mu",
+          "sd",
+          "lo",
+          "hi",
+          "source"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "unit": {
+            "type": "string",
+            "minLength": 1
+          },
+          "nominal": {
+            "type": "number"
+          },
+          "log": {
+            "type": "boolean"
+          },
+          "mu": {
+            "type": "number"
+          },
+          "sd": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "lo": {
+            "type": "number"
+          },
+          "hi": {
+            "type": "number"
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "description": "One truncated normal per engine scalar, in the sampled space (ln of the value when log is true), with its source."
+      }
+    },
+    "convergence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "criterion",
+        "tau_factor",
+        "folds",
+        "all_converged"
+      ],
+      "properties": {
+        "criterion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tau_factor": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "folds": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "fold",
+              "converged",
+              "tau_max",
+              "post_burn_steps",
+              "chain_over_tau",
+              "acceptance_fraction",
+              "samples"
+            ],
+            "properties": {
+              "fold": {
+                "description": "The held-out survey number, or all for the fit to all ten.",
+                "oneOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  {
+                    "const": "all"
+                  }
+                ]
+              },
+              "converged": {
+                "type": "boolean"
+              },
+              "tau_max": {
+                "type": "number",
+                "minimum": 0
+              },
+              "post_burn_steps": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "chain_over_tau": {
+                "type": "number",
+                "minimum": 0
+              },
+              "acceptance_fraction": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+              },
+              "samples": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        },
+        "all_converged": {
+          "type": "boolean"
+        }
+      }
+    },
+    "loo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tph",
+        "kW"
+      ],
+      "properties": {
+        "tph": {
+          "$ref": "#/$defs/target"
+        },
+        "kW": {
+          "$ref": "#/$defs/target"
+        }
+      }
+    },
+    "comparators": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tph",
+        "kW"
+      ],
+      "properties": {
+        "tph": {
+          "$ref": "#/$defs/comparators"
+        },
+        "kW": {
+          "$ref": "#/$defs/comparators"
+        }
+      }
+    },
+    "comparators_note": {
+      "type": "string",
+      "minLength": 1
+    },
+    "contraction": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "unit",
+          "nominal",
+          "prior_sd",
+          "posterior_mean",
+          "posterior_sd",
+          "contraction"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "unit": {
+            "type": "string",
+            "minLength": 1
+          },
+          "nominal": {
+            "type": "number"
+          },
+          "prior_sd": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "posterior_mean": {
+            "type": "number"
+          },
+          "posterior_sd": {
+            "type": "number",
+            "minimum": 0
+          },
+          "contraction": {
+            "type": "number",
+            "minimum": 0
+          }
+        }
+      }
+    },
+    "contraction_note": {
+      "type": "string",
+      "minLength": 1
+    },
+    "kill_criterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rule",
+        "margin_mape_pts",
+        "coverage_band",
+        "power_mape_pct",
+        "power_mape_blin_pct",
+        "power_gain_over_blin_pts",
+        "a_power_beats_blin_by_margin",
+        "tph_mape_pct",
+        "tph_mape_m0_pct",
+        "tph_gain_over_m0_pts",
+        "a_tph_beats_m0_by_margin",
+        "a_holds",
+        "coverage",
+        "coverage_outside_band",
+        "mean_width",
+        "mean_width_crushercal",
+        "band_wider_than_crushercal",
+        "b_holds",
+        "verdict"
+      ],
+      "properties": {
+        "rule": {
+          "type": "string",
+          "minLength": 1
+        },
+        "margin_mape_pts": {
+          "type": "number",
+          "minimum": 0
+        },
+        "coverage_band": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        },
+        "power_mape_pct": {
+          "type": "number",
+          "minimum": 0
+        },
+        "power_mape_blin_pct": {
+          "type": "number",
+          "minimum": 0
+        },
+        "power_gain_over_blin_pts": {
+          "type": "number"
+        },
+        "a_power_beats_blin_by_margin": {
+          "type": "boolean"
+        },
+        "tph_mape_pct": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tph_mape_m0_pct": {
+          "type": "number",
+          "minimum": 0
+        },
+        "tph_gain_over_m0_pts": {
+          "type": "number"
+        },
+        "a_tph_beats_m0_by_margin": {
+          "type": "boolean"
+        },
+        "a_holds": {
+          "type": "boolean"
+        },
+        "coverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tph",
+            "kW"
+          ],
+          "properties": {
+            "tph": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            },
+            "kW": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 1
+            }
+          }
+        },
+        "coverage_outside_band": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tph",
+            "kW"
+          ],
+          "properties": {
+            "tph": {
+              "type": "boolean"
+            },
+            "kW": {
+              "type": "boolean"
+            }
+          }
+        },
+        "mean_width": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tph",
+            "kW"
+          ],
+          "properties": {
+            "tph": {
+              "type": "number",
+              "minimum": 0
+            },
+            "kW": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "mean_width_crushercal": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tph",
+            "kW"
+          ],
+          "properties": {
+            "tph": {
+              "type": "number",
+              "minimum": 0
+            },
+            "kW": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "band_wider_than_crushercal": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "tph",
+            "kW"
+          ],
+          "properties": {
+            "tph": {
+              "type": "boolean"
+            },
+            "kW": {
+              "type": "boolean"
+            }
+          }
+        },
+        "b_holds": {
+          "type": "boolean"
+        },
+        "verdict": {
+          "enum": [
+            "kept",
+            "dropped as a predictor"
+          ]
+        }
+      }
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "paper",
+        "doi",
+        "license",
+        "table"
+      ],
+      "properties": {
+        "paper": {
+          "type": "string",
+          "minLength": 1
+        },
+        "doi": {
+          "const": "10.3390/min14090919"
+        },
+        "license": {
+          "const": "CC BY 4.0"
+        },
+        "table": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "scores": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mape_pct",
+        "rmse",
+        "lpd_mean",
+        "coverage_80",
+        "mean_width"
+      ],
+      "properties": {
+        "mape_pct": {
+          "type": "number",
+          "minimum": 0
+        },
+        "rmse": {
+          "type": "number",
+          "minimum": 0
+        },
+        "lpd_mean": {
+          "type": "number"
+        },
+        "coverage_80": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "mean_width": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "description": "MAPE [%], RMSE and mean 80 percent width in the target's unit, the mean log predictive density of the held-out value, and the share of held-out surveys inside their 80 percent interval."
+    },
+    "target": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "measured",
+        "pred_mean",
+        "lo80",
+        "hi80",
+        "scores"
+      ],
+      "properties": {
+        "measured": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "pred_mean": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "lo80": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "hi80": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          }
+        },
+        "scores": {
+          "$ref": "#/$defs/scores"
+        }
+      }
+    },
+    "comparators": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "M0",
+        "B_lin",
+        "M2"
+      ],
+      "properties": {
+        "M0": {
+          "$ref": "#/$defs/scores"
+        },
+        "B_lin": {
+          "$ref": "#/$defs/scores"
+        },
+        "M2": {
+          "$ref": "#/$defs/scores"
+        }
+      }
+    }
+  }
+}

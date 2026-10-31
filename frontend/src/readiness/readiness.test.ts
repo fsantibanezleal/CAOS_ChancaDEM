@@ -30,7 +30,7 @@ const DOCUMENTS: Array<[string, Readiness]> = [['provider tree', fixture], ...(c
 const VIEWS: Record<string, string[]> = {
   ...GROUP_ROWS,
   experiments: ['case-index', 'case-manifest', 'trace', 'hp500-backbone', 'hp500-loo'],
-  benchmark: ['case-index', 'case-manifest', 'trace', 'hp500-loo', 'surrogate-model', 'anomaly-model', 'model-metrics'],
+  benchmark: ['case-index', 'case-manifest', 'trace', 'hp500-loo', 'hp500-crusherbayes', 'surrogate-model', 'anomaly-model', 'model-metrics'],
   implementation: fixture.contracts.map((c) => c.id),
 };
 
@@ -63,7 +63,7 @@ describe('the committed documents', () => {
   });
   it('every row a surface names is a row of the catalog, in the document of both roots', () => {
     const ids = new Set(fixture.contracts.map((c) => c.id));
-    expect(ids.size).toBe(11);
+    expect(ids.size).toBe(12);
     for (const [view, rows] of Object.entries(VIEWS)) for (const id of rows) expect(ids.has(id), `${view}: ${id}`).toBe(true);
   });
   it('the provider tree says provider on every artifact row (its api row is missing, by the catalog); the note names the provider from the document', () => {

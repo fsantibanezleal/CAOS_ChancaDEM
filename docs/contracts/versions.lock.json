@@ -30,9 +30,14 @@
     "sha256": "704cc5f306c72ed1d8f4cfaae9e65ab7d80ef5dbd32b328ed95cc79328285125"
   },
   "hp500-loo": {
-    "version": "1.1.0",
+    "version": "1.2.0",
     "schema": "docs/contracts/schemas/hp500-loo.schema.json",
-    "sha256": "fd760e83b7c35a840ea7b5eebde4bd8254ca951c8436e22ffb607ab541a264c2"
+    "sha256": "5e788adc282c66ccec1f99c1f82b02b0e3b1e34a484331ae1a282c4cb16e2a60"
+  },
+  "hp500-crusherbayes": {
+    "version": "1.0.0",
+    "schema": "docs/contracts/schemas/hp500-crusherbayes.schema.json",
+    "sha256": "cedc649f770045c491562927ff269cfd2054b14e532d651c2fd1b7b6d4da29e0"
   },
   "surrogate-model": {
     "version": "1.0.0",

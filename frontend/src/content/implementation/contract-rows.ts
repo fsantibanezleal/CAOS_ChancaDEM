@@ -47,10 +47,17 @@ export const ROWS: { id: string; version: string; schema: string; governs: [stri
   },
   {
     id: 'hp500-loo',
-    version: '1.1.0',
+    version: '1.2.0',
     schema: 'chancadem.hp500.loo/v1',
     governs: ['CrusherCal: the leave-one-survey-out validation with its controls and predictive bands.', 'CrusherCal: la validación dejando un muestreo fuera, con sus controles y bandas predictivas.'],
     missing: ['Missing: the real-survey gauges show the measured values without a band and say why.', 'Ausente: los indicadores de muestreos reales muestran los valores medidos sin banda y dicen por qué.'],
+  },
+  {
+    id: 'hp500-crusherbayes',
+    version: '1.0.0',
+    schema: 'chancadem.hp500.crusherbayes/v1',
+    governs: ['CrusherBayes: the Bayesian calibration of the engine with a structural discrepancy, with its convergence, contraction table and verdict.', 'CrusherBayes: la calibración bayesiana del motor con una discrepancia estructural, con su convergencia, su tabla de contracción y su veredicto.'],
+    missing: ['Missing: the Benchmark says not available yet with the reason, never a number from an older bake.', 'Ausente: el Benchmark dice aún no disponible con la razón, nunca un número de un precálculo anterior.'],
   },
   {
     id: 'surrogate-model',

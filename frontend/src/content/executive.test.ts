@@ -130,8 +130,8 @@ function citations(): Array<{ source: string; tab: number }> {
 }
 
 describe('the example executive view', () => {
-  it('the shell is pinned exactly at 0.19.3 (0.14.0 brought flip cards, carousels, animated illustrations and Focus mode; 0.15.0 added the G19 value check; 0.16.0 gave SurfacePage Focus; 0.19.0 added Tier A chart interaction and accessible data tables; 0.19.1 improves narrow table flow and Spanish time-axis labels; 0.19.2 tells the sticky site header from a static content header in G5; 0.19.3 reads its own labels in Spanish on a Spanish page)', () => {
-    expect(pkg.dependencies['@fasl-work/caos-app-shell']).toBe('0.19.3');
+  it('the shell is pinned exactly at 0.19.9 (0.14.0 brought flip cards, carousels, animated illustrations and Focus mode; 0.15.0 added the G19 value check; 0.16.0 gave SurfacePage Focus; 0.19.0 added Tier A chart interaction and accessible data tables; 0.19.1 improves narrow table flow and Spanish time-axis labels; 0.19.2 tells the sticky site header from a static content header in G5; 0.19.3 reads its own labels in Spanish on a Spanish page; 0.19.4 to 0.19.9 need no product-side change here)', () => {
+    expect(pkg.dependencies['@fasl-work/caos-app-shell']).toBe('0.19.9');
     expect(EXECUTIVE_SCHEMA_VERSION).toBe('2.0.0');
   });
 

@@ -7,3 +7,6 @@
 torch==2.12.1
 onnx==1.22.0
 onnxruntime==1.27.0
+# CrusherBayes (data-pipeline/pipeline/hp500/crusherbayes.py): the affine-invariant ensemble sampler of the offline bake. Latest release
+# on PyPI 3.1.6 (2024-04-19, MIT; checked 2026-10-30); it needs numpy only. CI never runs the sampler (ADR-0074).
+emcee==3.1.6

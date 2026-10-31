@@ -36,19 +36,22 @@ CAP: dict[str, CapModel] = {
 HP500_QREF = 647
 
 
-def throughput(machine: str, css_mm: float, throw_mm: float, speed_rpm: float, calibrated: bool = False) -> float:
-    """Throughput [t/h] from machine, CSS, throw and speed. Unimodal in speed (the capacity hump)."""
+def throughput(machine: str, css_mm: float, throw_mm: float, speed_rpm: float, calibrated: bool = False,
+               hp500_q_ref: float = HP500_QREF) -> float:
+    """Throughput [t/h] from machine, CSS, throw and speed. Unimodal in speed (the capacity hump). ``hp500_q_ref`` [t/h]
+    replaces the calibrated base only on the HP500 lane (CrusherBayes samples it; the default is the Table 4 value)."""
     m = CAP[machine]
-    q_ref = HP500_QREF if (calibrated and machine == "cone-sec") else m.q_ref
+    q_ref = hp500_q_ref if (calibrated and machine == "cone-sec") else m.q_ref
     open_factor = (css_mm + throw_mm / 2) / m.ref_gap_mm
     s = speed_rpm / m.speed_opt
     hump = s * jexp(1 - s)   # peaks at s = 1, value 1
     return jmax(0.0, q_ref * open_factor * hump)
 
 
-def calibrated_power(bond_pd_kw: float) -> float:
-    """HP500 current-based power: Pc = 1.30 Pd + 110 kW (no-load), Pd the Bond net comminution draw."""
-    return 1.3 * bond_pd_kw + 110
+def calibrated_power(bond_pd_kw: float, zeta: float = 1.3, pn_kw: float = 110) -> float:
+    """HP500 current-based power: Pc = zeta Pd + Pn, zeta = 1.30 and Pn = 110 kW (no-load), Pd the Bond net comminution
+    draw. The two scalars are keywords only so CrusherBayes can sample them; the defaults are Table 5."""
+    return zeta * bond_pd_kw + pn_kw
 
 
 def optimal_speed(machine: str) -> float:

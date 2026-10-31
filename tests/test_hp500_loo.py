@@ -64,3 +64,44 @@ def test_build_does_not_touch_the_input(bb: dict) -> None:
     before = copy.deepcopy(bb)
     loo.build(bb, VERSION)
     assert bb == before
+
+
+# ---- release 0.12.000: B-lin and Morrell on the same folds (hp500-loo 1.2.0) ----------------------------------------
+def test_b_lin_reproduces_the_dossier_numbers(bb: dict) -> None:
+    """Section 1.4 of the beyond-SOTA dossier: the CSS-only line scores 12.78 percent on power and 13.67 on throughput."""
+    res = loo.build(bb, VERSION)["loo"]
+    assert res["kW"]["strict"]["B_lin"]["mape_pct"] == 12.78
+    assert res["tph"]["strict"]["B_lin"]["mape_pct"] == 13.67
+    assert "B_lin" not in res["p80"]["strict"]                       # p80 is not measured, so no line is fitted to it
+    assert len(res["kW"]["strict"]["pred"]["B_lin"]) == len(res["tph"]["leaky"]["pred"]["B_lin"]) == 10
+
+
+def test_b_lin_leaky_is_no_worse_than_strict(bb: dict) -> None:
+    kw = loo.build(bb, VERSION)["loo"]["kW"]
+    assert kw["leaky"]["B_lin"]["mape_pct"] <= kw["strict"]["B_lin"]["mape_pct"]
+
+
+def test_morrell_variants_report_the_numbers_as_they_come(bb: dict) -> None:
+    """G1 of the dossier measured 38.08 percent without and 15.21 with the no-load term; both are worse than B-lin."""
+    kw = loo.build(bb, VERSION)["loo"]["kW"]["strict"]
+    assert kw["Morrell"]["mape_pct"] == 38.08
+    assert kw["Morrell_noload"]["mape_pct"] == 15.21
+    assert kw["Morrell"]["mape_pct"] > kw["B_lin"]["mape_pct"] and kw["Morrell_noload"]["mape_pct"] > kw["B_lin"]["mape_pct"]
+    fit = kw["morrell_fit"]
+    assert len(fit["m_ic_kwh_t"]) == len(fit["no_load_kw"]) == len(fit["noload_variant_m_ic_positive"]) == 10
+    assert all(m > 0 for m in fit["m_ic_kwh_t"])
+    assert not any(fit["noload_variant_m_ic_positive"])               # the no-load variant fits a negative M_ic: not Morrell's physics
+    assert "Morrell" not in loo.build(bb, VERSION)["loo"]["tph"]["strict"]
+
+
+def test_adversarial_a_fold_never_sees_its_held_out_survey(bb: dict) -> None:
+    """Plant an absurd measured power in survey k: the held-out prediction of fold k does not move for any model, and the
+    predictions of the other folds (which train on survey k) do."""
+    k = 4
+    base = loo.build(bb, VERSION)["loo"]["kW"]["strict"]["pred"]
+    planted = copy.deepcopy(bb)
+    planted["surveys"][k]["measured"]["power_kw"] = 9999
+    moved = loo.build(planted, VERSION)["loo"]["kW"]["strict"]["pred"]
+    for model in ("M0", "M2", "B_lin", "Morrell", "Morrell_noload"):
+        assert moved[model][k] == base[model][k], model
+        assert all(moved[model][i] != base[model][i] for i in range(10) if i != k), model

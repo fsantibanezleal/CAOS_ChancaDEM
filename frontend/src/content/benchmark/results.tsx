@@ -5,17 +5,17 @@ import { ReadinessNote } from '../../readiness/ReadinessNote';
 import type { Hp500Loo, ModelMetrics } from '../../lib/contract.types';
 import { OUTPUT_UNITS, type SurrogateOutput } from '../../lib/ort';
 import { P, useT } from '../bi';
-import { MODEL_LABEL, MODEL_SHORT, MODELS, TARGET_LABEL, scoresOf, type ModelKey, type Target } from './data';
+import { ROW_LABEL, ROW_SHORT, TARGET_LABEL, rowsFor, scoresOf, strictScores, type RowKey, type Target } from './data';
 import { Ready, TableWrap, useBench } from './shared';
 
 const TARGETS: Target[] = ['tph', 'kW', 'p80'];
 
 function modelBars(loo: Hp500Loo, target: Target): BarDatum[] {
-  return MODELS.map((m: ModelKey) => ({
+  return rowsFor(loo, target).map((m: RowKey) => ({
     id: m,
-    label: MODEL_SHORT[m],
-    value: scoresOf(loo, target, 'strict', m).mape_pct,
-    tone: m === 'M0_backbone' ? 'accent' : m === 'constant_mean' || m === 'M1_label_shuffle' ? 'warn' : 'neutral',
+    label: ROW_SHORT[m],
+    value: strictScores(loo, target, m)?.mape_pct ?? 0,
+    tone: m === 'M0_backbone' ? 'accent' : m === 'constant_mean' || m === 'M1_label_shuffle' || m === 'Morrell_noload' ? 'warn' : 'neutral',
   }));
 }
 
@@ -45,12 +45,12 @@ function LooTables({ loo }: { loo: Hp500Loo }) {
           </thead>
           <tbody>
             {TARGETS.flatMap((target) =>
-              MODELS.map((m) => {
-                const s = scoresOf(loo, target, 'strict', m);
+              rowsFor(loo, target).map((m) => {
+                const s = strictScores(loo, target, m)!;
                 return (
                   <tr key={`${target}-${m}`}>
                     <td className="caos-col-text">{TARGET_LABEL[target][lang]}</td>
-                    <td className="caos-col-text">{MODEL_LABEL[m][lang]}</td>
+                    <td className="caos-col-text">{ROW_LABEL[m][lang]}</td>
                     <td>{f(s.mape_pct, { decimals: 1 })}</td>
                     <td>{f(s.rmse, { decimals: 1 })}</td>
                     <td>{f(s.r2, { decimals: 3 })}</td>
@@ -112,6 +112,46 @@ function LooTables({ loo }: { loo: Hp500Loo }) {
           </PlotCard>
         ))}
       </ViewsRow>
+    </>
+  );
+}
+
+/** The range [min, max] of a fitted per-fold series. */
+const span = (v: readonly number[]): [number, number] => [Math.min(...v), Math.max(...v)];
+
+/** What the two added families say, every figure read from the document: the setting-only line, and Morrell's two variants with the sign of the fitted M_ic. */
+function AddedModelsNote({ loo }: { loo: Hp500Loo }) {
+  const t = useT();
+  const f = useFormat();
+  const lin = { tph: strictScores(loo, 'tph', 'B_lin'), kw: strictScores(loo, 'kW', 'B_lin') };
+  const m = strictScores(loo, 'kW', 'Morrell');
+  const mn = strictScores(loo, 'kW', 'Morrell_noload');
+  const fit = loo.loo.kW.strict.morrell_fit;
+  if (!lin.tph && !lin.kw && !m && !mn) return null;
+  const nNeg = fit ? fit.noload_variant_m_ic_positive.filter((p) => !p).length : 0;
+  const [icLo, icHi] = fit ? span(fit.m_ic_noload_kwh_t) : [0, 0];
+  const [p0Lo, p0Hi] = fit ? span(fit.no_load_kw) : [0, 0];
+  const d = { decimals: 1 } as const;
+  return (
+    <>
+      {lin.kw && lin.tph ? (
+        <P
+          en={<>B-lin is the bar every other method meets: a straight line on the closed-side setting alone, refit on each fold, with no physics. Held out it reaches {f(lin.tph.mape_pct, d)} percent on throughput and {f(lin.kw.mape_pct, d)} percent on power. A method that claims more than a line on the setting claims it over that margin.</>}
+          es={<>B-lin es la vara que todo otro método debe alcanzar: una recta sobre la abertura de lado cerrado solamente, reajustada en cada pliegue, sin física. Reservada alcanza {f(lin.tph.mape_pct, d)} por ciento en capacidad y {f(lin.kw.mape_pct, d)} por ciento en potencia. Un método que afirma más que una recta sobre la abertura lo afirma sobre ese margen.</>}
+        />
+      ) : null}
+      {m && mn && fit ? (
+        <P
+          en={<>Morrell&apos;s size-specific energy gives the crusher power from the feed and product sizes and one ore property, <Cite id="morrell2009" />. The ore&apos;s crushing work index is not published, so it is fitted on the training surveys of each fold. Without a no-load term the held-out error on power is {f(m.mape_pct, d)} percent. With a no-load term it falls to {f(mn.mape_pct, d)} percent, but the fit is then not Morrell&apos;s physics: the fitted work index is negative in {f(nNeg, { decimals: 0 })} of {f(fit.noload_variant_m_ic_positive.length, { decimals: 0 })} folds ({f(icLo, d)} to {f(icHi, d)} kWh/t) beside a no-load power of {f(p0Lo, { decimals: 0 })} to {f(p0Hi, { decimals: 0 })} kW. That row is a descriptive line on the design column, and is labelled so; it is not an estimate of the work index.</>}
+          es={<>La energía específica por tamaño de Morrell da la potencia del chancador a partir de los tamaños de alimento y producto y una propiedad del mineral <Cite id="morrell2009" />. El índice de trabajo de chancado del mineral no está publicado, así que se ajusta con los muestreos de entrenamiento de cada pliegue. Sin término en vacío el error reservado en potencia es {f(m.mape_pct, d)} por ciento. Con un término en vacío baja a {f(mn.mape_pct, d)} por ciento, pero el ajuste ya no es la física de Morrell: el índice de trabajo ajustado es negativo en {f(nNeg, { decimals: 0 })} de {f(fit.noload_variant_m_ic_positive.length, { decimals: 0 })} pliegues ({f(icLo, d)} a {f(icHi, d)} kWh/t) junto a una potencia en vacío de {f(p0Lo, { decimals: 0 })} a {f(p0Hi, { decimals: 0 })} kW. Esa fila es una línea descriptiva sobre la columna de diseño, y se rotula así; no es una estimación del índice de trabajo.</>}
+        />
+      ) : null}
+      <p className="caos-plot-note">
+        {t(
+          'The setting-only line has no row for P80 and Morrell has none for throughput: the document carries them only for the targets they predict.',
+          'La línea de la abertura no tiene fila para P80 y Morrell no la tiene para capacidad: el documento los trae solo para las magnitudes que predicen.',
+        )}
+      </p>
     </>
   );
 }
@@ -189,11 +229,11 @@ export function Results() {
   const m0 = loo.state === 'ready' ? scoresOf(loo.data, 'tph', 'strict', 'M0_backbone') : null;
   const mean = loo.state === 'ready' ? scoresOf(loo.data, 'tph', 'strict', 'constant_mean') : null;
   return (
-    <DocSection title={{ en: 'Held-out results', es: 'Resultados reservados' }} area="results" refs={['rocha2024', 'koh2021']}>
+    <DocSection title={{ en: 'Held-out results', es: 'Resultados reservados' }} area="results" refs={['rocha2024', 'koh2021', 'morrell2009']}>
       <P
         en={
           <>
-            CrusherCal predicts each measured survey from the other nine, for the two measured targets, throughput and power, and grades P80 only as self-consistency because the source publishes its curves as figures <Cite id="rocha2024" />. The tables below put five models on the same folds: the calibrated backbone (M0), the backbone with a bounded residual (M1), a free-form fit (M2) and two controls, the constant mean and a label shuffle that must not beat M0.
+            CrusherCal predicts each measured survey from the other nine, for the two measured targets, throughput and power, and grades P80 only as self-consistency because the source publishes its curves as figures <Cite id="rocha2024" />. The tables below put the models on the same folds: the calibrated backbone (M0), the backbone with a bounded residual (M1), a free-form fit (M2), the setting-only line B-lin, Morrell&apos;s size-specific energy for power, and two controls, the constant mean and a label shuffle that must not beat M0.
             {m0 && mean ? (
               <>
                 {' '}On throughput the backbone has a strict MAPE of {f(m0.mape_pct, { decimals: 1 })} percent against {f(mean.mape_pct, { decimals: 1 })} percent for the constant mean.
@@ -203,7 +243,7 @@ export function Results() {
         }
         es={
           <>
-            CrusherCal predice cada muestreo medido a partir de los otros nueve, para las dos magnitudes medidas, capacidad y potencia, y califica el P80 sólo como autoconsistencia porque la fuente publica sus curvas como figuras <Cite id="rocha2024" />. Las tablas siguientes ponen cinco modelos sobre los mismos pliegues: el esqueleto calibrado (M0), el esqueleto con un residuo acotado (M1), un ajuste de forma libre (M2) y dos controles, la media constante y unas etiquetas barajadas que no deben superar a M0.
+            CrusherCal predice cada muestreo medido a partir de los otros nueve, para las dos magnitudes medidas, capacidad y potencia, y califica el P80 sólo como autoconsistencia porque la fuente publica sus curvas como figuras <Cite id="rocha2024" />. Las tablas siguientes ponen los modelos sobre los mismos pliegues: el esqueleto calibrado (M0), el esqueleto con un residuo acotado (M1), un ajuste de forma libre (M2), la recta solo de la abertura B-lin, la energía específica por tamaño de Morrell para la potencia, y dos controles, la media constante y unas etiquetas barajadas que no deben superar a M0.
             {m0 && mean ? (
               <>
                 {' '}En capacidad, el esqueleto tiene un MAPE estricto de {f(m0.mape_pct, { decimals: 1 })} por ciento contra {f(mean.mape_pct, { decimals: 1 })} por ciento de la media constante.
@@ -214,6 +254,7 @@ export function Results() {
       />
       <ReadinessNote ids={['hp500-loo']} />
       <Ready a={loo}>{(l) => <LooTables loo={l} />}</Ready>
+      <Ready a={loo}>{(l) => <AddedModelsNote loo={l} />}</Ready>
       <Ready a={loo}>
         {(l) => <CoarseNote loo={l} />}
       </Ready>

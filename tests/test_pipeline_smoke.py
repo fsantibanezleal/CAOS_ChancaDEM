@@ -82,7 +82,7 @@ def test_run_all_writes_the_27_cases_the_index_and_the_hp500_documents(tmp_path:
     idx = json.loads((out / "manifests" / "index.json").read_text(encoding="utf-8"))
     assert idx["n_cases"] == 27 and idx["schema"] == "chancadem.index/v1" and idx["default_case"] == "S01"
     assert [c["case_id"] for c in idx["cases"]] == sorted(c["case_id"] for c in idx["cases"])
-    assert idx["files"] == ["hp500/backbone.json", "hp500/loo.json"]            # no models in a bare sandbox
+    assert idx["files"] == ["hp500/backbone.json", "hp500/loo.json", "hp500/crusherbayes.json"]   # no models in a bare sandbox
     assert all((out / f).is_file() for f in idx["files"])
 
 
@@ -136,7 +136,7 @@ def test_a_missing_survey_table_bakes_no_real_case_and_no_hp500_document(tmp_pat
     assert idx["files"] == []
     ready = json.loads((out / "readiness.json").read_text(encoding="utf-8"))
     states = {e["id"]: e["state"] for e in ready["contracts"]}
-    assert states["hp500-survey"] == states["hp500-backbone"] == states["hp500-loo"] == "missing"
+    assert states["hp500-survey"] == states["hp500-backbone"] == states["hp500-loo"] == states["hp500-crusherbayes"] == "missing"
 
 
 def test_a_rejected_survey_drops_its_case_and_readiness_lists_its_number(tmp_path: Path) -> None:

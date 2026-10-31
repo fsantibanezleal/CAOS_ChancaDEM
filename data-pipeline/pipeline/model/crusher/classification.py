@@ -45,11 +45,12 @@ KMODEL: dict[str, KModel] = {
 }
 
 
-def hp500_params(css_mm: float, f80_mm: float) -> Classification:
-    """HP500 secondary-cone classification calibrated to the 10 Minas Rio surveys (Rocha et al. 2024, Table 5)."""
-    k1 = 0.23 * css_mm + 0.3 * f80_mm
-    k2 = 12.0 + 0.55 * css_mm + 0.4 * f80_mm
-    return Classification(k1=k1, k2=jmax(k2, k1 * 1.05), k3=2.3)
+def hp500_params(css_mm: float, f80_mm: float, k1_scale: float = 1.0, k2_scale: float = 1.0, k3: float = 2.3) -> Classification:
+    """HP500 secondary-cone classification calibrated to the 10 Minas Rio surveys (Rocha et al. 2024, Table 5). The three
+    keywords scale K1 and K2 and set K3; they are there so CrusherBayes can sample them, the defaults are Table 5."""
+    k1 = k1_scale * (0.23 * css_mm + 0.3 * f80_mm)
+    k2 = k2_scale * (12.0 + 0.55 * css_mm + 0.4 * f80_mm)
+    return Classification(k1=k1, k2=jmax(k2, k1 * 1.05), k3=k3)
 
 
 def classification_params(
@@ -58,11 +59,14 @@ def classification_params(
     f80_mm: float | None = None,
     calibrated: bool = False,
     throw_mm: float | None = None,
+    k1_scale: float = 1.0,
+    k2_scale: float = 1.0,
+    k3: float = 2.3,
 ) -> Classification:
     """Build K1, K2, K3 from machine, CSS and throw. Synthetic path: K1 linear in CSS, K2 linear in CSS and throw,
     centered on the machine design throw. Calibrated path: the HP500 fit, linear in CSS and f80."""
     if calibrated and machine == "cone-sec" and f80_mm is not None:
-        return hp500_params(css_mm, f80_mm)
+        return hp500_params(css_mm, f80_mm, k1_scale, k2_scale, k3)
     km = KMODEL[machine]
     d_throw = (REF_THROW_MM[machine] if throw_mm is None else throw_mm) - REF_THROW_MM[machine]
     k1 = km.k1a + km.k1b * css_mm

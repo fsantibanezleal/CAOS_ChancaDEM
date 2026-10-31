@@ -13,6 +13,7 @@ from __future__ import annotations
 import math
 from typing import NamedTuple
 
+from .capacity import HP500_QREF
 from .jsmath import jpow
 from .types import Operating
 
@@ -32,6 +33,21 @@ HP500_ORE = {
 }
 HP500_BLEND_WI_KWH_T = 9.0     # representative blend Wi of the modeled Bond power parity readout
 HP500_FEED_M = 0.9             # Rosin-Rammler uniformity of the reconstructed feed
+
+
+class Hp500Scalars(NamedTuple):
+    """The engine's fitted scalars on the HP500 lane that enter throughput and power, each at its nominal (Rocha et al.
+    2024, Tables 4 and 5, and the itabirite blend Wi). ``evaluate(op, scalars)`` runs the engine with other values; with
+    none (or the defaults) it is the shipped engine number for number. CrusherBayes (pipeline.hp500.crusherbayes) samples
+    them; nothing else reads them."""
+    q_ref_tph: float = HP500_QREF     # capacity base QT [t/h]
+    wi_kwh_t: float = HP500_BLEND_WI_KWH_T   # Bond work index of the blend [kWh/t]
+    zeta: float = 1.30                # slope of the current-based power form Pc = zeta Pd + Pn [-]
+    pn_kw: float = 110.0              # no-load power Pn [kW]
+    k1_scale: float = 1.0             # multiplier of the K1 fit (K1 = 0.23 CSS + 0.30 f80) [-]
+    k2_scale: float = 1.0             # multiplier of the K2 fit (K2 = 12.0 + 0.55 CSS + 0.40 f80) [-]
+    k3: float = 2.3                   # classification exponent K3 [-]
+    t10_shift_pct: float = 0.0        # shift of the t10 constant (64) [percentage points of t10]
 
 
 def x63_from_f80(f80_mm: float, m: float = HP500_FEED_M) -> float:

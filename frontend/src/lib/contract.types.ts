@@ -46,6 +46,7 @@ export const SCHEMAS = {
   readiness: 'chancadem.readiness/v1',
   backbone: 'chancadem.hp500.backbone/v1',
   loo: 'chancadem.hp500.loo/v1',
+  crusherbayes: 'chancadem.hp500.crusherbayes/v1',
   surrogate: 'chancadem.surrogate/v1',
   anomaly: 'chancadem.anomaly/v1',
   metrics: 'chancadem.model-metrics/v1',
@@ -56,6 +57,7 @@ export const SCHEMAS = {
   readiness: Readiness['schema'];
   backbone: string;
   loo: string;
+  crusherbayes: string;
   surrogate: Schemas['SurrogateModel']['schema'];
   anomaly: string;
   metrics: string;
@@ -296,7 +298,16 @@ const FOLDS = {
   M2_freeform: SCORES,
   constant_mean: SCORES,
   M1_label_shuffle: SCORES,
-  pred: { object: { M0: SERIES, M1: SERIES, M2: SERIES } },
+  pred: { object: { M0: SERIES, M1: SERIES, M2: SERIES, B_lin: { optional: SERIES }, Morrell: { optional: SERIES }, Morrell_noload: { optional: SERIES } } },
+  // from hp500-loo 1.2.0, all optional: the setting-only line (throughput and power) and Morrell's two variants (power only)
+  B_lin: { optional: SCORES },
+  Morrell: { optional: SCORES },
+  Morrell_noload: { optional: SCORES },
+  morrell_fit: {
+    optional: {
+      object: { m_ic_kwh_t: SERIES, m_ic_noload_kwh_t: SERIES, no_load_kw: SERIES, noload_variant_m_ic_positive: { array: 'boolean' } },
+    },
+  },
 } as const;
 const LOO_TARGET = {
   target: { enum: ['tph', 'kW', 'p80'] },
@@ -319,6 +330,7 @@ export const HP500_LOO = {
       features: { array: 'string' },
       targets_primary: { array: { enum: ['tph', 'kW'] } },
       target_secondary: { array: { enum: ['p80'] } },
+      morrell: { optional: { object: { k_s: 'number', k2: 'number', circuit: { enum: ['closed', 'open'] }, inputs: 'string', fitted: 'string' } } },
     },
   },
   loo: { object: { tph: { object: LOO_TARGET }, kW: { object: LOO_TARGET }, p80: { object: LOO_TARGET } } },
@@ -343,6 +355,88 @@ export const HP500_LOO = {
   },
 } as const satisfies Record<string, Kind>;
 export type Hp500Loo = Of<{ readonly object: typeof HP500_LOO }>;
+
+const CB_SCORES = { object: { mape_pct: 'number', rmse: 'number', lpd_mean: 'number', coverage_80: 'number', mean_width: 'number' } } as const;
+const CB_TARGET = { object: { measured: SERIES, pred_mean: SERIES, lo80: SERIES, hi80: SERIES, scores: CB_SCORES } } as const;
+const CB_COMPARATORS = { object: { M0: CB_SCORES, B_lin: CB_SCORES, M2: CB_SCORES } } as const;
+const PER_TARGET = <K extends Kind>(kind: K) => ({ object: { tph: kind, kW: kind } }) as const;
+
+/** hp500-crusherbayes: CrusherBayes, the Bayesian calibration of the engine's scalars with a structural discrepancy, held out on the ten surveys. */
+export const HP500_CRUSHERBAYES = {
+  schema: 'string',
+  source: SOURCE,
+  engine_version: 'string',
+  n: 'integer',
+  seed: 'integer',
+  inputs_sha256: 'string',
+  method: {
+    object: {
+      sampler: 'string',
+      sampler_version: 'string',
+      move: 'string',
+      walkers: 'integer',
+      steps: 'integer',
+      burn_in_steps: 'integer',
+      thin: 'integer',
+      predictive_draws_per_sample: 'integer',
+      likelihood: 'string',
+      discrepancy_prior_sd: PER_TARGET('number'),
+      noise_prior: { object: { family: 'string', median: PER_TARGET('number'), log_sd: 'number' } },
+      p80: 'string',
+      interval_80: 'string',
+    },
+  },
+  priors: { array: { object: { name: 'string', unit: 'string', nominal: 'number', log: 'boolean', mu: 'number', sd: 'number', lo: 'number', hi: 'number', source: 'string' } } },
+  convergence: {
+    object: {
+      criterion: 'string',
+      tau_factor: 'integer',
+      folds: {
+        array: {
+          object: {
+            fold: { union: ['integer', { enum: ['all'] }] },
+            converged: 'boolean',
+            tau_max: 'number',
+            post_burn_steps: 'integer',
+            chain_over_tau: 'number',
+            acceptance_fraction: 'number',
+            samples: 'integer',
+          },
+        },
+      },
+      all_converged: 'boolean',
+    },
+  },
+  loo: PER_TARGET(CB_TARGET),
+  comparators: PER_TARGET(CB_COMPARATORS),
+  comparators_note: 'string',
+  contraction: { array: { object: { name: 'string', unit: 'string', nominal: 'number', prior_sd: 'number', posterior_mean: 'number', posterior_sd: 'number', contraction: 'number' } } },
+  contraction_note: 'string',
+  kill_criterion: {
+    object: {
+      rule: 'string',
+      margin_mape_pts: 'number',
+      coverage_band: { tuple: ['number', 'number'] },
+      power_mape_pct: 'number',
+      power_mape_blin_pct: 'number',
+      power_gain_over_blin_pts: 'number',
+      a_power_beats_blin_by_margin: 'boolean',
+      tph_mape_pct: 'number',
+      tph_mape_m0_pct: 'number',
+      tph_gain_over_m0_pts: 'number',
+      a_tph_beats_m0_by_margin: 'boolean',
+      a_holds: 'boolean',
+      coverage: PER_TARGET('number'),
+      coverage_outside_band: PER_TARGET('boolean'),
+      mean_width: PER_TARGET('number'),
+      mean_width_crushercal: PER_TARGET('number'),
+      band_wider_than_crushercal: PER_TARGET('boolean'),
+      b_holds: 'boolean',
+      verdict: { enum: ['kept', 'dropped as a predictor'] },
+    },
+  },
+} as const satisfies Record<string, Kind>;
+export type Hp500CrusherBayes = Of<{ readonly object: typeof HP500_CRUSHERBAYES }>;
 
 /** The training range of a continuous input, [low, high], and the ranges of every continuous input of every machine (training.input_ranges of both model contracts). */
 const BOUNDS = { tuple: ['number', 'number'] } as const;
