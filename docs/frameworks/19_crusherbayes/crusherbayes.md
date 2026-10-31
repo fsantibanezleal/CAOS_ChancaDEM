@@ -23,10 +23,12 @@ integrated out exactly, $y_t \sim N\!\left(f_t(\theta),\ \sigma_t^2 I + \tau_t^2
 engine scalars and the two noise scales (ten dimensions); the coefficients $d$ are drawn afterwards from their exact Gaussian
 conditional (`test_the_discrepancy_marginal_is_the_exact_gaussian` checks the marginal against a Monte Carlo of the model).
 
-Sampler: the affine-invariant ensemble sampler of Goodman and Weare
-([doi:10.2140/camcos.2010.5.65](https://doi.org/10.2140/camcos.2010.5.65)) as `emcee` 3.1.6 (`StretchMove`, the latest
-release on PyPI on 2026-10-30, MIT, pinned in `requirements-precompute.txt`), 20 walkers, 3000 steps, 600 discarded, thinned
-by 10, seeded. The engine takes the scalars through one optional keyword (`evaluate(op, Hp500Scalars(...))`), whose defaults are
+Sampler: the differential-evolution moves of ter Braak 2006
+([doi:10.1007/s11222-006-8769-1](https://doi.org/10.1007/s11222-006-8769-1)) and ter Braak and Vrugt 2008
+([doi:10.1007/s11222-008-9104-9](https://doi.org/10.1007/s11222-008-9104-9)) as `emcee` 3.1.6 (`DEMove` 0.8, `DESnookerMove` 0.2;
+the latest release on PyPI on 2026-10-30, MIT, pinned in `requirements-precompute.txt`), 20 walkers, 7000 steps, 1000
+discarded, thinned by 10, seeded. The stretch move of Goodman and Weare was tried first and did not converge: its
+autocorrelation time stayed above 100 steps and grew with the chain, along the parameters the surveys do not identify. The engine takes the scalars through one optional keyword (`evaluate(op, Hp500Scalars(...))`), whose defaults are
 the shipped values; the TypeScript port and the shared reference are untouched.
 
 ## Priors (truncated normal around the engine's own values)
@@ -57,10 +59,10 @@ backbone M0 (whose nested band is the CrusherCal band) and the free-form M2.
 
 | Target | CrusherBayes | M0 | B-lin | M2 |
 |---|---|---|---|---|
-| throughput MAPE (percent) | 11.99 | 12.09 | 13.67 | 12.18 |
-| throughput coverage, mean width (t/h) | 0.80, 442.6 | 0.80, 473.8 | 0.80, 478.8 | 0.80, 468.5 |
+| throughput MAPE (percent) | 12.00 | 12.09 | 13.67 | 12.18 |
+| throughput coverage, mean width (t/h) | 0.80, 439.1 | 0.80, 473.8 | 0.80, 478.8 | 0.80, 468.5 |
 | power MAPE (percent) | 14.31 | 25.94 | 12.78 | 14.03 |
-| power coverage, mean width (kW) | 0.90, 118.2 | 0.90, 209.8 | 0.80, 119.6 | 0.80, 129.8 |
+| power coverage, mean width (kW) | 0.90, 117.7 | 0.90, 209.8 | 0.80, 119.6 | 0.80, 129.8 |
 
 Read with $n = 10$, where a difference below about 3 points is noise: on throughput CrusherBayes ties the backbone; on power it
 is far better than the Bond backbone and about 1.5 points worse than the setting-only line, which is within the noise and
@@ -94,11 +96,9 @@ the result the method is worth: ten surveys with no measured product size cannot
 
 The diagnostic is the chain length over the integrated autocorrelation time (`emcee`'s `get_autocorr_time`, the largest over
 the parameters): a posterior is converged when the post-burn chain is at least 50 autocorrelation times long. In the committed
-document every posterior is **not converged**: the autocorrelation time is 97 to 123 steps and the chains are 2400 steps, 20 to 25
-times it. The bake's budget (eleven posteriors in about 20 minutes) does not allow 50 times; the document says so
-(`convergence.all_converged` is false). Evidence that the numbers are stable nonetheless: a shorter run of 1200 steps with 400
-discarded gave a power MAPE of 14.25 against 14.31 and a throughput MAPE of 11.95 against 11.99, and the same coverages, and the
-effective sample size is about 20 walkers x 2400 steps / 100 = 480 per posterior. The verdict must be read with that flag.
+document all eleven posteriors are **converged**: the autocorrelation time is 48 to 85 steps and the 6000 post-burn steps are 71
+to 125 times it. The stretch move did not reach this: at 7000 steps it stayed near 30 times, with the autocorrelation time
+growing with the chain. The held-out scores barely moved between the samplers (power 14.29 and 14.31, throughput 12.00 in both).
 
 ## Where it runs
 

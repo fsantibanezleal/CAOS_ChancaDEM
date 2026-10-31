@@ -7,7 +7,7 @@ their Table 4 and 5 values (``PRIORS``, each with its source). The measured thro
 at those scalars plus a discrepancy that is linear in the standardized closed-side setting and f80 (a constant and two
 slopes per target, a Gaussian prior, the low-order form of Kennedy and O'Hagan 2001, https://doi.org/10.1111/1467-9868.00294)
 plus Gaussian noise. The discrepancy and the noise are Gaussian given the engine scalars, so the discrepancy is integrated
-out exactly: y ~ N(f(theta), sigma^2 I + tau^2 X X^T), and the sampler (an affine-invariant ensemble sampler,
+out exactly: y ~ N(f(theta), sigma^2 I + tau^2 X X^T), and the sampler (a differential-evolution ensemble sampler,
 Goodman and Weare 2010, ``emcee`` 3.1.6, gradient free) explores the engine scalars and the two noise scales only; the
 discrepancy coefficients are drawn afterwards from their exact Gaussian conditional. The engine is its own simulator
 (about 1.3 ms per evaluation), so there is no emulator.
@@ -45,7 +45,8 @@ SCHEMA = "chancadem.hp500.crusherbayes/v1"
 SEED = 42
 SAMPLER_NAME = "emcee"
 SAMPLER_VERSION = "3.1.6"
-SAMPLER_MOVE = "StretchMove (affine-invariant ensemble sampler, Goodman and Weare 2010, https://doi.org/10.2140/camcos.2010.5.65)"
+SAMPLER_MOVE = ("DEMove 0.8 and DESnookerMove 0.2 (ter Braak 2006, https://doi.org/10.1007/s11222-006-8769-1; ter Braak and "
+                "Vrugt 2008, https://doi.org/10.1007/s11222-008-9104-9)")
 TAU_FACTOR = 50          # converged when the post-burn chain is at least this many integrated autocorrelation times long
 MARGIN_MAPE_PTS = 3.0    # the SDD margin (a difference below about 3 MAPE points is noise at n = 10)
 COVERAGE_BAND = (0.7, 0.9)
@@ -55,10 +56,9 @@ TARGETS = ("tph", "kW")
 @dataclass(frozen=True)
 class Config:
     """The sampler's size. The committed document is baked with ``DEFAULT_CONFIG``; tests use a tiny one."""
-    walkers: int = 20    # twice the sampled dimension (ten), the least the stretch move needs
-    steps: int = 7000    # sized to convergence: the integrated autocorrelation time is about 100 steps (0.11.x bake of
-                         # 3000 steps: tau 97 to 100, chain 20 to 25 tau, no fold converged), so 6000 post-burn steps
-                         # give about 60 tau, above TAU_FACTOR; eleven posteriors take about 45 minutes on 32 cores
+    walkers: int = 20    # twice the sampled dimension (ten)
+    steps: int = 7000    # sized to convergence: the stretch move kept tau above 100 and growing (no fold converged at
+                         # 7000 steps), the DE moves give about 50 at 3000 steps on the same posterior
     burn: int = 1000
     thin: int = 10
     draws: int = 20      # predictive draws per retained posterior sample (the interval is their quantile)
@@ -307,7 +307,7 @@ def _fit(spec: dict, job: int, executor) -> dict:
     held, seed, cfg = spec["held"], spec["seed"], Config(**spec["config"])
     rng = np.random.default_rng(seed)
     p0 = nominal_theta() + 0.05 * np.array([p.sd for p in PRIORS] + [NOISE_LOG_SD, NOISE_LOG_SD]) * rng.standard_normal((cfg.walkers, N_THETA))
-    sampler = emcee.EnsembleSampler(cfg.walkers, N_THETA, _LogProb(job), pool=_PoolMap(executor), moves=emcee.moves.StretchMove())
+    sampler = emcee.EnsembleSampler(cfg.walkers, N_THETA, _LogProb(job), pool=_PoolMap(executor), moves=[(emcee.moves.DEMove(), 0.8), (emcee.moves.DESnookerMove(), 0.2)])
     sampler.random_state = np.random.RandomState(seed % (2 ** 32)).get_state()
     sampler.run_mcmc(p0, cfg.steps, progress=False)
     tau = sampler.get_autocorr_time(discard=cfg.burn, tol=0, quiet=True)
@@ -317,7 +317,7 @@ def _fit(spec: dict, job: int, executor) -> dict:
     chain = sampler.get_chain(discard=cfg.burn, thin=cfg.thin, flat=True)
     result: dict = {
         "held": held, "converged": converged, "tau_max": tau_max, "post_burn_steps": post_steps,
-        "ratio": float(post_steps / tau_max) if tau_max > 0 else math.inf,
+        "ratio": float(post_steps / tau_max) if np.isfinite(tau_max) and tau_max > 0 else 0.0,
         "acceptance": float(np.mean(sampler.acceptance_fraction)), "samples": int(chain.shape[0]),
     }
     pred_rng = np.random.default_rng(seed + 1)
