@@ -78,6 +78,15 @@
       "title": "ChancaDEM: A Crusher-Comminution Studio Coupling Whiten, Evertsson and Bond, with a Physics-Faithful Learned Surrogate",
       "version": "0.09.003",
       "covers": []
+    },
+    {
+      "kind": "manuscript",
+      "concept_doi": "10.5281/zenodo.23843809",
+      "title": "What Ten Industrial Surveys Identify in a Cone-Crusher Population Balance Model: Bayesian Calibration with Structural Discrepancy",
+      "version": "0.01",
+      "covers": [
+        "BS-2"
+      ]
     }
   ]
 }

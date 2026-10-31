@@ -40,6 +40,8 @@ Learned Surrogate, is in [`manuscripts/comminution-studio/`](manuscripts/comminu
 compiled PDF). Its concept DOI, which always resolves to the latest version, is
 [10.5281/zenodo.21518356](https://doi.org/10.5281/zenodo.21518356).
 
+The preprint on CrusherBayes, the Bayesian calibration with structural discrepancy that this product proposes, What Ten Industrial Surveys Identify in a Cone-Crusher Population Balance Model: Bayesian Calibration with Structural Discrepancy, is in [`manuscripts/crusherbayes/`](manuscripts/crusherbayes/); its concept DOI is [10.5281/zenodo.23843809](https://doi.org/10.5281/zenodo.23843809).
+
 ## Run it
 
 ```bash

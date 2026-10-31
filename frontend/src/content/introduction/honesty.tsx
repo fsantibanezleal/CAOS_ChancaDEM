@@ -5,7 +5,8 @@ import { Callout, DocSection } from '@fasl-work/caos-app-shell';
 import product from '../../../../product.json';
 import { P, useT } from '../bi';
 
-const REPORT = product.manuscripts[0];
+const REPORT = product.manuscripts.find((m) => m.kind === 'technical-report')!;
+const PREPRINT = product.manuscripts.find((m) => m.kind === 'manuscript');
 
 export function Honesty() {
   const t = useT();
@@ -26,6 +27,15 @@ export function Honesty() {
         </a>
         {t(' (the concept DOI, which always resolves to the latest version).', ' (el DOI de concepto, que siempre lleva a la última versión).')}
       </p>
+      {PREPRINT && (
+        <p>
+          {t('The preprint on CrusherBayes, the calibration this product proposes: ', 'El preprint sobre CrusherBayes, la calibración que propone este producto: ')}
+          <a href={`https://doi.org/${PREPRINT.concept_doi}`} rel="noopener noreferrer" data-preprint-doi={PREPRINT.concept_doi}>
+            doi:{PREPRINT.concept_doi}
+          </a>
+          .
+        </p>
+      )}
       <Callout variant="honest" title={t('Not a sizing tool, a digital twin or a grinding model', 'No es una herramienta de dimensionamiento, un gemelo digital ni un modelo de molienda')}>
         {t(
           'ChancaDEM does not select or size a crusher, does not mirror a measured plant, and stops at the crusher product: grinding and SAG milling are another product. A reading is a model output for the case shown, labelled with its lane and its data, and the measured value is shown beside it wherever one exists.',

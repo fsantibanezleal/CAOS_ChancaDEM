@@ -18,9 +18,9 @@ describe('the CrusherBayes view', () => {
   });
   it('adversarial: a posterior flipped to not converged is labelled, one flipped back is not', () => {
     const flipped = structuredClone(cb);
-    flipped.convergence.folds.forEach((f) => (f.converged = true));
+    flipped.convergence.folds.forEach((f) => ((f as { converged: boolean }).converged = true));
     expect(convergenceText(flipped, 'en')).toBeNull();
-    flipped.convergence.folds[2].converged = false;
+    (flipped.convergence.folds[2] as { converged: boolean }).converged = false;
     expect(convergenceText(flipped, 'en')).toContain('1 of');
     expect(convergenceText(flipped, 'es')).toContain('1 de');
   });
