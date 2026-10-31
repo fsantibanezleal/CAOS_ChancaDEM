@@ -33,14 +33,15 @@ The repository by area: its folder, whether the area is active or dormant, and w
 | Tests and gates | [`tests/`](tests/), [`scripts/`](scripts/) | active | `python -m pytest` for the pipeline, `npm test` for the web, and the guards `scripts/check_*.py` (artifacts, contracts, notebooks, README areas, SDD, content standards). See [scripts/README.md](scripts/README.md). |
 | Deploy | [`deploy/`](deploy/) | active: deployed to GitHub Pages | A static site on GitHub Pages at https://chancadem.fasl-work.com, built and deployed by `deploy-pages.yml` after CI succeeds on `main`; never credentials. See [deploy/pages.md](deploy/pages.md). |
 
-## Technical report
+## Records on Zenodo
 
-The manuscript, ChancaDEM: A Crusher-Comminution Studio Coupling Whiten, Evertsson and Bond, with a Physics-Faithful
-Learned Surrogate, is in [`manuscripts/comminution-studio/`](manuscripts/comminution-studio/) (LaTeX source, figures and the
-compiled PDF). Its concept DOI, which always resolves to the latest version, is
-[10.5281/zenodo.21518356](https://doi.org/10.5281/zenodo.21518356).
+The app has three records, each under a concept DOI that always resolves to its latest version:
 
-The preprint on CrusherBayes, the Bayesian calibration with structural discrepancy that this product proposes, What Ten Industrial Surveys Identify in a Cone-Crusher Population Balance Model: Bayesian Calibration with Structural Discrepancy, is in [`manuscripts/crusherbayes/`](manuscripts/crusherbayes/); its concept DOI is [10.5281/zenodo.23843809](https://doi.org/10.5281/zenodo.23843809).
+| Record | What it is | Concept DOI |
+|---|---|---|
+| The repository | the software itself, archived from GitHub; each release is a version of this one record | [10.5281/zenodo.23686602](https://doi.org/10.5281/zenodo.23686602) |
+| The technical report | ChancaDEM: A Crusher-Comminution Studio and a Held-Out Evaluation of Cone-Crusher Models on Ten Industrial Surveys, the app and its content, in [`manuscripts/comminution-studio/`](manuscripts/comminution-studio/) | [10.5281/zenodo.21518356](https://doi.org/10.5281/zenodo.21518356) |
+| The manuscript | What Ten Industrial Surveys Identify in a Cone-Crusher Population Balance Model: Bayesian Calibration with Structural Discrepancy, the results of CrusherBayes, in [`manuscripts/crusherbayes/`](manuscripts/crusherbayes/) | [10.5281/zenodo.23843809](https://doi.org/10.5281/zenodo.23843809) |
 
 ## Run it
 
