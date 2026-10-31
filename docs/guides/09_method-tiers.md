@@ -2,7 +2,7 @@
 
 Every CAOS product implements, for the problem it covers, three tiers of methods, none optional, and keeps its results
 on Zenodo. The rule is CAOS_MANAGE `conventions/method-tiers-and-manuscripts.md` (Felipe, 2026-10-28); this guide is how a
-product applies it, and the gates below fail a product that does not. The template's own SIR example is the one tree that
+product applies it, and the gates below fail a product that does not. The template itself is the one tree that
 may keep a single beyond-the-state-of-the-art line, `None claimed.`, because `.template-source` marks it as the template
 (`instantiate.py` deletes that file, and a product is held to the whole rule from its first commit).
 
