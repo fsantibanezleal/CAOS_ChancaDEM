@@ -25,7 +25,7 @@ MAIN.loader.exec_module(GATES)
 def base(tmp_path_factory: pytest.TempPathFactory) -> Path:
     dest = tmp_path_factory.mktemp("nbc-base")
     make_tree(dest, "notebooks", "docs/design/SDD.md", ".github", "data/derived", "data/examples", "README.md", "data-pipeline",
-              "scripts/check_notebooks.py", "scripts/check_template_residue.py", "scripts/run_notebooks.py", "scripts/check_readme_areas.py",
+              "scripts/check_notebooks.py", "scripts/notebook_bar.json", "product.json", "scripts/check_template_residue.py", "scripts/run_notebooks.py", "scripts/check_readme_areas.py",
               "scripts/check_tech_matrix.py", "VERSION", "requirements*.txt", "frontend/package.json", "frontend/package-lock.json", "pyproject.toml")
     return dest
 
@@ -62,7 +62,7 @@ def test_a_spanish_notebook_deleted_from_a_copy_breaks_the_mirror(repo: Path) ->
     assert r.returncode == 1 and "mirror" in r.stdout and "02-measured-against-modelled.ipynb" in r.stdout, r.stdout
     en = sorted(p.relative_to(repo / "notebooks" / "en").as_posix() for p in (repo / "notebooks" / "en").rglob("*.ipynb"))
     es = sorted(p.relative_to(repo / "notebooks" / "es").as_posix() for p in (repo / "notebooks" / "es").rglob("*.ipynb"))
-    assert en != es and len(es) == GATES.PER_LANGUAGE - 1, "the copy must no longer be mirrored and hold 17 Spanish notebooks"
+    assert en != es and len(es) == GATES.PER_LANGUAGE - 1, "the copy must no longer be mirrored and hold 21 Spanish notebooks"
 
 
 def test_an_example_notebook_planted_into_a_tree_is_found_by_the_residue_guard_and_the_rule(repo: Path, tmp_path: Path) -> None:
@@ -128,7 +128,8 @@ def test_a_figure_cell_that_loses_its_case_is_stale(repo: Path, lang: str, tmp_p
     release gate finds the committed outputs stale."""
     only = f"notebooks/{lang}/{GATES.FIGURE_CASE_NOTEBOOK}"
     temp = tmp_path / "gate"
-    assert run_release_gate(repo, "--check", "--only", only, "--tmp", str(temp)).returncode == 0
+    r = run_release_gate(repo, "--check", "--only", only, "--tmp", str(temp))
+    assert r.returncode == 0, r.stdout
 
     def lose_case(doc: dict) -> None:
         cell = next(c for c in doc["cells"] if c["cell_type"] == "code" and "np.linspace(0.5, 1.5, 11)" in "".join(c["source"]))

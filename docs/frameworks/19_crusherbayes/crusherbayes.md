@@ -84,8 +84,8 @@ Posterior over prior standard deviation on the fit to all ten surveys (`contract
 |---|---|---|
 | `q_ref_tph` | 0.45 | identified by the measured throughput |
 | noise $\sigma$ (t/h, kW) | 0.30, 0.33 | identified |
-| discrepancy slopes on CSS and on $f_{80}$ | 0.35 to 0.38 | identified; the CSS slopes are large (+99 t/h and -57 kW per standardized unit) |
-| `zeta`, `wi_kwh_t`, `pn_kw` | 0.70, 0.84, 0.83 | weakly; `zeta` and `wi_kwh_t` enter power only as a product |
+| discrepancy slopes on CSS and on $f_{80}$ | 0.34 to 0.38 | identified; the CSS slopes are large (+101 t/h and -57 kW per standardized unit) |
+| `zeta`, `wi_kwh_t`, `pn_kw` | 0.73, 0.85, 0.80 | weakly; `zeta` and `wi_kwh_t` enter power only as a product |
 | `k1_scale`, `k2_scale`, `k3`, `t10_shift_pct`, discrepancy constants | 0.88 to 1.02 | not identified: they stay at their prior |
 
 The scalars that set the product size (the classification and breakage ones) are not identified because the two measured
@@ -116,7 +116,6 @@ combination) and `tests/contracts/test_hp500_crusherbayes.py` (schema, provider 
 ## What it is not
 
 - Not shown to predict better than B-lin on power or the Bond backbone on throughput beyond noise.
-- Not a converged posterior at the bake's size (see above).
 - Not an identification of the population-balance scalars: the table says they are not identified.
 - The closest published work is general Bayesian calibration with discrepancy (Kennedy and O'Hagan 2001); the searches of 2026-10-28
   found no Bayesian calibration with discrepancy of a cone-crusher population-balance model evaluated held out (not exhaustive: Scopus
@@ -125,6 +124,8 @@ combination) and `tests/contracts/test_hp500_crusherbayes.py` (schema, provider 
 ## References
 
 - Kennedy and O'Hagan 2001, J. R. Statist. Soc. B 63(3), 425-464, [doi:10.1111/1467-9868.00294](https://doi.org/10.1111/1467-9868.00294).
+- ter Braak 2006, Statistics and Computing 16, 239-249, [doi:10.1007/s11222-006-8769-1](https://doi.org/10.1007/s11222-006-8769-1).
+- ter Braak and Vrugt 2008, Statistics and Computing 18, 435-446, [doi:10.1007/s11222-008-9104-9](https://doi.org/10.1007/s11222-008-9104-9).
 - Goodman and Weare 2010, Commun. Appl. Math. Comput. Sci. 5(1), 65-80, [doi:10.2140/camcos.2010.5.65](https://doi.org/10.2140/camcos.2010.5.65).
 - Foreman-Mackey, Hogg, Lang and Goodman 2013, PASP 125, 306, `emcee`, [doi:10.1086/670067](https://doi.org/10.1086/670067).
 - Rocha et al. 2024, [doi:10.3390/min14090919](https://doi.org/10.3390/min14090919).

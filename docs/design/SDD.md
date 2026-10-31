@@ -242,7 +242,7 @@ None of these is a model judging a model.
   calibrated and sharper than the residual band of CrusherCal (M10), and shows which parameters the ten surveys identify and
   which stay at their prior. Method: the engine is its own simulator (about 1.3 ms per evaluation, so no emulator); a likelihood
   on the measured throughput and power with a noise per target; a low-order discrepancy on the setting variables in the form
-  of Kennedy and O'Hagan 2001 (https://doi.org/10.1111/1467-9868.00294); weakly informative priors from the literature
+  of Kennedy and O'Hagan 2001 (https://doi.org/10.1111/1467-9868.00294), sampled with the moves of ter Braak 2006 (https://doi.org/10.1007/s11222-006-8769-1) and ter Braak and Vrugt 2008 (https://doi.org/10.1007/s11222-008-9104-9); weakly informative priors from the literature
   ranges; a differential-evolution ensemble sampler (gradient-free; ter Braak 2006, ter Braak and Vrugt 2008); posterior predictive intervals per held-out survey. Closest
   work and difference: general Bayesian calibration with discrepancy is Kennedy and O'Hagan 2001; the searches of 2026-10-28
   found no Bayesian calibration with discrepancy of a cone-crusher population-balance model, evaluated held out (not exhaustive:
