@@ -11,6 +11,7 @@ al. 2024 on the calibrated lane. The bake of the cases, the surrogate training a
 from __future__ import annotations
 
 import math
+from dataclasses import replace
 
 from .breakage import breakage_matrix, phi_from_t10, specific_energy, t10_calibrated, t10_of
 from .bounds import check_bounds
@@ -18,6 +19,7 @@ from .capacity import bond_power, calibrated_power, nip_angle, nip_limit, throug
 from .classification import classification_params, classify
 from .envelope import check_envelope
 from .feed import make_feed, rosin_rammler_size_at
+from .hp500 import Hp500Scalars
 from .jsmath import jfloor
 from .machines import REF_THROW_MM
 from .sieve import make_grid, mid_sizes, passing_at_size, size_at_passing, to_psd
@@ -46,19 +48,27 @@ def grid_f80(op: Operating) -> float:
     return size_at_passing(make_feed(_EDGES, op.feed_x63_mm, op.feed_m), 0.8)
 
 
-def evaluate(op: Operating) -> CrusherResult:
-    """Evaluate one operating point."""
+def evaluate(op: Operating, scalars: Hp500Scalars | None = None) -> CrusherResult:
+    """Evaluate one operating point. ``scalars`` replaces the fitted scalars of the HP500 lane (CrusherBayes); None, or the
+    defaults, is the shipped engine. It is only meaningful on the calibrated lane and is refused elsewhere."""
+    if scalars is None:
+        scalars = Hp500Scalars()
+    elif not op.calibrated:
+        raise ValueError("scalars replace the HP500 calibration and need a calibrated operating point")
+    else:
+        op = replace(op, ore_wi=scalars.wi_kwh_t)
     feed = make_feed(_EDGES, op.feed_x63_mm, op.feed_m)
     f80 = size_at_passing(feed, 0.8)
 
     # classification C(d); K2 tracks OSS = CSS + throw. The calibrated lane is the HP500 fit, throw-independent.
-    cparams = classification_params(op.machine, op.css_mm, f80_mm=f80, calibrated=op.calibrated, throw_mm=op.throw_mm)
+    cparams = classification_params(op.machine, op.css_mm, f80_mm=f80, calibrated=op.calibrated, throw_mm=op.throw_mm,
+                                   k1_scale=scalars.k1_scale, k2_scale=scalars.k2_scale, k3=scalars.k3)
     c = [classify(d, cparams) for d in _MID]
 
     # breakage B from energy, t10 and Austin phi; the per-nip energy uses the machine design throw. Calibrated:
     # t10 comes straight from the HP500 fit.
     ecs = specific_energy(op.speed_rpm, REF_THROW_MM[op.machine])
-    t10 = t10_calibrated(op.css_mm, f80) if op.calibrated else t10_of(ecs, op.ore_axb)
+    t10 = t10_calibrated(op.css_mm, f80, scalars.t10_shift_pct) if op.calibrated else t10_of(ecs, op.ore_axb)
     phi = phi_from_t10(t10)
     b = breakage_matrix(_EDGES, _MID, phi)
 
@@ -71,10 +81,10 @@ def evaluate(op: Operating) -> CrusherResult:
     reduction_ratio = f80 / p80 if p80 > 0 else 0.0
     pct_passing = {s: passing_at_size(product, s) for s in READOUT_SIZES}
 
-    tph = throughput(op.machine, op.css_mm, op.throw_mm, op.speed_rpm, op.calibrated)
+    tph = throughput(op.machine, op.css_mm, op.throw_mm, op.speed_rpm, op.calibrated, scalars.q_ref_tph)
     bond_pd = bond_power(tph, f80, p80, op.ore_wi)
     # calibrated: the HP500 current-based model; synthetic keeps the raw Bond draw
-    power_kw = calibrated_power(bond_pd) if op.calibrated else bond_pd
+    power_kw = calibrated_power(bond_pd, scalars.zeta, scalars.pn_kw) if op.calibrated else bond_pd
 
     oss_mm = op.css_mm + op.throw_mm
     nip = nip_angle(op.machine, op.css_mm)

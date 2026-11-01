@@ -172,7 +172,8 @@ function NipWedge({ nip, limit, width, height }: { nip: number; limit: number; w
   const gripped = nip <= limit;
   const half = (Math.min(Math.max(nip, 1), 80) / 2) * (Math.PI / 180);
   const cx = width / 2;
-  const base = height - 18;
+  // the apex sits high enough to write the angle under it, clear of the particle's arrow, which crosses the arc at some sizes
+  const base = height - 34;
   const len = Math.max(40, Math.min(height - 40, width / (2 * Math.sin(half) + 0.4)));
   const lx = cx - Math.sin(half) * len;
   const rx = cx + Math.sin(half) * len;
@@ -184,7 +185,7 @@ function NipWedge({ nip, limit, width, height }: { nip: number; limit: number; w
   const dir = gripped ? 1 : -1;
   const L = new Labels(width, height);
   const labels = [
-    L.place(`${num(nip, { decimals: 1 })}°`, cx, base - arc - 6, 'middle', { fill: TOKEN.warn, weight: 700 }),
+    L.place(`${num(nip, { decimals: 1 })}°`, cx, base + 22, 'middle', { fill: TOKEN.warn, weight: 700 }),
     L.place(lang === 'es' ? 'cóncavo' : 'concave', lx, ty - 6, 'end', { fill: TOKEN.subtle }),
     L.place(lang === 'es' ? 'manto' : 'mantle', rx, ty - 6, 'start', { fill: TOKEN.good }),
   ];

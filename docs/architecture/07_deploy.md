@@ -3,7 +3,8 @@
 One deploy place per product, written in `deploy/TARGET`: for ChancaDEM it is `pages`, GitHub Pages, a static site with
 every artifact committed, no secret and no server at request time (ADR-0055). The custom domain is
 `chancadem.fasl-work.com` (`frontend/public/CNAME`). `scripts/check_deploy_place.py` fails a product that carries the
-files of two places. The one-time Pages setup (enable Actions as the source, set the domain, the DNS record, enforce
+files of two places; a product that composes a static VPS site with a separately bounded service declares a
+structured `target: vps-static+vps-service` record instead, which ChancaDEM does not need. The one-time Pages setup (enable Actions as the source, set the domain, the DNS record, enforce
 HTTPS) is in [`deploy/pages.md`](../../deploy/pages.md).
 
 ## Before a deploy
