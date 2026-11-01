@@ -9,6 +9,7 @@ import { Calibrated, Whiten } from '../content/methodology/classification';
 import { Autoencoder, Surrogate } from '../content/methodology/learned';
 import { Capacity, Power } from '../content/methodology/machine';
 import { Size } from '../content/methodology/size';
+import { CrusherBayes, Morrell } from '../content/methodology/newmethods';
 import { CrusherCal } from '../content/methodology/validation';
 
 export function Methodology() {
@@ -17,8 +18,8 @@ export function Methodology() {
     <DocPage
       title={{ en: 'Methodology', es: 'Metodología' }}
       lede={t(
-        'The nine methods behind the crusher studio, in six questions: which sizes go in and out, how a particle breaks, which particles the chamber breaks, what the machine can do, what the two learned models add beside the engine, and whether the calibrated engine holds on measured surveys. Each topic gives its equations with the constants of the code, one figure, and what is exact against what is illustrative.',
-        'Los nueve métodos detrás del estudio de chancado, en seis preguntas: qué tamaños entran y salen, cómo se rompe una partícula, qué partículas rompe la cámara, qué puede hacer la máquina, qué agregan los dos modelos aprendidos junto al motor, y si el motor calibrado se sostiene con muestreos medidos. Cada tema entrega sus ecuaciones con las constantes del código, una figura, y qué es exacto frente a qué es ilustrativo.',
+        'The methods behind the crusher studio, in six questions: which sizes go in and out, how a particle breaks, which particles the chamber breaks, what the machine can do, what the two learned models add beside the engine, and whether the calibrated engine holds on measured surveys. Each topic gives its equations with the constants of the code, one figure, and what is exact against what is illustrative.',
+        'Los métodos detrás del estudio de chancado, en seis preguntas: qué tamaños entran y salen, cómo se rompe una partícula, qué partículas rompe la cámara, qué puede hacer la máquina, qué agregan los dos modelos aprendidos junto al motor, y si el motor calibrado se sostiene con muestreos medidos. Cada tema entrega sus ecuaciones con las constantes del código, una figura, y qué es exacto frente a qué es ilustrativo.',
       )}
     >
       <TabGroups
@@ -40,6 +41,7 @@ export function Methodology() {
             tabs: [
               { id: 'capacity', label: t('Capacity and nip angle', 'Capacidad y ángulo de mordida'), content: <Capacity /> },
               { id: 'power', label: t('Power', 'Potencia'), content: <Power /> },
+              { id: 'morrell', label: t('Morrell energy', 'Energía de Morrell'), content: <Morrell /> },
             ],
           },
           {
@@ -50,7 +52,11 @@ export function Methodology() {
               { id: 'autoencoder', label: t('Autoencoder', 'Autoencoder'), content: <Autoencoder /> },
             ],
           },
-          { id: 'validation', label: t('Is it right on measured data?', '¿Es correcto con datos medidos?'), tabs: [{ id: 'crushercal', label: t('CrusherCal', 'CrusherCal'), content: <CrusherCal /> }] },
+          { id: 'validation', label: t('Is it right on measured data?', '¿Es correcto con datos medidos?'), tabs: [
+              { id: 'crushercal', label: t('CrusherCal', 'CrusherCal'), content: <CrusherCal /> },
+              { id: 'crusherbayes', label: t('CrusherBayes', 'CrusherBayes'), content: <CrusherBayes /> },
+            ],
+          },
         ]}
       />
     </DocPage>

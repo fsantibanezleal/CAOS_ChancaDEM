@@ -1,0 +1,813 @@
+{
+ "cbTphMape": {
+  "value": "12.00",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "loo.tph.scores.mape_pct"
+ },
+ "cbTphRmse": {
+  "value": "168.57",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "loo.tph.scores.rmse"
+ },
+ "cbTphLpd": {
+  "value": "-6.68",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "loo.tph.scores.lpd_mean"
+ },
+ "cbTphCov": {
+  "value": "0.8",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "loo.tph.scores.coverage_80"
+ },
+ "cbTphWidth": {
+  "value": "439.12",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "loo.tph.scores.mean_width"
+ },
+ "BlinTphMape": {
+  "value": "13.67",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.tph.B_lin.mape_pct"
+ },
+ "BlinTphRmse": {
+  "value": "177.75",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.tph.B_lin.rmse"
+ },
+ "BlinTphLpd": {
+  "value": "-6.71",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.tph.B_lin.lpd_mean"
+ },
+ "BlinTphCov": {
+  "value": "0.8",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.tph.B_lin.coverage_80"
+ },
+ "BlinTphWidth": {
+  "value": "478.76",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.tph.B_lin.mean_width"
+ },
+ "BackTphMape": {
+  "value": "12.09",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.tph.M0.mape_pct"
+ },
+ "BackTphRmse": {
+  "value": "176.67",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.tph.M0.rmse"
+ },
+ "BackTphLpd": {
+  "value": "-6.90",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.tph.M0.lpd_mean"
+ },
+ "BackTphCov": {
+  "value": "0.8",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.tph.M0.coverage_80"
+ },
+ "BackTphWidth": {
+  "value": "473.76",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.tph.M0.mean_width"
+ },
+ "FreeTphMape": {
+  "value": "12.18",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.tph.M2.mape_pct"
+ },
+ "FreeTphRmse": {
+  "value": "174.42",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.tph.M2.rmse"
+ },
+ "FreeTphLpd": {
+  "value": "-6.65",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.tph.M2.lpd_mean"
+ },
+ "FreeTphCov": {
+  "value": "0.8",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.tph.M2.coverage_80"
+ },
+ "FreeTphWidth": {
+  "value": "468.51",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.tph.M2.mean_width"
+ },
+ "cbKwMape": {
+  "value": "14.31",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "loo.kW.scores.mape_pct"
+ },
+ "cbKwRmse": {
+  "value": "44.68",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "loo.kW.scores.rmse"
+ },
+ "cbKwLpd": {
+  "value": "-5.35",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "loo.kW.scores.lpd_mean"
+ },
+ "cbKwCov": {
+  "value": "0.9",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "loo.kW.scores.coverage_80"
+ },
+ "cbKwWidth": {
+  "value": "117.74",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "loo.kW.scores.mean_width"
+ },
+ "BlinKwMape": {
+  "value": "12.78",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.kW.B_lin.mape_pct"
+ },
+ "BlinKwRmse": {
+  "value": "44.56",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.kW.B_lin.rmse"
+ },
+ "BlinKwLpd": {
+  "value": "-5.34",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.kW.B_lin.lpd_mean"
+ },
+ "BlinKwCov": {
+  "value": "0.8",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.kW.B_lin.coverage_80"
+ },
+ "BlinKwWidth": {
+  "value": "119.60",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.kW.B_lin.mean_width"
+ },
+ "BackKwMape": {
+  "value": "25.94",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.kW.M0.mape_pct"
+ },
+ "BackKwRmse": {
+  "value": "78.52",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.kW.M0.rmse"
+ },
+ "BackKwLpd": {
+  "value": "-5.85",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.kW.M0.lpd_mean"
+ },
+ "BackKwCov": {
+  "value": "0.9",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.kW.M0.coverage_80"
+ },
+ "BackKwWidth": {
+  "value": "209.79",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.kW.M0.mean_width"
+ },
+ "FreeKwMape": {
+  "value": "14.03",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.kW.M2.mape_pct"
+ },
+ "FreeKwRmse": {
+  "value": "48.68",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.kW.M2.rmse"
+ },
+ "FreeKwLpd": {
+  "value": "-5.40",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.kW.M2.lpd_mean"
+ },
+ "FreeKwCov": {
+  "value": "0.8",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.kW.M2.coverage_80"
+ },
+ "FreeKwWidth": {
+  "value": "129.82",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "comparators.kW.M2.mean_width"
+ },
+ "constTphMape": {
+  "value": "18.29",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "loo.tph.strict.constant_mean.mape_pct"
+ },
+ "constKwMape": {
+  "value": "24.48",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "loo.kW.strict.constant_mean.mape_pct"
+ },
+ "morrellMape": {
+  "value": "38.08",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "loo.kW.strict.Morrell.mape_pct"
+ },
+ "morrellNoloadMape": {
+  "value": "15.21",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "loo.kW.strict.Morrell_noload.mape_pct"
+ },
+ "shuffleTphMape": {
+  "value": "25.04",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "loo.tph.strict.M1_label_shuffle.mape_pct"
+ },
+ "widthRedKw": {
+  "value": "43.9",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "derived: 100 (1 - loo.kW.scores.mean_width / comparators.kW.M0.mean_width)"
+ },
+ "widthRedTph": {
+  "value": "7.3",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "derived: 100 (1 - loo.tph.scores.mean_width / comparators.tph.M0.mean_width)"
+ },
+ "gainBlinKw": {
+  "value": "-1.53",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.power_gain_over_blin_pts"
+ },
+ "gainBackTph": {
+  "value": "0.09",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.tph_gain_over_m0_pts"
+ },
+ "marginPts": {
+  "value": "3.0",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.margin_mape_pts"
+ },
+ "covLo": {
+  "value": "0.7",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.coverage_band[0]"
+ },
+ "covHi": {
+  "value": "0.9",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.coverage_band[1]"
+ },
+ "tauMin": {
+  "value": "48.0",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "convergence.folds[*].tau_max (min)"
+ },
+ "tauMax": {
+  "value": "84.8",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "convergence.folds[*].tau_max (max)"
+ },
+ "ratioMin": {
+  "value": "70.7",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "convergence.folds[*].chain_over_tau (min)"
+ },
+ "ratioMax": {
+  "value": "125.0",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "convergence.folds[*].chain_over_tau (max)"
+ },
+ "accMin": {
+  "value": "0.171",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "convergence.folds[*].acceptance_fraction (min)"
+ },
+ "accMax": {
+  "value": "0.204",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "convergence.folds[*].acceptance_fraction (max)"
+ },
+ "nPosteriors": {
+  "value": "11",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "convergence.folds (length)"
+ },
+ "tauFactor": {
+  "value": "50",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "convergence.tau_factor"
+ },
+ "walkers": {
+  "value": "20",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "method.walkers"
+ },
+ "steps": {
+  "value": "7000",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "method.steps"
+ },
+ "burn": {
+  "value": "1000",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "method.burn_in_steps"
+ },
+ "thin": {
+  "value": "10",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "method.thin"
+ },
+ "draws": {
+  "value": "20",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "method.predictive_draws_per_sample"
+ },
+ "postSteps": {
+  "value": "6000",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "convergence.folds[0].post_burn_steps"
+ },
+ "nSamples": {
+  "value": "12000",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "convergence.folds[0].samples"
+ },
+ "samplerVersion": {
+  "value": "3.1.6",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "method.sampler_version"
+ },
+ "seed": {
+  "value": "42",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "seed"
+ },
+ "tauTph": {
+  "value": "140",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "method.discrepancy_prior_sd.tph"
+ },
+ "tauKw": {
+  "value": "36",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "method.discrepancy_prior_sd.kW"
+ },
+ "noiseMedTph": {
+  "value": "60",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "method.noise_prior.median.tph"
+ },
+ "noiseMedKw": {
+  "value": "15",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "method.noise_prior.median.kW"
+ },
+ "nSurveys": {
+  "value": "10",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "n"
+ },
+ "sha": {
+  "value": "483d24c5ddd35b41f2be05628fe9f09fd22562c5ab59cda69e036b9bb0ce605a",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "inputs_sha256"
+ },
+ "shaDoc": {
+  "value": "2ad1ae736c7c8a6559be448ea6fa67b732d051e17ea7d8be7487863f7e0fb96c",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "sha256 of the file",
+  "note": "computed by make_figs.py"
+ },
+ "cssMin": {
+  "value": "38",
+  "artifact": "data/examples/hp500-surveys.csv",
+  "key": "css_mm (min)"
+ },
+ "cssMax": {
+  "value": "55",
+  "artifact": "data/examples/hp500-surveys.csv",
+  "key": "css_mm (max)"
+ },
+ "fEightyMin": {
+  "value": "47",
+  "artifact": "data/examples/hp500-surveys.csv",
+  "key": "f80_mm (min)"
+ },
+ "fEightyMax": {
+  "value": "140",
+  "artifact": "data/examples/hp500-surveys.csv",
+  "key": "f80_mm (max)"
+ },
+ "tphMMin": {
+  "value": "813",
+  "artifact": "data/examples/hp500-surveys.csv",
+  "key": "feed_tph (min)"
+ },
+ "tphMMax": {
+  "value": "1639",
+  "artifact": "data/examples/hp500-surveys.csv",
+  "key": "feed_tph (max)"
+ },
+ "kwMMin": {
+  "value": "187",
+  "artifact": "data/examples/hp500-surveys.csv",
+  "key": "power_kw (min)"
+ },
+ "kwMMax": {
+  "value": "355",
+  "artifact": "data/examples/hp500-surveys.csv",
+  "key": "power_kw (max)"
+ },
+ "rMeasCss": {
+  "value": "-0.82",
+  "artifact": "data/examples/hp500-surveys.csv",
+  "key": "Pearson r of power_kw with css_mm (derived)"
+ },
+ "rEngCss": {
+  "value": "0.79",
+  "artifact": "data/derived/hp500/backbone.json",
+  "key": "Pearson r of surveys[*].backbone.calibrated_power_kw with css_mm (derived)"
+ },
+ "calKwMin": {
+  "value": "365",
+  "artifact": "data/derived/hp500/backbone.json",
+  "key": "surveys[*].backbone.calibrated_power_kw (min)"
+ },
+ "calKwMax": {
+  "value": "419",
+  "artifact": "data/derived/hp500/backbone.json",
+  "key": "surveys[*].backbone.calibrated_power_kw (max)"
+ },
+ "bondKwMin": {
+  "value": "196",
+  "artifact": "data/derived/hp500/backbone.json",
+  "key": "surveys[*].backbone.bond_power_kw (min)"
+ },
+ "bondKwMax": {
+  "value": "237",
+  "artifact": "data/derived/hp500/backbone.json",
+  "key": "surveys[*].backbone.bond_power_kw (max)"
+ },
+ "qRefContr": {
+  "value": "0.454",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=q_ref_tph].contraction"
+ },
+ "qRefMean": {
+  "value": "646.35",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=q_ref_tph].posterior_mean"
+ },
+ "qRefSd": {
+  "value": "75.74",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=q_ref_tph].posterior_sd"
+ },
+ "qRefPriorSd": {
+  "value": "167.01",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=q_ref_tph].prior_sd"
+ },
+ "wiContr": {
+  "value": "0.854",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=wi_kwh_t].contraction"
+ },
+ "wiMean": {
+  "value": "8.39",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=wi_kwh_t].posterior_mean"
+ },
+ "wiSd": {
+  "value": "1.29",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=wi_kwh_t].posterior_sd"
+ },
+ "wiPriorSd": {
+  "value": "1.52",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=wi_kwh_t].prior_sd"
+ },
+ "zetaContr": {
+  "value": "0.733",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=zeta].contraction"
+ },
+ "zetaMean": {
+  "value": "1.14",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=zeta].posterior_mean"
+ },
+ "zetaSd": {
+  "value": "0.22",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=zeta].posterior_sd"
+ },
+ "zetaPriorSd": {
+  "value": "0.30",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=zeta].prior_sd"
+ },
+ "pnContr": {
+  "value": "0.795",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=pn_kw].contraction"
+ },
+ "pnMean": {
+  "value": "86.35",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=pn_kw].posterior_mean"
+ },
+ "pnSd": {
+  "value": "38.04",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=pn_kw].posterior_sd"
+ },
+ "pnPriorSd": {
+  "value": "47.85",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=pn_kw].prior_sd"
+ },
+ "kOneScaleContr": {
+  "value": "0.965",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=k1_scale].contraction"
+ },
+ "kOneScaleMean": {
+  "value": "1.07",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=k1_scale].posterior_mean"
+ },
+ "kOneScaleSd": {
+  "value": "0.15",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=k1_scale].posterior_sd"
+ },
+ "kOneScalePriorSd": {
+  "value": "0.15",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=k1_scale].prior_sd"
+ },
+ "kTwoScaleContr": {
+  "value": "1.026",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=k2_scale].contraction"
+ },
+ "kTwoScaleMean": {
+  "value": "1.05",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=k2_scale].posterior_mean"
+ },
+ "kTwoScaleSd": {
+  "value": "0.16",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=k2_scale].posterior_sd"
+ },
+ "kTwoScalePriorSd": {
+  "value": "0.15",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=k2_scale].prior_sd"
+ },
+ "kThreeContr": {
+  "value": "0.992",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=k3].contraction"
+ },
+ "kThreeMean": {
+  "value": "2.23",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=k3].posterior_mean"
+ },
+ "kThreeSd": {
+  "value": "0.49",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=k3].posterior_sd"
+ },
+ "kThreePriorSd": {
+  "value": "0.49",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=k3].prior_sd"
+ },
+ "tShiftContr": {
+  "value": "0.990",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=t10_shift_pct].contraction"
+ },
+ "tShiftMean": {
+  "value": "-0.11",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=t10_shift_pct].posterior_mean"
+ },
+ "tShiftSd": {
+  "value": "3.95",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=t10_shift_pct].posterior_sd"
+ },
+ "tShiftPriorSd": {
+  "value": "3.99",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=t10_shift_pct].prior_sd"
+ },
+ "sigTphContr": {
+  "value": "0.301",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=sigma_tph].contraction"
+ },
+ "sigTphMean": {
+  "value": "145.23",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=sigma_tph].posterior_mean"
+ },
+ "sigTphSd": {
+  "value": "39.04",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=sigma_tph].posterior_sd"
+ },
+ "sigTphPriorSd": {
+  "value": "129.67",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=sigma_tph].prior_sd"
+ },
+ "sigKwContr": {
+  "value": "0.332",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=sigma_kW].contraction"
+ },
+ "sigKwMean": {
+  "value": "38.81",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=sigma_kW].posterior_mean"
+ },
+ "sigKwSd": {
+  "value": "10.75",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=sigma_kW].posterior_sd"
+ },
+ "sigKwPriorSd": {
+  "value": "32.42",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=sigma_kW].prior_sd"
+ },
+ "dTphConstContr": {
+  "value": "0.878",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_tph_constant].contraction"
+ },
+ "dTphConstMean": {
+  "value": "53.36",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_tph_constant].posterior_mean"
+ },
+ "dTphConstSd": {
+  "value": "122.88",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_tph_constant].posterior_sd"
+ },
+ "dTphConstPriorSd": {
+  "value": "140.00",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_tph_constant].prior_sd"
+ },
+ "dTphCssContr": {
+  "value": "0.350",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_tph_css].contraction"
+ },
+ "dTphCssMean": {
+  "value": "100.84",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_tph_css].posterior_mean"
+ },
+ "dTphCssSd": {
+  "value": "49.00",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_tph_css].posterior_sd"
+ },
+ "dTphCssPriorSd": {
+  "value": "140.00",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_tph_css].prior_sd"
+ },
+ "dTphFContr": {
+  "value": "0.340",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_tph_f80].contraction"
+ },
+ "dTphFMean": {
+  "value": "56.57",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_tph_f80].posterior_mean"
+ },
+ "dTphFSd": {
+  "value": "47.63",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_tph_f80].posterior_sd"
+ },
+ "dTphFPriorSd": {
+  "value": "140.00",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_tph_f80].prior_sd"
+ },
+ "dKwConstContr": {
+  "value": "0.910",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_kW_constant].contraction"
+ },
+ "dKwConstMean": {
+  "value": "-12.57",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_kW_constant].posterior_mean"
+ },
+ "dKwConstSd": {
+  "value": "32.77",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_kW_constant].posterior_sd"
+ },
+ "dKwConstPriorSd": {
+  "value": "36.00",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_kW_constant].prior_sd"
+ },
+ "dKwCssContr": {
+  "value": "0.381",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_kW_css].contraction"
+ },
+ "dKwCssMean": {
+  "value": "-57.07",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_kW_css].posterior_mean"
+ },
+ "dKwCssSd": {
+  "value": "13.70",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_kW_css].posterior_sd"
+ },
+ "dKwCssPriorSd": {
+  "value": "36.00",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_kW_css].prior_sd"
+ },
+ "dKwFContr": {
+  "value": "0.362",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_kW_f80].contraction"
+ },
+ "dKwFMean": {
+  "value": "-5.16",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_kW_f80].posterior_mean"
+ },
+ "dKwFSd": {
+  "value": "13.03",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_kW_f80].posterior_sd"
+ },
+ "dKwFPriorSd": {
+  "value": "36.00",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_kW_f80].prior_sd"
+ },
+ "qRefNominal": {
+  "value": "647",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=q_ref_tph].nominal"
+ },
+ "sdCss": {
+  "value": "5.9",
+  "artifact": "data/examples/hp500-surveys.csv",
+  "key": "population standard deviation of css_mm of the ten surveys (derived)"
+ },
+ "dKwPerMm": {
+  "value": "-9.6",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_kW_css].posterior_mean / sdCss (derived)"
+ },
+ "dTphPerMm": {
+  "value": "17.0",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=discrepancy_tph_css].posterior_mean / sdCss (derived)"
+ },
+ "nIdent": {
+  "value": "7",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[*].contraction <= 0.5 (count, derived)"
+ },
+ "nPart": {
+  "value": "4",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[0.5 < *.contraction <= 0.9] (count, derived)"
+ },
+ "nNone": {
+  "value": "5",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[*].contraction > 0.9 (count, derived)"
+ },
+ "nParams": {
+  "value": "16",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction (length)"
+ }
+}

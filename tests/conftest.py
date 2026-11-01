@@ -14,8 +14,10 @@ from __future__ import annotations
 
 import hashlib
 import pathlib
+import json
 import subprocess
 import sys
+import types
 
 import pytest
 
@@ -121,6 +123,25 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
         listing = "\n  ".join(changed[:20])
         print(f"\nERROR: the test run changed committed artifacts (tests write only to tmp_path):\n  {listing}")
         session.exitstatus = 1
+
+
+def _committed_crusherbayes(backbone: dict, loo_doc: dict, version: str, **_: object) -> dict:
+    """The bake's CrusherBayes step in a test: the committed document, re-stamped. The sampler runs only in the offline
+    bake (ADR-0074: CI never trains); tests/test_crusher_bayes.py exercises it directly with a tiny chain."""
+    doc = json.loads((ROOT / "data" / "derived" / "hp500" / "crusherbayes.json").read_text(encoding="utf-8"))
+    doc["engine_version"] = version
+    return doc
+
+
+@pytest.fixture(autouse=True, scope="session")
+def _the_bake_never_samples() -> object:
+    """Session scoped, so it holds for the module-scoped bakes too: a test bake copies the committed CrusherBayes document."""
+    from pipeline import pipeline
+
+    patch = pytest.MonkeyPatch()
+    patch.setattr(pipeline, "crusherbayes_doc", types.SimpleNamespace(build=_committed_crusherbayes))
+    yield
+    patch.undo()
 
 
 @pytest.fixture(autouse=True)

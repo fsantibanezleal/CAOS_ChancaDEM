@@ -14,8 +14,8 @@ $$W = 10\,W_i\left(\frac{1}{\sqrt{P_{80}}} - \frac{1}{\sqrt{F_{80}}}\right)\ [\m
 with $W_i$ the work index and $Q$ the throughput; the draw is floored at 0. On the synthetic lane this is the power. At
 case S01 it gives 287.4 kW (`data/derived/manifests/S01.json`). Bond's law was developed for grinding and is a poor
 descriptor of coarse crushing duty; Morrell's size-specific energy ($M_{ic}$,
-[doi:10.1016/j.mineng.2009.01.005](https://doi.org/10.1016/j.mineng.2009.01.005)) is the documented alternative and is not
-implemented.
+[doi:10.1016/j.mineng.2009.01.005](https://doi.org/10.1016/j.mineng.2009.01.005)) is the documented alternative; it is implemented
+and held out on the ten surveys (card [Morrell](../18_morrell-size-specific-energy/morrell.md), M14), where it does not beat the setting-only line.
 
 ## The paper's calibrated form
 
@@ -58,8 +58,9 @@ ceiling (`core/unit_gate.py`), not as an accuracy claim.
 
 ## What it is not
 
-- Not a validated power model. Reconstructing the paper's size-specific $P_d$ so that its constants apply, or a
-  size-specific energy model, would be the next step; until then power is a documented limitation.
+- Not a validated power model. Reconstructing the paper's size-specific $P_d$ so that its constants apply would be the next step
+  (the size-specific energy model of Morrell was tried and does not beat the setting-only line); until then power is a documented
+  limitation.
 
 ## References
 

@@ -1,8 +1,9 @@
-"""Contracts hp500-backbone 1.0.0 and hp500-loo 1.1.0: the documents the pipeline builds from the survey
+"""Contracts hp500-backbone 1.0.0 and hp500-loo 1.2.0: the documents the pipeline builds from the survey
 table validate against their schemas, are computed by the canonical engine, are deterministic and equal the
 provider tree (the documents of release 0.09.003 mapped to the new field names) within 1e-9 relative."""
 from __future__ import annotations
 
+import copy
 import math
 from typing import Any
 
@@ -99,6 +100,31 @@ def test_loo_validates(lo: dict) -> None:
     strict = lo["loo"]["tph"]["strict"]
     assert strict["M1_label_shuffle"]["mape_pct"] > strict["M0_backbone"]["mape_pct"]
     assert len(lo["power_parity"]["per_survey"]) == len(lo["tph_parity"]["per_survey"]) == n
+    for target, models in (("tph", ("B_lin",)), ("kW", ("B_lin", "Morrell", "Morrell_noload"))):
+        for tag in ("strict", "leaky"):
+            for m in models:
+                assert m in lo["loo"][target][tag] and len(lo["loo"][target][tag]["pred"][m]) == n, (target, tag, m)
+    assert "B_lin" not in lo["loo"]["p80"]["strict"] and "Morrell" not in lo["loo"]["tph"]["strict"]
+    fit = lo["loo"]["kW"]["strict"]["morrell_fit"]
+    assert all(len(fit[k]) == n for k in fit)
+    assert lo["config"]["morrell"]["k_s"] == 55 and "fitted" in lo["config"]["morrell"]
+
+
+def test_adversarial_a_loo_document_that_breaks_the_new_fields_is_rejected(lo: dict) -> None:
+    """hp500-loo 1.2.0: the new models are typed; a wrong shape is refused."""
+    assert not cs.errors("hp500-loo", lo)
+    bad = copy.deepcopy(lo)
+    bad["loo"]["kW"]["strict"]["Morrell"] = {"mape_pct": "high"}
+    assert cs.errors("hp500-loo", bad)
+    bad = copy.deepcopy(lo)
+    bad["loo"]["kW"]["strict"]["pred"]["B_lin"] = "no"
+    assert cs.errors("hp500-loo", bad)
+    bad = copy.deepcopy(lo)
+    bad["loo"]["kW"]["strict"]["morrell_fit"].pop("no_load_kw")
+    assert cs.errors("hp500-loo", bad)
+    bad = copy.deepcopy(lo)
+    bad["loo"]["kW"]["strict"]["Morrell_free"] = bad["loo"]["kW"]["strict"]["Morrell"]
+    assert cs.errors("hp500-loo", bad)
 
 
 def test_loo_carries_the_nested_out_of_sample_coverage_beside_the_in_sample_one(lo: dict) -> None:

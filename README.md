@@ -22,23 +22,26 @@ The repository by area: its folder, whether the area is active or dormant, and w
 
 | Area | Folder | Status | What it holds |
 |---|---|---|---|
-| Web | [`frontend/`](frontend/) | active | The workbench (`/app`) and the five documentation routes, Introduction, Methodology, Implementation, Experiments and Benchmark, on the shared shell `@fasl-work/caos-app-shell` 0.19.3, with the engine ported to TypeScript and onnxruntime-web for the learned models. Build and test: `cd frontend && npm ci && npm run build && npm test && npm run gate`. |
+| Web | [`frontend/`](frontend/) | active | The workbench (`/app`) and the five documentation routes, Introduction, Methodology, Implementation, Experiments and Benchmark, on the shared shell `@fasl-work/caos-app-shell` 0.19.9, with the engine ported to TypeScript and onnxruntime-web for the learned models. Build and test: `cd frontend && npm ci && npm run build && npm test && npm run gate`. |
 | API | [`app/`](app/) | dormant: this solution does not require it at the moment | A FastAPI layer that would serve the committed documents read-only (`/api/cases`, `/api/artifacts/{path}`, `/health`). Activation is [guide 04](docs/guides/04_run-the-api.md). |
 | Core pipelines | [`data-pipeline/`](data-pipeline/) | active | The canonical Python crusher engine (`pipeline/model/crusher/`), the oracles, the HP500 lane with CrusherCal (`pipeline/hp500/`), the model bundles and the stages (`preprocess`, `train`, `evaluate`, `export`, `infer`). Bake: `./scripts/precompute.sh`, about 5 s. See [data-pipeline/README.md](data-pipeline/README.md). |
 | Packages | (PyPI) [numpy](https://pypi.org/project/numpy/) | active: consumes published libraries, publishes none | No package of its own: the methods live in the pipeline folder. It consumes [numpy 2.4.6](https://pypi.org/project/numpy/) ([repository](https://github.com/numpy/numpy)), and for the learned models [torch 2.12.1](https://pypi.org/project/torch/) ([repository](https://github.com/pytorch/pytorch)), [onnx 1.22.0](https://pypi.org/project/onnx/) ([repository](https://github.com/onnx/onnx)) and [onnxruntime 1.27.0](https://pypi.org/project/onnxruntime/) ([repository](https://github.com/microsoft/onnxruntime)); the notebooks and the contract checks add [jsonschema 4.26.0](https://pypi.org/project/jsonschema/) ([repository](https://github.com/python-jsonschema/jsonschema)). |
-| Notebooks | [`notebooks/`](notebooks/) | active | Notebooks in English and Spanish, by topic and from level 1 to level 4, executed on the committed data through the pipeline: the first run and the 27 cases, size distributions, breakage and classification, capacity and power, the ten real surveys, CrusherCal (claim BS-1) and the learned models. Run: `./scripts/setup.sh --notebooks`, then `python scripts/run_notebooks.py`. See [notebooks/README.md](notebooks/README.md) and [guide 08](docs/guides/08_notebooks.md). |
+| Notebooks | [`notebooks/`](notebooks/) | active | Notebooks in English and Spanish, by topic and from level 1 to level 4, executed on the committed data through the pipeline: the first run and the 27 cases, size distributions, breakage and classification, capacity and power, the ten real surveys, CrusherCal (the held-out validation) and the learned models. Run: `./scripts/setup.sh --notebooks`, then `python scripts/run_notebooks.py`. See [notebooks/README.md](notebooks/README.md) and [guide 08](docs/guides/08_notebooks.md). |
 | Data | [`data/`](data/) | active | The 17 authored circuit cases and the ten HP500 surveys (Table A1 of Rocha et al. 2024, https://doi.org/10.3390/min14090919, licence CC BY 4.0), the committed derived artifacts (manifests, traces, the backbone and CrusherCal documents, the two models) and the sources with their licence classes. See [data/README.md](data/README.md). |
 | Contracts | [`docs/contracts/`](docs/contracts/) | active | The contract catalog, one row per boundary and per model slot, and the JSON schemas that the pipeline and the web are both held to. See [catalog.md](docs/contracts/catalog.md). |
 | Documentation | [`docs/`](docs/) | active | The SDD ([docs/design/SDD.md](docs/design/SDD.md)), the [guides](docs/guides.md), the case pages, the framework cards and the architecture diagrams. |
 | Tests and gates | [`tests/`](tests/), [`scripts/`](scripts/) | active | `python -m pytest` for the pipeline, `npm test` for the web, and the guards `scripts/check_*.py` (artifacts, contracts, notebooks, README areas, SDD, content standards). See [scripts/README.md](scripts/README.md). |
 | Deploy | [`deploy/`](deploy/) | active: deployed to GitHub Pages | A static site on GitHub Pages at https://chancadem.fasl-work.com, built and deployed by `deploy-pages.yml` after CI succeeds on `main`; never credentials. See [deploy/pages.md](deploy/pages.md). |
 
-## Technical report
+## Records on Zenodo
 
-The manuscript, ChancaDEM: A Crusher-Comminution Studio Coupling Whiten, Evertsson and Bond, with a Physics-Faithful
-Learned Surrogate, is in [`manuscripts/comminution-studio/`](manuscripts/comminution-studio/) (LaTeX source, figures and the
-compiled PDF). Its concept DOI, which always resolves to the latest version, is
-[10.5281/zenodo.21518356](https://doi.org/10.5281/zenodo.21518356).
+The app has three records, each under a concept DOI that always resolves to its latest version:
+
+| Record | What it is | Concept DOI |
+|---|---|---|
+| The repository | the software itself, archived from GitHub; each release is a version of this one record | [10.5281/zenodo.23686602](https://doi.org/10.5281/zenodo.23686602) |
+| The technical report | ChancaDEM: A Crusher-Comminution Studio and a Held-Out Evaluation of Cone-Crusher Models on Ten Industrial Surveys, the app and its content, in [`manuscripts/comminution-studio/`](manuscripts/comminution-studio/) | [10.5281/zenodo.21518356](https://doi.org/10.5281/zenodo.21518356) |
+| The manuscript | What Ten Industrial Surveys Identify in a Cone-Crusher Population Balance Model: Bayesian Calibration with Structural Discrepancy, the results of CrusherBayes, in [`manuscripts/crusherbayes/`](manuscripts/crusherbayes/) | [10.5281/zenodo.23843809](https://doi.org/10.5281/zenodo.23843809) |
 
 ## Run it
 

@@ -8,5 +8,6 @@
 - [06, write the executive brief (the problem in its real context)](guides/06_executive-brief.md)
 - [07, the five documentation pages and the areas each must cover](guides/07_documentation-pages.md)
 - [08, write the product's notebooks (English and Spanish, by topic and level) and keep the README by areas](guides/08_notebooks.md)
+- [09, the three method tiers (classical, state of the art, beyond it) and the manuscripts on Zenodo](guides/09_method-tiers.md)
 
-Guides 05 to 08 are the template's rules for the pieces of the product they name.
+Guides 05 to 09 are the template's rules for the pieces of the product they name.

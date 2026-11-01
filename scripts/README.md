@@ -20,14 +20,16 @@ standard library only).
 | `check_artifacts.py` | contracts 2 and 3: the index, manifests and traces agree (bytes, sha256); each lane matches its gate; every metric is inside its expected range; the units gate holds |
 | `check_unit_constants.py` | contract 3b: every float literal of the engine declares the quantity it is measured in (`.unit_constants_allow.json`) |
 | `check_version_coherence.py` | VERSION is the only source; the package, the changelog and the tags agree with it |
-| `check_notebooks.py` | the notebooks: layout, the English and Spanish mirror, levels and the SDD's `BS-` claims, anatomy, metadata, cleanliness, pins (static; the execution is `run_notebooks.py --check`) |
+| `check_notebooks.py` | the notebooks: layout, the English and Spanish mirror, levels, the SDD's sota methods (`caos.methods`) and `BS-` claims, anatomy, metadata, cleanliness, pins (static; the execution is `run_notebooks.py --check`) |
+| `check_internal_names.py` | the tier names (classical, state of the art, beyond it, SOTA, `BS-<n>`) never reach a reader: notebooks, their indexes, manuscript sources, `product.json` manuscript titles, the README and the app's strings name each method instead (from 0.14.000) |
 | `check_readme_areas.py` | the README states the repository by areas, each active or dormant, every folder link present |
-| `check_sdd.py` | the SDD has its sections; every requirement names a gate that exists |
+| `check_sdd.py` | the SDD has its sections; every requirement names a gate that exists; the method ladder names the tier of each method and a product has all three (classical, sota, beyond) and a `BS-` claim |
+| `check_manuscripts.py` | `product.json` declares the product's Zenodo manuscripts, a technical report at least; `--release` requires the report at the release's version, `--zenodo` reads the records online (local, never CI) |
 | `check_template_residue.py` | an instantiated product carries none of the example |
 | `check_doc_paths.py` | every repository path a document names exists |
 | `check_web_baseline.py` | the web's tokens, classes, numbers, images and animation loops |
 | `check_svg_animation.py` | an animated SVG carries its reduced-motion block and plays ten seconds at most (the shell's own analysis; needs `npm ci`) |
-| `check_deploy_place.py` | one deploy place, and only its files |
+| `check_deploy_place.py` | one deploy place, and only its files; plain `pages`/`vps` targets and structured static-plus-service VPS records are supported |
 | `check_live.py` | after a deploy, the live site is this build (run by the deploy workflow) |
 | `check_base_integrity.py` | no real `.env`, venv, native or heavy binary, raw data or machine path is tracked; a model file (`.pt`, `.pth`, `.onnx`) passes only when a catalog row's `documents` names it, at most 5 MB each and 50 MB together |
 | `check_content_standards.py` | no em-dash and no emoji in tracked content (ADR-0067); a pinned third-party notice listed with its digest in `.content_standards_allow` is skipped while the digest matches |
