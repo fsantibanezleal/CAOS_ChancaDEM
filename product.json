@@ -75,8 +75,8 @@
     {
       "kind": "technical-report",
       "concept_doi": "10.5281/zenodo.21518356",
-      "title": "ChancaDEM: A Crusher-Comminution Studio Coupling Whiten, Evertsson and Bond, with a Physics-Faithful Learned Surrogate",
-      "version": "0.09.003",
+      "title": "ChancaDEM: A Crusher-Comminution Studio and a Held-Out Evaluation of Cone-Crusher Models on Ten Industrial Surveys",
+      "version": "0.12.000",
       "covers": []
     },
     {

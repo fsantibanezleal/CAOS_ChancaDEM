@@ -86,7 +86,7 @@ Posterior over prior standard deviation on the fit to all ten surveys (`contract
 | noise $\sigma$ (t/h, kW) | 0.30, 0.33 | identified |
 | discrepancy slopes on CSS and on $f_{80}$ | 0.34 to 0.38 | identified; the CSS slopes are large (+101 t/h and -57 kW per standardized unit) |
 | `zeta`, `wi_kwh_t`, `pn_kw` | 0.73, 0.85, 0.80 | weakly; `zeta` and `wi_kwh_t` enter power only as a product |
-| `k1_scale`, `k2_scale`, `k3`, `t10_shift_pct`, discrepancy constants | 0.88 to 1.02 | not identified: they stay at their prior |
+| `k1_scale`, `k2_scale`, `k3`, `t10_shift_pct`, discrepancy constants | 0.88 to 1.03 | not identified: they stay at their prior |
 
 The scalars that set the product size (the classification and breakage ones) are not identified because the two measured
 targets carry the product size only through the Bond term of power, and power follows the setting, not the product size. That is
