@@ -3,6 +3,7 @@
 // on a real survey, the publication it comes from, with its DOI link and licence. Nothing here is typed per case.
 import { useShellLang } from '@fasl-work/caos-app-shell';
 import { flagText } from '../engine/flags';
+import { citationBody, licenceIn } from '../lib/licence';
 import { ReadinessNote } from '../readiness/ReadinessNote';
 import { rowsFor } from '../workbench/model';
 import { Pending, REGIME_TEXT, useNum, useT, useView } from './shared';
@@ -91,11 +92,11 @@ export function ContextView() {
       <h3>{t('Source', 'Fuente')}</h3>
       {source.kind === 'publication' ? (
         <p>
-          {source.citation}{' '}
+          {citationBody(source.citation, source.doi, source.license)}{' '}
           <a href={`https://doi.org/${source.doi}`} target="_blank" rel="noreferrer">
             doi:{source.doi}
           </a>
-          . {t('Licence', 'Licencia')}: {source.license}.
+          . {t('Licence', 'Licencia')}: {licenceIn(source.license, lang)}.
         </p>
       ) : (
         <p>{t('Authored: an operating point of the circuit matrix written for this product, run by the engine.', 'Autoral: un punto de operación de la matriz de circuitos escrita para este producto, ejecutado por el motor.')}</p>
