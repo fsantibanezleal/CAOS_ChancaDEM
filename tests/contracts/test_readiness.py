@@ -19,7 +19,8 @@ from contract_schemas import ROOT, errors
 
 CATALOG = ROOT / "docs" / "contracts" / "catalog.md"
 VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
-OLDER = VERSION.rsplit(".", 1)[0] + ".001"  # an engine version that is not VERSION
+# an engine version that is never VERSION: the same minor with another patch (a fixed ".001" equals VERSION on a .001 patch)
+OLDER = VERSION.rsplit(".", 1)[0] + (".002" if VERSION.endswith(".001") else ".001")
 NO_NUMPY = ("import sys, runpy; sys.modules['numpy'] = None; path = sys.argv[1]; sys.argv = sys.argv[1:]; "
             "runpy.run_path(path, run_name='__main__')")
 DERIVED_DOCS = ("hp500/backbone.json", "hp500/loo.json", "hp500/crusherbayes.json", "model-metrics.json")
