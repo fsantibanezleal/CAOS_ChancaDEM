@@ -2,15 +2,10 @@
 // the documents; the licences are those the product records (LICENSES.md and ATTRIBUTION.md) and the source block of the HP500 documents.
 import { Cite, DocSection, useFormat, useShellLang } from '@fasl-work/caos-app-shell';
 import type { CaseIndex, Hp500Backbone, Hp500Loo, ModelMetrics } from '../../lib/contract.types';
+import { licenceEs } from '../../lib/licence';
 import { ReadinessNote } from '../../readiness/ReadinessNote';
 import { P, useT } from '../bi';
 import { Ready, TableWrap, useBench } from './shared';
-
-/** A licence name as Spanish writes it: no decimal point in a version number (the gate's G11), so `CC BY 4.0` reads `CC BY, versión 4`. */
-function licenceEs(name: string): string {
-  const m = /^(.*?)\s*(\d+)\.0$/.exec(name);
-  return m ? `${m[1]}, versión ${m[2]}` : name.replace('.', ',');
-}
 
 function span(values: number[]): [number, number] {
   return [Math.min(...values), Math.max(...values)];
