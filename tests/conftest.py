@@ -135,8 +135,14 @@ def _committed_crusherbayes(backbone: dict, loo_doc: dict, version: str, **_: ob
 
 @pytest.fixture(autouse=True, scope="session")
 def _the_bake_never_samples() -> object:
-    """Session scoped, so it holds for the module-scoped bakes too: a test bake copies the committed CrusherBayes document."""
-    from pipeline import pipeline
+    """Session scoped, so it holds for the module-scoped bakes too: a test bake copies the committed CrusherBayes document. The
+    guard tests run in CI with the standard library and pytest only (ADR-0074): there the pipeline cannot be imported, no test
+    bakes, and nothing is patched."""
+    try:
+        from pipeline import pipeline
+    except ModuleNotFoundError:
+        yield
+        return
 
     patch = pytest.MonkeyPatch()
     patch.setattr(pipeline, "crusherbayes_doc", types.SimpleNamespace(build=_committed_crusherbayes))
