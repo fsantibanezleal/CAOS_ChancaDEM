@@ -28,6 +28,8 @@ code has them, where it runs, tests, what it is not, references.
 | [HP500 calibration](16_hp500-calibration/hp500-calibration.md) | M8 | Rocha et al. 2024 |
 | [Envelope gate](15_envelope-gate/envelope.md) | M9 | the engine's rules, the HP500 support |
 | [Campaign view](17_campaign/campaign.md) | M13 | Ma, Fan and He 2016 (the form of a liner wear model, not its parameters) |
+| [Morrell's size-specific energy and the setting-only line](18_morrell-size-specific-energy/morrell.md) | M14, B-lin | Morrell 2009 (GMSG guideline, equations B4 and B5); ordinary least squares on the setting |
+| [CrusherBayes](19_crusherbayes/crusherbayes.md) | BS-2 | Kennedy and O'Hagan 2001, Goodman and Weare 2010 |
 | [CrusherCal](08_calibration_validation/calibration-validation.md) | M10 | leave-one-survey-out, controls, predictive band |
 | [Surrogate MLP](05_surrogate/surrogate.md) | M11 | a population-balance emulator (Koh et al. 2021 as the state of the art) |
 | [Denoising autoencoder](06_denoising-ae/denoising-ae.md) | M12 | reconstruction error as an extrapolation score |

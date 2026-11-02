@@ -87,9 +87,12 @@ export function Deployment() {
       />
       <Commands
         lines={[
-          'cd frontend && npm run build                          # copy the declared artifacts, type-check, bundle, write every route',
-          'cd frontend && npm run gate                           # the measured gate on that build',
-          'cd frontend && npm run gate -- --url https://chancadem.fasl-work.com   # the same gate on the deployed origin',
+          '# copy the declared artifacts, type-check, bundle, write every route',
+          'cd frontend && npm run build',
+          '# the measured gate on that build',
+          'cd frontend && npm run gate',
+          '# the same gate on the deployed origin',
+          'cd frontend && npm run gate -- --url https://chancadem.fasl-work.com',
         ]}
       />
     </DocSection>

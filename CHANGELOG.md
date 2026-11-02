@@ -4,6 +4,27 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [0.12.000] · 2026-10-31
+
+### Added
+
+- CrusherBayes, the method this product proposes: a Bayesian calibration of the engine's fitted scalars with a structural
+  discrepancy term per target (Kennedy and O'Hagan 2001), sampled with the differential-evolution moves of ter Braak 2006 and ter
+  Braak and Vrugt 2008, held out survey by survey on the ten HP500 surveys. Held out it reaches 12.00 percent on throughput and
+  14.31 percent on power, with coverage 0.80 and 0.90; it does not beat the setting-only line on power (12.78 percent). The surveys
+  identify the capacity base, the noise and the setting slopes of the discrepancy, not K1, K2, K3 or the t10 shift.
+- B-lin, the line of power on the closed-side setting alone, and Morrell's size-specific energy with its fitted index and no-load
+  power stated as fitted, on the same protocol. Contracts hp500-loo 1.2.0 and hp500-crusherbayes 1.0.0.
+- The Benchmark rows, the CrusherBayes section, the Morrell and CrusherBayes Methodology topics and the report and preprint DOIs on
+  the Introduction; framework cards 18 and 19.
+- Notebooks: Morrell against Bond, and a CrusherBayes topic of three notebooks, in English and Spanish (44 notebooks in all).
+- The technical report at 0.12.000 and the CrusherBayes preprint on Zenodo; the README names the three records of the app.
+
+### Changed
+
+- Template 0.14.001 and shell 0.19.9. The tier names are internal: notebook sections, the app and the README name each method.
+- The nip-angle label sits under the apex, clear of the particle's arrow.
+
 ## [0.11.000] · 2026-10-27
 
 ### Added

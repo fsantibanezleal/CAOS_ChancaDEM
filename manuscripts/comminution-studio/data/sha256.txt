@@ -1,0 +1,5 @@
+ab9609a79ba64b4de6b10c1c924e2233c1a7af655822fa3303c9426939b19f7a  data/examples/hp500-surveys.csv
+204ebb468d84a9d0f26a51fe34da7fe16bdbb34227cbbfcbd491dfb09ce94fc9  data/derived/hp500/backbone.json
+269b3148a905f05c1365d6801635529a7188ecb11ab7b9555b442ebaae98edba  data/derived/hp500/loo.json
+2ad1ae736c7c8a6559be448ea6fa67b732d051e17ea7d8be7487863f7e0fb96c  data/derived/hp500/crusherbayes.json
+1f77b2d46051c953f26fdd666c2b153cd3dda522ea404d9f81e1c797e1e6f11f  data/derived/model-metrics.json

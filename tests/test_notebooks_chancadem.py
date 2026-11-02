@@ -2,7 +2,7 @@
 ``docs/design/features/notebooks/requirements.md``): the committed set, read as committed.
 
 The generic rules of the notebooks gate live in ``tests/test_check_notebooks.py`` (a base file, one plant per rule). These tests
-hold what is true of this product's set: 18 notebooks per language in seven topics, built on the crusher engine and the
+hold what is true of this product's set: 22 notebooks per language in eight topics, built on the crusher engine and the
 oracles, and the figure of a notebook that names a case runs that case. Counts are read from the committed set once and
 written here as constants, so an added or removed notebook fails a test on purpose."""
 from __future__ import annotations
@@ -35,17 +35,19 @@ LEVELS = {
     "01-getting-started": [1, 2],
     "02-size-distributions": [1, 2],
     "03-breakage-and-classification": [1, 2, 2],
-    "04-capacity-and-power": [1, 2],
+    "04-capacity-and-power": [1, 2, 3],
     "05-real-surveys": [1, 2],
-    "06-crushercal": [1, 2, 3, 4],
+    "06-crushercal": [1, 2, 3, 3],
     "07-learned-models": [1, 2, 3],
+    "08-crusherbayes": [1, 2, 4],
 }
-PER_LANGUAGE = 18          # the sum of LEVELS
+PER_LANGUAGE = 22          # the sum of LEVELS
 ORACLE_USERS = {           # the notebooks that import the oracles, read from notebooks/en on 2026-10-27
     "02-size-distributions/01-rosin-rammler-feed.ipynb",
     "02-size-distributions/02-grid-interpolation-and-the-oracle.ipynb",
     "03-breakage-and-classification/02-whiten-solve-step-by-step.ipynb",
     "04-capacity-and-power/02-setting-throw-and-the-bond-oracle.ipynb",
+    "04-capacity-and-power/03-morrell-size-specific-energy-against-bond.ipynb",
     "05-real-surveys/02-measured-against-modelled.ipynb",
 }
 # The template's example notebooks (the example set) and the import its engine needs. The topics are spelled in pieces,
@@ -77,7 +79,7 @@ def code_of(doc: dict) -> str:
 
 # ---------------------------------------------------------------- NB-026
 
-def test_the_committed_set_is_mirrored_in_seven_topics_and_passes_the_static_check() -> None:
+def test_the_committed_set_is_mirrored_in_eight_topics_and_passes_the_static_check() -> None:
     en, es = notebooks("en"), notebooks("es")
     assert en == es, "the Spanish tree must mirror the English one"
     assert len(en) == PER_LANGUAGE == sum(len(v) for v in LEVELS.values())

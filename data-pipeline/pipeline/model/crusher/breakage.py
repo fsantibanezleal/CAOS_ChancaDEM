@@ -37,10 +37,11 @@ def t10_of(ecs_kwh_t: float, ore_axb: float, a: float = 60) -> float:
     return jmax(0.0, jmin(0.44, (a * (1 - jexp(-b * ecs_kwh_t))) / 100))
 
 
-def t10_calibrated(css_mm: float, f80_mm: float) -> float:
+def t10_calibrated(css_mm: float, f80_mm: float, shift_pct: float = 0.0) -> float:
     """HP500 secondary-cone t10 [fraction] calibrated to the Minas Rio surveys (Rocha et al. 2024, Table 5):
-    t10 (%) = 64 - 0.12 CSS - 0.23 f80, capped at 0.44 like the synthetic path."""
-    return jmax(0.0, jmin(0.44, (64 - 0.12 * css_mm - 0.23 * f80_mm) / 100))
+    t10 (%) = 64 - 0.12 CSS - 0.23 f80, capped at 0.44 like the synthetic path. ``shift_pct`` [t10 percentage points] is
+    added to the constant term; keyword only, so CrusherBayes can sample it (default 0 is Table 5)."""
+    return jmax(0.0, jmin(0.44, (64 + shift_pct - 0.12 * css_mm - 0.23 * f80_mm) / 100))
 
 
 def appearance_cum(u: float, phi: float) -> float:
