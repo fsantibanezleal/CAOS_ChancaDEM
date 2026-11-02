@@ -4,6 +4,13 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [0.12.001] · 2026-11-02
+
+### Fixed
+
+- The App's case context printed the source's DOI URL and licence twice, and the licence with a decimal point on the Spanish
+  page: the citation now drops what the paragraph prints beside it, and the licence reads in the reader's language.
+
 ## [0.12.000] · 2026-10-31
 
 ### Added
