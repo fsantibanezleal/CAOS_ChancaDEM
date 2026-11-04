@@ -1,0 +1,68 @@
+\section{Problem formulation}\label{sec:problem}
+
+\subsection{The forward problem: an operating point to a product}\label{sec:problem-forward}
+
+An operating point of a crusher is the vector
+\begin{equation}
+\mathbf u = \left(\mathrm{m},\ s,\ T,\ N,\ x_{63},\ n,\ A\!\times\!b,\ W_i\right),
+\label{eq:operating}
+\end{equation}
+with $\mathrm{m}$ the machine class (gyratory, jaw, secondary cone, tertiary cone or short-head cone), $s$ the
+closed-side setting (CSS) in millimetres, $T$ the eccentric throw in millimetres, $N$ the eccentric speed in revolutions
+per minute, $x_{63}$ and $n$ the characteristic size (mm) and the uniformity exponent of a Rosin-Rammler feed, $A\times b$
+the JKMRC drop-weight ore competence (dimensionless, lower is harder) and $W_i$ the Bond work index in kWh/t. The engine
+is a deterministic map
+\begin{equation}
+\mathcal F:\ \mathbf u \mapsto \left(\mathbf p,\ P_{80},\ Q,\ P,\ \mathbf r\right),
+\label{eq:forward}
+\end{equation}
+where $\mathbf p\in[0,1]^K$ is the product mass per size class on a fixed grid of $K=28$ classes, $P_{80}$ the size in
+millimetres that $80\%$ of the product mass passes, $Q$ the throughput in t/h, $P$ the power in kW, and $\mathbf r$ a set
+of qualifiers: the regime, a validity flag, the nip angle against its grip limit and the envelope codes. The forward problem
+is to evaluate $\mathcal F$ fast enough to be re-run at every move of a control in a browser, with every output in the
+unit of its observable, and with the trends a process engineer expects: a tighter setting gives a finer product and less
+capacity, the capacity rises with speed to an optimum and falls past it, and a wider throw coarsens the product at a fixed
+setting.
+
+The constraints that every evaluation satisfies are physical. Mass is conserved, $\sum_k p_k = \sum_k f_k = 1$ within the
+round-off of the solve; the classification probability lies in $[0,1]$ and is monotone non-decreasing in size; broken
+mass reports only to finer classes; the throughput and the power are finite and non-negative at every valid point. A point
+at which the setting is at or above the 80 percent passing size of the feed, or at or above its top size, is not answered
+with a confident number: it is flagged as a pass-through or an invalid point.
+
+\subsection{The inverse problem: calibration on ten surveys}\label{sec:problem-inverse}
+
+The measured data are ten surveys $\mathcal D=\{(s_i, f_{80,i}, Q_i, P_i)\}_{i=1}^{10}$ of one Metso HP500 secondary cone
+crusher on itabirite iron ore~\cite{rocha2024}: the closed-side setting, the feed $f_{80}$, the measured feed rate (t/h)
+and the motor power (kW). On this machine the engine depends on a vector of fitted scalars $\boldsymbol\theta$ (the capacity
+base, the work index of the blend, the two constants of the power form, two multipliers and the exponent of the
+classification, and a shift of the $t_{10}$ relation), so the model of a survey is
+\begin{equation}
+y_{t,i} = f_t\!\left(\boldsymbol\theta;\ s_i, f_{80,i}\right) + e_{t,i},\qquad t\in\{Q, P\},
+\label{eq:inverse}
+\end{equation}
+where $f_t$ is the engine output for target $t$ at the survey's setting and feed with the machine's nominal throw and speed,
+and $e_{t,i}$ the error. The quantity estimated is the predictive distribution of $(Q_j, P_j)$ for a survey $j$ that the
+fit has not seen, and the objective is twofold: a small held-out error of its centre, measured by the mean absolute
+percentage error, and an $80\%$ interval that contains the measured value in about $80\%$ of the held-out surveys while
+being as narrow as possible. The product size is not a target, because the size distributions of the surveys are printed
+only as figures in the source~\cite{rocha2024}; the engine's $P_{80}$ at a survey is a model output.
+
+\subsection{Assumptions and where each comes from}\label{sec:problem-assumptions}
+
+Each assumption below bounds the results; Section~\ref{sec:limits} returns to them.
+\begin{enumerate}
+\item The chamber is one breakage zone with a classification function and a breakage function, in steady state and choke
+fed: the Whiten crusher model~\cite{whiten1972,napier1996}. No spatial resolution of the chamber, no liner wear and no feed
+segregation enter the engine.
+\item A feed is a Rosin-Rammler distribution~\cite{rosin1933}. For a survey the feed is rebuilt from the measured $f_{80}$
+with a uniformity exponent $n=0.9$, an assumption of the product, and $x_{63}=f_{80}/(\ln 5)^{1/n}$.
+\item On the survey lane the throw ($34$~mm) and the speed ($360$~rpm) are machine constants of the product, because the
+surveys vary only the setting and the feed; the constants of the classification, the $t_{10}$ relation, the capacity base
+and the power form are those of the calibration of Rocha et al.~\cite{rocha2024}. The correspondence of each constant to a
+numbered table of that paper is carried from the product's code and could not be re-read at the publisher (Section~\ref{sec:limits}).
+\item The seventeen circuit cases use per-machine constants that are typical of their class and reproduce trends, not a
+vendor's numbers; only the HP500 lane is calibrated.
+\item The two learned models are trained on, and judged against, the engine itself; they emulate the engine, not a plant.
+\item The ten surveys are exchangeable for the purpose of leave-one-out evaluation: no order in time is used.
+\end{enumerate}

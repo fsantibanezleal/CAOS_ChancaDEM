@@ -1,0 +1,111 @@
+\section{Experimental protocol}\label{sec:protocol}
+
+\subsection{Cases and what each set of cases tests}\label{sec:protocol-cases}
+
+Three sets of operating points serve three different questions, and no result of one set is read as evidence about another. The
+seventeen circuit cases test the behaviour of the coupled engine: whether it reproduces the size-reduction ladder of a crushing circuit
+and the trends of each lever, and whether its checks flag the controls. They are baked at their operating points and judged against the
+numeric expected ranges each case declares (for example, for S01, a $P_{80}$ between $22$ and $35$~mm, a throughput between $520$ and
+$780$~t/h and a reduction ratio between $3.5$ and $5.5$), ranges written from engineering relations and not from the engine's own value.
+The ten HP500 surveys test prediction against measurement, for the two measured targets only, under the leave-one-survey-out protocol of
+Section~\ref{sec:m-crushercal}. The two Latin-hypercube draws test the learned models against the engine. Each case also has two
+variants computed live in the browser, a tight setting ($15\%$ lower) and an open setting ($15\%$ higher), which the studio shows and which
+are not scored.
+
+\subsection{Metrics}\label{sec:protocol-metrics}
+
+For a target with measured values $y_i$ and held-out predictions $\hat y_i$, $i=1,\dots,n$, the point scores are
+\begin{equation}
+\mathrm{MAPE} = \frac{100}{n}\sum_{i=1}^{n}\left|\frac{\hat y_i - y_i}{y_i}\right|,\qquad
+\mathrm{RMSE} = \sqrt{\frac1n\sum_{i=1}^{n}\left(\hat y_i - y_i\right)^2},\qquad
+R^2 = 1 - \frac{\sum_i(y_i-\hat y_i)^2}{\sum_i(y_i-\bar y)^2},
+\label{eq:scores}
+\end{equation}
+and the largest deviation $\max_i|\hat y_i-y_i|/y_i$ in percent. A held-out $R^2$ can be negative: a predictor worse than the mean of the
+measured values scores below zero. For an interval $[\ell_i,u_i]$ the coverage and the mean width are
+\begin{equation}
+\mathrm{cov} = \frac1n\sum_{i=1}^{n}\mathbb 1\!\left[\ell_i\le y_i\le u_i\right],\qquad
+\bar w = \frac1n\sum_{i=1}^{n}(u_i-\ell_i),
+\label{eq:coverage}
+\end{equation}
+and the mean log predictive density of a predictive distribution with density $p_i$ is $\overline{\mathrm{lpd}}=\frac1n\sum_i\log p_i(y_i)$.
+For CrusherBayes $p_i$ is the posterior predictive density, estimated as the log of the mean over the retained samples of the Gaussian
+predictive density at each sample; for a residual-band predictor it is the normal density with standard deviation $\sigma_{-i}$ at its
+residual. The contraction of a parameter is the ratio of its posterior to its prior standard deviation on its natural scale; below $0.5$ the
+surveys identify the parameter, and near one it stays at its prior. For the learned models, $R^2$ and MAPE are computed per output in the
+original units over the $2196$ held-out points; the false-alarm rate is the share of held-out points that raise an alarm and the detection
+rate the share of planted points that do.
+
+\subsection{Baselines and controls}\label{sec:protocol-baselines}
+
+Every comparison has a baseline that a method must beat before it claims skill. On the surveys: the constant mean of the training surveys
+(no information), the label-shuffle control (a fit that learns noise, which must not beat the backbone), and the setting-only line (one
+feature, no physics), which is the bar for any claim on power. For the surrogate the baseline is the engine itself, which is what the slot
+answers with when its bundle is invalid; for the autoencoder the baseline is the envelope check. The leaky variant of every survey fit is
+reported beside the strict one, so that the optimism of letting a survey into its own fit is measured and not assumed. The published
+calibration is a baseline of a different kind: its own error on the surveys is not available to the product (Section~\ref{sec:val-published}),
+so the comparison with it is made by running its constants in the engine and refitting its scalars per fold, never by quoting a number. A
+predictor that does not beat the setting-only line on a target by more than the noise of ten surveys has no claim of skill on that target.
+
+\subsection{The protocol shared by every survey predictor}\label{sec:protocol-shared}
+
+All predictors of the surveys use the same ten folds, the same targets in the same units, the same score functions and the same nested band
+construction (Section~\ref{sec:m-crushercal}); CrusherBayes uses its posterior predictive interval in place of the band. In every fold every
+fitted quantity, the capacity base, the power-form constants, the ridge and free-form coefficients, the line, $M_{ic}$ and the no-load power,
+and the whole CrusherBayes posterior, is refit on the nine training surveys, and the held-out survey enters only the prediction. A test plants
+an absurd target in one survey and checks that every other fold's prediction moves and the planted survey's own does not. With $n=10$ the
+protocol has a resolution of $0.1$ in coverage, and a difference below about three points of MAPE is treated as noise; the adoption rule of
+CrusherBayes uses that margin. No predictor is tuned on the held-out scores: every constant of every fit was set before the first run and is
+recorded in its document.
+
+\subsection{Seeds, repetitions, hardware and run times}\label{sec:protocol-seeds}
+
+The survey evaluation is deterministic given the seed $42$, which fixes the label-shuffle permutation; CrusherBayes spawns one seed per
+posterior from a seed sequence started at $42$, uses that seed plus one for the predictive draws of the posterior, and its document is byte-identical whatever the number of worker
+processes. The learned models use the training seed $12345$ and the held-out seed $67890$, with torch single-threaded. The
+particle-replacement check of Section~\ref{sec:validation} uses five seeds per parcel count. Each posterior is one chain of twenty walkers;
+its repetition is the eleven posteriors of the folds, whose convergence diagnostics are reported. The measured run times, on a Windows 11
+workstation with Python $3.13$ and Node $24$, are in Table~\ref{tab:resources}: $7.3$~s for the bake before CrusherBayes, $48$~s to train and
+evaluate both learned models on the processor, and a median of $1.34$~ms per engine evaluation. No stage uses a graphics processor. The
+wall time of the CrusherBayes sampler is not recorded in the committed documents; its size, $140{,}000$ log-probability evaluations per
+posterior, is (Section~\ref{sec:arch-resources}).
+
+\subsection{Acceptance criteria}\label{sec:protocol-acceptance}
+
+Table~\ref{tab:acceptance} states, for each method, the criterion that a test checks and that would fail the build. They are criteria of
+correctness and of reporting, not of accuracy against the plant: a method that predicts the surveys poorly passes when its result is computed
+as stated and reported as it is, and its poor accuracy is a result (Section~\ref{sec:results}). The distinction matters for the power
+results: the criterion of the Bond power and of Morrell's energy is that their held-out numbers are computed and reported as they come, so the
+build passes with a held-out power error of $25.94\%$ for the backbone and $38.08\%$ for Morrell through the origin. Each criterion names its
+test in the product's design document, and a requirement without a test that exists fails a check of the repository; the criteria below are
+therefore the ones the committed build satisfies, not intentions.
+
+\begin{table}[!t]
+\centering
+\caption{The acceptance criterion of each method of the product, as the product's test suite checks it. A failing criterion fails the build;
+the accuracy of a method against the surveys is reported as a result and is not a criterion.}
+\label{tab:acceptance}
+\footnotesize
+\begin{tabular}{@{}p{0.27\textwidth} p{0.68\textwidth}@{}}
+\toprule
+Method & Acceptance criterion \\
+\midrule
+Rosin-Rammler feed and grid & the feed masses sum to one and the coarsest edge passes $100\%$ \\
+Breakage function & the matrix is strictly lower triangular and every column conserves mass \\
+Classification & $C(d)$ is monotone, $0$ below $K_1$ and $1$ above $K_2$; a wider throw coarsens the product; the throw is neutral at the design throw \\
+Whiten solve & mass closure and a product finer than the feed; a tighter setting gives a finer product \\
+Capacity & the throughput is unimodal in speed \\
+Regimes and nip angle & pass-through and invalid flags at a setting at or above the feed's $F_{80}$ and top size \\
+Bond power and current-based form & positive and finite at every valid point; the held-out power result reported as computed \\
+Morrell's energy & equation B4 as printed, the units kWh/t and kW, the rule on $S_c$; the held-out results reported as computed, the negative $M_{ic}$ flagged \\
+HP500 calibration & the calibrated engine at each survey equals the backbone document; the surveys are physically plausible \\
+Setting-only line & reproduces $12.78\%$ (power) and $13.67\%$ (throughput); a planted survey moves every fold but its own \\
+CrusherCal & the label-shuffle control does not beat the backbone; the backbone beats the constant mean on throughput; the optimism gap is exposed; coverage reported \\
+Envelope check & an implausible point is invalid; a calibrated point outside the support is flagged as extrapolating \\
+Surrogate & $R^2$ of every output from the shipped graph; $P_{80}$ monotone in the setting; the engine answers, labelled, with an invalid bundle \\
+Autoencoder & false-alarm and detection rates beside those of the envelope check; the envelope check answers, labelled, with an invalid bundle \\
+Drift projection & both engines return the same setting on $45$ rows to $10^{-6}$~mm; $P_{80}$ at the setting is the target; no answer is never a guess \\
+CrusherBayes & the adoption rule applied as written; folds refit without the held-out survey; a short chain recorded as not converged; the document byte-identical \\
+\bottomrule
+\end{tabular}
+\end{table}

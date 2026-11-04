@@ -1,0 +1,292 @@
+\section{Data and data contracts}\label{sec:data}
+
+\subsection{Sources}\label{sec:data-sources}
+
+Four data sources enter the product; a fifth, the sector statistics of the introduction, is context and enters no
+computation.
+
+\emph{The ten HP500 surveys.} Table A1 of Rocha, Campos, Silva and Tavares~\cite{rocha2024} (Minerals, MDPI, open access
+under CC BY 4.0, \url{https://doi.org/10.3390/min14090919}) gives, for ten surveys of a Metso HP500 secondary cone crusher at
+an itabirite iron-ore operation, the closed-side setting, the feed $80\%$ passing size $f_{80}$, the solid feed rate and the
+motor power estimated from the measured current. The abstract of the paper, read through its OpenAlex record because the
+publisher page refused automated access, describes surveys collected over several years, an Andersen-Whiten model
+implemented in an integrated extraction simulator and a fit-for-purpose throughput model; the exact dates of the surveys are
+not printed in the material available to the product. The table is transcribed into \texttt{data/\allowbreak{}examples/\allowbreak{}hp500-surveys.csv}
+(ten rows, five columns, $210$~bytes) and validated by the \texttt{hp500-survey} contract below. Table~\ref{tab:surveys}
+lists the ten rows beside the calibrated engine's outputs at each of them. Across the surveys the setting spans $38$ to
+$55$~mm, the feed $f_{80}$ $47$ to $140$~mm, the feed rate $813$ to $1639$~t/h and the power $187$ to $355$~kW. The measured
+power is correlated with the setting ($r=-0.82$) and with the feed rate ($r=-0.85$), and the feed rate with the setting
+($r=+0.81$), so a tighter setting draws more power at a lower feed rate (Figure~\ref{fig:surveys}). The paper prints the
+product size distributions only as figures, so no product size is measured in the product's data.
+
+\emph{The circuit cases.} The seventeen circuit cases are the product's own table \texttt{data/\allowbreak{}examples/\allowbreak{}params.csv} (MIT
+licence, seventeen rows and nine columns, one operating point each): two gyratory, two jaw, six secondary cone, two tertiary
+cone and two short-head cases, and three controls, a pass-through case (CP1, a setting of $160$~mm against a feed $F_{80}$ of
+$126$~mm), an invalid case (CI1, a setting of $280$~mm, above the top size of the grid) and a synthetic anchor (CK1). The case
+CK1 is synthetic because the only other open industrial cone calibration found, Duarte et al.~\cite{duarte2021}, reports
+seven operating points of an HP400 and a CH660 with the setting, the throughput and the feed $F_{80}$ only, without throw,
+speed, ore properties or power, and with its size data as plots. Table~\ref{tab:cases} lists the $27$ cases as baked.
+
+\emph{The engine sweeps of the learned models.} The training data of the surrogate and the autoencoder are generated, not
+measured: a Latin-hypercube sweep of the canonical engine, $1400$ points per machine class over that class's own ranges
+(Table~\ref{tab:machines}), labelled by the engine, with degenerate draws dropped (a setting at or above the feed top size, an
+ill-conditioned matrix, a reduction ratio below $1.02$ or a non-positive $P_{80}$), which leaves $6430$ training points. An
+independent second draw with another seed ($67890$, $480$ points per class) leaves $2196$ held-out points.
+
+\emph{Vendor bounds.} Two sourced warnings of the engine read published vendor documents: the minimum closed-side setting of
+the HP Series standard ($16$~mm) and short-head ($6$~mm) chambers and the typical reduction ratios of $3$ to $5$ and $2$ to
+$4$ from the Metso HP wear-parts application guide~\cite{metsoHP}; the smallest minimum setting of the Nordberg C Series jaw
+crushers ($40$~mm, the C80)~\cite{metsoC}; and the reduction ratio of $3$ to $4$ for jaw and gyratory crushers from the Metso
+handbook~\cite{metsoBasics}. No vendor minimum setting was found for a primary gyratory, so that check is skipped.
+
+\emph{The splits and why.} The circuit cases are not fitted and need no split. The ten surveys are too few for a held-out
+block, so every fitted quantity is evaluated by leave-one-survey-out: ten folds of nine training surveys and one held-out
+survey, the same folds for every predictor (Section~\ref{sec:m-crushercal}). The learned models are judged on an independent
+draw rather than a split of the training draw, so that a point near a training point does not flatter the error.
+
+\begin{table}[!t]
+\centering
+\caption{The ten HP500 surveys of Rocha et al.~\cite{rocha2024} as committed, with the calibrated engine evaluated at each
+measured setting and feed $f_{80}$ (throw $34$~mm, speed $360$~rpm): its grid $F_{80}$, product $P_{80}$, throughput $Q$, Bond
+draw and the published current-based power $1.30\,P_d+110$. Generated from \texttt{backbone.json}.}
+\label{tab:surveys}
+\footnotesize
+\input{tables/tab-surveys}
+\end{table}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig-surveys.pdf}
+\caption{The ten HP500 surveys: (a) measured motor power and (b) measured feed rate against the closed-side setting, coloured
+by the measured feed $f_{80}$ and numbered as in the published table, with the least-squares line on the setting fitted to all
+ten surveys.}
+\label{fig:surveys}
+\end{figure}
+
+\begin{table}[!t]
+\centering
+\caption{The $27$ baked cases, from their manifests and traces: machine, setting, throw and speed, the engine's feed $F_{80}$,
+product $P_{80}$, reduction ratio, throughput, power, regime and validity. The ten HP500 cases run on the calibrated lane.}
+\label{tab:cases}
+\scriptsize
+\input{tables/tab-cases}
+\end{table}
+
+\subsection{The contract catalog}\label{sec:data-catalog}
+
+Every boundary between two components of the product is a data contract: one JSON Schema file (or, for the interface, one
+OpenAPI document), an example, a test on the producer side and a test on the consumer side, a stated behaviour when the data
+are missing, and a version that moves by semantic versioning with the schema. The catalog
+\texttt{docs/\allowbreak{}contracts/\allowbreak{}catalog.md} lists thirteen contracts (Table~\ref{tab:contracts}); the TypeScript types of the web are
+generated from the same schema files, so a change to a contract fails the web build until both sides follow it. Missing data
+are described by one vocabulary of states: \emph{available}, \emph{missing} (the document is absent), \emph{partial} (some
+files a document names are absent), \emph{stale} (the document was baked by an older version of the product), \emph{training}
+(a model bundle is absent or fails its checksum, so the slot answers with its baseline) and \emph{provider} (a stand-in serves
+the contract). The readiness document records the state of every contract for one build, and every view of the web shows it.
+The subsections below describe each contract; the field tables generated from the schema files are in
+Appendix~\ref{app:schemas}.
+
+\begin{table}[!t]
+\centering
+\caption{The thirteen data contracts of the product, generated from the catalog: identifier, version, producing module,
+schema file and status in the committed build. Their fields are listed in Appendix~\ref{app:schemas}.}
+\label{tab:contracts}
+\footnotesize
+\input{tables/tab-contracts}
+\end{table}
+
+\subsection{params-record: one operating point}\label{sec:data-params}
+
+The \texttt{params-record} contract (version $1.0.0$, schema \texttt{params-record.schema.json}) is the ingestion contract of
+the circuit cases: one row of \texttt{params.csv} as \texttt{pipeline/\allowbreak{}io/\allowbreak{}contract.py} accepts it. Its nine required fields
+are the case identifier (string, pattern of one capital letter followed by one to fifteen capitals, digits or hyphens), the
+machine class (one of five values), the closed-side setting \texttt{css\_mm} (number, above $0$ and at most $600$~mm), the
+throw \texttt{throw\_mm} ($1$ to $100$~mm), the speed \texttt{speed\_rpm} ($50$ to $1000$~rpm), the feed characteristic size
+\texttt{feed\_x63\_mm} (above $0$ and at most $2000$~mm), the uniformity exponent \texttt{feed\_m} ($0.3$ to $4$), the ore
+competence \texttt{ore\_axb} ($10$ to $1000$) and the Bond work index \texttt{ore\_wi} ($2$ to $40$~kWh/t). A value is parsed,
+never coerced: a row the schema refuses is rejected with its reason, and a physically unusual but valid row (a setting at or
+above the feed's $F_{80}$ or its top size) is accepted and flagged with the engine's own codes, so the controls are baked and
+shown. The consumers are the bake (\texttt{pipeline/\allowbreak{}pipeline.py}) and the tests of both sides. Missing-data behaviour: a
+rejected row is dropped with its reason and the bake goes on with the accepted rows, while readiness lists the rejected case
+identifiers as \emph{partial}; with no source table at all, readiness says \emph{missing} and the bake uses the registry's
+cases.
+
+\subsection{hp500-survey: one measured survey}\label{sec:data-survey}
+
+The \texttt{hp500-survey} contract (version $1.0.0$) is the ingestion contract of the real data: one row of
+\texttt{hp500-surveys.csv} as \texttt{pipeline/\allowbreak{}hp500/\allowbreak{}surveys.py} accepts it. Its five required fields are the survey number
+(integer, $1$ to $10$, consecutive without a gap), the measured feed $f_{80}$ (number, above $0$ and at most $400$~mm), the
+measured closed-side setting (above $0$ and at most $200$~mm), the measured solid feed rate \texttt{feed\_tph} (above $0$ and at
+most $5000$~t/h) and the crusher power estimated from the measured current \texttt{power\_kw} (above $0$ and at most
+$1000$~kW). The bounds are wide on purpose: they refuse a unit error, such as a power in watts, and a typing error, not a
+plausible survey. The producer is the transcription of Table A1, its consumers the HP500 cases, the backbone, CrusherCal and
+CrusherBayes. A kill criterion of the product applies to this contract alone: if a re-transcription of the published table
+disagrees with the committed file, the real lane is removed from the build until the table is corrected. Missing-data behaviour: with no
+survey table, readiness says \emph{missing}, the bake skips the ten real cases and the three HP500 documents, the case selector
+lists no real survey, and the survey views of the web say that the data are not available with the reason; a rejected row is
+dropped with its reason, its case is not baked and readiness lists the survey number as \emph{partial}.
+
+\subsection{case-index: the inventory of a bake}\label{sec:data-index}
+
+The \texttt{case-index} contract (version $1.0.0$, \texttt{data/\allowbreak{}derived/\allowbreak{}manifests/\allowbreak{}index.json}, schema
+\texttt{chancadem.index/\allowbreak{}v1}) is the flat inventory the web reads first. It carries the product version that baked it
+(\texttt{engine\_version}, pattern \texttt{X.XX.XXX}), the number of cases (integer, at least one; $27$ in the committed build),
+the default case (\texttt{S01}), one entry per case with its identifier, its title and category in English and Spanish, whether
+it is real or synthetic and the relative path of its manifest, and the list of the further files the site serves: the five
+model files, the three HP500 documents and the model metrics. Rules the schema cannot state are checked by the tests: the count
+equals the number of entries, every path exists, and the default case is listed. It is produced by
+\texttt{pipeline/\allowbreak{}core/\allowbreak{}manifest.py} (\texttt{build\_index}) and read by the web's case selector, the copy step of the site build
+(which copies exactly the files the index declares) and the dormant interface. Missing-data behaviour: without an index the site
+build stops at its copy step, because a site without an inventory would show nothing reliably; the interface answers $503$ with
+the state \emph{missing}. When \texttt{engine\_version} is older than the product version, readiness says \emph{stale} with both
+versions and the views show it.
+
+\subsection{case-manifest: one baked case}\label{sec:data-manifest}
+
+The \texttt{case-manifest} contract (version $1.1.0$, one file \texttt{data/\allowbreak{}derived/\allowbreak{}manifests/\allowbreak{}<case>.json} per case, schema
+\texttt{chancadem.manifest/\allowbreak{}v1}) is the authoritative record of one case and a pure function of its parameters and seed: it
+holds no wall-clock time, so a re-bake does not change it. Its twenty required fields include the case identifier, the
+bilingual title, category and expected band in words, the circuit stage (primary, secondary, tertiary or control), the kind of
+control (none, negative, invalid or calibration), the case context (the question, the variables and how to read the views),
+the engine package and version, the operating point exactly as the ingestion contract accepted it with the \texttt{calibrated}
+switch, the seed, the artifact (relative path, format, trace schema, size in bytes and SHA-256), the lane decision of the lane
+check (live or precompute, with the measured trace size and the budgets of $1500$~ms and $256$~KiB), the flags as stable codes,
+the result metrics, which model answered per model slot (the released model or its baseline), the expected range of each
+metric, and the source. A real case adds the survey row as measured; its metrics add the signed percentage error of the
+throughput and the power against the measured values ($-10.75\%$ and $+53.55\%$ for survey 3). The producer is
+\texttt{pipeline/\allowbreak{}core/\allowbreak{}manifest.py}; the consumers are the web workbench and the interface. Missing-data behaviour: a manifest the
+index lists but that is absent is reported by readiness as \emph{partial} with its path, the selector marks that case as not
+available and the other cases work, and the interface answers $404$ for it; staleness follows the index.
+
+\subsection{trace: the replay artifact}\label{sec:data-trace}
+
+The \texttt{trace} contract (version $1.0.0$, \texttt{data/\allowbreak{}derived/\allowbreak{}<case>/\allowbreak{}trace.json}, schema \texttt{chancadem.trace/\allowbreak{}v1}) holds
+what the engine computed at the operating point of a case: the $29$ sieve edges and $28$ mid-sizes in millimetres, the feed
+and product cumulative passing at each edge and mass per class (fractions in $[0,1]$), the classification $C(d)$ at each
+mid-size, the $t_{10}$ of the appearance function in percent ($0$ to $100$), a summary of scalars ($F_{80}$, $P_{80}$, $P_{50}$
+and $P_{20}$ in mm, the reduction ratio, the passing at $1$, $4$, $8$, $16$ and $32$~mm, the throughput in t/h, the power in kW,
+the specific energy in kWh/t, the open-side setting, the nip angle and its limit in degrees, the regime, the validity and
+envelope flags, the mass closure and the conditioning proxy, which may be the string \texttt{Infinity} for a singular solve),
+a speed sweep of $31$ points from $0.5$ to $1.5$ times the case speed (throughput and power) and a setting sweep (product
+$P_{80}$, throughput and power). The largest trace of the committed build is $4{,}127$~bytes. It is produced by
+\texttt{pipeline/\allowbreak{}core/\allowbreak{}trace.py} and read by the web's replay curves and by the parity test of the TypeScript engine, which
+re-runs each case and compares with the trace to the six significant digits it is written with. Missing-data behaviour: an
+artifact a manifest names but that is absent is listed by readiness as \emph{partial}; the replay views of that case say that
+the data are not available, while the live lane still runs from the manifest's parameters, and the interface answers $404$.
+
+\subsection{hp500-backbone: the calibrated engine at each survey}\label{sec:data-backbone}
+
+The \texttt{hp500-backbone} contract (version $1.0.0$, \texttt{data/\allowbreak{}derived/\allowbreak{}hp500/\allowbreak{}backbone.json}, schema
+\texttt{chancadem.hp500.backbone/\allowbreak{}v1}) records the calibrated engine evaluated at each of the ten surveys. Its fields are the
+source (paper, DOI, licence and tables), the engine version, a note, the number of surveys and, per survey, its identifier
+(pattern \texttt{HP500-NN}), its number, the measured block (setting, $f_{80}$, feed rate and power, in mm, mm, t/h and kW) and
+the engine block (product $P_{80}$ in mm, throughput in t/h, Bond power and calibrated power in kW, and the engine's own $F_{80}$
+on its grid in mm). Its note states the two facts a reader must not miss: the product size is a model output, graded only by a
+physical relation of $0.35$ to $1.1$ times the setting, and the power constants $1.30$ and $110$~kW of the source apply to the
+paper's size-specific net power and not to the Bond draw of the engine. It is produced by \texttt{pipeline/\allowbreak{}hp500/\allowbreak{}backbone.py};
+CrusherCal, CrusherBayes and the web's validation views read it, and a test checks that the calibrated engine at each survey
+equals the committed document. Missing-data behaviour: when it is absent, readiness says \emph{missing}, the survey views of the
+web say that the validation is not available with the reason, and the ten real cases still replay their own manifests.
+
+\subsection{hp500-loo: CrusherCal}\label{sec:data-loo}
+
+The \texttt{hp500-loo} contract (version $1.2.0$, \texttt{data/\allowbreak{}derived/\allowbreak{}hp500/\allowbreak{}loo.json}, schema \texttt{chancadem.hp500.loo/\allowbreak{}v1})
+is the leave-one-survey-out evaluation of Section~\ref{sec:m-crushercal}. It holds the source, the engine version, the number of
+surveys, the seed ($42$), the configuration (the residual clip fraction $0.20$, the ridge penalty $1.0$, the two features, the
+two primary targets and the secondary one, and the Morrell settings $K_s=55$, $K_2=1.0$, closed circuit), and per target
+(throughput, power and the self-consistency target $P_{80}$) the measured values and two blocks, strict and leaky, each with the
+MAPE in percent, RMSE in the target unit, $R^2$ and largest deviation in percent of every predictor, the held-out predictions per
+survey, and, on the strict block, the band: $\sigma$ of the held-out residuals, the half-width, the nominal and in-sample
+coverage, the relative half-width in percent, the nested coverage with the per-survey $\sigma_{-i}$ and whether each survey is
+covered. The power block adds the per-fold Morrell fits. Two further blocks give the in-sample power and throughput parity. The
+version moved to $1.2.0$ when the setting-only line and the two Morrell variants were added. The producer is
+\texttt{pipeline/\allowbreak{}hp500/\allowbreak{}loo.py}; the consumers are CrusherBayes, the web's Benchmark and Experiments views, the band shown on the
+real-survey gauges and the lower-bound band of the synthetic secondary-cone cases. Missing-data behaviour: readiness says
+\emph{missing}, the gauges show the measured values without a band and say why, and the validation views say that the data are
+not available.
+
+\subsection{hp500-crusherbayes: the posterior and its held-out scores}\label{sec:data-cb}
+
+The \texttt{hp500-crusherbayes} contract (version $1.0.0$, \texttt{data/\allowbreak{}derived/\allowbreak{}hp500/\allowbreak{}crusherbayes.json}, schema
+\texttt{chancadem.hp500.crusherbayes/\allowbreak{}v1}) is the output of the offline sampler of Section~\ref{sec:m-crusherbayes}. It holds the
+source, the engine version, the number of surveys, the seed, a SHA-256 over the survey table, the sampler size, the seed and the
+priors (so a reader can tell which inputs produced it), the method (sampler name and version, moves, $20$ walkers, $7000$
+steps, $1000$ discarded, thinning $10$, $20$ predictive draws per sample, the likelihood, the discrepancy and noise priors and the
+definition of the interval), the eight priors with their nominal value, scale, centre, standard deviation, truncation and source,
+the convergence block (criterion, factor $50$, and per posterior the largest autocorrelation time, the post-burn steps, their
+ratio, the acceptance fraction, the retained samples and whether it converged), the held-out block per target (measured values,
+predictive means, the $10$th and $90$th percentiles, and the MAPE, RMSE, mean log predictive density, coverage and mean width),
+the comparators scored the same way, the contraction table, and every term of the adoption rule with its outcome. The producer is
+\texttt{pipeline/\allowbreak{}hp500/\allowbreak{}crusherbayes.py}; the consumers are the web's validation views and the notebooks. Missing-data behaviour:
+readiness says \emph{missing} and the views that would show CrusherBayes say that it is not available, never a number from an
+older bake; every other document is unaffected.
+
+\subsection{surrogate-model: the emulator slot}\label{sec:data-surrogate}
+
+The \texttt{surrogate-model} contract (version $1.0.0$, \texttt{data/\allowbreak{}derived/\allowbreak{}models/\allowbreak{}surrogate.json} beside the graphs
+\texttt{surrogate.onnx}, $32{,}449$~bytes, and \texttt{surrogate.int8.onnx}, $15{,}880$~bytes) carries everything the meaning of
+the graph depends on: the order of the five machine classes of the one-hot block, the order of the six continuous inputs (setting,
+throw, speed, feed $x_{63}$, feed exponent and $A\times b$) with their means and standard deviations, the order of the ten outputs
+(three sizes, five passing fractions, throughput and power), which outputs are fitted in $\log_{10}$, their means and standard
+deviations, the path, size in bytes, SHA-256, opset, input name \texttt{x} (float32, $[1,11]$) and output name \texttt{y}
+(float32, $[1,10]$) of each graph, the architecture, and the training block (seed, sizes, sampler, the input ranges per machine,
+the torch version and the export parity). The producer is \texttt{pipeline/\allowbreak{}stages/\allowbreak{}train.py}; the consumers are the browser
+through onnxruntime-web and the evaluation stage. The slot answers only an operating point that is not calibrated and lies inside
+the training ranges; otherwise the engine answers and the answer is labelled as such. Missing-data behaviour: when the contract or
+a graph is absent, fails its schema or its checksum, readiness says \emph{training} with the baseline as provenance, the what-if
+view answers with the engine itself, labelled, and the Benchmark labels the metrics with the model that answered.
+
+\subsection{anomaly-model: the extrapolation-score slot}\label{sec:data-anomaly}
+
+The \texttt{anomaly-model} contract (version $1.0.0$, \texttt{data/\allowbreak{}derived/\allowbreak{}models/\allowbreak{}psd-ae.json} beside
+\texttt{psd-ae.onnx}, $5{,}859$~bytes) describes the denoising autoencoder: the order of its fourteen features (the logarithms
+of $P_{80}$, $P_{50}$ and $P_{20}$, the passing at five sizes, throughput, power, reduction ratio, the logarithm of $F_{80}$,
+specific energy and the feed exponent), their means and standard deviations, the alarm threshold (the $99$th percentile of the
+training scores, $0.24454$), the mean training reconstruction score ($0.05181$), the graph (path, bytes up to $5$~MiB, SHA-256,
+opset at least $13$, input \texttt{x} and output \texttt{xr}, float32 $[1,14]$), the architecture with the input noise, and the
+training block. The score is the mean squared error between the standardised features and their reconstruction; a score above the
+threshold, or a non-finite score, is an alarm. The producer is the training stage; the consumers are the browser and the
+evaluation stage. The slot scores only an operating point that is not calibrated and lies inside the training ranges; otherwise
+the envelope check answers, labelled. Missing-data behaviour: readiness says \emph{training} with the baseline as provenance and
+the anomaly view answers with the envelope check, labelled as the baseline.
+
+\subsection{model-metrics: the held-out evaluation of the two slots}\label{sec:data-metrics}
+
+The \texttt{model-metrics} contract (version $1.0.0$, \texttt{data/\allowbreak{}derived/\allowbreak{}model-metrics.json}, schema
+\texttt{chancadem.model-metrics/\allowbreak{}v1}) holds the held-out evaluation of Sections~\ref{sec:m-surrogate} and~\ref{sec:m-ae}. For the
+surrogate: the training and test sizes ($6430$ and $2196$), the seed of the test draw ($67890$), per output the $R^2$ and the MAPE
+of the float32 graph and the MAPE of the int8 graph, whether $P_{80}$ is monotone in the setting on the fifteen test curves, the
+export parity (the largest absolute difference of the standardised outputs, torch against float32 and float32 against int8), and a
+note on how each number was computed. For the anomaly slot: the number of held-out points, the false-alarm rate (a fraction in
+$[0,1]$), the number of planted off-manifold points, the detection rate, the same two rates for the envelope check, a description
+of how the points were planted, and a note. Every number is computed by \texttt{pipeline/\allowbreak{}stages/\allowbreak{}evaluate.py} through onnxruntime
+on the shipped graphs, never in torch, so the metrics describe what the browser runs. The consumer is the Benchmark of the web.
+Missing-data behaviour: readiness says \emph{missing} and the model views of the Benchmark say that the evaluation is not
+available, never a number from an older bake; an older \texttt{engine\_version} makes it \emph{stale}.
+
+\subsection{readiness: what is real in a build}\label{sec:data-readiness}
+
+The \texttt{readiness} contract (version $1.0.0$, \texttt{data/\allowbreak{}derived/\allowbreak{}readiness.json}, schema \texttt{chancadem.readiness/\allowbreak{}v1})
+answers, for one build, which contracts are served by their real producer and in which state. It carries the product version, the
+SHA-256 of the catalog it was computed from (with line endings normalised), and one row per contract other than itself with the
+identifier, version, catalog status, provenance (real, baseline, a provider kind, or null), state (one of the six of
+Section~\ref{sec:data-catalog}), a bilingual reason when the state is not \emph{available}, and the list of missing paths. It is
+computed by \texttt{pipeline/\allowbreak{}core/\allowbreak{}readiness.py} from the catalog and the repository, so editing the catalog makes it stale until it
+is recomputed, and a check fails meanwhile. In the committed build twelve rows are \emph{available} and the interface row is
+\emph{missing}, with the reason that the interface is dormant and the site reads the committed documents. Every view of the web
+reads it, and so does the interface. Missing-data behaviour: without it the site build stops at its copy step; if it cannot be
+loaded at run time the views keep working and each says that readiness is unknown; the interface answers $503$ with the state
+\emph{missing}.
+
+\subsection{api: the dormant interface}\label{sec:data-api}
+
+The \texttt{api} contract (version $1.0.1$, \texttt{docs/\allowbreak{}contracts/\allowbreak{}api.openapi.json}, OpenAPI 3.1) describes the read-only
+interface of \texttt{app/\allowbreak{}}, dormant until a deployment needs a server. It has six routes, all \texttt{GET}: two health routes,
+the case list, the manifest of a case, an artifact by relative path and the readiness document (Appendix~\ref{app:schemas}). It
+serves the committed documents unchanged, and its components reference the same schema files as the catalog, so the TypeScript
+types generated from it are the types of the static site. Its rule for missing data is that a document that does not exist yet is
+a declared state and never an empty body that looks like data: when a document a route serves is absent, the route answers $503$
+with a body that names the state \emph{missing} and the reason, and an unknown case or artifact is $404$. The producer is the
+FastAPI application of \texttt{app/\allowbreak{}}; the consumers are its contract tests and, when the interface is activated, the web. The
+static readiness reports this row as \emph{missing} while the interface is dormant, and the interface's own readiness route reports
+it as available.

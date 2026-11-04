@@ -1,0 +1,85 @@
+\section{Discussion}\label{sec:discussion}
+
+\subsection{What the results mean for the setting decision}\label{sec:disc-meaning}
+
+The question a process engineer asks of a calibrated crusher model is how well it predicts a survey it was not fitted to. On the ten HP500 surveys
+the answer has two parts. For throughput, the calibrated engine is a useful predictor: its held-out error of $12.09\%$ is close to its in-sample
+error of $11.55\%$, it beats the constant mean by six points, and a nested $80\%$ band of about $\pm239$~t/h covers the measured feed rate at the
+stated rate. The capacity physics, with one refit scalar, does as well as a free-form regression with two coefficients, which is what a physical
+shape should buy on ten points. For power, the calibrated engine is not a useful predictor: the Bond draw it computes hardly varies across the
+surveys while the measured power spans almost a factor of two, and the published power constants belong to a different net power. A plant that
+wants to predict the power of this machine at a new setting is better served, on these data, by a line on the setting, which reaches $12.78\%$ held
+out, than by any of the size-aware energy laws the product implements. The recommendation that follows is specific: use the calibrated engine for
+throughput and for the product size trends it was built for, and read power from the measured relation with the setting until the plant measures
+the quantities that the energy laws need (the crushing work index from an SMC Test, the no-load power, and the product size distribution of each
+survey).
+
+\subsection{Why each method behaves as it does}\label{sec:disc-why}
+
+The setting-only line wins on power because the measured power on these surveys is, to first order, a function of the setting ($r=-0.82$), and
+the line spends its two coefficients on exactly that relation. The free-form fit spends a third coefficient on $f_{80}$, which adds noise on ten
+points and costs it $1.25$ points held out. The Bond draw is flat because, as the setting tightens, the finer product raises the specific energy
+while the lower throughput lowers the tonnage, and the two nearly cancel in kilowatts; the measured power instead rises as the setting tightens,
+which a model of the machine's mechanics might explain, for example an energy computed as the product of the liner pressure and
+the displacement over the chamber~\cite{liu2018}, which the product does not implement. Morrell's energy inherits the same design column, the specific energy times the measured throughput,
+so its fit has the same problem as Bond's, and the variant with a no-load term recovers accuracy only by fitting a negative work index. The bounded
+residual fails held out because it is a two-feature correction fitted on nine points to residuals that are themselves noisy: its leaky error is the
+lowest of all predictors and its strict error is above the backbone's, the signature of overfitting. CrusherBayes calibrates its interval because
+its noise and discrepancy scales are learned from the residuals of the engine (the posterior noise is about two and a half times the prior median on
+both targets), and narrows it relative to the backbone band on power because its discrepancy slope on the setting absorbs the relation that the
+Bond draw misses, about $57$~kW per standard deviation of the setting. That slope plays the role of the setting-only line inside the Bayesian model, which is
+consistent with CrusherBayes approaching but not passing the line on power.
+
+\subsection{Where each method fails}\label{sec:disc-failures}
+
+Each method has a failure that the results expose. The Bond draw and the published power form fail on the measured power (Table~\ref{tab:power-parity}).
+Morrell through the origin fails by $25$ points against the line, and with a no-load term it fits a physically impossible work index in every fold
+(Table~\ref{tab:morrell}). The bounded residual fails to beat the backbone held out, and the label-shuffle control shows how a leaky evaluation would
+have hidden that (Table~\ref{tab:leaky}). CrusherBayes does not beat the setting-only line on power, $14.31\%$ against $12.78\%$, and does not beat the
+backbone on throughput beyond noise ($0.09$ points); its posterior leaves the classification and breakage scalars at their prior, so it cannot say
+anything about the product size distribution. The calibrated backbone misses two surveys of ten on throughput, survey 1 by $407$~t/h, so a single
+survey can sit well outside a model whose average error is twelve percent. The learned surrogate is worst on the fine tail of the product
+($9.21\%$ on $P_{20}$), and the autoencoder misses $72\%$ of the planted off-manifold points. The circuit cases have no measured data, so their absolute
+numbers carry no validation at all. The survey HP500-03 is flagged pass-through because its feed is barely coarser than its setting; a model reading
+that survey's product size is outside its regime.
+
+\subsection{What the product recommends and when}\label{sec:disc-recommend}
+
+Three recommendations follow, each with the condition under which it holds. First, read the calibrated engine's throughput with its nested band
+(about $\pm21\%$) for a secondary HP500 on this ore inside the surveyed support of $38$ to $55$~mm and $47$ to $140$~mm; outside it the envelope check
+flags extrapolation and the band does not apply. Second, for power, prefer the measured relation with the setting, and use the CrusherBayes interval,
+which covers the measured power at the stated rate and is narrower than the backbone band, when an uncertainty is needed; do not read the engine's
+Bond power as a prediction of a survey. Third, to calibrate the population balance itself, which ten surveys without product sizes cannot do,
+measure the product size distribution of each survey: the contraction table shows that no other addition to the present data would identify the
+classification and breakage scalars. For the synthetic machine classes the product makes no recommendation beyond the trends; their constants are
+typical of their class and their band on the secondary cone is a lower bound.
+
+\section{Limitations}\label{sec:limits}
+
+\emph{Sample size.} The real data are ten surveys of one machine on one ore. A difference below about three MAPE points is within noise, and one survey
+moves a coverage by $0.1$, so the coverages of $0.80$ and $0.90$ are coarse estimates, and the ranking of predictors within three points of each other is
+not stable. The surveys are treated as exchangeable; their order in time is not known to the product.
+
+\emph{What is not measured.} The product size distribution of the surveys is printed only as figures in the source, so the product size is never a target,
+and every statement about the engine's $P_{80}$ on the survey lane is a model output. The throw and the speed of each survey are not in the table and are
+held at nominal values. The crushing work index and the no-load power of the machine are not published, so Morrell's method and the power form are fits.
+
+\emph{The source calibration.} The constants of the calibrated lane are carried from the product's code and earlier documentation; the publisher page of
+the source refused automated access in every documenting attempt, so their correspondence to the numbered tables of the paper, and the paper's own error
+figures, are not re-verified here. The priors of CrusherBayes have widths chosen by the author, because no published range of these fitted scalars for this
+ore was found.
+
+\emph{Scope of the engine.} The engine is a single-zone population balance with a reduced capacity model and an empirical power law. It has no chamber
+geometry, no liner wear, no feed segregation and no choke-level dynamics. The synthetic machines are not calibrated: their constants are illustrative
+of their class and reproduce trends. The three-dimensional chamber view is a kinematic view of the geometry and not a particle simulation. The learned
+models emulate the engine and not a plant, and the autoencoder detects distance from the engine's sampled envelope and not a mechanical fault. The drift
+projection models no wear and asserts no drift rate.
+
+\emph{Discrete-element simulation.} A discrete-element simulation with breakage, by particle replacement with the Tavares breakage model~\cite{tavares2022}
+in a separate package, is being built for validation on the laboratory jaw crusher of Barrios et al.~\cite{barrios2020}; it is not part of the methods or the
+results of this report. The open HP500 data could not validate it in any case, because the liner geometry of that machine is not public.
+
+\emph{Prior work.} The searches that preceded CrusherBayes found no Bayesian calibration with structural discrepancy of a cone-crusher population-balance
+model evaluated held out; they were not exhaustive (two citation indexes, Scopus and Web of Science, were not searched). Cone-crusher models that couple
+energy and breakage~\cite{lindqvistli2021,bengtsson2019} and machine-learning models of cone-crusher power~\cite{gharaei2024} exist and were read only at the
+level of their metadata; the product implements neither.

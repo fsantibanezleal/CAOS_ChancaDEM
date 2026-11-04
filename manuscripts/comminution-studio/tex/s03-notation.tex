@@ -1,0 +1,80 @@
+\section{Notation}\label{sec:notation}
+
+Table~\ref{tab:notation} collects every symbol of the report with its unit. Four conventions hold throughout and are worth
+stating before the methods, because the engine depends on them and a reimplementation that changes one of them gives
+different numbers.
+
+\emph{Size classes.} The sieve grid runs from coarse to fine. Edge $e_k$ is $256/(\sqrt2)^{k}$~mm for $k=0,\dots,28$, so
+there are $K=28$ classes and the finest edge is $256/2^{14}=0.015625$~mm. Class $k$ lies between the upper edge $e_k$ and
+the lower edge $e_{k+1}$ and has the geometric mid-size $\bar d_k=\sqrt{e_k e_{k+1}}$. Because the classes run coarse to
+fine, a matrix whose entry $(i,j)$ moves mass from class $j$ to class $i$ is strictly lower triangular when mass only moves
+to finer classes, and the breakage matrix of Section~\ref{sec:m-breakage} has this form. Vectors indexed by class are bold
+($\mathbf f$, $\mathbf p$, $\mathbf c$); a diagonal matrix built from a vector is the upright capital ($\mathrm C=\mathrm{diag}(\mathbf c)$).
+
+\emph{Gradations.} A gradation is stored either as mass per class (a vector that sums to one) or as cumulative fraction
+passing at each edge (a vector that starts at one and decreases). The size at a passing fraction ($P_{80}$, $P_{50}$,
+$P_{20}$, $F_{80}$) is read by linear interpolation in the logarithm of the size between the two edges that bracket the
+fraction. Capital $F_{80}$ is the feed $80\%$ passing size as the engine reads it on its grid; lower-case $f_{80}$ is the
+measured value of a survey. They differ when the feed is coarser than the $256$~mm top of the grid.
+
+\emph{Units.} Sizes are in millimetres in the engine and in micrometres inside the two energy laws (Bond and Morrell), as
+those laws are printed; throughput is in tonnes per hour; power in kilowatts; specific energy in kWh per tonne; speed in
+revolutions per minute; angles in degrees. Percentages are written with the percent sign; a difference between two
+percentage errors is written in points.
+
+\emph{Survey indices and folds.} Survey $i$ runs from $1$ to $n=10$ in the order of the published table. A fold of the
+leave-one-survey-out evaluation is indexed by its held-out survey; $\mathcal T_{-i}$ is the set of the other nine surveys,
+and a quantity fitted on them carries the subscript $-i$. A standardised variable is written $z$, with the mean and
+standard deviation of the training surveys of the fold. In CrusherBayes, $\boldsymbol\theta$ is the vector of the eight
+engine scalars and the two noise scales, and $\mathbf d_t$ the three discrepancy coefficients of target $t$.
+
+\begin{table}[!t]
+\centering
+\caption{Notation. Every symbol used in the equations of the report, its meaning and its unit; a dash marks a
+dimensionless quantity. Symbols local to one derivation are defined where they appear.}
+\label{tab:notation}
+\footnotesize
+\begin{tabular}{@{}l p{0.62\textwidth} l@{}}
+\toprule
+Symbol & Meaning & Unit \\
+\midrule
+$K$, $k$ & number of size classes ($28$) and class index, coarse to fine & -- \\
+$e_k$, $\bar d_k$ & upper edge and geometric mid-size of class $k$ & mm \\
+$\mathbf f$, $\mathbf p$ & feed and product mass per class (each sums to one) & -- \\
+$R(x)$ & cumulative fraction passing size $x$ & -- \\
+$x_{63}$, $n$ & Rosin-Rammler characteristic size and uniformity exponent & mm, -- \\
+$F_{80}$, $f_{80}$ & feed $80\%$ passing size, on the engine grid and as measured & mm \\
+$P_{80}$, $P_{50}$, $P_{20}$ & product sizes passing $80$, $50$ and $20\%$ & mm \\
+$s$ (CSS), $T$, OSS & closed-side setting, eccentric throw, open-side setting $s+T$ & mm \\
+$T_{ref}$ & design throw of a machine class & mm \\
+$N$, $N_{opt}$ & eccentric speed and the speed of maximum capacity & rpm \\
+$A$, $b$, $A\!\times\!b$ & JKMRC ore competence parameters and their product & \%, t/kWh, -- \\
+$E_{cs}$ & specific comminution energy per nip & kWh/t \\
+$t_{10}$ & fraction of progeny passing one tenth of the parent size & -- or \% \\
+$B(u)$, $\varphi$, $\gamma$, $\beta$ & Austin cumulative appearance function of relative size $u$, its weight and slopes & -- \\
+$\mathrm B$, $B_{ij}$ & breakage matrix, fraction of broken class-$j$ mass reporting to class $i$ & -- \\
+$C(d)$, $\mathbf c$, $\mathrm C$ & classification probability of size $d$, its vector and diagonal matrix & -- \\
+$K_1$, $K_2$, $K_3$ & classification sizes and exponent & mm, mm, -- \\
+$\mathbf x$ & internal mass flow of the breakage zone per unit feed & -- \\
+$\kappa$ & conditioning proxy of $\mathrm I-\mathrm B\mathrm C$ & -- \\
+$Q$, $Q_{ref}$, $Q_T$ & throughput, reference capacity, calibrated capacity base & t/h \\
+$g_{ref}$ & reference discharge gap of a machine class & mm \\
+$W_i$, $W$ & Bond work index and Bond specific energy & kWh/t \\
+$P_d$, $P_c$, $P$ & Bond net draw, current-based calibrated power, power & kW \\
+$\zeta$, $P_n$ & slope and no-load term of the current-based power form & --, kW \\
+$M_{ic}$, $W_c$, $S_c$ & Morrell crushing work index, crusher specific energy, hardness correction & kWh/t, kWh/t, -- \\
+$x_1$, $x_2$ & feed and product $80\%$ passing sizes in the Morrell equation & $\mu$m \\
+$\alpha$, $\mu_f$ & nip angle and friction coefficient of the grip limit & deg, -- \\
+$\mathcal D$, $n$ & set of surveys and their number ($10$) & -- \\
+$\mathcal T_{-i}$ & training surveys of the fold that holds out survey $i$ & -- \\
+$y_{t,i}$, $\hat y_{t,i}$ & measured value and held-out prediction of target $t$ at survey $i$ & t/h or kW \\
+$\sigma$, $\sigma_{-i}$ & residual standard deviation, and that of the nine other surveys & t/h or kW \\
+$z_{\mathrm{CSS}}$, $z_{f_{80}}$ & setting and feed size standardised on the training surveys & -- \\
+$\boldsymbol\theta$ & CrusherBayes engine scalars and log noise scales & mixed \\
+$\delta_t$, $\mathbf d_t$, $\tau_t$ & discrepancy of target $t$, its coefficients and their prior scale & t/h or kW \\
+$\sigma_t$ & observation noise of target $t$ & t/h or kW \\
+$\hat\tau$ & integrated autocorrelation time of a chain & steps \\
+$\Delta s$, $r$, $t_{out}$ & setting opening to a target, drift rate, hours to the target & mm, mm/h, h \\
+\bottomrule
+\end{tabular}
+\end{table}

@@ -365,7 +365,7 @@ def tab_contracts() -> None:
         rows.append([r"\texttt{" + tex(r["id"]) + "}", tex(r["version"]), r"\texttt{" + tex(owner) + "}",
                      r"\texttt{" + tex(schema) + "}", tex(r["status"])])
     head = ["Contract", "Version", "Producer (owner)", "Schema file", "Status"]
-    write("tab-contracts", tabular("@{}l l l l l@{}", head, rows))
+    write("tab-contracts", tabular("@{}l l p{0.32\\textwidth} p{0.27\\textwidth} l@{}", head, rows))
 
 
 def _type_of(v: dict, defs: dict) -> str:
@@ -394,7 +394,7 @@ def _range_of(v: dict, defs: dict) -> str:
             return _range_of(d, defs)
     parts = []
     if "const" in v:
-        parts.append(str(v["const"]))
+        parts.append(chr(0) + str(v["const"]) + chr(1))
     if "enum" in v:
         parts.append(", ".join("null" if e is None else str(e) for e in v["enum"]))
     for key, sym in (("minimum", ">="), ("exclusiveMinimum", ">"), ("maximum", "<="), ("exclusiveMaximum", "<")):
@@ -404,13 +404,21 @@ def _range_of(v: dict, defs: dict) -> str:
         lo, hi = v.get("minItems"), v.get("maxItems")
         parts.append(f"{lo if lo is not None else 0} to {hi if hi is not None else 'n'} items")
     if "pattern" in v:
-        parts.append("pattern " + v["pattern"])
+        parts.append("pattern " + chr(0) + v["pattern"] + chr(1))
     items = v.get("items")
     if isinstance(items, dict) and not parts:
         sub = _range_of(items, defs)
         if sub:
             parts.append("items " + sub)
     return "; ".join(parts)
+
+
+def breakable(text: str) -> str:
+    """A break point between the characters of a pattern marked by chr(0) and chr(1) (a regular expression has no spaces)."""
+    def split(m: re.Match) -> str:
+        toks = re.findall(r"\\[a-zA-Z]+\{\}|\\.|.", m.group(1))
+        return r"\allowbreak{}".join(toks)
+    return re.sub(chr(0) + "(.*?)" + chr(1), split, text)
 
 
 def schema_longtable(cid: str, schema_path: Path) -> None:
@@ -429,7 +437,7 @@ def schema_longtable(cid: str, schema_path: Path) -> None:
             desc = re.sub(r"\s+", " ", desc)
             if len(desc) > 150:
                 desc = desc[:147].rsplit(" ", 1)[0] + " ..."
-            rows.append([r"\texttt{" + tex(name) + "}", tex(_type_of(v, defs)), tex(rng) if rng else DASH,
+            rows.append([r"\texttt{" + tex(name) + "}", tex(_type_of(v, defs)), breakable(tex(rng)) if rng else DASH,
                          "yes" if k in required else "no", tex(desc) if desc else DASH])
             sub = v
             if "$ref" in v:
@@ -445,7 +453,7 @@ def schema_longtable(cid: str, schema_path: Path) -> None:
 
     walk(s.get("properties", {}), "", req, 0)
     lines = [r"\begingroup\scriptsize",
-             r"\begin{longtable}{@{}p{0.22\textwidth} p{0.11\textwidth} p{0.2\textwidth} p{0.05\textwidth} p{0.34\textwidth}@{}}",
+             r"\begin{longtable}{@{}p{0.21\textwidth} p{0.10\textwidth} p{0.19\textwidth} p{0.05\textwidth} p{0.33\textwidth}@{}}",
              r"\toprule", r"Field & Type & Range or values & Req. & Meaning \\", r"\midrule", r"\endhead",
              r"\bottomrule", r"\endfoot"]
     lines += [" & ".join(r) + r" \\" for r in rows]
@@ -468,7 +476,7 @@ def schemas() -> None:
             rows.append([r"\texttt{" + tex(verb.upper() + " " + p) + "}", tex(", ".join(op.get("responses", {}).keys())),
                          tex(summ) if summ else DASH])
     lines = [r"\begingroup\scriptsize",
-             r"\begin{longtable}{@{}p{0.33\textwidth} p{0.12\textwidth} p{0.5\textwidth}@{}}", r"\toprule",
+             r"\begin{longtable}{@{}p{0.32\textwidth} p{0.12\textwidth} p{0.48\textwidth}@{}}", r"\toprule",
              r"Route & Responses & Meaning \\", r"\midrule", r"\endhead", r"\bottomrule", r"\endfoot"]
     lines += [" & ".join(r) + r" \\" for r in rows]
     lines += [r"\end{longtable}", r"\endgroup"]
@@ -494,7 +502,46 @@ def hashes() -> None:
     write("tab-hashes", tabular("@{}l l@{}", ["Artifact", "SHA-256 (first 16 hex digits)"], rows))
 
 
+def parity_numbers() -> None:
+    """The size of the shared engine reference and the largest relative difference of the Python engine against it,
+    recomputed with the comparison of ``tests/test_crusher_engine.py`` (needs pytest importable, as in the pipeline venv)."""
+    sys.path.insert(0, str(ROOT / "tests"))
+    import test_crusher_engine as t  # noqa: E402
+
+    ref = _json(ROOT / "tests" / "fixtures" / "engine-reference.json")
+    worst = 0.0
+    for p in ref["points"]:
+        got = t.python_point(p, ref["scaler"])
+        worst = max(worst, t._worst_rel({"result": p["result"], "features": p["features"]}, got))
+    mant, exp = f"{worst:.1e}".split("e")
+    # the setting-only line in closed form: leverages h_ii of the survey settings and the leave-one-out residuals e_i / (1 - h_ii)
+    import numpy as np
+
+    with (ROOT / "data" / "examples" / "hp500-surveys.csv").open(encoding="utf-8") as fh:
+        rows = list(csv.DictReader(fh))
+    s = np.array([float(r["css_mm"]) for r in rows])
+    lev = 1.0 / s.size + (s - s.mean()) ** 2 / np.sum((s - s.mean()) ** 2)
+    A = np.column_stack([np.ones(s.size), s])
+    out = {}
+    for key, col in (("P", "power_kw"), ("Q", "feed_tph")):
+        y = np.array([float(r[col]) for r in rows])
+        coef = np.linalg.lstsq(A, y, rcond=None)[0]
+        e = y - A @ coef
+        out[key] = (100 * np.mean(np.abs(e / y)), 100 * np.mean(np.abs(e / (1 - lev) / y)))
+    write("numbers", "\n".join([
+        f"\\newcommand{{\\nrefpoints}}{{{len(ref['points'])}}}",
+        f"\\newcommand{{\\refworst}}{{{mant}\\times10^{{{int(exp)}}}}}",
+        f"\\newcommand{{\\levmin}}{{{lev.min():.3f}}}",
+        f"\\newcommand{{\\levmax}}{{{lev.max():.3f}}}",
+        f"\\newcommand{{\\lineinP}}{{{out['P'][0]:.2f}}}",
+        f"\\newcommand{{\\linelooP}}{{{out['P'][1]:.2f}}}",
+        f"\\newcommand{{\\lineinQ}}{{{out['Q'][0]:.2f}}}",
+        f"\\newcommand{{\\linelooQ}}{{{out['Q'][1]:.2f}}}",
+    ]))
+
+
 if __name__ == "__main__":
+    parity_numbers()
     tab_surveys()
     tab_cases()
     tab_machines()
