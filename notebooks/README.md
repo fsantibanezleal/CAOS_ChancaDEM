@@ -40,6 +40,23 @@ se puede comprobar); cada notebook está escrito entero en el idioma de su árbo
 | `07-learned-models` | the surrogate and the autoencoder through onnxruntime, against the engine and against the plant / el sustituto y el autoencoder con onnxruntime, frente al motor y frente a la planta |
 | `08-crusherbayes` | the Bayesian calibration of the engine with a structural discrepancy: priors, the sampler run live on one fold, and the held-out evidence with its kill criterion / la calibración bayesiana del motor con una discrepancia estructural: a priori, el muestreador corrido en vivo sobre un pliegue, y la evidencia con retención con su criterio de descarte |
 
+Every notebook of level 2 and above has a third-level section on where its method changes or breaks and one on using it
+on the reader's own data, and every method states its equations (CAOS_MANAGE `conventions/notebook-content-bar.md`).
+
+Todo notebook de nivel 2 o superior tiene una sección de tercer nivel sobre dónde cambia o se quiebra su método y otra
+sobre usarlo con los datos propios del lector, y todo método declara sus ecuaciones.
+
+## Coverage of the tool / Cobertura de la herramienta
+
+[`coverage.json`](coverage.json) maps every part of the product to the notebooks that teach it, by paths relative to a
+language tree (present in both): the sixteen methods of the SDD's method ladder (each at level 2 or above), the thirteen
+contracts of `docs/contracts/catalog.md` and the five stages of `data-pipeline/pipeline/stages/`. `product.json` declares
+no method package, so the `packages` map is empty. The ids are internal and never appear in a notebook; the map is checked
+by CAOS_MANAGE `tools/notebooks/check_notebook_depth.py`.
+
+[`coverage.json`](coverage.json) asigna cada parte del producto a los notebooks que la enseñan: los dieciséis métodos de la
+escala de métodos del SDD, los trece contratos del catálogo y las cinco etapas del pipeline.
+
 ## Run them / Correrlos
 
 ```bash
