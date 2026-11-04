@@ -8,6 +8,8 @@
 \usepackage{array}
 \usepackage{url}
 \usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
 \usepackage[hidelinks]{hyperref}
 \usepackage{orcidlink}
 \usepackage{balance}
@@ -42,9 +44,9 @@
 % Page-1 header block (conventions/manuscript-header-standard.md). The four document
 % macros are set by the publishing tool when the version DOI is reserved.
 \newcommand{\doctype}{Preprint}
-\newcommand{\docversion}{v0.01}
-\newcommand{\docdate}{31 October 2026}
-\newcommand{\versiondoi}{10.5281/zenodo.23843810}
+\newcommand{\docversion}{v0.02}
+\newcommand{\docdate}{4 November 2026}
+\newcommand{\versiondoi}{10.5281/zenodo.23843809}
 \newcommand{\conceptdoi}{10.5281/zenodo.23843809}
 \newcommand{\docrepo}{github.com/fsantibanezleal/CAOS\_ChancaDEM}
 \newcommand{\headerblock}{%
@@ -60,10 +62,14 @@ Not peer reviewed. Source code, data and computational records: \href{https://\d
 \vspace{4pt}}
 
 \newcommand{\pct}{\,\%}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\newtheorem{conjecture}{Conjecture}
+\newtheorem{remark}{Remark}
 
 \begin{document}
 
-\title{What Ten Industrial Surveys Identify in a Cone-Crusher Population Balance Model: Bayesian Calibration with Structural Discrepancy}
+\title{What Ten Industrial Surveys Identify in a Cone-Crusher Population Balance Model: Bayesian Calibration with Structural Discrepancy Gives Calibrated Bands but No Accuracy Gain over a Setting-Only Line}
 
 \author{Felipe~Santib\'a\~nez-Leal~\orcidlink{0000-0002-0150-3246}%
 \thanks{F. Santib\'a\~nez-Leal is with the CAOS open-research programme, Santiago, Chile
@@ -79,23 +85,21 @@ Not peer reviewed. Source code, data and computational records: \href{https://\d
 \maketitle
 
 \begin{abstract}
-A cone-crusher model that predicts throughput, power and product size rests on a handful of fitted scalars, and a point
-fit to a few industrial surveys does not say which of them the surveys determine. We calibrate the eight fitted scalars
-of a Whiten classification-breakage population balance engine of a Metso HP500 cone crusher (capacity, Bond work
-index, power form, classification and breakage constants) as a Bayesian posterior against the ten surveys of Rocha et
-al., with a linear structural discrepancy on the closed-side setting and the feed size in the form of Kennedy and
-O'Hagan. The posterior is sampled with the differential-evolution moves of ter Braak, after the affine-invariant
-stretch move failed an autocorrelation-time criterion on the same posterior. Strict leave-one-survey-out validation
-refits every quantity without the held-out survey. Held out, the posterior predictive mean has a mean absolute
-percentage error of \cbTphMape\pct{} on throughput and \cbKwMape\pct{} on power, which is within the noise of a
-setting-only line (\BlinTphMape\pct{} and \BlinKwMape\pct{}) and no gain over it on power. The 80\pct{} bands cover
-\cbTphCov{} and \cbKwCov{} of the surveys, and on power the band is \widthRedKw\pct{} narrower than the residual band of
-the refit backbone at the same coverage; against the setting-only line (width \BlinKwWidth~kW, coverage \BlinKwCov{}) and the
-free-form fit (\FreeKwWidth~kW, \FreeKwCov{}) its width of \cbKwWidth~kW is about the same, with a higher coverage, so the band gain is against the backbone and not
-against the simple line. Of the \nParams{} parameters, \nIdent{} are identified by the surveys; the
-classification and breakage scalars of the population balance stay at their prior. With ten surveys and no measured
-product size, the data calibrate how the two outputs depend on the setting, and they cannot calibrate the population
-balance.
+A cone-crusher model that predicts throughput and power rests on fitted scalars, and a point fit to a few industrial
+surveys does not say which of them the surveys determine or how well an unseen survey is predicted. We calibrate the
+eight fitted scalars of a Whiten classification and breakage engine of a Metso HP500 cone crusher as a Bayesian posterior
+against the ten surveys of Rocha et al., with a linear structural discrepancy on the closed-side setting and the feed
+size in the form of Kennedy and O'Hagan, integrated out exactly and sampled with differential-evolution moves. Strict
+leave-one-survey-out validation refits every quantity without the held-out survey, and nine published or simple methods
+run on the same folds by the product. Held out, the posterior predictive mean reaches \cbTphMape\pct{} (95\pct{} bootstrap interval
+\cbTphMapeLo{} to \cbTphMapeHi) on throughput and \cbKwMape\pct{} (\cbKwMapeLo{} to \cbKwMapeHi) on power; the
+setting-only line reaches \BlinKwMape\pct{} on power, and the paired difference of \dBlinKw{} points (interval \dBlinKwLo{}
+to \dBlinKwHi) is no gain. The 80\pct{} bands cover \cbTphCov{} and \cbKwCov{} of the surveys and are \widthRedKw\pct{}
+narrower on power than the residual band of the refit engine, at the width of the line's band. We prove that the
+engine's throughput lies in the span of the discrepancy, that the predictive mean is a ridge regression shrunk toward
+the engine, and that the work index and the power slope enter only as a product; a linearized posterior reproduces the
+sampled contraction of every parameter within \thLapMaxDev. The surveys identify the capacity base and the setting
+dependence, not the population balance. The ablation shows that the discrepancy carries the power prediction.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -103,238 +107,800 @@ Cone crusher, population balance, Bayesian calibration, model discrepancy, ident
 differential-evolution MCMC, comminution.
 \end{IEEEkeywords}
 
-\section{Introduction}
+\section{Introduction}\label{sec:intro}
 
-\IEEEPARstart{T}{he} electricity of a copper concentrator goes especially to crushing and grinding, and in Chile in 2024 the
-concentrators took 55.7\,\% of the electricity of copper mining~\cite{cochilco}. A cone crusher is modelled in the
-tradition of Whiten~\cite{whiten}: a classification function decides which particles are broken, a breakage function
-distributes the progeny, and a mass balance gives the product. The classification constants, the breakage law, the
-capacity and the power form of such an engine are fitted to survey data, and the fitted values are then used as if they
-were known.
+\IEEEPARstart{T}{he} electricity of a copper concentrator goes largely to crushing and grinding, and in Chile in 2024 the
+concentrators took 55.7\,\% of the electricity of copper mining~\cite{cochilco}. The setting of a crusher decides how much
+work the grinding downstream must do, so a model that predicts the throughput, the power and the product size of a cone
+crusher from its closed-side setting and its feed is a planning tool of direct economic weight. Such models are written in
+the tradition of Whiten~\cite{whiten}: a classification function decides which particles are nipped and broken, a breakage
+function distributes the progeny, and a mass balance gives the product. The classification constants, the breakage law,
+the capacity and the power form of an engine of this kind are fitted to survey data, and the fitted values are then used as
+if they were known.
 
-Industrial surveys of a crusher are few and expensive. Rocha et al.~\cite{rocha} report ten surveys of an HP500 secondary
-cone crusher on itabirite iron ore with five numbers each: the closed-side setting (CSS), the feed size
-$f_{80}$, the throughput and the motor power, and a product size distribution that appears only as a figure. A point fit
-to ten rows of two measured outputs raises two questions that the point fit does not answer. Which of the fitted scalars
-do the surveys determine, and which does the fit leave where it started? And how well calibrated is the prediction of an
-unseen survey?
+Industrial surveys of a crusher are few and expensive. Rocha et al.~\cite{rocha} report ten surveys of an HP500
+secondary cone crusher on itabirite iron ore with four numbers each that are tabulated (the closed-side setting, the feed
+size $f_{80}$, the throughput and the motor power) and a product size distribution that appears only as a figure. They
+fitted a model of the machine on the same ten surveys. A point fit to ten rows of two measured outputs leaves two
+questions open. Which of the fitted scalars do the surveys determine, and which does the fit leave where it started? And
+how well, and with what uncertainty, is an unseen survey predicted? The published crusher models we found are
+calibrated by least squares or by iterative tuning and evaluated in sample (Section~\ref{sec:related}); the statistical
+literature on computer-model calibration gives the tools to answer both questions, a posterior over the parameters and a
+discrepancy term that keeps the model error out of the parameters~\cite{ko,higdon,brynj}, but we found no application of
+it to a crusher population balance evaluated on held-out surveys.
 
-We answer both with a Bayesian calibration of the engine with an explicit structural discrepancy. The engine is run as
-its own simulator (a few milliseconds per evaluation), the eight fitted scalars get weakly informative priors centred
-on the values of Rocha et al., and a linear discrepancy on the setting and the feed size is added to each measured
-output in the form of Kennedy and O'Hagan~\cite{ko}. The result is a posterior per scalar, a predictive distribution per
-held-out survey and a table of prior against posterior. Our contributions are:
+We propose CrusherBayes, a Bayesian calibration of the engine with an explicit structural discrepancy. The engine is run
+as its own simulator, the eight fitted scalars receive weakly informative priors centred on the values of Rocha et al.,
+and a discrepancy linear in the standardized setting and feed size is added to each measured output in the form of
+Kennedy and O'Hagan~\cite{ko}. Because the discrepancy and the noise are Gaussian given the scalars, the discrepancy is
+integrated out exactly and the sampler explores ten dimensions. The method gives a posterior per scalar, a predictive
+distribution per held-out survey and a table of prior against posterior. Our contributions are:
 \begin{enumerate}
-\item a Bayesian calibration with discrepancy of a cone-crusher population balance engine, with the discrepancy
-integrated out exactly so that the sampler explores ten dimensions only;
-\item a sampler configuration chosen by a measured criterion: the differential-evolution moves meet an
-autocorrelation-time criterion that the stretch move does not meet on the same posterior;
-\item a strict leave-one-survey-out evaluation over the ten surveys, against a setting-only line, a refit backbone with
-a residual band and a free-form linear fit, with calibration (coverage and width) scored beside accuracy;
-\item the identifiability table: which scalars the surveys determine, which they determine partly and which stay at
-their prior, and the structural discrepancy that the power output requires.
+\item the method: a Bayesian calibration with exact marginalization of a structural discrepancy for a cone-crusher
+population balance engine, sampled with differential-evolution moves chosen by an autocorrelation criterion;
+\item a theory of what the surveys can identify: the engine's throughput lies exactly in the column space of the
+discrepancy design, the posterior predictive mean is a ridge regression shrunk toward the engine's best affine
+approximation, and the work index and the power slope enter only as a product, with a linearized posterior that
+reproduces the sampled contraction of all fourteen engine and discrepancy parameters;
+\item a strict leave-one-survey-out comparison, with bootstrap intervals and paired differences, against nine methods run
+by the product on the same folds: the setting-only line, the free-form linear fit, the refit capacity base and
+current-based power form of the engine, the same with a bounded residual, Morrell's size-specific energy with and without
+a no-load term, the Bond draw, the engine at the published constants and the constant mean;
+\item an ablation of the discrepancy, the engine scalars, the population-balance scalars, the prior widths, the
+discrepancy scale and the sampler, with three seeds of the full method.
 \end{enumerate}
-The calibrated prediction is not more accurate than a line in the closed-side setting. The result is the
-identifiability finding and a calibrated predictive band, not a gain in point accuracy.
+The main result is partly negative. Held out, CrusherBayes is as accurate as the refit engine on throughput and no more
+accurate than a line in the closed-side setting on power, with 80\pct{} bands whose coverage is inside 0.7 to 0.9 on both
+outputs. The surveys identify the capacity base, the noise and the dependence of both outputs on the setting; they leave
+the classification and breakage scalars of the population balance at their prior.
 
-\section{Related Work}
+Section~\ref{sec:related} places the method among the published approaches; Section~\ref{sec:problem} states the
+problem; Section~\ref{sec:method} gives the method; Section~\ref{sec:theory} proves what it can identify;
+Sections~\ref{sec:design} to~\ref{sec:ablation} give the design, the results and the ablation, and
+Sections~\ref{sec:discussion} to~\ref{sec:conclusions} discuss them.
 
-\subsection{Calibration with discrepancy}
+\section{Related Work}\label{sec:related}
 
-Kennedy and O'Hagan~\cite{ko} calibrate the parameters of a computer model against field data by writing the data as
-the simulator at the true parameters plus a model discrepancy, itself a Gaussian process, plus measurement error.
-Higdon et al.~\cite{higdon} extend the construction to a simulator that cannot be run at every
-parameter value, with Gaussian process models of the unknown functions, and Bayarri et al.~\cite{bayarri} give a
-six-step Bayesian framework for validating a computer model against reality. Brynjarsd\'ottir and
-O'Hagan~\cite{brynj} show that an analysis that ignores the model discrepancy can give biased and over-confident
-parameter estimates and predictions, and that the confounding of the discrepancy with the calibration parameters is
-resolved only with meaningful priors. We use the low-order form: the discrepancy is linear in the standardized setting and feed
-size, with a Gaussian prior on its three coefficients per output. The engine is cheap, so no emulator is used.
+\subsection{Population balance models of cone crushers}
 
-\subsection{Samplers}
+Whiten~\cite{whiten} modelled a crusher as a classification and breakage process solved as a mass balance; Napier-Munn et
+al.~\cite{napier} give the breakage descriptors ($t_{10}$ and the ore's $A\times b$) and the classification relations that
+such a model is calibrated with, and Andersen and Napier-Munn~\cite{andersen} gave a parameterization of the
+classification constants and a power prediction for cone crushers. Evertsson modelled the flow of material in a cone
+crusher~\cite{evertsson99} and its capacity and performance~\cite{evertsson}. Bond's third theory~\cite{bond} gives the
+specific energy of a size reduction from the feed and product $P_{80}$. Rocha et al.~\cite{rocha} fitted an
+Andersen--Whiten model of the HP500 to the ten surveys used here, with fitted expressions for the classification
+constants, the breakage parameter, the capacity and a current-based power form; we take them as the nominal values of
+our priors and as one of the comparators. Duarte et al.~\cite{duarte} calibrate a cone-crusher model with industrial data
+from two mines, with the entries of the breakage matrix as calibration parameters fitted by least squares. Lindqvist
+and Li~\cite{lindq} present a cone-crusher model with a coupled energy and breakage dependency, and
+Bengtsson~\cite{bengtsson} models energy and size distribution in cone crushers. Atta et al.~\cite{atta} extend a
+control-oriented cone-crusher model with energy consumption and validate it on laboratory and field data, and Liu et
+al.~\cite{liu} compute the energy of a cone crusher as the product of the compressive pressure and the displacement on
+the liner. Yamashita et al.~\cite{yamashita} review the modelling and control of cone crushers. These works give the
+model structure and the point estimates; none of them reports a posterior of the fitted scalars or a held-out evaluation
+of a calibrated crusher on industrial surveys.
+
+\subsection{Energy and power of crushing}
+
+Morrell~\cite{morrell} predicts the specific energy of crushing, high-pressure grinding and tumbling mill circuits from a
+size-specific energy; the guideline of the Global Mining Guidelines Group~\cite{gmsg} gives its crusher equations (B4
+and B5) with the crusher work index $M_{ic}$ of the SMC test, and defines the net power as the motor power less the
+no-load power. Both Bond and Morrell need a work index of the ore; the Morrell index of the Minas Rio itabirite is not
+published, so here it is a fitted scalar. The current-based form of Rocha et al.~\cite{rocha}, a slope times a net power
+plus a no-load power, is the power model of the engine. The three forms differ in what they assume about the measured
+motor power: Bond's draw is a net comminution power with no idle term, Morrell's guideline subtracts a no-load power that
+the surveys do not report, and the current-based form fits both a slope and a no-load term to the motor power. On ten
+surveys each of them is therefore a fitted relation, and Section~\ref{sec:results} runs all three on the same folds.
+
+\subsection{Discrete-element and learned models}
+
+Discrete-element simulation with breakage is the detailed alternative to the population balance. Cleary and
+Sinnott~\cite{cleary} simulate particle flows and breakage in compression crushers, Quist and Evertsson~\cite{quist} model
+and simulate a cone crusher with the discrete-element method, Johansson et al.~\cite{johansson} evaluate the performance
+of a cone crusher with simulations and laboratory experiments, Andr\'e and Tavares~\cite{andre} simulate a laboratory cone
+crusher with polyhedral particles, and Moncada et al.~\cite{moncada} predict crushing power in cone crushers with the
+discrete-element method. Metso report a fast-breakage discrete-element cone model developed over about a decade and
+regression equations fitted to it~\cite{metso}. These simulations need a liner geometry and hours of computation per second of
+operation, and several of them are validated on laboratory machines; the HP500 liner geometry is not public. On the learned side, Koh et
+al.~\cite{koh} use a deep network as a surrogate of the phenomenological models of a comminution circuit, Gharaei et
+al.~\cite{gharaei} simulate the power of an iron-ore cone crusher plant with a multi-method machine-learning framework,
+and Chen et al.~\cite{chen} and Gupta and Mishra~\cite{gupta} solve or learn breakage population balances with
+physics-informed or multi-head networks. A learned model of ten surveys is a risk of overfitting; here the free-form
+linear fit and the setting-only line stand for this family.
+
+\subsection{Calibration of computer models with discrepancy}
+
+Kennedy and O'Hagan~\cite{ko} calibrate the parameters of a computer model against field data by writing the data as the
+simulator at the true parameters plus a model discrepancy, itself a Gaussian process, plus measurement error. Higdon et
+al.~\cite{higdon} combine field data and simulations for calibration and prediction with Gaussian-process models of the
+unknown functions, for a simulator that cannot be run at every parameter value, and Bayarri et al.~\cite{bayarri} give a
+framework for validating a computer model against reality. Brynjarsd\'ottir and O'Hagan~\cite{brynj} show that an
+analysis that ignores the discrepancy gives biased and over-confident parameter estimates, and that the confounding of
+the discrepancy with the calibration parameters is resolved only with meaningful priors. We use the low-order form of
+this construction: the discrepancy is linear in two standardized regressors, with a Gaussian prior on its three
+coefficients per output, which makes the marginal likelihood exact. Section~\ref{sec:theory} gives the exact form that this confounding takes for the
+linear discrepancy and this engine.
+
+\subsection{Samplers and predictive evaluation}
 
 The affine-invariant ensemble sampler of Goodman and Weare~\cite{gw}, implemented in \texttt{emcee}~\cite{emcee}, moves a
-walker along the line to another walker (the stretch move). ter Braak~\cite{tb06} proposed differential-evolution
-Markov chain Monte Carlo, a multiple-chain sampler whose jumps are built from differences between chains, and ter Braak and
-Vrugt~\cite{tbv08} added a snooker updater so that fewer than twice the dimension of chains suffice. Both families are gradient free, which
-matters here because the engine solves a linear system per evaluation and is written in plain Python.
+walker along the line through another walker (the stretch move). ter Braak~\cite{tb06} proposed differential-evolution
+Markov chain Monte Carlo, whose jumps are built from differences between chains, and ter Braak and Vrugt~\cite{tbv08}
+added a snooker updater so that fewer chains suffice. Both families are gradient free, which matters here because the
+engine solves a linear system per evaluation in plain Python. For the evaluation of probabilistic predictions, Gneiting et
+al.~\cite{gneitingcal} assess probabilistic forecasts by their calibration and their sharpness, and Gneiting and
+Raftery~\cite{gneiting} study strictly proper scoring rules for prediction and estimation; we score the coverage, the
+width and the log predictive density of each held-out prediction in that frame. Yao et al.~\cite{yao} average Bayesian predictive distributions by stacking, a combination we do not use because ten surveys leave too few degrees of freedom for stable
+weights. Our intervals on the scores use the bootstrap of Efron~\cite{efron} and the score interval of
+Wilson~\cite{wilson} for a binomial proportion.
 
-\subsection{Crusher models and their calibration}
+Searches in Crossref and on the open web for a Bayesian calibration with discrepancy of a crusher or mill population
+balance returned general methodology and no application to a cone crusher evaluated on held-out surveys; Scopus and Web
+of Science were not searched, so the search is not exhaustive. Among the works above, CrusherBayes takes the structure of
+Whiten and the point estimates of Rocha et al., the inference of Kennedy and O'Hagan with the low-order discrepancy, and
+the samplers of ter Braak, and adds the held-out protocol and the identifiability analysis that the crusher literature
+does not report.
 
-Rocha et al.~\cite{rocha} fitted a model of the HP500 on the same ten surveys and published the fitted expressions for
-the classification constants, the breakage parameter, the capacity and the power form; they are the nominal values of
-our priors. Lindqvist and Li~\cite{lindq} present a cone-crusher model with a coupled energy and breakage dependency.
-Morrell~\cite{morrell} gives a size-specific energy for crushing circuits that we use as a comparator for power. The
-engine itself combines the Whiten balance~\cite{whiten}, the JKMRC breakage and classification relations~\cite{napier},
-Evertsson's capacity model~\cite{evertsson} and Bond's law~\cite{bond}. Literature searches in Crossref and on the open
-web for a Bayesian calibration with discrepancy of a crusher or mill population balance model returned general
-methodology and no application to a cone crusher evaluated on held-out surveys; the search is not exhaustive, because
-Scopus and Web of Science were not searched.
-
-\section{Method}
+\section{Problem Formulation}\label{sec:problem}
 
 \subsection{Data}
 
-The data are the ten surveys of the Metso HP500 secondary cone crusher at an itabirite iron-ore operation (Table~\ref{tab:surveys}
-of Appendix~\ref{app:data}): the closed-side setting spans \cssMin\ to \cssMax~mm, the feed $f_{80}$ \fEightyMin\ to
-\fEightyMax~mm, the throughput \tphMMin\ to \tphMMax~t/h and the motor power \kwMMin\ to \kwMMax~kW. Throughput and power
-are the two targets. The product $P_{80}$ is not measured (the product size distributions of the source are figures
-only), so it is never a target.
+The data are the ten surveys of the Metso HP500 secondary cone crusher at an itabirite iron-ore operation of Rocha et
+al.~\cite{rocha} (Table~A1 of that work, CC BY 4.0), transcribed into the product and validated by its survey contract
+(Table~\ref{tab:surveys}). The survey contract parses each value, refuses one outside its bounds and requires the survey
+numbers 1 to 10 without a gap. The closed-side setting $c$ spans \cssMin\ to \cssMax~mm, the feed
+$f_{80}$ \fEightyMin\ to \fEightyMax~mm, the throughput \tphMMin\ to \tphMMax~t/h and the motor power \kwMMin\ to
+\kwMMax~kW. Throughput and power are the two targets. The product $P_{80}$ is not measured (the product size distributions
+of the source are figures only), so it is never a target; the engine's $P_{80}$ over the ten surveys spans
+\peightyMin\ to \peightyMax~mm and is a model output. Two correlations of the data, computed from the survey table and the engine's documents, shape every result below. The measured
+power falls as the setting widens (Pearson correlation \rMeasCss), and the measured throughput rises with it
+(\rTphCss); power and throughput are correlated at \rKwTph{}, while the correlation of the measured power with the
+engine's $P_{80}$ is \rKwPeighty.
 
-\subsection{The engine}
+\begin{table}[!t]
+\caption{The ten HP500 surveys of Rocha et al. (Table A1, CC BY 4.0): closed-side setting, feed $f_{80}$, throughput and motor power of each survey.}
+\label{tab:surveys}
+\centering\footnotesize
+\input{generated/tab-surveys}
+\end{table}
 
-For a survey with setting $c$ and feed size $f_{80}$ the engine evaluates a classification-breakage balance on a
-size grid. The classification function is zero below $K_1$, one above $K_2$ and
+\subsection{The calibration problem}
+
+Write $\mathbf x_i=(c_i,f_{80,i})$ for the operating point of survey $i$ and $y_{t,i}$ for its measured output
+$t\in\{\mathrm{tph},\mathrm{kW}\}$. The engine is a deterministic map $f_t(\boldsymbol\theta;\mathbf x)$ from eight scalars
+$\boldsymbol\theta$ and the operating point to the output. The problem has three parts. First, a posterior
+$\pi(\boldsymbol\theta\mid\mathcal D)$ over the scalars given the surveys $\mathcal D$, with a model of the error between
+the engine and the plant that does not force that error into the scalars. Second, for a survey $h$ not used in the fit, a
+predictive distribution $p(y_{t,h}\mid\mathcal D_{-h})$ whose mean is accurate and whose central intervals cover the
+measurement at their nominal rate. Third, the identification question: for each scalar, how much the posterior narrows
+the prior. The assumptions are those of the engine (one breakage zone, a feed rebuilt from its $f_{80}$, a fixed throw and
+speed), that the surveys are exchangeable given the operating point, that the two outputs are independent given the
+scalars, and that the measurement error is Gaussian with one scale per output. The symbols are collected in
+Table~\ref{tab:notation}. The two outputs are measured; the product size, the throw and the speed are not, so an answer to
+the identification question is an answer for these two outputs only, and a scalar the surveys cannot reach through them
+is reported as such rather than estimated.
+
+\begin{table}[!t]
+\caption{Notation used throughout, with the meaning of each symbol and its unit; every symbol is defined again at its first use in the text.}
+\label{tab:notation}
+\centering\footnotesize
+\begin{tabular}{@{}lll@{}}
+\toprule
+Symbol & Meaning & Unit \\
+\midrule
+$c$, $f_{80}$ & closed-side setting, feed 80\pct{} passing size & mm \\
+$P_{80}$, $F_{80}$ & product and feed 80\pct{} passing size (engine) & mm \\
+$y_{t,i}$ & measured output $t$ of survey $i$ & t/h or kW \\
+$f_t(\boldsymbol\theta;\mathbf x)$ & engine output $t$ at scalars $\boldsymbol\theta$ & t/h or kW \\
+$Q_{\mathrm{ref}}$ & capacity base & t/h \\
+$W_i$ & Bond work index of the ore blend & kWh/t \\
+$\zeta$, $P_n$ & slope and no-load power of the power form & --, kW \\
+$s_{K_1}$, $s_{K_2}$, $K_3$ & classification multipliers and exponent & -- \\
+$\Delta t_{10}$ & shift of the breakage index $t_{10}$ & points \\
+$\delta_t$, $\mathbf d_t$ & discrepancy of output $t$ and its coefficients & t/h or kW \\
+$\mathbf Z$, $\mathbf z_i$ & discrepancy design and its row & -- \\
+$\sigma_t$, $\tau_t$ & noise scale and discrepancy prior scale & t/h or kW \\
+$\lambda_t$ & shrinkage $\sigma_t^2/\tau_t^2$ & -- \\
+$n$ & number of training surveys (9 in a fold) & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Proposed Method: CrusherBayes}\label{sec:method}
+
+CrusherBayes treats the crusher engine as an exact, cheap simulator and calibrates its fitted scalars jointly with an
+output-specific structural discrepancy. This section gives the engine, the priors, the discrepancy and its exact
+marginalization, the posterior predictive, the sampler, the algorithm, its cost and its implementation.
+
+\subsection{The engine as the simulator}
+
+For a survey with setting $c$ and feed size $f_{80}$ the engine evaluates a classification and breakage balance on a
+square-root-of-two sieve grid of 28 classes from 256~mm. The classification function is zero below $K_1$, one above $K_2$ and
 \begin{equation}
 C(d)=1-\left(\frac{K_2-d}{K_2-K_1}\right)^{K_3}\quad (K_1<d<K_2),
+\label{eq:class}
 \end{equation}
-with $K_1=s_{K_1}(0.23\,c+0.30\,f_{80})$ and $K_2=\max\{s_{K_2}(12.0+0.55\,c+0.40\,f_{80}),\,1.05\,K_1\}$ in mm, the
-coefficients being those of Rocha et al.~\cite{rocha} and $s_{K_1}$, $s_{K_2}$ multipliers. The breakage function
-follows from the $t_{10}$ relation $t_{10}\,(\%)=64+\Delta t_{10}-0.12\,c-0.23\,f_{80}$, capped at 44, through the
-appearance function of Austin. The product mass fractions are $\mathbf p=(\mathbf I-\mathbf C)(\mathbf I-\mathbf B\mathbf C)^{-1}\mathbf f$ for a
-feed $\mathbf f$ reconstructed from the measured $f_{80}$ with a Rosin--Rammler distribution of uniformity $0.9$. The
-throughput depends on the setting and one scalar,
-\begin{equation}
-Q=Q_{\mathrm{ref}}\;\sigma(c),
-\end{equation}
-where $\sigma(c)$ is the capacity factor of the machine, linear in the setting, at the fixed throw of 34~mm and
-speed of 360~rpm. The Bond power and the calibrated power are
+with, in millimetres and for the calibrated lane of the HP500,
 \begin{align}
-P_d &= 10\,W_i\left(\frac{1}{\sqrt{P_{80}}}-\frac{1}{\sqrt{f_{80}}}\right) Q,\\
+K_1&=s_{K_1}\,(0.23\,c+0.30\,f_{80}),\nonumber\\
+K_2&=\max\{s_{K_2}\,(12.0+0.55\,c+0.40\,f_{80}),\ 1.05\,K_1\},
+\label{eq:k12}
+\end{align}
+the coefficients being those of Rocha et al.~\cite{rocha} and $s_{K_1}$, $s_{K_2}$ multipliers whose nominal value is one.
+The breakage function follows from the calibrated $t_{10}$ relation
+\begin{equation}
+t_{10}=\min\{0.44,\ (64+\Delta t_{10}-0.12\,c-0.23\,f_{80})/100\},
+\label{eq:t10}
+\end{equation}
+through the appearance function of Austin, a two-slope cumulative distribution in the relative size that passes through
+$t_{10}$ at one tenth of the parent size and is applied column by column to a strictly lower-triangular breakage matrix
+$\mathbf B$. The product mass fractions are
+\begin{equation}
+\mathbf p=(\mathbf I-\mathbf C)(\mathbf I-\mathbf B\mathbf C)^{-1}\mathbf f,
+\label{eq:whiten}
+\end{equation}
+with $\mathbf C$ the diagonal matrix of the classification of each class and $\mathbf f$ the feed, rebuilt from the measured
+$f_{80}$ as a Rosin--Rammler distribution of uniformity $0.9$. Since $\mathbf B$ is strictly lower triangular, $\mathbf I-\mathbf
+B\mathbf C$ has a unit diagonal and the solve is never singular. The throughput depends on the setting and one scalar. At the
+fixed throw of 34~mm and speed of 360~rpm, which is the optimal speed of the machine in the capacity model, the
+capacity factor is the discharge opening over the reference gap of 38~mm, so
+\begin{equation}
+Q(c)=Q_{\mathrm{ref}}\,\frac{c+17}{38}.
+\label{eq:capacity}
+\end{equation}
+The Bond draw and the calibrated power are
+\begin{align}
+P_d &= 10\,W_i\left(\frac{1}{\sqrt{P_{80}}}-\frac{1}{\sqrt{F_{80}}}\right) Q,\nonumber\\
 P_c &= \zeta\,P_d+P_n,
+\label{eq:power}
 \end{align}
 with the sizes in micrometres, $W_i$ the Bond work index of the ore blend, and $\zeta$ and $P_n$ the slope and the no-load
-power of the current-based form of Rocha et al.~\cite{rocha}. The eight scalars $\boldsymbol\theta=(Q_{\mathrm{ref}},W_i,\zeta,P_n,s_{K_1},s_{K_2},K_3,\Delta t_{10})$ are the
-quantities calibrated. Two facts of the structure matter for what the surveys can identify. Throughput depends on
-$Q_{\mathrm{ref}}$ alone: the other seven scalars never enter it. Power depends on all eight, the four of the population
-balance ($s_{K_1}$, $s_{K_2}$, $K_3$, $\Delta t_{10}$) only through the product size $P_{80}$ in the Bond term, and
-$W_i$ and $\zeta$ only through their product.
+power of the current-based form of Rocha et al.~\cite{rocha}. The eight scalars
+$\boldsymbol\theta=(Q_{\mathrm{ref}},W_i,\zeta,P_n,s_{K_1},s_{K_2},K_3,\Delta t_{10})$ are the quantities calibrated. Two
+facts of this structure decide what the surveys can identify, and Section~\ref{sec:theory} makes them exact. Throughput
+depends on $Q_{\mathrm{ref}}$ alone, through~\eqref{eq:capacity}. Power depends on all eight: on the four scalars of the
+population balance ($s_{K_1}$, $s_{K_2}$, $K_3$, $\Delta t_{10}$) only through $P_{80}$ in the Bond term, and on $W_i$ and
+$\zeta$ only through their product. The engine evaluates one operating point in about 1.3~ms, so it is run directly inside
+the likelihood and no emulator is needed, which removes the emulator error that Higdon et al.~\cite{higdon} must model.
 
 \subsection{Priors}
 
 Each scalar has a truncated normal prior around its nominal value, on the logarithmic scale for the positive scalars
-(Table~\ref{tab:priors}). The nominal values are those of Rocha et al.~\cite{rocha} (Tables 4 and 5) and, for $W_i$, the
-blend of the compact and supercompact itabirite bands (7.2 and 10.6~kWh/t, Table 1 of the same work). The widths are
-weakly informative choices that bracket the spans quoted there; we found no published range of these fitted scalars for
-this ore, so the widths are ours. The noise scale of each output has $\ln\sigma_t\sim N(\ln m_t,1)$ with medians
-$m_{\mathrm{tph}}=\noiseMedTph$~t/h and $m_{\mathrm{kW}}=\noiseMedKw$~kW, about 5\,\% of the typical level.
+(Table~\ref{tab:priors}). The nominal values are those of Rocha et al.~\cite{rocha} (Tables 4 and 5 of that work) and,
+for $W_i$, the blend of the compact and supercompact itabirite bands (7.2 and 10.6~kWh/t, Table 1 of the same work).
+The widths are weakly informative choices that bracket the spans quoted there: a logarithmic standard deviation of 0.25 on
+$Q_{\mathrm{ref}}$ (about $\pm28$\pct), 0.17 on $W_i$, 0.23 on $\zeta$, 0.15 on each classification multiplier, a
+standard deviation of 50~kW on $P_n$, 0.5 on $K_3$ and 4 points on $\Delta t_{10}$. We found no published range of these
+fitted scalars for this ore, so the widths are ours, and Section~\ref{sec:ablation} doubles them to measure their effect.
+The noise scale of each output has $\ln\sigma_t\sim N(\ln m_t,1)$ with medians $m_{\mathrm{tph}}=\noiseMedTph$~t/h and
+$m_{\mathrm{kW}}=\noiseMedKw$~kW, about 5\pct{} of the typical level of 1,200~t/h and 300~kW. Writing $\boldsymbol\vartheta$ for
+the sampled vector (the logarithm of each positive scalar, the other scalars as they are, and $\ln\sigma_t$), the log prior is
+\begin{equation}
+\ln\pi(\boldsymbol\vartheta)=-\sum_{j=1}^{8}\frac{(\vartheta_j-\mu_j)^2}{2s_j^2}-\sum_{t}\frac{(\ln\sigma_t-\ln m_t)^2}{2}+\text{const},
+\label{eq:prior}
+\end{equation}
+inside the bounds of Table~\ref{tab:priors} and minus infinity outside them, with $\mu_j$ and $s_j$ the prior mean and
+standard deviation of the sampled scale.
 
 \begin{table}[!t]
-\caption{Priors of the eight engine scalars. The sampled scale is the natural logarithm for the positive scalars.}
+\caption{Priors of the eight engine scalars of the HP500 lane, with the nominal value of Rocha et al., the prior on the sampled scale and its truncation range; the sampled scale is the natural logarithm for the positive scalars.}
 \label{tab:priors}
 \centering\footnotesize
 \resizebox{\columnwidth}{!}{\input{generated/tab-priors}}
 \end{table}
 
-\subsection{Discrepancy and likelihood}
+\subsection{Discrepancy and exact marginal likelihood}
 
-For survey $i$ and output $t\in\{\mathrm{tph},\mathrm{kW}\}$,
+For survey $i$ and output $t$,
 \begin{equation}
-y_{t,i}=f_t(\boldsymbol\theta;c_i,f_{80,i})+\delta_t(\mathbf z_i)+\varepsilon_{t,i},\quad \varepsilon_{t,i}\sim N(0,\sigma_t^2),
+y_{t,i}=f_t(\boldsymbol\theta;\mathbf x_i)+\delta_t(\mathbf z_i)+\varepsilon_{t,i},\quad \varepsilon_{t,i}\sim N(0,\sigma_t^2),
+\label{eq:model}
 \end{equation}
 \begin{equation}
 \delta_t(\mathbf z)=d_{t,0}+d_{t,1}z_{c}+d_{t,2}z_{f_{80}},\quad d_{t,j}\sim N(0,\tau_t^2),
+\label{eq:disc}
 \end{equation}
-where $\mathbf z$ is the pair (setting, feed size) standardized with the mean and standard deviation of the training
-surveys, and $\tau_{\mathrm{tph}}=\tauTph$~t/h and $\tau_{\mathrm{kW}}=\tauKw$~kW (about 12\,\% of the typical level). Given
-$\boldsymbol\theta$ and $\sigma_t$ the model is linear and Gaussian in $\mathbf d_t$, so the discrepancy is integrated out
-exactly: with $\mathbf Z$ the $n\times3$ matrix of rows $(1,z_c,z_{f_{80}})$ of the training surveys,
+where $\mathbf z=(z_c,z_{f_{80}})$ is the pair of setting and feed size standardized with the mean and the population
+standard deviation of the training surveys, and $\tau_{\mathrm{tph}}=\tauTph$~t/h and $\tau_{\mathrm{kW}}=\tauKw$~kW (about
+12\pct{} of the typical level). The discrepancy is the model-form error of Kennedy and O'Hagan~\cite{ko} reduced to a plane in
+the two regressors that the surveys vary: a constant that absorbs a level error of the engine and two slopes that absorb
+a wrong dependence on the setting or the feed size. Given $\boldsymbol\theta$ and $\sigma_t$ the model is linear and
+Gaussian in $\mathbf d_t$, so the discrepancy is integrated out exactly. With $\mathbf Z$ the $n\times3$ matrix of rows
+$(1,z_{c,i},z_{f_{80},i})$ of the training surveys and $\mathbf r_t=\mathbf y_t-\mathbf f_t(\boldsymbol\theta)$ the residual
+of the engine,
 \begin{equation}
-\mathbf y_t\sim N\!\left(\mathbf f_t(\boldsymbol\theta),\ \sigma_t^2\mathbf I+\tau_t^2\mathbf Z\mathbf Z^{\top}\right).
+\mathbf y_t\sim N\!\left(\mathbf f_t(\boldsymbol\theta),\ \boldsymbol\Sigma_t\right),\qquad
+\boldsymbol\Sigma_t=\sigma_t^2\mathbf I+\tau_t^2\mathbf Z\mathbf Z^{\top}.
 \label{eq:marginal}
 \end{equation}
-The two outputs are treated as independent given $\boldsymbol\theta$, and the likelihood is the product of the two
-densities in~\eqref{eq:marginal}. The sampler explores the eight scalars and the two noise scales (ten dimensions). For
-each retained sample the discrepancy coefficients are drawn from their exact Gaussian conditional given the residual, and
-the posterior predictive of a held-out survey is the engine at that survey plus $\mathbf x_h^\top\mathbf d_t$ plus
-noise, with $\mathbf x_h$ the standardized regressors of the survey. The interval of 80\,\% is the 10th to the 90th
-percentile of \draws{} predictive draws per retained sample.
+The two outputs are treated as independent given $\boldsymbol\theta$, so the log likelihood is the sum of the two Gaussian
+log densities of~\eqref{eq:marginal}, computed through the Cholesky factor of $\boldsymbol\Sigma_t$; the unnormalized log
+posterior is
+\begin{align}
+\ln\pi(\boldsymbol\vartheta\mid\mathcal D)={}&\ln\pi(\boldsymbol\vartheta)+\text{const}\nonumber\\
+&-\sum_t\Big[\tfrac12\mathbf r_t^{\top}\boldsymbol\Sigma_t^{-1}\mathbf r_t+\tfrac12\ln\det\boldsymbol\Sigma_t\Big].
+\label{eq:posterior}
+\end{align}
+The sampler explores the eight scalars and the two noise scales (ten dimensions); the six discrepancy coefficients are never
+sampled. For each retained sample they follow from the exact Gaussian conditional
+\begin{align}
+\mathbf d_t\mid\boldsymbol\theta,\sigma_t,\mathcal D&\sim N(\mathbf m_t,\mathbf S_t),\nonumber\\
+\mathbf m_t=\tau_t^2\mathbf Z^{\top}\boldsymbol\Sigma_t^{-1}\mathbf r_t,\quad
+\mathbf S_t&=\tau_t^2\mathbf I-\tau_t^4\mathbf Z^{\top}\boldsymbol\Sigma_t^{-1}\mathbf Z,
+\label{eq:conditional}
+\end{align}
+which is how the identifiability table reports the discrepancy coefficients. The low-order form is a choice for nine
+training surveys: a Gaussian-process discrepancy as in Kennedy and O'Hagan~\cite{ko} would add a length scale and an
+amplitude per output to be learned from nine points in two dimensions, whereas the plane has three coefficients per output,
+a closed-form marginal and a conditional that the identifiability table can report coefficient by coefficient. The price is
+that a curved model error in the setting is not represented, and it appears as noise in $\sigma_t$.
 
-\subsection{Sampler and convergence}
+\subsection{Posterior predictive of a held-out survey}
 
-The sampler is \texttt{emcee} \samplerVersion~\cite{emcee} with the differential-evolution move and the snooker move
-of ter Braak~\cite{tb06} and ter Braak and Vrugt~\cite{tbv08}, in proportions 0.8 and 0.2, with \walkers{} walkers, \steps{}
-steps, the first \burn{} discarded and every \thin{}th kept, which retains \nSamples{} samples per posterior, and a fixed
-seed (\seed). The walkers start in a small ball around the prior centre (5\,\% of the prior standard deviation).
+For a survey $h$ outside the training set, with $\mathbf z_h$ standardized by the training mean and deviation and
+$\mathbf x_h^{\top}=(1,z_{c,h},z_{f_{80},h})$, the predictive at one retained sample is Gaussian,
+\begin{equation}
+y_{t,h}\mid\boldsymbol\theta,\sigma_t,\mathcal D_{-h}\sim N\!\left(f_t(\boldsymbol\theta;\mathbf x_h)+\mathbf x_h^{\top}\mathbf m_t,\
+\sigma_t^2+\mathbf x_h^{\top}\mathbf S_t\mathbf x_h\right),
+\label{eq:predictive}
+\end{equation}
+and the posterior predictive is the mixture of these Gaussians over the retained samples. Its mean is the average of the
+component means. The central 80\pct{} interval is the 10th to the 90th percentile of \draws{} draws per retained sample
+from~\eqref{eq:predictive}, and the predictive density of the measurement is the average of the component densities,
+which is the quantity the log score of Section~\ref{sec:design} uses. The predictive carries three sources of uncertainty:
+the noise $\sigma_t$, the conditional uncertainty of the discrepancy $\mathbf S_t$, and the spread of the scalars across
+the samples. It is a generative model of a survey, which is what distinguishes its band from a residual band built
+from the spread of held-out errors. The discrepancy at the held-out survey uses the standardization of the training
+surveys, so a held-out setting outside the training range extrapolates the plane linearly.
 
-The affine-invariant stretch move of Goodman and Weare~\cite{gw} was the first choice. On the same posterior it did
-not converge by the criterion below: the integrated autocorrelation time stayed above 100 steps and grew with the chain
-length, along the parameters that the surveys do not identify, so that no fold met the criterion at \steps{} steps. The
-differential-evolution moves reach an autocorrelation time of about 50 steps on the same posterior within the same
-number of steps. The held-out scores hardly depend on the move: the power MAPE is 14.29\pct{} with the stretch move
-and \cbKwMape\pct{} with the differential-evolution moves, and the throughput MAPE is \cbTphMape\pct{} with both.
+\subsection{Sampler and convergence criterion}
 
-A posterior counts as converged when the post-burn chain is at least \tauFactor{} integrated autocorrelation times long, with
-the autocorrelation time of \texttt{emcee} (the largest over the ten dimensions). A posterior that fails the criterion is
-reported as not converged.
+The sampler is \texttt{emcee} \samplerVersion~\cite{emcee} with the differential-evolution move of ter
+Braak~\cite{tb06} and the snooker move of ter Braak and Vrugt~\cite{tbv08}, chosen at random in proportions 0.8 and 0.2.
+The walkers are updated in groups (two for the differential-evolution move, four for the snooker move), each group
+proposing from the walkers of the others. In the installed
+implementation, the differential-evolution proposal of a walker $\boldsymbol\vartheta$ is
+\begin{equation}
+\boldsymbol\vartheta^{*}=\boldsymbol\vartheta+\gamma\,(\boldsymbol\vartheta_a-\boldsymbol\vartheta_b),\qquad
+\gamma=\gamma_0(1+10^{-5}\xi),\ \gamma_0=\frac{2.38}{\sqrt{2D}},
+\label{eq:demove}
+\end{equation}
+with $\boldsymbol\vartheta_a\neq\boldsymbol\vartheta_b$ two walkers of the other group, $\xi\sim N(0,1)$ and $D=10$ the dimension, and the
+proposal is accepted with probability $\min\{1,\pi(\boldsymbol\vartheta^{*}\mid\mathcal D)/\pi(\boldsymbol\vartheta\mid\mathcal
+D)\}$. The snooker move projects the difference of two other walkers on the line through the walker and a third one, with a
+stretch of 1.7. Both moves use only the log posterior~\eqref{eq:posterior}, no gradient. The run has \walkers{} walkers
+(twice the dimension), \steps{} steps, the first \burn{} discarded and every \thin{}th kept, which retains \nSamples{}
+samples per posterior, from a fixed seed (\seed). The walkers start in a ball around the prior centre of 5\pct{} of each
+prior standard deviation. A posterior counts as converged when
+\begin{equation}
+T-T_{\mathrm{burn}}\ \ge\ 50\,\hat\tau_{\max},
+\label{eq:converged}
+\end{equation}
+with $T$ the steps, $T_{\mathrm{burn}}$ the discarded steps and $\hat\tau_{\max}$ the largest over the ten dimensions of the
+integrated autocorrelation time that \texttt{emcee} estimates. A posterior that fails~\eqref{eq:converged} is recorded as
+not converged and never kept silently. The affine-invariant stretch move of Goodman and Weare~\cite{gw}, the default of
+\texttt{emcee}, was the first choice and fails this criterion on the same posterior (Section~\ref{sec:ablation}).
 
-\section{Experiments}
+\subsection{Algorithm, cost and implementation}
 
-\subsection{Strict leave-one-survey-out}
+Algorithm~\ref{alg:cb} gives one posterior and the predictive of its held-out survey. The cost is dominated by the engine.
+One log posterior evaluates the engine on the $n$ training surveys (two outputs per evaluation) and factors two $n\times n$
+matrices, so a posterior costs about $W T n$ engine evaluations, here $20\times7000\times9=1.26\times10^{6}$, and the
+predictive step adds $(n+1)$ evaluations for each of the \nSamples{} retained samples. The linear algebra is
+$O(n^3)$ per evaluation with $n=9$ and is negligible beside the engine's 28-class balance. The eleven posteriors of the
+protocol (ten folds and the fit to all ten surveys) are independent, and the walkers of all of them are evaluated in
+parallel by a pool of processes; the document does not depend on the number of processes, which a test of the product
+checks. The implementation is the module \path{data-pipeline/pipeline/hp500/crusherbayes.py} of the product, on the
+canonical Python engine \path{data-pipeline/pipeline/model/crusher/}, which takes the eight scalars through one optional
+argument whose defaults are the shipped values; the TypeScript port of the engine that runs in the browser is untouched.
+The parameters of the method are the prior widths, the discrepancy scales $\tau_t$, the noise prior, the sampler size and
+the seed, all listed above and in the committed document, and none of them was tuned on the held-out scores. The number of
+walkers is twice the sampled dimension, and the number of steps was sized to the convergence criterion: on the same posterior the
+differential-evolution moves give an autocorrelation time of about 50 steps, so 6,000 post-burn steps hold more than the 50
+autocorrelation times the criterion asks. The predictive step evaluates the engine once per retained sample at the training
+surveys and the held-out survey, and the discrepancy conditional~\eqref{eq:conditional} needs one more $n\times n$ inverse
+per sample and output. The bake writes one document for the whole protocol,
+the folds with their predictive summaries, the convergence record, the scores of the comparators, the contraction table
+and the terms of the rule for dropping the method, and the product's contract tests validate it.
 
-For each of the ten surveys, a posterior is computed from the other nine surveys alone: the engine scalars, the noise
-scales, the discrepancy and the standardization of the regressors are all refit inside the fold, and the held-out survey
-enters only the prediction. One more posterior is computed from all ten surveys for the identifiability table. That
-makes \nPosteriors{} posteriors.
+\begin{algorithm}[!t]
+\caption{CrusherBayes: one posterior and the predictive of the held-out survey $h$}
+\label{alg:cb}
+\begin{algorithmic}[1]
+\Require training surveys $\mathcal D_{-h}$, held-out operating point $\mathbf x_h$, priors, $\tau_t$, seed
+\State standardize $(c,f_{80})$ on $\mathcal D_{-h}$; build $\mathbf Z$ and $\mathbf x_h$
+\State draw $W$ walkers in a ball of 5\pct{} of the prior widths around the prior centre
+\For{$k=1,\dots,T$}
+  \For{each group of the walkers}
+    \State propose by~\eqref{eq:demove} (probability 0.8) or the snooker move (0.2)
+    \State evaluate the engine on $\mathcal D_{-h}$; $\ell\gets$~\eqref{eq:posterior} via Cholesky of $\boldsymbol\Sigma_t$
+    \State accept or reject
+  \EndFor
+\EndFor
+\State estimate $\hat\tau_{\max}$; record converged if~\eqref{eq:converged} holds
+\State keep every \thin{}th sample after $T_{\mathrm{burn}}$
+\For{each retained sample}
+  \State compute $\mathbf m_t,\mathbf S_t$ by~\eqref{eq:conditional}; the engine at $\mathbf x_h$
+  \State store mean and variance of~\eqref{eq:predictive}; draw \draws{} predictive values
+\EndFor
+\State \Return predictive mean, 10th and 90th percentiles, mixture density at $y_{t,h}$
+\end{algorithmic}
+\end{algorithm}
 
-\subsection{Comparators}
+\section{Theory}\label{sec:theory}
 
-The three comparators are refit inside every fold on the nine training surveys.
-\begin{itemize}
-\item The \emph{setting-only line} is an ordinary least-squares line of the output on the closed-side setting. It has no
-physics.
-\item The \emph{refit backbone} is the engine at the nominal scalars with the capacity base $Q_{\mathrm{ref}}$ refit for
-throughput, and the slope and intercept of the form $P_c=\zeta P_d+P_n$ refit for power, both by least squares. Its
-80\,\% band is the \emph{residual band}: the prediction plus or minus 1.2816 times the standard deviation of the held-out
-residuals of the other nine surveys, so that a survey never enters the width of its own band.
-\item The \emph{free-form linear fit} is an ordinary least-squares fit of the output on the setting and the feed size.
-\end{itemize}
-The bands of the setting-only line and of the free-form fit are built in the same way as the residual band. For power,
-Morrell's size-specific energy~\cite{morrell} is held out as well, with its work index refit per fold, with and without a
-no-load term; it reaches \morrellMape\pct{} and \morrellNoloadMape\pct{}, and its fitted work index is negative in every
-fold with the no-load term, so that variant is a descriptive line and not an estimate of the work index.
+This section states why the method behaves as it does on these surveys: what the data can and cannot tell about each
+scalar, and what form the predictive mean takes. Propositions~\ref{prop:span} to~\ref{prop:product} are exact for the
+model of Section~\ref{sec:method}; Proposition~\ref{prop:info} is exact for the parts of the engine that are linear in a
+scalar and a first-order statement for the others, and Conjecture~\ref{conj:pb} is supported by the evidence given with it.
 
-\subsection{Scores}
+\subsection{The information a discrepancy leaves to the scalars}
 
-Per output: the mean absolute percentage error (MAPE) of the predictive mean; the root mean squared error (RMSE, in t/h
-or kW); the mean log predictive density of the held-out measurement (a log density per t/h or per kW, higher is better;
-for CrusherBayes the log of the mean of the Gaussian densities over the posterior draws, for the comparators a Gaussian
-with the residual-band standard deviation); the coverage of the 80\,\% interval, which is the fraction of surveys whose
-measurement lies inside; and the mean width of that interval. With $n=10$ one survey moves a coverage by 0.1, and a
-difference of about \marginPts{} points of MAPE is within the noise.
+Let $\mathbf Z=\mathbf U\mathbf S\mathbf V^{\top}$ be the thin singular value decomposition of the design, with
+$\mathbf U$ an $n\times3$ matrix of orthonormal columns and $\mathbf S=\mathrm{diag}(s_1,s_2,s_3)$; over the ten surveys
+the singular values span \thSvMin{} to \thSvMax. Since $\mathbf Z\mathbf Z^{\top}=\mathbf U\mathbf S^2\mathbf U^{\top}$,
+\begin{equation}
+\boldsymbol\Sigma_t^{-1}=\frac{1}{\sigma_t^2}\left(\mathbf I-\mathbf U\mathbf U^{\top}\right)+\mathbf U\left(\sigma_t^2\mathbf I+\tau_t^2\mathbf S^2\right)^{-1}\mathbf U^{\top},
+\label{eq:sigmainv}
+\end{equation}
+which one checks by multiplying by $\boldsymbol\Sigma_t=\sigma_t^2(\mathbf I-\mathbf U\mathbf U^{\top})+\mathbf
+U(\sigma_t^2\mathbf I+\tau_t^2\mathbf S^2)\mathbf U^{\top}$: the two terms act on orthogonal subspaces.
 
-\subsection{Rule for dropping the method, stated before the run}
+\begin{proposition}\label{prop:info}
+Let $\mathbf j=\partial\mathbf f_t/\partial\vartheta$ be the sensitivity of output $t$ on the training surveys to a sampled
+scalar $\vartheta$, and $\mathbf P=\mathbf U\mathbf U^{\top}$ the projection on the column space of $\mathbf Z$. The Fisher
+information of the marginal likelihood~\eqref{eq:marginal} about $\vartheta$ is
+\begin{equation}
+\mathcal I_t(\vartheta)=\frac{\|(\mathbf I-\mathbf P)\mathbf j\|^2}{\sigma_t^2}+\sum_{k=1}^{3}\frac{(\mathbf u_k^{\top}\mathbf j)^2}{\sigma_t^2+\tau_t^2s_k^2}.
+\label{eq:fisher}
+\end{equation}
+\end{proposition}
+\begin{IEEEproof}
+For a Gaussian with mean $\mathbf f_t(\vartheta)$ and a covariance that does not depend on $\vartheta$, the Fisher information is
+$\mathbf j^{\top}\boldsymbol\Sigma_t^{-1}\mathbf j$. Inserting~\eqref{eq:sigmainv} and writing $\mathbf
+j=(\mathbf I-\mathbf P)\mathbf j+\mathbf U\mathbf U^{\top}\mathbf j$ gives the two terms. The result is exact when $\mathbf f_t$ is
+linear in $\vartheta$ and holds to first order otherwise.
+\end{IEEEproof}
 
-Before the posteriors were computed we stated when the method would be dropped as a predictor: (a) its power MAPE is not
-below that of the setting-only line by at least \marginPts{} points and its throughput MAPE is not below that of the refit
-backbone by at least \marginPts{} points, and (b) on either output its coverage lies outside \covLo{} to \covHi{} or its mean band is wider
-than the residual band. Both conditions must hold. Whatever the outcome, the identifiability table is reported.
+The proposition says that a discrepancy linear in $(c,f_{80})$ discounts exactly the part of a sensitivity that is
+itself an affine function of the setting and the feed size, by the factor $\sigma_t^2/(\sigma_t^2+\tau_t^2s_k^2)$, and leaves
+the orthogonal part untouched. A scalar is identified by the surveys only through the part of its effect that a plane in
+the two regressors cannot imitate, or through the finite width of the discrepancy prior. With the noise scales at their
+posterior means on all ten surveys and the values of $\tau_t$, the discount factor for a singular value of 3 is about one
+tenth on both outputs.
 
-\section{Results}
+\subsection{Throughput and the capacity base}
 
-\subsection{Held-out accuracy and calibration}
+\begin{proposition}\label{prop:span}
+On the HP500 lane the vector of engine throughputs of the training surveys lies in the column space of $\mathbf Z$, for
+every value of the scalars: $\mathbf f_{\mathrm{tph}}(\boldsymbol\theta)=Q_{\mathrm{ref}}\,\mathbf Z\mathbf a$ with
+$\mathbf a=((\bar c+17)/38,\ s_c/38,\ 0)^{\top}$, $\bar c$ and $s_c$ the training mean and deviation of the setting.
+Consequently the throughput surveys carry no information about the other seven scalars, and their information about
+$\vartheta=\ln Q_{\mathrm{ref}}$ is
+\begin{align}
+\mathcal I_{\mathrm{tph}}(\ln Q_{\mathrm{ref}})&=Q_{\mathrm{ref}}^2\,\mathbf a^{\top}\mathbf Z^{\top}\mathbf Z\left(\sigma^2\mathbf I+\tau^2\mathbf Z^{\top}\mathbf Z\right)^{-1}\mathbf a\nonumber\\
+&\le\ \frac{Q_{\mathrm{ref}}^2\|\mathbf a\|^2}{\tau^2},
+\label{eq:qinfo}
+\end{align}
+with $\sigma,\tau$ the throughput scales, so that it vanishes as $\tau\to\infty$.
+\end{proposition}
+\begin{IEEEproof}
+By~\eqref{eq:capacity}, $Q_i=Q_{\mathrm{ref}}(c_i+17)/38$, and $c_i=\bar c+s_cz_{c,i}$, so
+$Q_i=Q_{\mathrm{ref}}[(\bar c+17)/38+(s_c/38)z_{c,i}]$, which is row $i$ of $Q_{\mathrm{ref}}\mathbf Z\mathbf a$. None of the
+other scalars enters~\eqref{eq:capacity}. Then $\mathbf j=Q_{\mathrm{ref}}\mathbf Z\mathbf a$ has no component orthogonal to the
+column space and, by~\eqref{eq:fisher} with $\mathbf Z=\mathbf U\mathbf S\mathbf V^{\top}$, $\mathcal I=Q_{\mathrm{ref}}^2\mathbf
+a^{\top}\mathbf V\mathbf S^2(\sigma^2\mathbf I+\tau^2\mathbf S^2)^{-1}\mathbf V^{\top}\mathbf a$, which is~\eqref{eq:qinfo}. Each
+factor $s_k^2/(\sigma^2+\tau^2s_k^2)$ is below $1/\tau^2$, which gives the bound.
+\end{IEEEproof}
 
-Table~\ref{tab:accuracy} gives the scores. On throughput the posterior predictive mean has a MAPE of
-\cbTphMape\pct{}, against \BackTphMape\pct{} for the refit backbone, \FreeTphMape\pct{} for the free-form fit and
-\BlinTphMape\pct{} for the setting-only line; a constant mean gives \constTphMape\pct{}. The differences of the first
-four are below the noise level of ten surveys. On power the posterior predictive mean has a MAPE of \cbKwMape\pct{},
-against \BackKwMape\pct{} for the refit backbone, \FreeKwMape\pct{} for the free-form fit and \BlinKwMape\pct{} for the
-setting-only line, \BlinKwMape\pct{} being the lowest; a constant mean gives \constKwMape\pct{}. CrusherBayes
-therefore removes most of the error of the refit backbone on power, and it does not beat the line in the setting: its gain
-over the line is \gainBlinKw{} points, which is within the noise. This is a measured negative result for accuracy.
+Computed with the product's engine on the ten surveys, the relative norm of the component of the capacity factors outside
+the column space of $\mathbf Z$ is $\thOutOfSpan$, which is the proposition at machine precision. The capacity base is
+therefore not identified by the shape of the throughput data, which a plane in the setting reproduces whatever
+$Q_{\mathrm{ref}}$ is; it is identified only because the discrepancy prior penalizes a large plane. The posterior contraction
+of $Q_{\mathrm{ref}}$ must therefore move toward one when $\tau_{\mathrm{tph}}$ grows and toward smaller values when it shrinks.
 
-The calibration is better than that of the backbone and comparable to that of the simple models. The 80\,\% interval of CrusherBayes covers \cbTphCov{} of the surveys for throughput and
-\cbKwCov{} for power, both inside \covLo{} to \covHi{}. Its mean width is \cbTphWidth~t/h on throughput, \widthRedTph\pct{}
-narrower than the residual band of the refit backbone (\BackTphWidth~t/h) at the same coverage, and \cbKwWidth~kW on
-power, \widthRedKw\pct{} narrower than the residual band (\BackKwWidth~kW) at the same coverage of \cbKwCov{}. On power
-the comparison with the simple models is different: the setting-only line has a mean width of \BlinKwWidth~kW and covers \BlinKwCov{} of the
-surveys, and the free-form fit has \FreeKwWidth~kW and \FreeKwCov{}, against \cbKwWidth~kW and \cbKwCov{} for CrusherBayes. Its width is
-about that of the setting-only line, whose coverage is lower, so the gain in band width on power is against the backbone and not against the simple line.
-On throughput its width is smaller than that of the setting-only line (\BlinTphWidth~t/h) and of the free-form fit (\FreeTphWidth~t/h), all with coverage \cbTphCov{}.
-Figure~\ref{fig:band} shows the bands against the measured values survey by survey.
+\subsection{The predictive mean is a shrunk regression}
+
+\begin{proposition}\label{prop:ridge}
+Write $\lambda_t=\sigma_t^2/\tau_t^2$, $\mathbf G=\mathbf Z^{\top}\mathbf Z$, and let $\mathbf b_t$ be the least-squares
+coefficients of the engine output on $\mathbf Z$, $\mathbf f_t=\mathbf Z\mathbf b_t+\mathbf e_t$ with $\mathbf Z^{\top}\mathbf
+e_t=\mathbf 0$, and $e_{t,h}=f_t(\boldsymbol\theta;\mathbf x_h)-\mathbf x_h^{\top}\mathbf b_t$ the engine's departure from that
+plane at the held-out survey. Given the scalars, the predictive mean of~\eqref{eq:predictive} is
+\begin{equation}
+\hat y_{t,h}=\mathbf x_h^{\top}\left(\mathbf G+\lambda_t\mathbf I\right)^{-1}\left(\mathbf Z^{\top}\mathbf y_t+\lambda_t\mathbf b_t\right)+e_{t,h}.
+\label{eq:ridge}
+\end{equation}
+\end{proposition}
+\begin{IEEEproof}
+The push-through identity $\mathbf Z^{\top}(\sigma^2\mathbf I+\tau^2\mathbf Z\mathbf Z^{\top})^{-1}=(\sigma^2\mathbf
+I+\tau^2\mathbf G)^{-1}\mathbf Z^{\top}$ turns~\eqref{eq:conditional} into $\mathbf m_t=(\mathbf G+\lambda_t\mathbf
+I)^{-1}\mathbf Z^{\top}(\mathbf y_t-\mathbf f_t)$. With $\mathbf Z^{\top}\mathbf f_t=\mathbf G\mathbf b_t$, the predictive mean
+$f_{t,h}+\mathbf x_h^{\top}\mathbf m_t=\mathbf x_h^{\top}\mathbf b_t+e_{t,h}+\mathbf x_h^{\top}(\mathbf G+\lambda_t\mathbf
+I)^{-1}(\mathbf Z^{\top}\mathbf y_t-\mathbf G\mathbf b_t)$, and $\mathbf b_t-(\mathbf G+\lambda_t\mathbf I)^{-1}\mathbf
+G\mathbf b_t=\lambda_t(\mathbf G+\lambda_t\mathbf I)^{-1}\mathbf b_t$ gives~\eqref{eq:ridge}.
+\end{IEEEproof}
+
+\begin{corollary}\label{cor:limits}
+As $\tau_t\to\infty$ ($\lambda_t\to0$) the predictive mean tends to the ordinary least-squares fit of the survey on the
+standardized setting and feed size plus the engine's non-affine remainder $e_{t,h}$; for throughput $e_{t,h}=0$ by
+Proposition~\ref{prop:span}, so the limit is the free-form linear fit. As $\lambda_t\to\infty$ it tends to the engine.
+Between them, the engine enters through a shrinkage target whose weight on each standardized coefficient is
+$\lambda_t/(g_{kk}+\lambda_t)$ for a diagonal $\mathbf G$.
+\end{corollary}
+
+The corollary bounds what CrusherBayes can achieve on these data: given the scalars, its predictive mean is a blend of a
+linear fit in the two regressors and the engine's best plane, plus the engine's curvature. The values in use are
+$\lambda_{\mathrm{tph}}=\thLamTph$ and $\lambda_{\mathrm{kW}}=\thLamKw$ with the noise at its posterior mean on all ten surveys, so
+the weight of the engine's plane is about \thWeightTph{} on both outputs. On power the engine's best plane over the ten
+surveys has a slope of \thEngSlope~kW per standard deviation of the setting, against \thMeasSlope~kW for the measured power,
+so the shrinkage pulls the slope toward the wrong sign; the method cannot beat a linear fit unless the curvature
+$e_{t,h}$ carries signal.
+
+\subsection{The work index and the power slope}
+
+\begin{proposition}\label{prop:product}
+The engine power depends on $W_i$ and $\zeta$ only through $\zeta W_i$, so the likelihood is constant along the curves
+$\ln\zeta+\ln W_i=\text{const}$, and
+\begin{equation}
+\frac{\partial\mathbf f_{\mathrm{kW}}}{\partial\ln W_i}=\frac{\partial\mathbf f_{\mathrm{kW}}}{\partial\ln\zeta}=\zeta\,\mathbf P_d.
+\label{eq:product}
+\end{equation}
+The data inform $\ln\zeta+\ln W_i$ and nothing else about the pair; the marginal of each is the prior along the ridge
+reweighted by the information on the sum.
+\end{proposition}
+\begin{IEEEproof}
+In~\eqref{eq:power}, $P_d$ is linear in $W_i$, and $P_c=\zeta W_i\cdot10(P_{80}^{-1/2}-F_{80}^{-1/2})Q+P_n$; $P_{80}$ does
+not depend on $W_i$, which on the calibrated lane enters only the Bond term. Differentiating in the logarithms gives the same
+vector $\zeta P_d$.
+\end{IEEEproof}
+
+The finite-difference Jacobians of the engine in $\ln W_i$ and $\ln\zeta$ agree to a relative difference of $\thRidge$. The
+no-load power $P_n$ enters power as a constant, $\partial\mathbf f_{\mathrm{kW}}/\partial P_n=\mathbf 1$, which lies in the
+column space of $\mathbf Z$; by Proposition~\ref{prop:info} it is discounted like the capacity base and is confounded with the
+constant of the power discrepancy. The linearized posterior~\eqref{eq:laplace} below gives a correlation of \thCorrWz{}
+between $W_i$ and $\zeta$: weaker than the exact ridge suggests, because the two priors have different widths and the
+information on their sum is small beside the prior precision, so the ridge reweights the prior only slightly.
+
+\subsection{The population balance}
+
+\begin{conjecture}\label{conj:pb}
+On these surveys, with throughput and power as the only measured outputs, the four population-balance scalars are not
+identified: their posterior equals their prior up to the Monte Carlo error of the sampler, and fixing them at their
+nominal value changes neither the held-out accuracy nor the bands beyond that error.
+\end{conjecture}
+
+The evidence is threefold. First, by Proposition~\ref{prop:span}, throughput carries nothing about them. Second, they reach
+power only through $P_{80}$ in the Bond term, and the Bond draw of the engine varies only from \bondKwMin\ to
+\bondKwMax~kW over the ten surveys, against a measured span of \kwMMin\ to \kwMMax~kW. Third, the share of the power
+sensitivity of each scalar that lies in the column space of $\mathbf Z$, and is therefore discounted by
+Proposition~\ref{prop:info}, is at least \thSpanMin{}, the lowest being that of $\Delta t_{10}$ (Table~\ref{tab:laplace}). A second-order
+statement for all fourteen parameters follows from a Laplace approximation of the linearized model: with $\mathbf A_t$ the
+Jacobian of the mean of output $t$ in the eight sampled scalars and the six discrepancy coefficients, and $\boldsymbol\Lambda$ the
+diagonal prior precision,
+\begin{equation}
+\mathrm{Cov}\approx\Big(\boldsymbol\Lambda+\sum_t\sigma_t^{-2}\mathbf A_t^{\top}\mathbf A_t\Big)^{-1},
+\label{eq:laplace}
+\end{equation}
+whose diagonal, divided by the prior variance, predicts the ratio of posterior to prior standard deviation. Evaluated at
+the posterior mean of the fit to all ten surveys, it predicts \thLapQRef{} for $Q_{\mathrm{ref}}$, \thLapWi{} for $W_i$,
+\thLapZeta{} for $\zeta$, \thLapPn{} for $P_n$ and 0.92 to 0.99 for the four population-balance scalars, and it agrees with
+the ratio the sampler measured within \thLapMaxDev{} for every one of the fourteen parameters (Table~\ref{tab:laplace}). The
+largest differences are on $\zeta$ and $W_i$, where the truncated, logarithmic prior and the curved ridge of
+Proposition~\ref{prop:product} make the Gaussian approximation coarsest. The conjecture is tested by the ablation that fixes
+the four scalars (Section~\ref{sec:ablation}).
 
 \begin{table}[!t]
-\caption{Held-out scores over the ten surveys (strict leave-one-survey-out). Coverage and width are those of the 80\,\% interval.}
+\caption{Theory against the sampler on the fit to all ten surveys: the share of each scalar's power sensitivity inside the column space of the discrepancy design, the ratio of posterior to prior standard deviation predicted by the linearized posterior~\eqref{eq:laplace}, and the ratio the sampler measured.}
+\label{tab:laplace}
+\centering\footnotesize
+\resizebox{\columnwidth}{!}{\input{generated/tab-laplace}}
+\end{table}
+
+\subsection{Conditions}
+
+The propositions hold under conditions that the HP500 lane meets and another machine or data set may not. The exactness of
+Proposition~\ref{prop:span} needs a capacity that is affine in the setting, which holds because the throw and the speed
+are fixed and the speed is at the optimum of the capacity model; with a varying speed the capacity hump of the engine is
+not affine and the throughput would carry information outside the span. Proposition~\ref{prop:ridge} needs the
+discrepancy to be linear in the regressors with independent Gaussian coefficients, so a Gaussian-process discrepancy as in
+Kennedy and O'Hagan~\cite{ko} would replace the ridge by a kernel smoother with the same structure. Conjecture~\ref{conj:pb}
+depends on the outputs measured: a measured product size distribution would give the population-balance scalars a
+sensitivity that a plane in the setting cannot absorb, and would change it. Identification of the capacity base and the
+no-load power rests on the finiteness of $\tau_t$, which is the formal content of the statement of Brynjarsd\'ottir and
+O'Hagan~\cite{brynj} that the confounding is resolved only by meaningful priors.
+
+\section{Experimental Design}\label{sec:design}
+
+\subsection{Hypotheses stated before the experiments}
+
+Four hypotheses were written before the posteriors were computed, two of them as the rule for dropping the method
+written into the product's design document, and two of them as the risks of the method in the research that preceded it.
+\begin{itemize}
+\item[H1] Accuracy. The posterior predictive mean beats the setting-only line on power by at least \marginPts{} points of
+mean absolute percentage error, or beats the refit capacity base on throughput by the same margin.
+\item[H2] Calibration and sharpness. On both outputs the coverage of the 80\pct{} interval lies within \covLo{} to
+\covHi{} and the mean width of the interval is no larger than that of the residual band of the refit engine.
+\item[H3] Identifiability. With ten surveys and two outputs the posterior of most scalars is dominated by the prior.
+\item[H4] Source of the gain. Most of what the method gains over the refit engine comes from the discrepancy, which the
+setting-only line already approximates.
+\end{itemize}
+The method is dropped as a predictor if H1 fails and H2 fails, both together; whatever the outcome, the identifiability
+table is reported. With $n=10$ a difference below about \marginPts{} points of MAPE is within the noise. The propositions of
+Section~\ref{sec:theory} add consequences that the ablation tests: the capacity-base contraction moves with $\tau_t$, the
+power accuracy moves toward the linear fit as $\tau_t$ grows, and fixing the population-balance scalars changes nothing
+beyond the Monte Carlo error.
+
+\subsection{Data, folds and protocol}
+
+The dataset is the ten HP500 surveys of Section~\ref{sec:problem}, used as published, with no survey removed. The
+protocol is strict leave-one-survey-out (Algorithm~\ref{alg:loso}): for each survey a posterior is computed from the other
+nine alone, and the engine scalars, the noise scales, the discrepancy and the standardization of the regressors are all
+refit inside the fold, so the held-out survey enters only the prediction. A test of the product plants an absurd value in
+one survey and checks that every other fold moves and its own does not. One more posterior from all ten surveys gives the
+identifiability table, making \nPosteriors{} posteriors. Every comparator is refit inside the same folds on the same nine
+surveys, so all methods are compared on identical training and test sets. The rule for dropping the method is evaluated
+by code from the scores alone, and a test of the product checks it in every combination of its terms.
+
+\begin{algorithm}[!t]
+\caption{Strict leave-one-survey-out protocol, shared by every method}
+\label{alg:loso}
+\begin{algorithmic}[1]
+\Require ten surveys, a method $\mathcal M$ that fits on surveys and predicts one
+\For{$h=1,\dots,10$}
+  \State $\mathcal D_{-h}\gets$ the nine other surveys
+  \State fit $\mathcal M$ on $\mathcal D_{-h}$ only (scalars, noise, standardization)
+  \State predict survey $h$: mean $\hat y_h$ and, if $\mathcal M$ has one, an 80\pct{} interval
+\EndFor
+\State for a residual-band method, $\sigma_h\gets$ sample deviation of the held-out residuals of the nine surveys $\neq h$
+\State score MAPE, RMSE, log density, coverage and width over the ten surveys
+\State bootstrap the ten surveys \nBoot{} times (seed \bootSeed) for intervals and paired differences
+\State \Return the scores with their intervals
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Published methods compared}
+
+All comparators are computed by the product's code on the same folds, from its committed held-out document; none of them is
+a reported number of another work. For both outputs: the setting-only line, an ordinary least-squares line of the output
+on the closed-side setting; the free-form linear fit, an ordinary least-squares fit on the setting and the feed size; the
+constant mean of the nine training surveys; and the refit engine of Rocha et al., the engine at the nominal scalars with the
+capacity base refit by least squares for throughput and the slope and intercept of the current-based form
+$P_c=\zeta P_d+P_n$ refit for power, with the same refit plus a ridge residual on the standardized regressors bounded to
+$\pm20$\pct{} of the engine value. For power only: Morrell's size-specific energy~\cite{morrell,gmsg} with the crusher
+work index $M_{ic}$ refit per fold through the origin, and the same with a refit no-load term, both on the measured
+$f_{80}$, the measured throughput and the engine's $P_{80}$. Two references fit nothing on the surveys: the bare Bond draw
+at the blend work index, and the engine at the published constants of Rocha et al., whose constants those authors fitted on
+the same ten surveys, so that this row is an in-sample figure of their fit and not a held-out one. The residual band of a
+comparator is its prediction plus or minus $1.2816\,\sigma_h$, with $\sigma_h$ the sample standard deviation of the
+held-out residuals of the other nine surveys, so that a survey never enters the width of its own band.
+
+\subsection{Metrics}
+
+For output $t$, held-out predictions $\hat y_{t,i}$ and measurements $y_{t,i}$ over the $N=10$ surveys,
+\begin{gather}
+\mathrm{MAPE}_t=\frac{100}{N}\sum_{i=1}^{N}\frac{|\hat y_{t,i}-y_{t,i}|}{y_{t,i}},\nonumber\\
+\mathrm{RMSE}_t=\Big(\frac1N\sum_{i=1}^{N}(\hat y_{t,i}-y_{t,i})^2\Big)^{1/2}.
+\label{eq:mape}
+\end{gather}
+The log predictive density is the mean over surveys of the log density of the measurement under the held-out predictive,
+\begin{equation}
+\mathrm{LPD}_t=\frac1N\sum_{i=1}^{N}\ln\Big[\frac1M\sum_{m=1}^{M}\phi\big(y_{t,i};\mu_{i}^{(m)},v_{i}^{(m)}\big)\Big],
+\label{eq:lpd}
+\end{equation}
+with $\phi$ the Gaussian density and $(\mu_i^{(m)},v_i^{(m)})$ the mean and variance of~\eqref{eq:predictive} at retained sample
+$m$; for a comparator it is the Gaussian density with its residual-band deviation. It is a strictly proper score~\cite{gneiting},
+in log units per t/h or per kW, higher being better. The coverage and the mean width of the 80\pct{} interval
+$[\ell_{t,i},u_{t,i}]$ are
+\begin{gather}
+\kappa_t=\frac1N\sum_{i=1}^{N}\mathbf{1}\{\ell_{t,i}\le y_{t,i}\le u_{t,i}\},\nonumber\\
+w_t=\frac1N\sum_{i=1}^{N}(u_{t,i}-\ell_{t,i}),
+\label{eq:coverage}
+\end{gather}
+read together as the calibration and the sharpness of the interval~\cite{gneitingcal}. The identifiability of a parameter is the
+ratio
+\begin{equation}
+\rho_j=\mathrm{sd}_{\mathrm{post}}(\theta_j)/\mathrm{sd}_{\mathrm{prior}}(\theta_j)
+\label{eq:ratio}
+\end{equation}
+on the natural scale, read as identified up to 0.5, partly identified up to 0.9 and at its prior above 0.9. MAPE and RMSE
+measure the point prediction, the log density measures the whole predictive distribution, and coverage with width measure
+the interval; a method can be good on one and poor on another, which is why the hypotheses H1 and H2 are stated on different
+metrics. The prior standard deviation of a positive scalar is computed on the natural scale by sampling its truncated
+log-normal prior.
+
+\subsection{Statistics}
+
+The ten held-out surveys are the unit of resampling. The 95\pct{} interval of a MAPE or an RMSE is the percentile interval of
+\nBoot{} bootstrap resamples of the ten surveys~\cite{efron}, with a fixed seed (\bootSeed); a paired difference of MAPE
+between CrusherBayes and a comparator is bootstrapped with the same resamples, so that the correlation of the two errors
+across surveys is kept, and reported with the fraction of resamples in which CrusherBayes has the lower MAPE and the number
+of surveys on which it has the lower error. The interval of a coverage $k/N$ is the Wilson score interval~\cite{wilson},
+\begin{equation}
+\frac{\hat p+\frac{z^2}{2N}\pm z\sqrt{\frac{\hat p(1-\hat p)}{N}+\frac{z^2}{4N^2}}}{1+\frac{z^2}{N}},\qquad z=1.96.
+\label{eq:wilson}
+\end{equation}
+The posterior uncertainty of each parameter is its posterior standard deviation. The Monte Carlo error of the sampler is
+measured by repeating the whole protocol with the seeds 43 and 44. With ten surveys these intervals are wide, and they are
+reported so that a difference is read against them rather than as a ranking of point values. No significance test is used
+to accept or reject a hypothesis.
+
+\subsection{Ablations planned}
+
+Each variant changes one component and reruns the whole protocol (eleven posteriors) with the product's code, the same folds,
+sampler size and seed. The discrepancy: its scale reduced to $10^{-6}$ of $\tau_t$, so the likelihood is the engine plus
+noise. The engine scalars: all eight held at their nominal value (prior width $10^{-4}$ of its value), so that only the
+discrepancy and the noise are learned. The shared population-balance scalars: $s_{K_1}$, $s_{K_2}$, $K_3$ and
+$\Delta t_{10}$ held at their nominal value while capacity, work index and power form are sampled. The priors: every engine
+prior width doubled. The discrepancy scale: $\tau_t$ halved and doubled. The sampler: the stretch move in place of the
+differential-evolution moves. The seeds 43 and 44 of the full method measure the Monte Carlo error against which every
+variant is read. Each variant writes a document of the same contract as the method, so that the same scores, the same
+contraction table and the same rule for dropping the method are computed for it by the same code.
+
+\section{Results}\label{sec:results}
+
+\subsection{Held-out accuracy against the published methods}
+
+Table~\ref{tab:comparison} gives every method on the same folds with its bootstrap interval, and Fig.~\ref{fig:comparison}
+draws the intervals. On throughput the posterior predictive mean has a MAPE of \cbTphMape\pct{} (95\pct{} interval
+\cbTphMapeLo{} to \cbTphMapeHi), against \backTphMapeBoot\pct{} for the refit capacity base, \freeTphMapeBoot\pct{} for the
+free-form fit, \residTphMapeBoot\pct{} with the bounded residual, \blinTphMapeBoot\pct{} for the setting-only line and
+\constTphMapeBoot\pct{} for the constant mean. The engine at the published constants reaches \pubTphMapeBoot\pct{}, but it is
+the fit of Rocha et al. to the same ten surveys, so it is not a held-out figure. The intervals of the first five methods
+overlap almost entirely. On power the posterior predictive mean has a MAPE of \cbKwMape\pct{} (\cbKwMapeLo{} to
+\cbKwMapeHi), against \blinKwMapeBoot\pct{} (\blinKwMapeLo{} to \blinKwMapeHi) for the setting-only line,
+\freeKwMapeBoot\pct{} for the free-form fit and \mnlKwMapeBoot\pct{} for Morrell with a no-load term. The engine-based power
+models are far behind: \backKwMapeBoot\pct{} for the refit current-based form, \residKwMapeBoot\pct{} with the bounded
+residual, \bondKwMapeBoot\pct{} for the Bond draw, \morKwMapeBoot\pct{} for Morrell through the origin and \pubKwMapeBoot\pct{}
+for the engine at the published constants, against \constKwMapeBoot\pct{} for the constant mean.
+
+\begin{table*}[!t]
+\caption{Held-out scores of CrusherBayes and of every compared method on the ten HP500 surveys (strict leave-one-survey-out, the same folds for all), with 95\pct{} percentile bootstrap intervals of the MAPE over the surveys, and the coverage of the 80\pct{} interval with its Wilson interval and the mean width for the methods that give a band; the engine at the published constants is in sample for the fit of Rocha et al.}
+\label{tab:comparison}
+\centering\footnotesize
+\resizebox{\textwidth}{!}{\input{generated/tab-comparison}}
+\end{table*}
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.95\textwidth]{fig-comparison.pdf}
+\caption{Held-out mean absolute percentage error of every method on the ten HP500 surveys with its 95\pct{} bootstrap interval, for (a) power and (b) throughput; CrusherBayes in blue, the setting-only line in green, the engine at the published constants (in sample for its fit) as a square.}
+\label{fig:comparison}
+\end{figure*}
+
+The paired comparison (Table~\ref{tab:paired}) settles H1. Against the setting-only line on power the difference of MAPE is
+\dBlinKw{} points (95\pct{} interval \dBlinKwLo{} to \dBlinKwHi), CrusherBayes has the lower error on \dBlinKwWins{} of the
+ten surveys, and the gain the hypothesis asked for, \marginPts{} points, lies outside the interval. Against the refit capacity
+base on throughput the difference is \dBackTph{} points (\dBackTphLo{} to \dBackTphHi), a tie. H1 does not hold. The
+comparison does show where the method gains: against every engine-based power model the difference is large and its
+interval excludes zero, \dBackKw{} points against the refit current-based form (\dBackKwLo{} to \dBackKwHi) and \dBondKw{}
+points against the Bond draw (\dBondKwLo{} to \dBondKwHi), and against the constant mean on power \dConstKw{} points
+(\dConstKwLo{} to \dConstKwHi). The gain is over the engine, not over the simple lines.
+
+\begin{table}[!t]
+\caption{Paired differences of held-out MAPE, CrusherBayes minus each comparator (negative favours CrusherBayes), with the 95\pct{} paired-bootstrap interval, the fraction of resamples favouring CrusherBayes and the surveys on which it has the lower error.}
+\label{tab:paired}
+\centering\footnotesize
+\resizebox{\columnwidth}{!}{\input{generated/tab-paired}}
+\end{table}
+
+\subsection{Calibration and sharpness}
+
+The 80\pct{} interval of CrusherBayes covers \cbTphCov{} of the surveys on throughput (Wilson interval \cbTphCovLo{} to
+\cbTphCovHi) and \cbKwCov{} on power (\cbKwCovLo{} to \cbKwCovHi), both inside \covLo{} to \covHi. Its mean width is
+\cbTphWidth~t/h on throughput, \widthRedTph\pct{} narrower than the residual band of the refit engine (\BackTphWidth~t/h) at
+the same coverage, and \cbKwWidth~kW on power, \widthRedKw\pct{} narrower than that band (\BackKwWidth~kW) at the same
+coverage of \cbKwCov. H2 holds. Against the simple models the picture is different: on power the setting-only line has a
+mean width of \BlinKwWidth~kW at a coverage of \BlinKwCov, and the free-form fit \FreeKwWidth~kW at \FreeKwCov, so the band of
+CrusherBayes has about the width of the line's band with a coverage higher by one survey. On throughput all four banded
+methods cover \cbTphCov{} and CrusherBayes has the narrowest band. The Wilson intervals of the coverages, \cbKwCovLo{} to
+\cbKwCovHi{} and \blinKwCovLo{} to \blinKwCovHi, overlap almost entirely: with ten surveys the coverages do not
+distinguish a calibrated band from a slightly miscalibrated one. The log predictive density (Table~\ref{tab:accuracy}) agrees:
+\cbKwLpd{} on power for CrusherBayes against \BlinKwLpd{} for the line and \BackKwLpd{} for the refit engine.
+Figure~\ref{fig:band} shows the bands survey by survey, and Fig.~\ref{fig:setting} draws them against the setting.
+
+\begin{table}[!t]
+\caption{Held-out scores of the methods that give an 80\pct{} band, over the ten surveys: MAPE, RMSE, mean log predictive density, coverage and mean width of the interval, for each output.}
 \label{tab:accuracy}
 \centering\footnotesize
 \resizebox{\columnwidth}{!}{\input{generated/tab-accuracy}}
@@ -343,24 +909,38 @@ Figure~\ref{fig:band} shows the bands against the measured values survey by surv
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=0.9\textwidth]{fig-band.pdf}
-\caption{Held-out 80\,\% predictive interval against the measured value, per survey, for (a) power and (b) throughput.
-The blue interval is the posterior predictive of CrusherBayes and the orange interval the residual band of the refit
-backbone; the green dash is the setting-only line and the black diamond the measurement. Every interval is computed
-without the survey it is drawn for.}
+\caption{Held-out 80\pct{} predictive interval against the measured value, per survey, for (a) power and (b) throughput:
+the posterior predictive of CrusherBayes in blue, the residual band of the refit engine in orange, the setting-only line as a
+green dash and the measurement as a black diamond; every interval is computed without the survey it is drawn for.}
 \label{fig:band}
 \end{figure*}
 
-\subsection{Outcome of the dropping rule}
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.9\textwidth]{fig-setting.pdf}
+\caption{The two outputs of the ten surveys against the closed-side setting: the measurement, the held-out interval and mean of CrusherBayes, the held-out setting-only line and the engine at the published constants, for (a) power and (b) throughput; surveys at one setting are spread by 0.9~mm.}
+\label{fig:setting}
+\end{figure*}
+
+Figure~\ref{fig:setting} makes the structure of Section~\ref{sec:theory} visible. The engine at the published constants
+puts the power at \calKwMin\ to \calKwMax~kW, rising with the setting, while the measured power falls from \kwMMax\ to
+\kwMMin~kW as the setting widens; the held-out mean of CrusherBayes follows the measurements, because the discrepancy has taken over the setting
+dependence. On throughput the engine, the line and CrusherBayes all follow the rise of the throughput with the setting,
+and the scatter around it, which neither the setting nor the feed size explains, sets the width of every band.
+
+\subsection{The dropping rule}
 
 Table~\ref{tab:rule} applies the rule stated before the run. Condition (a) holds: the gain in power MAPE over the setting-only
-line is \gainBlinKw{} points and the gain in throughput MAPE over the refit backbone is \gainBackTph{} points, both below
-\marginPts{}. Condition (b) fails: the coverages \cbTphCov{} and \cbKwCov{} are inside the interval \covLo{} to \covHi{}, and the
-bands are narrower than the residual band on both outputs. As both conditions are needed to drop the method, the rule does
-not drop it. The rule, as written, therefore retains a method that calibrates its band and does not improve the point
-prediction; it does not assert a gain in accuracy.
+line is \gainBlinKw{} points and the gain in throughput MAPE over the refit capacity base is \gainBackTph{} points, both below
+\marginPts. Condition (b) fails: the coverages \cbTphCov{} and \cbKwCov{} are inside the interval \covLo{} to \covHi, and the
+bands are narrower than the residual band on both outputs. Both conditions are needed to drop the method, so the rule does
+not drop it. The rule therefore retains a method that calibrates its band and does not improve the point prediction. Every variant
+of the ablation gives the same outcome: condition (a) holds and condition (b) fails in all of them, including the variant
+without the discrepancy, whose coverage of \abNoDiscKwCov{} is at the lower edge of the interval and whose band remains
+narrower than the residual band.
 
 \begin{table}[!t]
-\caption{The terms of the rule for dropping the method as a predictor, evaluated on the held-out scores. The reference is the setting-only line for power and the refit backbone for throughput.}
+\caption{The terms of the rule for dropping the method as a predictor, evaluated on the held-out scores of the ten surveys; the reference is the setting-only line for power and the refit capacity base for throughput.}
 \label{tab:rule}
 \centering\footnotesize
 \input{generated/tab-dropping-rule}
@@ -368,15 +948,20 @@ prediction; it does not assert a gain in accuracy.
 
 \subsection{What the surveys identify}
 
-Table~\ref{tab:identifiability} compares the prior with the posterior of every parameter, fitted to all ten surveys. The
-ratio is the posterior standard deviation over the prior standard deviation; a ratio far below one means that the surveys
-determine the parameter, a ratio near one that it stays at its prior. We read a ratio up to 0.5 as identified, up to
-0.9 as partly identified and above 0.9 as at its prior; a ratio slightly above one (\kTwoScaleContr{} for
-$s_{K_2}$) is read as no contraction. Figure~\ref{fig:posterior} shows the prior and a normal summary of the posterior for
-each parameter, and Fig.~\ref{fig:contraction} the ratios.
+Table~\ref{tab:identifiability} compares the prior with the posterior of every parameter, fitted to all ten surveys, and
+Figs.~\ref{fig:posterior} and~\ref{fig:contraction} draw it. Of the \nParams{} parameters, \nIdent{} are identified,
+\nPart{} are partly identified and \nNone{} stay at their prior. The identified ones are the capacity base
+$Q_{\mathrm{ref}}$ (ratio \qRefContr), the two noise scales (\sigTphContr{} and \sigKwContr) and the four discrepancy slopes
+(\dTphFContr{} to \dKwCssContr). Partly identified are $\zeta$ (\zetaContr), $P_n$ (\pnContr), $W_i$ (\wiContr) and the
+constant of the throughput discrepancy (\dTphConstContr). Four of the eight engine scalars stay at their prior: $s_{K_1}$
+(\kOneScaleContr), $s_{K_2}$ (\kTwoScaleContr), $K_3$ (\kThreeContr) and $\Delta t_{10}$ (\tShiftContr), and so does the
+constant of the power discrepancy (\dKwConstContr). The posterior of $Q_{\mathrm{ref}}$ is \qRefMean{} $\pm$ \qRefSd~t/h against a
+nominal \qRefNominal~t/h: the surveys narrow the capacity base and leave its centre where it was. H3 holds, in the specific
+form that the theory predicts: the scalars that only power can inform, through a sensitivity that lies almost wholly in the
+span of the discrepancy, stay at their prior, and the linearized posterior of Table~\ref{tab:laplace} reproduces every ratio.
 
 \begin{table*}[!t]
-\caption{Prior against posterior of the \nParams{} parameters, fitted to all ten surveys. The ratio is the posterior standard deviation over the prior standard deviation (natural scale).}
+\caption{Prior against posterior of the \nParams{} parameters of CrusherBayes, fitted to all ten HP500 surveys; the ratio is the posterior standard deviation over the prior standard deviation on the natural scale, and the reading follows the thresholds 0.5 and 0.9.}
 \label{tab:identifiability}
 \centering\footnotesize
 \input{generated/tab-identifiability}
@@ -385,140 +970,245 @@ each parameter, and Fig.~\ref{fig:contraction} the ratios.
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=0.8\textwidth]{fig-posterior.pdf}
-\caption{Prior (grey area) against posterior (blue line) of each parameter, fitted to all ten surveys. The posterior is drawn
-as a normal density with its mean and standard deviation, the two summaries of the fit; the dotted line is the nominal
-value. The ratio is the posterior over the prior standard deviation.}
+\caption{Prior (grey area) against posterior (blue line) of each of the sixteen parameters, fitted to all ten surveys; the posterior is drawn
+as a normal density with its mean and standard deviation, the dotted line is the nominal value and the ratio is the posterior over the prior standard deviation.}
 \label{fig:posterior}
 \end{figure*}
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=0.78\columnwidth]{fig-contraction.pdf}
-\caption{Posterior over prior standard deviation of each parameter: identified (blue, up to 0.5), partly identified
-(green, up to 0.9) and at the prior (grey). The dashed line marks 0.5 and the dotted line 1.}
+\caption{Posterior over prior standard deviation of each parameter on the fit to all ten surveys: identified (blue, up to 0.5), partly identified
+(green, up to 0.9) and at the prior (grey), with dashed and dotted lines at 0.5 and 1.}
 \label{fig:contraction}
 \end{figure}
 
-Of the \nParams{} parameters, \nIdent{} are identified, \nPart{} are partly identified and \nNone{} stay at their prior. The
-identified ones are the capacity base $Q_{\mathrm{ref}}$ (ratio \qRefContr{}), the two noise scales (\sigTphContr{} for
-throughput, \sigKwContr{} for power) and the four discrepancy slopes on the setting and the feed size
-(\dTphCssContr{} to \dKwCssContr{}). Partly identified are $\zeta$ (\zetaContr{}), $P_n$ (\pnContr{}), $W_i$
-(\wiContr{}) and the constant of the throughput discrepancy (\dTphConstContr{}). Four of the eight engine scalars stay at
-their prior: the multipliers $s_{K_1}$ (\kOneScaleContr{}) and $s_{K_2}$ (\kTwoScaleContr{}), the exponent $K_3$
-(\kThreeContr{}) and the breakage shift $\Delta t_{10}$ (\tShiftContr{}), and so does the constant of the power
-discrepancy (\dKwConstContr{}). The posterior mean of $Q_{\mathrm{ref}}$ is \qRefMean~t/h against a nominal \qRefNominal~t/h:
-the surveys narrow the capacity base and leave its centre where it was.
-
-\subsection{The discrepancy}
+\subsection{The discrepancy and the shrinkage}
 
 The discrepancy slope on the setting is large for both outputs. For power it is \dKwCssMean{} $\pm$ \dKwCssSd~kW per
-standard deviation of the setting (about \dKwPerMm~kW/mm, with \sdCss~mm the standard deviation of the setting over the
-ten surveys), and for throughput \dTphCssMean{} $\pm$ \dTphCssSd~t/h per standard deviation (about \dTphPerMm~t/h per mm).
-The measured power falls as the setting widens (correlation \rMeasCss{}), whereas the calibrated engine power rises with
-it (correlation \rEngCss{}, from \calKwMin\ to \calKwMax~kW over the ten surveys); the negative discrepancy slope of power has the opposite sign to the setting dependence of the engine, and
-compensates it.
+standard deviation of the setting (about \dKwPerMm~kW/mm, with \sdCss~mm the standard deviation of the setting over the ten
+surveys), and for throughput \dTphCssMean{} $\pm$ \dTphCssSd~t/h per standard deviation (about \dTphPerMm~t/h per mm). The
+measured power falls as the setting widens (correlation \rMeasCss), whereas the engine power at the published constants rises
+with it (correlation \rEngCss, from \calKwMin\ to \calKwMax~kW); the negative slope of the power discrepancy compensates the
+setting dependence of the engine. Figure~\ref{fig:shrinkage} evaluates the closed form~\eqref{eq:ridge} with the scalars at
+their nominal value over the shrinkage $\lambda$. On throughput the held-out MAPE is \thOlsTph\pct{} at $\lambda=0$, which is
+the free-form fit as Corollary~\ref{cor:limits} states, and \thBigTph\pct{} for a large $\lambda$, which is the engine at the
+published constants; between them it dips to \thMinTph\pct{} near $\lambda=\thArgminTph$, and at the $\lambda$ of the method it
+is \thAtMethodTph\pct, against \cbTphMape\pct{} for the sampled method. A stronger shrinkage would have fit these folds better,
+but choosing $\lambda$ on the held-out scores would tune the method on its test set, and the dip of about one point is inside
+the bootstrap interval of every throughput method. On power it rises from \thOlsKw\pct{} at $\lambda=0$ to \thBigKw\pct{} for a large $\lambda$, with \thAtMethodKw\pct{}
+at the $\lambda$ of the method against \cbKwMape\pct{} sampled: shrinking toward the engine costs accuracy on power, as its
+wrong-signed slope predicts.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.9\textwidth]{fig-shrinkage.pdf}
+\caption{Held-out MAPE of the closed-form predictive mean~\eqref{eq:ridge} with the engine scalars at their nominal value, against the shrinkage $\lambda$, for (a) power and (b) throughput; the dot marks the $\lambda$ of the method, the dashed line the sampled CrusherBayes and the dash-dotted line the setting-only line.}
+\label{fig:shrinkage}
+\end{figure*}
 
 \subsection{Convergence}
 
-All \nPosteriors{} posteriors meet the criterion (Table~\ref{tab:convergence} of Appendix~\ref{app:convergence}): the largest autocorrelation time is
-between \tauMin{} and \tauMax{} steps and the \postSteps{} post-burn steps are \ratioMin{} to \ratioMax{} times it. The acceptance
-fraction is between \accMin{} and \accMax{}.
+All \nPosteriors{} posteriors meet the criterion~\eqref{eq:converged} (Table~\ref{tab:convergence} and
+Fig.~\ref{fig:convergence}): the largest autocorrelation time is between \tauMin{} and
+\tauMax{} steps and the \postSteps{} post-burn steps are \ratioMin{} to \ratioMax{} times it, with an acceptance fraction
+between \accMin{} and \accMax. The fold without survey 4 has the slowest chain. Across the three seeds the throughput MAPE
+varies by \seedSpreadTph{} points and the power MAPE by \seedSpreadKw{} points, and the power band width by \seedWidthSpreadKw~kW, so
+the Monte Carlo error of the sampler is two orders of magnitude below the differences between methods. The retained samples
+of a fold, \nSamples, are therefore far more than the summaries need: the posterior means and standard deviations of the
+identifiability table and the percentiles of the predictive interval are averages over at least 70 effective draws per
+walker, and the ratios of posterior to prior standard deviation of the three seeds differ by at most 0.02.
 
-\section{Discussion}
-
-\paragraph{Why the point accuracy does not improve}
-Throughput of the engine is $Q_{\mathrm{ref}}\sigma(c)$ with $\sigma$ linear in the setting, and the discrepancy adds a
-term linear in the setting and the feed size. Measured power correlates with the setting at
-\rMeasCss{}, and the engine's own power moves the other way. Once the discrepancy has absorbed that setting dependence, the
-posterior predictive is close in form to a line in the setting and the feed size, which the setting-only line and the free-form fit
-already are; this agrees with the ties in Table~\ref{tab:accuracy}, but we did not test it directly.
-
-\paragraph{Why the population balance is not identified}
-The two measured outputs carry the product size only through the Bond term of power, and power follows the setting and
-the throughput, not the product size. The four scalars that set the product size ($s_{K_1}$, $s_{K_2}$, $K_3$,
-$\Delta t_{10}$) therefore remain at their prior, and the engine's product size, which is not measured in the ten surveys,
-is not validated by them. Measured product size distributions per survey would constrain these scalars directly. We did
-not test that, because the distributions of the source are figures only.
-
-\paragraph{Confounding of calibration and discrepancy}
-Brynjarsd\'ottir and O'Hagan~\cite{brynj} show that the discrepancy is confounded with the calibration parameters.
-Two instances appear here. The capacity base and the constant of the throughput discrepancy both set the level of
-throughput, and only the first contracts strongly (\qRefContr{} against \dTphConstContr{}). And since $W_i$ and $\zeta$
-multiply, power fixes their product and not each of them, which is why both are only partly identified. The posterior of
-the individual scalars should not be read as an estimate of a physical value of the ore.
-
-\paragraph{What the band is worth}
-The band of the setting-only line, built from the spread of its held-out residuals, is as wide as the CrusherBayes band on power
-(\BlinKwWidth{} against \cbKwWidth~kW), with a coverage of \BlinKwCov{} against \cbKwCov{}. The advantage of CrusherBayes
-over the line is that its band comes from a generative model of the survey (engine, discrepancy and noise), so the
-band carries the uncertainty of the scalars; whether it stays calibrated at a setting outside the surveyed range was not tested. The advantage over the refit backbone is plain in the data: the same coverage with a band \widthRedKw\pct{} narrower on power. Against the setting-only line the power width is about the same (\cbKwWidth{} against \BlinKwWidth~kW) and the coverage is higher (\cbKwCov{} against \BlinKwCov{}), a difference of one survey out of ten; the band gain is not against the simple line.
-
-\section{Limitations}
-
-\begin{itemize}
-\item Ten surveys of one machine, one ore and one operation, with two measured outputs and two regressors. Coverage is coarse:
-one survey moves it by 0.1, and the coverages of \cbTphCov{} and \cbKwCov{} do not distinguish a calibrated band from a
-slightly miscalibrated one.
-\item The widths of the priors and the discrepancy standard deviations $\tau_t$ are our choices; no sensitivity analysis of
-the held-out scores or of the ratios to those choices was made, and the confounding of discrepancy and parameters is resolved only by meaningful priors~\cite{brynj}.
-\item The discrepancy is linear in two standardized regressors with a fixed prior scale, not a Gaussian process with
-estimated hyperparameters; the two outputs are independent given the scalars.
-\item The throw and the speed are fixed at the machine's nominal values, and the feed gradation is reconstructed from
-the measured $f_{80}$ with a Rosin--Rammler distribution of fixed uniformity, so neither the throw, the speed nor the feed
-shape is calibrated.
-\item The convergence criterion uses the autocorrelation time of a single ensemble with one seed, and we did not
-run independent ensembles with other seeds. The comparison with the stretch move is a measurement on the same posterior,
-reported from the preliminary runs, and was not repeated for this paper.
-\item The rule for dropping the method is lenient: it drops a method only when it fails on accuracy and on calibration at
-once, so it retains a method that does not improve accuracy.
-\item The comparison with other crusher models is limited to the comparators of the Experiments section; the discrete-element
-simulation of a crusher is not covered, and the search of the literature was not exhaustive.
-\end{itemize}
-
-\section{Conclusions}
-
-Ten HP500 surveys, two measured outputs and a linear discrepancy identify the capacity base, the two noise scales and the
-dependence of both outputs on the setting and the feed size. They determine the work index and the power form only as a
-product, and they leave the classification and breakage scalars of the population balance at their prior. Strict
-leave-one-survey-out validation shows a throughput MAPE of \cbTphMape\pct{} and a power MAPE of \cbKwMape\pct{} for the
-posterior predictive mean, no better than a line in the closed-side setting (\BlinTphMape\pct{} and \BlinKwMape\pct{}), with
-80\,\% bands that are \widthRedKw\pct{} narrower on power than the residual band of the refit backbone at the same
-coverage; against the setting-only line the power band has about the same width (\cbKwWidth{} against \BlinKwWidth~kW) and a coverage of \cbKwCov{} against \BlinKwCov{}. The finding is negative for accuracy and positive for calibration and for identifiability: to calibrate the
-population balance itself, the surveys need to measure the product size.
-
-\appendices
-
-\section{Reproducibility}\label{app:repro}
-
-The artifacts of the paper are in the repository \path{github.com/fsantibanezleal/CAOS_ChancaDEM}. The posteriors are
-sampled offline by the pipeline step of the data bake (\texttt{python} \path{data-pipeline/run.py} \texttt{hp500}), which writes
-\path{data/derived/hp500/crusherbayes.json}; the engine, the priors, the likelihood, the sampler and the scores are in
-\path{data-pipeline/pipeline/hp500/crusherbayes.py}. Every figure, table and number of this paper is regenerated from the committed
-artifacts \texttt{crusherbayes.json}, \texttt{loo.json}, \texttt{backbone.json} and \path{data/examples/hp500-surveys.csv} by
-\texttt{python} \path{manuscripts/crusherbayes/figures/make_figs.py}, which also writes the number-to-key table
-\path{manuscripts/crusherbayes/data/claims.json}. The sampler is \texttt{emcee} \samplerVersion{} with seed \seed{}. The document carries the SHA-256 of its inputs,
-\begin{center}\texttt{\tiny\sha}\end{center}
-and the SHA-256 of the file read for this paper is
-\begin{center}\texttt{\tiny\shaDoc}\end{center}
-
-\section{Survey data}\label{app:data}
-
-\begin{table}[!h]
-\caption{The ten HP500 surveys (Rocha et al.~\cite{rocha}, Table A1, CC BY 4.0): closed-side setting, feed $f_{80}$, throughput and motor power.}
-\label{tab:surveys}
-\centering\footnotesize
-\input{generated/tab-surveys}
-\end{table}
-
-\section{Convergence per posterior}\label{app:convergence}
-
-\begin{table}[!h]
-\caption{Convergence of the \nPosteriors{} posteriors: the largest integrated autocorrelation time $\tau_{\max}$ over the ten dimensions, the
-post-burn chain length in units of $\tau_{\max}$ (the criterion is \tauFactor{}), the mean acceptance fraction and the retained samples.}
+\begin{table}[!t]
+\caption{Convergence of the \nPosteriors{} posteriors of the method: the largest integrated autocorrelation time $\tau_{\max}$ over the ten dimensions, the
+post-burn chain length in units of $\tau_{\max}$ (the criterion is \tauFactor), the mean acceptance fraction and the retained samples.}
 \label{tab:convergence}
 \centering\footnotesize
 \resizebox{\columnwidth}{!}{\input{generated/tab-convergence}}
 \end{table}
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.9\textwidth]{fig-convergence.pdf}
+\caption{Convergence of the eleven posteriors (ten folds and all ten surveys): (a) the largest integrated autocorrelation time and (b) the post-burn chain length in autocorrelation times, for the differential-evolution moves (bars) and the stretch move (diamonds); the dashed lines mark the criterion, an autocorrelation time of at most 120 steps in (a) and a chain of at least 50 autocorrelation times in (b).}
+\label{fig:convergence}
+\end{figure*}
+
+\section{Ablation}\label{sec:ablation}
+
+Table~\ref{tab:ablation} and Fig.~\ref{fig:ablation} give the ablation; every row is a full rerun of the eleven posteriors with
+the product's code. The seed rows bound the Monte Carlo error: \abSeedBTphMape{} and \abSeedCTphMape\pct{} on throughput and
+\abSeedBKwMape{} and \abSeedCKwMape\pct{} on power, against \abFullTphMape{} and \abFullKwMape\pct{} for seed 42.
+
+The discrepancy carries the power prediction. Without it, the power MAPE rises to \abNoDiscKwMape\pct{}, back to the level of
+the refit engine (\backKwMapeBoot\pct), the band widens to \abNoDiscKwWidth~kW and the coverage falls to \abNoDiscKwCov{} on
+both outputs; the log density of power drops from \abFullKwLpd{} to \abNoDiscKwLpd. Throughput hardly changes
+(\abNoDiscTphMape\pct), because the engine throughput is already a line in the setting (Proposition~\ref{prop:span}); the
+capacity base contracts more without the discrepancy (ratio \abNoDiscQRefContr{} against \abFullQRefContr), as
+Proposition~\ref{prop:span} predicts when $\tau_{\mathrm{tph}}\to0$. H4 holds.
+
+The engine scalars contribute little. With all eight held at their nominal value the throughput MAPE is \abEngFixTphMape\pct{}
+and the power MAPE \abEngFixKwMape\pct, \abEngFixKwMape{} against \abFullKwMape\pct{}, with a power band of \abEngFixKwWidth~kW
+at a coverage of \abEngFixKwCov; calibrating the scalars improves power by less than two points and does not change
+throughput. The discrepancy slopes are the same with and without the scalars (\abEngFixDKwCssMean{} against
+\abFullDKwCssMean~kW on power).
+
+The population-balance scalars contribute little. Held at their nominal value, they leave the throughput MAPE at
+\abBalFixTphMape\pct, the power MAPE at \abBalFixKwMape\pct{} and the power band at \abBalFixKwWidth~kW, all close to the
+full method, and the contraction of the other scalars hardly moves ($Q_{\mathrm{ref}}$ \abBalFixQRefContr, $\zeta$
+\abBalFixZetaContr). The power MAPE is \balFixGainKw{} points lower than with the four scalars sampled, a difference larger
+than the seed spread of \seedSpreadKw{} points, so sampling them has a real but small effect through the engine's curvature,
+far inside the survey-level uncertainty of several points. The identification part of Conjecture~\ref{conj:pb} stands; its
+part on the scores holds at the level of the survey noise and not at the level of the Monte Carlo error.
+
+The priors matter for identification and not for accuracy. Doubling every engine prior width gives \abWideTphMape\pct{} and
+\abWideKwMape\pct, with a power band of \abWideKwWidth~kW; the ratios are taken against the wider prior, so
+$Q_{\mathrm{ref}}$ falls to \abWideQRefContr{} while $W_i$ (\abWideWiContr) and $\zeta$ (\abWideZetaContr) remain partly
+identified, and one fold of eleven (without survey 4) fails the convergence criterion, with an autocorrelation time of
+\abWideTauMax{} steps: the wider prior opens the ridge of Proposition~\ref{prop:product}.
+
+The discrepancy scale moves the method along the shrinkage of Proposition~\ref{prop:ridge}. Halving $\tau_t$ shrinks harder
+toward the engine: power degrades to \abTauHalfKwMape\pct{} with a band of \abTauHalfKwWidth~kW, and the capacity base
+contracts to \abTauHalfQRefContr. Doubling $\tau_t$ shrinks less: power improves to \abTauDoubleKwMape\pct, closer to the
+linear limit of Corollary~\ref{cor:limits}, and the capacity base loosens to \abTauDoubleQRefContr, as~\eqref{eq:qinfo} states.
+Throughput moves by less than a quarter of a point either way. None of the variants changes the outcome of the dropping
+rule.
+
+The sampler changes the diagnostics and not the scores. The stretch move gives \abStretchTphMape\pct{} and
+\abStretchKwMape\pct, equal to the differential-evolution moves within the seed spread, but none of the eleven posteriors
+meets the criterion: its autocorrelation time is \abStretchTauMin{} to \abStretchTauMax{} steps, so the post-burn chain is
+below 50 autocorrelation times in every posterior (Fig.~\ref{fig:convergence}). The choice of the move is a choice of
+reliability of the posterior summaries, which are the identifiability result.
+
+\begin{table*}[!t]
+\caption{Ablation of CrusherBayes on the ten HP500 surveys: every row reruns the eleven posteriors of the strict leave-one-survey-out protocol with one component changed, and gives the held-out MAPE, coverage and mean width of each output, the range of the largest autocorrelation time and the converged posteriors.}
+\label{tab:ablation}
+\centering\footnotesize
+\resizebox{\textwidth}{!}{\input{generated/tab-ablation}}
+\end{table*}
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.95\textwidth]{fig-ablation.pdf}
+\caption{Held-out MAPE of each ablation variant for (a) power and (b) throughput, with its coverage and mean band width as labels; the dashed line is the setting-only line for power and the refit capacity base for throughput, and the three seeds of the full method are in blue.}
+\label{fig:ablation}
+\end{figure*}
+
+\section{Discussion}\label{sec:discussion}
+
+\subsection{Why the point accuracy does not improve}
+
+Proposition~\ref{prop:ridge} answers it. Given the scalars, the predictive mean is a ridge regression of the survey on the
+standardized setting and feed size, shrunk with a weight of about one tenth toward the engine's best plane, plus the engine's
+non-affine remainder. On throughput the engine's plane is the engine itself (Proposition~\ref{prop:span}), and the method
+is a blend of the free-form fit (\freeTphMapeBoot\pct) and the refit capacity line (\backTphMapeBoot\pct); it lands between
+and ties both, as the paired differences show. On power the engine's plane has the wrong sign of the setting slope, so
+shrinking toward it costs accuracy, and the closed form traces the cost as $\lambda$ grows (Fig.~\ref{fig:shrinkage}); the
+remainder $e_{t,h}$ is small because almost all of the engine's power variation is affine in the two regressors. A line in
+the setting alone already captures the strongest dependence of the data, and with ten surveys a second regressor costs more
+in variance than it gains. The negative result on power is therefore structural, not a failure of the sampler, and it
+would persist with any amount of computation on these data.
+
+\subsection{Why the population balance is not identified}
+
+The two measured outputs carry the product size only through the Bond term of power, and the Bond draw of the engine
+spans only \bondKwMin\ to \bondKwMax~kW across surveys whose power spans \kwMMin\ to \kwMMax~kW. More than nine tenths of the
+power sensitivity of each population-balance scalar is an affine function of the setting and the feed size, which the
+discrepancy absorbs at a discount of about one tenth (Proposition~\ref{prop:info}); what is left is below the noise. The
+four scalars therefore stay at their prior, the engine's product size is not validated by these surveys, and the ablation
+that fixes them changes the scores by far less than the survey-level noise. Measured product size distributions per survey would constrain them directly; the
+distributions of the source are figures only, so this was not tested. Proposition~\ref{prop:info} also says how much such
+data would help: a measured size has a sensitivity to the classification constants that is not an affine function of the
+setting and the feed size, so it would be counted at the full weight $1/\sigma^2$ rather than at the discount of the plane.
+
+\subsection{Confounding of calibration and discrepancy}
+
+Brynjarsd\'ottir and O'Hagan~\cite{brynj} show that the discrepancy is confounded with the calibration parameters. Here the
+confounding has an exact form. The capacity base is identified only through the finite width of the throughput discrepancy
+prior, and its contraction moves with $\tau_{\mathrm{tph}}$ from \abTauHalfQRefContr{} to \abTauDoubleQRefContr{} when the
+scale is halved or doubled. The no-load power is a constant, confounded with the constant of the power discrepancy, and both
+are only partly identified or at the prior. The work index and the power slope enter as a product, and each of them is only
+partly identified. The posterior of an individual scalar should therefore not be read as an estimate of a physical value of
+the ore or the machine: $W_i$ at \wiMean{} $\pm$ \wiSd~kWh/t is the prior reweighted along a ridge, not a measurement of the
+work index of the itabirite. The same holds for $\zeta$ and $P_n$, whose posterior means of \zetaMean{} and \pnMean~kW are
+the values that, together with the discrepancy, reproduce ten power measurements.
+
+\subsection{What the band is worth, and the negative results}
+
+The band of CrusherBayes comes from a generative model of a survey (engine, discrepancy and noise), so it carries the
+uncertainty of the scalars and of the discrepancy, and its width is set by the posterior of the noise. Against the
+residual band of the refit engine it gives the same coverage at \widthRedKw\pct{} less width on power, a gain that is plain
+in the data. Against the setting-only line it gives about the same width with one more survey covered out of ten, which
+the Wilson intervals do not resolve. Three results are negative and are part of the finding: the method does not beat a
+line in the setting on power, the engine-based power models (refit current-based form, Bond, Morrell through the origin, the
+published constants) are worse than the constant mean, and the refit current-based form on all ten surveys takes a negative
+slope (\refitZeta, with an intercept of \refitPn~kW), which is the engine's power moving against the measured power. The
+Morrell form with a no-load term reaches \mnlKwMapeBoot\pct, but its fitted work index is negative in every fold, so it is
+a descriptive line in the engine's size term and not an estimate of $M_{ic}$; through the origin its fitted $M_{ic}$ is
+\micMin{} to \micMax~kWh/t across folds and its error is \morKwMapeBoot\pct. For a plant engineer the practical reading is
+that, on these surveys, the population balance engine contributes a calibrated throughput line and a band, and the power
+prediction comes from the data's own dependence on the setting.
+
+\section{Limitations}\label{sec:limitations}
+
+\subsection{Internal validity}
+
+The priors and the discrepancy scales are choices: we found no published range of the fitted scalars for this ore. The
+ablation measures their effect (doubling the prior widths, halving and doubling $\tau_t$) and finds that accuracy moves by at
+most about three and a half points on power and a quarter of a point on throughput, while the identification of the
+capacity base moves with $\tau_{\mathrm{tph}}$ as the theory states; a different prior family was not tried. The convergence
+criterion uses the autocorrelation time of one ensemble per posterior, and the Monte Carlo error is measured by three seeds,
+not by independent ensembles started from dispersed points. The linearized posterior of Section~\ref{sec:theory} is
+evaluated at one point (the posterior mean on all ten surveys) and ignores the truncation of the priors. The comparators
+that use the engine's $P_{80}$ (Morrell, Bond) inherit the engine's product size, which is not measured. The seed of the
+bootstrap is fixed, so its intervals are reproducible.
+
+\subsection{External validity and construct}
+
+Ten surveys of one machine, one ore and one operation, with two measured outputs and two regressors, bound every result.
+Coverage is coarse: one survey moves it by 0.1, and the Wilson intervals of the coverages span about 0.5 to 0.95. The
+throw and the speed are fixed at the machine's nominal values, so Proposition~\ref{prop:span} holds exactly here and would
+not hold with a varying speed; the feed gradation is rebuilt from the measured $f_{80}$ with a Rosin--Rammler distribution
+of fixed uniformity, so neither the throw, the speed nor the feed shape is calibrated. The discrepancy is linear in two
+regressors with a fixed prior scale, not a Gaussian process with estimated hyperparameters, and the two outputs are
+independent given the scalars, although the measured power and throughput are correlated at \rKwTph. Whether the band stays
+calibrated at a setting outside the surveyed range of \cssMin\ to \cssMax~mm was not tested. The MAPE weights a survey by the
+inverse of its measured value, so the low-power surveys weigh more on power. The comparison is limited to methods the
+product implements; discrete-element simulation is not covered, and the literature search was not exhaustive. The rule for
+dropping the method is lenient by construction, since it requires failure on accuracy and on calibration at once.
+
+\section{Reproducibility}\label{sec:repro}
+
+The code, data and artifacts are in the repository \path{github.com/fsantibanezleal/CAOS_ChancaDEM}. The posteriors of the
+method are sampled offline by the pipeline step of the data bake (\texttt{python} \path{data-pipeline/run.py}
+\texttt{hp500}), which writes \path{data/derived/hp500/crusherbayes.json}; the engine, the priors, the likelihood, the sampler
+and the scores are in \path{data-pipeline/pipeline/hp500/crusherbayes.py}, and the comparators in
+\path{data-pipeline/pipeline/hp500/loo.py}. The ablation and the seed replicates are run by \texttt{python}
+\path{manuscripts/crusherbayes/ablation/run_ablation.py}, which calls the same code and writes one document per variant under
+\path{manuscripts/crusherbayes/data/ablation/}; each run took \wallMin{} to \wallMax{} minutes on a workstation with \ablCpu{}
+logical processors and 30 worker processes. The checks of the theory are computed by \texttt{python}
+\path{manuscripts/crusherbayes/analysis/theory_check.py} into \path{manuscripts/crusherbayes/data/theory.json}. Every figure,
+table and number of the text is regenerated from these artifacts by \texttt{python}
+\path{manuscripts/crusherbayes/figures/make_figs.py}, which writes the number-to-source table
+\path{manuscripts/crusherbayes/data/claims.json}. The sampler is \texttt{emcee} \samplerVersion{} with seed \seed; the bootstrap uses
+seed \bootSeed. The document of the method carries the SHA-256 of its inputs,
+\begin{center}\texttt{\tiny\sha}\end{center}
+and the SHA-256 of the document read here is
+\begin{center}\texttt{\tiny\shaDoc}\end{center}
+
+\section{Conclusions}\label{sec:conclusions}
+
+Ten HP500 surveys, two measured outputs and a linear structural discrepancy identify the capacity base, the noise and the
+dependence of both outputs on the setting and the feed size. They determine the work index and the power slope only as a
+product and leave the classification and breakage scalars of the population balance at their prior, which the theory
+predicts and a linearized posterior reproduces within \thLapMaxDev{} on every parameter. Held out, CrusherBayes reaches
+\cbTphMape\pct{} on throughput and \cbKwMape\pct{} on power, no better than a line in the closed-side setting
+(\BlinKwMape\pct{} on power, paired difference \dBlinKw{} points, interval \dBlinKwLo{} to \dBlinKwHi), with 80\pct{} bands that
+are calibrated on both outputs and \widthRedKw\pct{} narrower on power than the residual band of the refit engine. The ablation
+shows that the discrepancy carries the power prediction and that the population-balance scalars contribute nothing
+beyond the survey-level noise. To calibrate the population balance itself, the surveys need to measure the product size; the next steps are the
+digitized product size distributions of the source with their digitization error, and surveys at a varying speed, which
+would break the exact confounding of the capacity base.
 
 \begin{thebibliography}{00}
 
@@ -528,26 +1218,92 @@ actualizaci\'on a\~no 2024}. Santiago: Cochilco, 2025. [Online]. Available:
 
 \bibitem{whiten} W.~J. Whiten, ``The simulation of crushing plants with models developed using multiple spline
 regression,'' \emph{Journal of the South African Institute of Mining and Metallurgy}, vol.~72, pp.~257--264, 1972.
+[Online]. Available: \url{https://www.saimm.co.za/Conferences/Apcom72/317-Whiten.pdf}
 
 \bibitem{napier} T.~J. Napier-Munn, S.~Morrell, R.~D. Morrison, and T.~Kojovic, \emph{Mineral Comminution
-Circuits: Their Operation and Optimisation}. Brisbane: Julius Kruttschnitt Mineral Research Centre, 1996.
+Circuits: Their Operation and Optimisation}. Brisbane: Julius Kruttschnitt Mineral Research Centre, 1996. [Online].
+Available: \url{https://search.worldcat.org/title/37081193}
+
+\bibitem{andersen} Andersen and T.~J. Napier-Munn, ``Power prediction for cone crushers,'' 1988. [Online].
+Available: \url{https://www.semanticscholar.org/paper/Power-prediction-for-cone-crushers-Andersen-Napier-Munn/2c60e81b909b65cba85b44583354dc8e310ec2f8}
 
 \bibitem{bond} F.~C. Bond, ``The third theory of comminution,'' \emph{Transactions of the American Institute of
-Mining, Metallurgical and Petroleum Engineers}, vol.~193, pp.~484--494, 1952.
+Mining, Metallurgical and Petroleum Engineers}, vol.~193, pp.~484--494, 1952. [Online]. Available:
+\url{https://onemine.org/documents/the-third-theory-of-comminution}
+
+\bibitem{evertsson99} C.~M. Evertsson, ``Modelling of flow in cone crushers,'' \emph{Minerals Engineering}, vol.~12,
+no.~12, pp.~1479--1499, 1999. doi:10.1016/S0892-6875(99)00136-3.
 
 \bibitem{evertsson} C.~M. Evertsson, \emph{Cone Crusher Performance}, Ph.D. dissertation, Chalmers University of
-Technology, G\"oteborg, Sweden, 2000.
+Technology, G\"oteborg, Sweden, 2000. [Online]. Available: \url{https://research.chalmers.se/en/publication/759}
 
 \bibitem{rocha} B.~K.~N. da Rocha, T.~M. Campos, J.~Silva, and L.~M. Tavares, ``Fit-for-purpose model of HP500 cone
 crusher in size reduction of itabirite iron ore,'' \emph{Minerals}, vol.~14, no.~9, art.~919, 2024.
 doi:10.3390/min14090919.
 
+\bibitem{duarte} R.~A. Duarte, A.~S. Yamashita, M.~T. da Silva, L.~P. Cota, and T.~A.~M. Euz\'ebio, ``Calibration and
+validation of a cone crusher model with industrial data,'' \emph{Minerals}, vol.~11, no.~11, art.~1256, 2021.
+doi:10.3390/min11111256.
+
 \bibitem{lindq} M.~Lindqvist and H.~Li, ``A cone crusher model with a coupled energy- and breakage dependency,''
 \emph{Minerals Engineering}, vol.~172, art.~107147, 2021. doi:10.1016/j.mineng.2021.107147.
+
+\bibitem{bengtsson} M.~Bengtsson, ``Modelling energy and size distribution in cone crushers,'' \emph{Minerals
+Engineering}, vol.~139, art.~105869, 2019. doi:10.1016/j.mineng.2019.105869.
+
+\bibitem{atta} K.~T. Atta, T.~Euz\'ebio, H.~Ibarra, V.~S. Moreira, and A.~Johansson, ``Extension, validation, and
+simulation of a cone crusher model,'' \emph{IFAC-PapersOnLine}, vol.~52, no.~14, pp.~1--6, 2019.
+doi:10.1016/j.ifacol.2019.09.154.
+
+\bibitem{liu} R.~Liu, B.~Shi, G.~Li, and H.~Yu, ``Influence of operating conditions and crushing chamber on energy
+consumption of cone crusher,'' \emph{Energies}, vol.~11, no.~5, art.~1102, 2018. doi:10.3390/en11051102.
+
+\bibitem{yamashita} A.~S. Yamashita, A.~Thivierge, and T.~A.~M. Euz\'ebio, ``A review of modeling and control strategies
+for cone crushers in the mineral processing and quarrying industries,'' \emph{Minerals Engineering}, vol.~170,
+art.~107036, 2021. doi:10.1016/j.mineng.2021.107036.
 
 \bibitem{morrell} S.~Morrell, ``Predicting the overall specific energy requirement of crushing, high pressure grinding roll
 and tumbling mill circuits,'' \emph{Minerals Engineering}, vol.~22, no.~6, pp.~544--549, 2009.
 doi:10.1016/j.mineng.2009.01.005.
+
+\bibitem{gmsg} Global Mining Guidelines Group, ``Morrell method for determining comminution circuit specific energy and
+assessing energy utilization efficiency of existing circuits,'' guideline, Annex B. [Online]. Available:
+\url{https://www.smctesting.com/documents/Morrell_method_for_determining_comminution_circuit_specific_energy_and_assessing_energy_utilization_efficiency_of_existing_circuits.pdf}
+
+\bibitem{cleary} P.~W. Cleary and M.~D. Sinnott, ``Simulation of particle flows and breakage in crushers using DEM: Part 1,
+compression crushers,'' \emph{Minerals Engineering}, vol.~74, pp.~178--197, 2015. doi:10.1016/j.mineng.2014.10.021.
+
+\bibitem{quist} J.~Quist and C.~M. Evertsson, ``Cone crusher modelling and simulation using DEM,'' \emph{Minerals
+Engineering}, vol.~85, pp.~92--105, 2016. doi:10.1016/j.mineng.2015.11.004.
+
+\bibitem{johansson} M.~Johansson, J.~Quist, M.~Evertsson, and E.~Hulth\'en, ``Cone crusher performance evaluation using DEM
+simulations and laboratory experiments for model validation,'' \emph{Minerals Engineering}, vol.~103--104, pp.~93--101,
+2017. doi:10.1016/j.mineng.2016.09.015.
+
+\bibitem{andre} F.~P. Andr\'e and L.~M. Tavares, ``Simulating a laboratory-scale cone crusher in DEM using polyhedral
+particles,'' \emph{Powder Technology}, vol.~372, pp.~362--371, 2020. doi:10.1016/j.powtec.2020.06.016.
+
+\bibitem{moncada} M.~Moncada~M., P.~Toledo~M., F.~Betancourt~C., and C.~G. Rodr\'iguez, ``Predictive modeling of crushing
+power in cone crushers with the discrete element method,'' \emph{Powder Technology}, vol.~447, art.~120178, 2024.
+doi:10.1016/j.powtec.2024.120178.
+
+\bibitem{metso} Metso, ``How we developed our DEM cone crusher model,'' blog. [Online]. Available:
+\url{https://www.metso.com/insights/blog/mining-and-metals/how-we-developed-our-dem-cone-crusher-model/}
+
+\bibitem{koh} E.~J.~Y. Koh, E.~Amini, G.~J. McLachlan, and N.~Beaton, ``Utilising a deep neural network as a surrogate
+model to approximate phenomenological models of a comminution circuit for faster simulations,'' \emph{Minerals
+Engineering}, vol.~170, art.~107026, 2021. doi:10.1016/j.mineng.2021.107026.
+
+\bibitem{gharaei} R.~S. Gharaei, A.~Gholami, H.~Khoshdast, and H.~Biglari, ``A multi-method machine learning framework for
+simulating power dynamics in an iron ore cone crusher plant,'' \emph{Mineral Processing and Extractive Metallurgy Review},
+vol.~46, no.~7, pp.~783--798, 2024. doi:10.1080/08827508.2024.2395828.
+
+\bibitem{chen} X.~Chen, L.~G. Wang, F.~Meng, and Z.-H. Luo, ``Physics-informed deep learning for modelling particle
+aggregation and breakage processes,'' \emph{Chemical Engineering Journal}, vol.~426, art.~131220, 2021.
+doi:10.1016/j.cej.2021.131220.
+
+\bibitem{gupta} A.~Gupta and B.~K. Mishra, ``Multi-head neural networks for simulating particle breakage dynamics,''
+\emph{Theoretical and Applied Mechanics Letters}, vol.~14, no.~2, art.~100515, 2024. doi:10.1016/j.taml.2024.100515.
 
 \bibitem{ko} M.~C. Kennedy and A.~O'Hagan, ``Bayesian calibration of computer models,'' \emph{Journal of the Royal
 Statistical Society: Series B}, vol.~63, no.~3, pp.~425--464, 2001. doi:10.1111/1467-9868.00294.
@@ -575,6 +1331,23 @@ doi:10.1007/s11222-006-8769-1.
 
 \bibitem{tbv08} C.~J.~F. ter Braak and J.~A. Vrugt, ``Differential evolution Markov chain with snooker updater and fewer
 chains,'' \emph{Statistics and Computing}, vol.~18, no.~4, pp.~435--446, 2008. doi:10.1007/s11222-008-9104-9.
+
+\bibitem{gneitingcal} T.~Gneiting, F.~Balabdaoui, and A.~E. Raftery, ``Probabilistic forecasts, calibration and
+sharpness,'' \emph{Journal of the Royal Statistical Society: Series B}, vol.~69, no.~2, pp.~243--268, 2007.
+doi:10.1111/j.1467-9868.2007.00587.x.
+
+\bibitem{gneiting} T.~Gneiting and A.~E. Raftery, ``Strictly proper scoring rules, prediction, and estimation,''
+\emph{Journal of the American Statistical Association}, vol.~102, no.~477, pp.~359--378, 2007.
+doi:10.1198/016214506000001437.
+
+\bibitem{yao} Y.~Yao, A.~Vehtari, D.~Simpson, and A.~Gelman, ``Using stacking to average Bayesian predictive distributions
+(with discussion),'' \emph{Bayesian Analysis}, vol.~13, no.~3, pp.~917--1007, 2018. doi:10.1214/17-BA1091.
+
+\bibitem{efron} B.~Efron, ``Bootstrap methods: another look at the jackknife,'' \emph{The Annals of Statistics}, vol.~7,
+no.~1, pp.~1--26, 1979. doi:10.1214/aos/1176344552.
+
+\bibitem{wilson} E.~B. Wilson, ``Probable inference, the law of succession, and statistical inference,'' \emph{Journal of
+the American Statistical Association}, vol.~22, no.~158, pp.~209--212, 1927. doi:10.1080/01621459.1927.10502953.
 
 \end{thebibliography}
 
