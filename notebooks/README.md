@@ -68,8 +68,11 @@ python scripts/check_notebooks.py          # the static check: layout, mirror, l
 python scripts/check_notebooks.py --pypi   # also reads PyPI for the pin of each method package (opt-in, needs the network, never CI)
 ```
 
-The whole set runs in about three minutes on a workstation, the longest notebook being the held-out draw of topic 07, which
-labels 2400 operating points with the Python engine. Every random draw is seeded, so a second run writes the same bytes.
+The longest notebook is the live CrusherBayes notebook of topic 08 (`08-crusherbayes/02`), which samples one fold and the
+all-surveys posterior with short chains: about four and a half minutes per language measured on 2026-11-04, with its fold cell
+taking about three minutes on its own, and longer on a loaded machine, where the runner's per-cell timeout of 600 seconds can be
+reached. The held-out draw of topic 07 labels 2400 operating points with the Python engine. Every random draw is seeded, so a
+second run writes the same bytes.
 
 Only the runner writes a notebook's outputs; the committed notebooks are the runner's output. To read one, open it on
 GitHub or in any Jupyter client (select the `.venv-notebooks` kernel to run it).
