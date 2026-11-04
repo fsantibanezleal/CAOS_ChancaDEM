@@ -267,6 +267,281 @@ kr = [r"\begin{tabular}{@{}lrr@{}}", r"\toprule", r"Term & Throughput & Power \\
       r"\bottomrule", r"\end{tabular}"]
 write("tab-dropping-rule.tex", "\n".join(kr) + "\n")
 
+# ---------------------------------------------------------------- the comparison with the published methods, with intervals
+# Every method is scored on the same ten surveys from the committed held-out predictions (strict leave-one-survey-out: every
+# scalar a method fits on the surveys is refit without the held-out one). Two rows fit nothing on the surveys: the bare Bond
+# draw (work index of the ore blend) and the engine at the published constants of Rocha et al. (fitted by those authors on
+# the same ten surveys, so in sample for that fit). The 95 percent intervals of MAPE and RMSE are percentile bootstraps over
+# the ten surveys (B resamples, seeded); the interval of a coverage is the Wilson score interval of a binomial proportion.
+BOOT = 20000
+BOOT_SEED = 42
+rng_boot = np.random.default_rng(BOOT_SEED)
+BOOT_IDX = rng_boot.integers(0, 10, size=(BOOT, 10))
+strict = {t: loo["loo"][t]["strict"] for t in ("tph", "kW")}
+meas = {"tph": tph_m, "kW": kw_m}
+PRED: dict[str, dict[str, tuple[str, np.ndarray, str]]] = {
+    "kW": {
+        "cb": ("CrusherBayes", np.array(sc["kW"]["pred_mean"]), "eight scalars, noise, discrepancy"),
+        "blin": ("Setting-only line", np.array(strict["kW"]["pred"]["B_lin"]), "intercept, slope"),
+        "free": ("Free-form linear fit", np.array(strict["kW"]["pred"]["M2"]), "intercept, two slopes"),
+        "mnl": ("Morrell with no-load term", np.array(strict["kW"]["pred"]["Morrell_noload"]), "$M_{ic}$, no-load power"),
+        "back": ("Refit current-based form", np.array(strict["kW"]["pred"]["M0"]), r"$\zeta$, $P_n$"),
+        "resid": ("Refit form with bounded residual", np.array(strict["kW"]["pred"]["M1"]), r"$\zeta$, $P_n$, ridge residual"),
+        "mor": ("Morrell through the origin", np.array(strict["kW"]["pred"]["Morrell"]), "$M_{ic}$"),
+        "const": ("Constant mean", None, "the mean"),
+        "bond": ("Bond draw, blend work index", np.array([r["bare_bond"] for r in loo["power_parity"]["per_survey"]]), "none"),
+        "pub": ("Engine at the published constants", np.array([r["engine_pc"] for r in loo["power_parity"]["per_survey"]]),
+                "none; published fit"),
+    },
+    "tph": {
+        "cb": ("CrusherBayes", np.array(sc["tph"]["pred_mean"]), "eight scalars, noise, discrepancy"),
+        "back": ("Refit capacity base", np.array(strict["tph"]["pred"]["M0"]), r"$Q_{\mathrm{ref}}$"),
+        "free": ("Free-form linear fit", np.array(strict["tph"]["pred"]["M2"]), "intercept, two slopes"),
+        "resid": ("Capacity base with bounded residual", np.array(strict["tph"]["pred"]["M1"]), r"$Q_{\mathrm{ref}}$, ridge residual"),
+        "blin": ("Setting-only line", np.array(strict["tph"]["pred"]["B_lin"]), "intercept, slope"),
+        "const": ("Constant mean", None, "the mean"),
+        "pub": ("Engine at the published constants", np.array([r["backbone"] for r in loo["tph_parity"]["per_survey"]]),
+                "none; published fit"),
+    },
+}
+for t in ("tph", "kW"):   # the constant mean of each fold: the mean of the nine training surveys
+    m = meas[t]
+    PRED[t]["const"] = ("Constant mean", np.array([np.mean(np.delete(m, i)) for i in range(10)]), "the mean")
+    for key, (_, p, _) in PRED[t].items():
+        if key == "const":
+            assert abs(100 * np.mean(np.abs(p - m) / m) - loo["loo"][t]["strict"]["constant_mean"]["mape_pct"]) < 0.01
+assert abs(100 * np.mean(np.abs(PRED["kW"]["bond"][1] - kw_m) / kw_m) - loo["power_parity"]["bare_bond"]["mape_pct"]) < 0.05
+
+
+def ape(t: str, key: str) -> np.ndarray:
+    return 100.0 * np.abs(PRED[t][key][1] - meas[t]) / meas[t]
+
+
+def boot_ci(values: np.ndarray, stat=np.mean) -> tuple[float, float]:
+    s = stat(values[BOOT_IDX], axis=1)
+    return float(np.quantile(s, 0.025)), float(np.quantile(s, 0.975))
+
+
+def rmse_ci(err: np.ndarray) -> tuple[float, float]:
+    s = np.sqrt(np.mean(err[BOOT_IDX] ** 2, axis=1))
+    return float(np.quantile(s, 0.025)), float(np.quantile(s, 0.975))
+
+
+def wilson(k: int, n: int, z: float = 1.959964) -> tuple[float, float]:
+    p = k / n
+    den = 1 + z * z / n
+    centre = (p + z * z / (2 * n)) / den
+    half = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / den
+    return centre - half, centre + half
+
+
+BANDED = {"cb": None, "blin": "B_lin", "back": "M0", "free": "M2"}
+STATS: dict[str, dict[str, dict]] = {"tph": {}, "kW": {}}
+for t in ("tph", "kW"):
+    for key, (label, p, fitted) in PRED[t].items():
+        a = ape(t, key)
+        err = p - meas[t]
+        row = {"label": label, "fitted": fitted, "mape": float(a.mean()), "mape_ci": boot_ci(a),
+               "rmse": float(np.sqrt(np.mean(err ** 2))), "rmse_ci": rmse_ci(err)}
+        if key in BANDED:
+            s = sc[t]["scores"] if key == "cb" else cmp_[t][BANDED[key]]
+            k = int(round(s["coverage_80"] * 10))
+            row.update(coverage=s["coverage_80"], coverage_ci=wilson(k, 10), width=s["mean_width"], lpd=s["lpd_mean"])
+        STATS[t][key] = row
+tk = {"tph": "Tph", "kW": "Kw"}
+KEYN = {"cb": "Cb", "blin": "Blin", "free": "Free", "mnl": "Mnl", "back": "Back", "resid": "Resid", "mor": "Mor",
+        "const": "Const", "bond": "Bond", "pub": "Pub"}
+for t in ("tph", "kW"):
+    for key, row in STATS[t].items():
+        base = f"{KEYN[key].lower()}{tk[t]}"
+        put(f"{base}MapeBoot", row["mape"], "loo" if key != "cb" else "cb", f"mean absolute percentage error of {key} ({t}), recomputed", 2)
+        put(f"{base}MapeLo", row["mape_ci"][0], "loo", f"2.5 percent bootstrap quantile of the MAPE of {key} ({t}), {BOOT} resamples, seed {BOOT_SEED}", 1)
+        put(f"{base}MapeHi", row["mape_ci"][1], "loo", f"97.5 percent bootstrap quantile of the MAPE of {key} ({t})", 1)
+        if "coverage_ci" in row:
+            put(f"{base}CovLo", row["coverage_ci"][0], "cb", f"Wilson 95 percent lower bound of the coverage of {key} ({t})", 2)
+            put(f"{base}CovHi", row["coverage_ci"][1], "cb", f"Wilson 95 percent upper bound of the coverage of {key} ({t})", 2)
+# paired differences: CrusherBayes minus each comparator, the same bootstrap resamples (positive: CrusherBayes is worse)
+PAIRED: dict[str, dict[str, dict]] = {"tph": {}, "kW": {}}
+for t in ("tph", "kW"):
+    acb = ape(t, "cb")
+    for key in PRED[t]:
+        if key == "cb":
+            continue
+        d = acb - ape(t, key)
+        s = d[BOOT_IDX].mean(axis=1)
+        PAIRED[t][key] = {"diff": float(d.mean()), "ci": (float(np.quantile(s, 0.025)), float(np.quantile(s, 0.975))),
+                          "p_better": float(np.mean(s < 0)), "wins": int(np.sum(d < 0))}
+        base = f"d{KEYN[key]}{tk[t]}"
+        put(f"{base}", PAIRED[t][key]["diff"], "cb", f"mean over surveys of APE(CrusherBayes) - APE({key}) ({t}), points", 2)
+        put(f"{base}Lo", PAIRED[t][key]["ci"][0], "cb", f"2.5 percent paired-bootstrap quantile ({t}, {key})", 2)
+        put(f"{base}Hi", PAIRED[t][key]["ci"][1], "cb", f"97.5 percent paired-bootstrap quantile ({t}, {key})", 2)
+        put(f"{base}Wins", PAIRED[t][key]["wins"], "cb", f"surveys where CrusherBayes has the lower APE ({t}, {key})")
+put("nBoot", BOOT, "cb", "bootstrap resamples (make_figs.py constant)")
+put("bootSeed", BOOT_SEED, "cb", "bootstrap seed (make_figs.py constant)")
+for key, nm in (("zeta", "refitZeta"), ("pn", "refitPn")):
+    put(nm, loo["power_parity"]["refit_pc"][key], "loo", f"power_parity.refit_pc.{key}", 2 if key == "zeta" else 1)
+put("pubKwMapeDoc", loo["power_parity"]["engine_pc_1p30_110"]["mape_pct"], "loo", "power_parity.engine_pc_1p30_110.mape_pct", 2)
+put("bondKwMapeDoc", loo["power_parity"]["bare_bond"]["mape_pct"], "loo", "power_parity.bare_bond.mape_pct", 2)
+put("pubTphMapeDoc", loo["tph_parity"]["backbone"]["mape_pct"], "loo", "tph_parity.backbone.mape_pct", 2)
+put("residTphMapeDoc", loo["loo"]["tph"]["strict"]["M1_residual"]["mape_pct"], "loo", "loo.tph.strict.M1_residual.mape_pct", 2)
+put("residKwMapeDoc", loo["loo"]["kW"]["strict"]["M1_residual"]["mape_pct"], "loo", "loo.kW.strict.M1_residual.mape_pct", 2)
+mic = loo["loo"]["kW"]["strict"]["morrell_fit"]
+put("micMin", min(mic["m_ic_kwh_t"]), "loo", "loo.kW.strict.morrell_fit.m_ic_kwh_t (min)", 2)
+put("micMax", max(mic["m_ic_kwh_t"]), "loo", "loo.kW.strict.morrell_fit.m_ic_kwh_t (max)", 2)
+put("noloadMin", min(mic["no_load_kw"]), "loo", "loo.kW.strict.morrell_fit.no_load_kw (min)", 0)
+put("noloadMax", max(mic["no_load_kw"]), "loo", "loo.kW.strict.morrell_fit.no_load_kw (max)", 0)
+r_tph_css = float(np.corrcoef(tph_m, css)[0, 1])
+put("rTphCss", r_tph_css, "csv", "Pearson r of feed_tph with css_mm (derived)", 2)
+put("rKwTph", float(np.corrcoef(kw_m, tph_m)[0, 1]), "csv", "Pearson r of power_kw with feed_tph (derived)", 2)
+p80_bb = np.array([s["backbone"]["p80_mm"] for s in bb["surveys"]])
+put("rKwPeighty", float(np.corrcoef(kw_m, p80_bb)[0, 1]), "bb", "Pearson r of power_kw with surveys[*].backbone.p80_mm (derived)", 2)
+put("peightyMin", p80_bb.min(), "bb", "surveys[*].backbone.p80_mm (min)", 1)
+put("peightyMax", p80_bb.max(), "bb", "surveys[*].backbone.p80_mm (max)", 1)
+
+
+def ci(lo_hi, d=1):
+    return f"[{fx(lo_hi[0], d)}, {fx(lo_hi[1], d)}]"
+
+
+cmp_rows = [r"\begin{tabular}{@{}lllrlrll@{}}", r"\toprule",
+            r"Target & Method & Fitted on the training surveys & MAPE (\%) & 95\% interval & RMSE & Coverage [95\% interval] & Width \\",
+            r"\midrule"]
+for t, unit in (("kW", "kW"), ("tph", "t/h")):
+    cmp_rows.append(rf"\multicolumn{{8}}{{@{{}}l}}{{\textit{{{'Power' if t == 'kW' else 'Throughput'} ({unit})}}}} \\")
+    for key, row in STATS[t].items():
+        cov = f"{fx(row['coverage'], 1)} {ci(row['coverage_ci'], 2)}" if "coverage" in row else "--"
+        wid = fx(row["width"], 1) if "width" in row else "--"
+        cmp_rows.append(rf"& {row['label']} & {row['fitted']} & {fx(row['mape'])} & {ci(row['mape_ci'])} & {fx(row['rmse'], 1)} & {cov} & {wid} \\")
+    cmp_rows.append(r"\midrule" if t == "kW" else r"\bottomrule")
+cmp_rows.append(r"\end{tabular}")
+write("tab-comparison.tex", "\n".join(cmp_rows) + "\n")
+
+pr = [r"\begin{tabular}{@{}llrlrr@{}}", r"\toprule",
+      r"Target & Comparator & $\Delta$ MAPE (points) & 95\% interval & $P(\Delta<0)$ & Surveys won \\", r"\midrule"]
+for t, unit in (("kW", "kW"), ("tph", "t/h")):
+    pr.append(rf"\multicolumn{{6}}{{@{{}}l}}{{\textit{{{'Power' if t == 'kW' else 'Throughput'}}}}} \\")
+    for key, row in PAIRED[t].items():
+        pr.append(rf"& {PRED[t][key][0]} & {fx(row['diff'])} & {ci(row['ci'], 2)} & {fx(row['p_better'], 3)} & {row['wins']} of 10 \\")
+    pr.append(r"\midrule" if t == "kW" else r"\bottomrule")
+pr.append(r"\end{tabular}")
+write("tab-paired.tex", "\n".join(pr) + "\n")
+
+# ---------------------------------------------------------------- the ablation (documents of ablation/run_ablation.py)
+ABL_DIR = DATA / "ablation"
+ABL_ORDER = [("full", "The method (seed 42)"), ("full-seed43", "The method, seed 43"), ("full-seed44", "The method, seed 44"),
+             ("no-discrepancy", "Without the discrepancy"), ("engine-fixed", "Engine scalars fixed at nominal"),
+             ("balance-fixed", "Population-balance scalars fixed"), ("wide-priors", "Engine prior widths doubled"),
+             ("tau-half", r"Discrepancy scale $\tau_t$ halved"), ("tau-double", r"Discrepancy scale $\tau_t$ doubled"),
+             ("stretch-move", "Stretch move instead of differential evolution")]
+ABL: dict[str, dict] = {"full": cb}
+missing = [n for n, _ in ABL_ORDER[1:] if not (ABL_DIR / f"{n}.json").is_file()]
+if missing:
+    raise SystemExit(f"the ablation documents {missing} are missing: run manuscripts/crusherbayes/ablation/run_ablation.py first")
+for n, _ in ABL_ORDER[1:]:
+    ABL[n] = json.loads((ABL_DIR / f"{n}.json").read_text(encoding="utf-8"))
+    assert ABL[n]["n"] == 10 and ABL[n]["loo"]["kW"]["measured"] == cb["loo"]["kW"]["measured"]
+ABL_SHORT = {"full": "Full", "full-seed43": "SeedB", "full-seed44": "SeedC", "no-discrepancy": "NoDisc", "engine-fixed": "EngFix",
+             "balance-fixed": "BalFix", "wide-priors": "Wide", "tau-half": "TauHalf", "tau-double": "TauDouble",
+             "stretch-move": "Stretch"}
+CONTR_KEYS = {"q_ref_tph": "QRef", "wi_kwh_t": "Wi", "zeta": "Zeta", "pn_kw": "Pn", "k3": "KThree"}
+ab = [r"\begin{tabular}{@{}lrrrrrrrr@{}}", r"\toprule",
+      r"Variant & \multicolumn{3}{c}{Throughput} & \multicolumn{3}{c}{Power} & $\tau_{\max}$ & Converged \\",
+      r" & MAPE & Cov. & Width & MAPE & Cov. & Width & (steps) & \\", r"\midrule"]
+for n, label in ABL_ORDER:
+    d = ABL[n]
+    s_t, s_k = d["loo"]["tph"]["scores"], d["loo"]["kW"]["scores"]
+    taus_n = [f["tau_max"] for f in d["convergence"]["folds"]]
+    nconv = sum(f["converged"] for f in d["convergence"]["folds"])
+    ab.append(rf"{label} & {fx(s_t['mape_pct'])} & {fx(s_t['coverage_80'], 1)} & {fx(s_t['mean_width'], 0)} & "
+              rf"{fx(s_k['mape_pct'])} & {fx(s_k['coverage_80'], 1)} & {fx(s_k['mean_width'], 1)} & "
+              rf"{fx(min(taus_n), 0)}--{fx(max(taus_n), 0)} & {nconv} of {len(taus_n)} \\")
+    if n in ("full-seed44",):
+        ab.append(r"\midrule")
+    sh = ABL_SHORT[n]
+    for t in ("tph", "kW"):
+        for k, nm in (("mape_pct", "Mape"), ("coverage_80", "Cov"), ("mean_width", "Width"), ("lpd_mean", "Lpd")):
+            put(f"ab{sh}{tk[t]}{nm}", d["loo"][t]["scores"][k], "cb" if n == "full" else f"manuscripts/crusherbayes/data/ablation/{n}.json",
+                f"loo.{t}.scores.{k}", 2 if k != "coverage_80" else 1)
+    put(f"ab{sh}Conv", nconv, f"manuscripts/crusherbayes/data/ablation/{n}.json", "convergence.folds[*].converged (count)")
+    put(f"ab{sh}TauMax", max(taus_n), f"manuscripts/crusherbayes/data/ablation/{n}.json", "convergence.folds[*].tau_max (max)", 1)
+    put(f"ab{sh}TauMin", min(taus_n), f"manuscripts/crusherbayes/data/ablation/{n}.json", "convergence.folds[*].tau_max (min)", 1)
+    if n != "full":
+        put(f"ab{sh}Wall", d["wall_seconds"] / 60.0, f"manuscripts/crusherbayes/data/ablation/{n}.json", "wall_seconds / 60", 1)
+    byn = {r["name"]: r for r in d["contraction"]}
+    for k, nm in CONTR_KEYS.items():
+        put(f"ab{sh}{nm}Contr", byn[k]["contraction"], f"manuscripts/crusherbayes/data/ablation/{n}.json",
+            f"contraction[name={k}].contraction", 3)
+    for k, nm in (("discrepancy_kW_css", "DKwCss"), ("discrepancy_tph_css", "DTphCss")):
+        put(f"ab{sh}{nm}Mean", byn[k]["posterior_mean"], f"manuscripts/crusherbayes/data/ablation/{n}.json",
+            f"contraction[name={k}].posterior_mean", 1)
+    put(f"ab{sh}KillA", "holds" if d["kill_criterion"]["a_holds"] else "fails", "cb", "kill_criterion.a_holds")
+    put(f"ab{sh}KillB", "holds" if d["kill_criterion"]["b_holds"] else "fails", "cb", "kill_criterion.b_holds")
+    put(f"ab{sh}Verdict", d["kill_criterion"]["verdict"], "cb", "kill_criterion.verdict")
+ab += [r"\bottomrule", r"\end{tabular}"]
+write("tab-ablation.tex", "\n".join(ab) + "\n")
+seeds = [ABL[n] for n in ("full", "full-seed43", "full-seed44")]
+for t in ("tph", "kW"):
+    v = [d["loo"][t]["scores"]["mape_pct"] for d in seeds]
+    put(f"seedSpread{tk[t]}", max(v) - min(v), "cb", f"max - min over seeds 42, 43, 44 of loo.{t}.scores.mape_pct", 2)
+    w = [d["loo"][t]["scores"]["mean_width"] for d in seeds]
+    put(f"seedWidthSpread{tk[t]}", max(w) - min(w), "cb", f"max - min over seeds 42, 43, 44 of loo.{t}.scores.mean_width", 1)
+put("balFixGainKw", cb["loo"]["kW"]["scores"]["mape_pct"] - ABL["balance-fixed"]["loo"]["kW"]["scores"]["mape_pct"], "cb",
+    "loo.kW.scores.mape_pct (method) - the same of data/ablation/balance-fixed.json", 2)
+walls = [ABL[n]["wall_seconds"] for n, _ in ABL_ORDER[1:]]
+put("wallMin", min(walls) / 60.0, "cb", "min of ablation wall_seconds / 60", 0)
+put("wallMax", max(walls) / 60.0, "cb", "max of ablation wall_seconds / 60", 0)
+put("ablCpu", ABL["full-seed43"]["machine"]["cpu_count"], "cb", "ablation machine.cpu_count")
+
+# ---------------------------------------------------------------- the theory checks (analysis/theory_check.py)
+TH = json.loads((DATA / "theory.json").read_text(encoding="utf-8"))
+THREL = "manuscripts/crusherbayes/data/theory.json"
+put("thOutOfSpan", f"{TH['throughput_shape_out_of_span_rel']:.1e}".replace("e-", r"\times 10^{-") + "}", THREL,
+    "throughput_shape_out_of_span_rel")
+put("thRidge", f"{TH['kw_jacobian_wi_minus_zeta_rel']:.1e}".replace("e-", r"\times 10^{-") + "}", THREL,
+    "kw_jacobian_wi_minus_zeta_rel")
+put("thCorrWz", TH["laplace_corr_wi_zeta"], THREL, "laplace_corr_wi_zeta", 2)
+for t in ("tph", "kW"):
+    s = TH["shrinkage"][t]
+    put(f"thLam{tk[t]}", s["lambda_method"], THREL, f"shrinkage.{t}.lambda_method", 2)
+    put(f"thAtMethod{tk[t]}", s["at_method"]["mape_pct"], THREL, f"shrinkage.{t}.at_method.mape_pct", 2)
+    put(f"thOls{tk[t]}", s["curve"][0]["mape_pct"], THREL, f"shrinkage.{t}.curve[lambda=0].mape_pct", 2)
+    put(f"thBig{tk[t]}", s["curve"][-1]["mape_pct"], THREL, f"shrinkage.{t}.curve[lambda=1000].mape_pct", 2)
+    put(f"thWeight{tk[t]}", s["engine_weight_at_method"], THREL, f"shrinkage.{t}.engine_weight_at_method", 2)
+    best = min(s["curve"], key=lambda c: c["mape_pct"])
+    put(f"thMin{tk[t]}", best["mape_pct"], THREL, f"shrinkage.{t}.curve (min mape_pct)", 2)
+    put(f"thArgmin{tk[t]}", best["lambda"], THREL, f"shrinkage.{t}.curve (lambda at the min)", 1)
+inf = {r["name"]: r for r in TH["information"]}
+fr = [inf[n]["kW"]["fraction_in_span"] for n in inf]
+put("thSpanMin", min(fr), THREL, "information[*].kW.fraction_in_span (min)", 3)
+put("thSpanTShift", inf["t10_shift_pct"]["kW"]["fraction_in_span"], THREL, "information[t10_shift_pct].kW.fraction_in_span", 3)
+put("thSpanKOne", inf["k1_scale"]["kW"]["fraction_in_span"], THREL, "information[k1_scale].kW.fraction_in_span", 3)
+lap = {r["name"]: r for r in TH["laplace"]}
+dev = [abs(r["predicted_ratio"] - r["sampler_ratio"]) for r in TH["laplace"]]
+put("thLapMaxDev", max(dev), THREL, "max |laplace[*].predicted_ratio - sampler_ratio|", 3)
+put("thLapQRef", lap["q_ref_tph"]["predicted_ratio"], THREL, "laplace[q_ref_tph].predicted_ratio", 3)
+put("thLapZeta", lap["zeta"]["predicted_ratio"], THREL, "laplace[zeta].predicted_ratio", 3)
+put("thLapWi", lap["wi_kwh_t"]["predicted_ratio"], THREL, "laplace[wi_kwh_t].predicted_ratio", 3)
+put("thLapPn", lap["pn_kw"]["predicted_ratio"], THREL, "laplace[pn_kw].predicted_ratio", 3)
+bk, by = TH["engine_power_affine_coef"], TH["measured_power_affine_coef"]
+put("thEngSlope", bk[1], THREL, "engine_power_affine_coef[1]", 1)
+put("thMeasSlope", by[1], THREL, "measured_power_affine_coef[1]", 1)
+put("thEngLevel", bk[0], THREL, "engine_power_affine_coef[0]", 0)
+put("thMeasLevel", by[0], THREL, "measured_power_affine_coef[0]", 0)
+put("thSvMin", min(TH["design_singular_values"]), THREL, "design_singular_values (min)", 2)
+put("thSvMax", max(TH["design_singular_values"]), THREL, "design_singular_values (max)", 2)
+NAMEL = {**{k: v[0] for k, v in PL.items()}}
+lt = [r"\begin{tabular}{@{}lrrrr@{}}", r"\toprule",
+      r"Parameter & Share of the power sensitivity in the design span & Linearized ratio & Sampled ratio & Difference \\", r"\midrule"]
+for r in TH["laplace"]:
+    nm = r["name"]
+    share = fx(inf[nm]["kW"]["fraction_in_span"], 3) if nm in inf else "--"
+    lt.append(rf"{NAMEL[nm]} & {share} & {fx(r['predicted_ratio'], 3)} & {fx(r['sampler_ratio'], 3)} & "
+              rf"{fx(r['predicted_ratio'] - r['sampler_ratio'], 3)} \\")
+    if nm == "t10_shift_pct":
+        lt.append(r"\midrule")
+lt += [r"\bottomrule", r"\end{tabular}"]
+write("tab-laplace.tex", "\n".join(lt) + "\n")
+
 (GEN / "numbers.tex").write_text("% generated by figures/make_figs.py from the committed artifacts; do not edit\n" +
                                  "".join(f"\\newcommand{{\\{k}}}{{{v}}}\n" for k, v in sorted(MACROS.items())), encoding="utf-8")
 (DATA / "claims.json").write_text(json.dumps(CLAIMS, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -367,4 +642,124 @@ ax.invert_yaxis()
 fig.tight_layout()
 fig.savefig(OUT / "figures" / "fig-contraction.pdf")
 plt.close(fig)
-print(f"wrote {len(MACROS)} numbers, 7 tables, 3 figures under {OUT}")
+
+
+# ---------------------------------------------------------------- figure 4: held-out MAPE with bootstrap intervals, all methods
+def mape_panel(ax, t, title):
+    rows_t = sorted(STATS[t].items(), key=lambda kv: kv[1]["mape"], reverse=True)
+    yy = np.arange(len(rows_t))
+    for y, (key, row) in zip(yy, rows_t):
+        col = BLUE if key == "cb" else (GREEN if key == "blin" else GREY)
+        ax.plot(row["mape_ci"], [y, y], color=col, lw=1.6)
+        ax.plot(row["mape"], y, "o" if key != "pub" else "s", color=col, ms=4)
+    ax.set_yticks(yy)
+    ax.set_yticklabels([row["label"] for _, row in rows_t], fontsize=6.5)
+    ax.set_xlabel("held-out MAPE (%), 95% interval")
+    ax.set_title(title, loc="left", fontsize=8)
+
+
+fig, axs = plt.subplots(1, 2, figsize=(7.2, 3.2))
+mape_panel(axs[0], "kW", "(a) power")
+mape_panel(axs[1], "tph", "(b) throughput")
+fig.tight_layout()
+fig.savefig(OUT / "figures" / "fig-comparison.pdf")
+plt.close(fig)
+
+
+# ---------------------------------------------------------------- figure 5: the outputs against the closed-side setting
+def setting_panel(ax, t, unit, title):
+    meas_t = meas[t]
+    lo, hi = np.array(sc[t]["lo80"]), np.array(sc[t]["hi80"])
+    mean = np.array(sc[t]["pred_mean"])
+    # surveys at the same setting are spread by 0.9 mm so that their markers do not overlap (the setting is read at the centre)
+    rank = np.array([np.sum(css[:i] == css[i]) for i in range(10)])
+    count = np.array([np.sum(css == c) for c in css])
+    x = css + 0.9 * (rank - (count - 1) / 2)
+    ax.vlines(x + 0.25, lo, hi, color=BLUE, lw=1.6, label="CrusherBayes 80% interval (held out)")
+    ax.plot(x + 0.25, mean, "o", color=BLUE, ms=3)
+    ax.plot(x - 0.25, PRED[t]["pub"][1], "s", color=ORANGE, ms=3.2, mfc="none", label="engine at the published constants")
+    ax.plot(x, PRED[t]["blin"][1], "_", color=GREEN, ms=8, mew=1.6, label="setting-only line (held out)")
+    ax.plot(x, meas_t, "D", color=INK, ms=3.4, label="measured")
+    ax.set_xlabel("closed-side setting (mm)")
+    ax.set_ylabel(f"{title} ({unit})")
+    ax.set_title(f"({'a' if t == 'kW' else 'b'}) {title.lower()}", loc="left", fontsize=8)
+
+
+fig, axs = plt.subplots(1, 2, figsize=(7.2, 3.0))
+setting_panel(axs[0], "kW", "kW", "Power")
+setting_panel(axs[1], "tph", "t/h", "Throughput")
+h, l = axs[0].get_legend_handles_labels()
+fig.legend(h, l, loc="lower center", ncol=4, fontsize=6.5, bbox_to_anchor=(0.5, -0.01))
+fig.tight_layout(rect=(0, 0.09, 1, 1))
+fig.savefig(OUT / "figures" / "fig-setting.pdf")
+plt.close(fig)
+
+# ---------------------------------------------------------------- figure 6: the ablation
+fig, axs = plt.subplots(1, 2, figsize=(7.2, 3.1), sharey=True)
+yy = np.arange(len(ABL_ORDER))
+for ax, t, unit in ((axs[0], "kW", "kW"), (axs[1], "tph", "t/h")):
+    m_ = [ABL[n]["loo"][t]["scores"]["mape_pct"] for n, _ in ABL_ORDER]
+    w_ = [ABL[n]["loo"][t]["scores"]["mean_width"] for n, _ in ABL_ORDER]
+    cv_ = [ABL[n]["loo"][t]["scores"]["coverage_80"] for n, _ in ABL_ORDER]
+    ax.barh(yy, m_, color=[BLUE if n.startswith("full") else GREY for n, _ in ABL_ORDER], height=0.6)
+    ref = STATS[t]["blin" if t == "kW" else "back"]["mape"]
+    ax.axvline(ref, color=GREEN if t == "kW" else ORANGE, lw=1.0, ls="--")
+    for y, mv, wv, cvv in zip(yy, m_, w_, cv_):
+        ax.text(mv + 0.4, y, f"cov {cvv:.1f}, width {wv:.0f} {unit}", va="center", fontsize=6)
+    ax.set_xlabel("held-out MAPE (%)")
+    ax.set_xlim(0, max(m_) * 1.9)
+    ax.set_title(f"({'a' if t == 'kW' else 'b'}) {'power' if t == 'kW' else 'throughput'}", loc="left", fontsize=8)
+axs[0].set_yticks(yy)
+axs[0].set_yticklabels([lab.replace(r"$\tau_t$", "tau") for _, lab in ABL_ORDER], fontsize=6.5)
+axs[0].invert_yaxis()
+fig.tight_layout()
+fig.savefig(OUT / "figures" / "fig-ablation.pdf")
+plt.close(fig)
+
+# ---------------------------------------------------------------- figure 7: convergence of every posterior
+fig, axs = plt.subplots(1, 2, figsize=(7.2, 2.6))
+labels = [str(f["fold"]) if f["fold"] != "all" else "all" for f in folds]
+xx = np.arange(len(folds))
+axs[0].bar(xx, taus, color=BLUE, width=0.6, label="differential-evolution moves")
+st = ABL["stretch-move"]["convergence"]["folds"]
+axs[0].plot(xx, [f["tau_max"] for f in st], "D", color=ORANGE, ms=3.5, label="stretch move")
+axs[0].axhline((meth["steps"] - meth["burn_in_steps"]) / conv["tau_factor"], color=INK, lw=0.7, ls="--")
+axs[0].set_xticks(xx)
+axs[0].set_xticklabels(labels, fontsize=6.5)
+axs[0].set_xlabel("posterior (held-out survey)")
+axs[0].set_ylabel("largest autocorrelation time (steps)")
+axs[0].legend(fontsize=6.5)
+axs[0].set_title("(a) autocorrelation time", loc="left", fontsize=8)
+axs[1].bar(xx, ratios, color=BLUE, width=0.6)
+axs[1].plot(xx, [f["chain_over_tau"] for f in st], "D", color=ORANGE, ms=3.5)
+axs[1].axhline(conv["tau_factor"], color=INK, lw=0.7, ls="--")
+axs[1].set_xticks(xx)
+axs[1].set_xticklabels(labels, fontsize=6.5)
+axs[1].set_xlabel("posterior (held-out survey)")
+axs[1].set_ylabel("post-burn steps / autocorrelation time")
+axs[1].set_title("(b) chain length in autocorrelation times", loc="left", fontsize=8)
+fig.tight_layout()
+fig.savefig(OUT / "figures" / "fig-convergence.pdf")
+plt.close(fig)
+
+# ---------------------------------------------------------------- figure 8: the shrinkage closed form over lambda
+fig, axs = plt.subplots(1, 2, figsize=(7.2, 2.7))
+for ax, t, title in ((axs[0], "kW", "(a) power"), (axs[1], "tph", "(b) throughput")):
+    s = TH["shrinkage"][t]
+    lam = np.array([c["lambda"] for c in s["curve"][1:]])
+    mp = np.array([c["mape_pct"] for c in s["curve"][1:]])
+    ax.semilogx(lam, mp, color=INK, lw=1.2, label="closed form, scalars at nominal")
+    ax.axhline(s["curve"][0]["mape_pct"], color=GREY, lw=0.8, ls=":", label=r"closed form at $\lambda = 0$")
+    ax.plot([s["lambda_method"]], [s["at_method"]["mape_pct"]], "o", color=INK, ms=4)
+    ax.axhline(s["cb_mape_pct"], color=BLUE, lw=1.0, ls="--", label="CrusherBayes (sampled)")
+    ax.axhline(STATS[t]["blin"]["mape"], color=GREEN, lw=1.0, ls="-.", label="setting-only line")
+    ax.axvline(s["lambda_method"], color=GREY, lw=0.6)
+    ax.set_xlabel(r"shrinkage $\lambda=\sigma_t^2/\tau_t^2$")
+    ax.set_ylabel("held-out MAPE (%)")
+    ax.set_title(title, loc="left", fontsize=8)
+h, l = axs[0].get_legend_handles_labels()
+fig.legend(h, l, loc="lower center", ncol=4, fontsize=6.5, bbox_to_anchor=(0.5, -0.01))
+fig.tight_layout(rect=(0, 0.1, 1, 1))
+fig.savefig(OUT / "figures" / "fig-shrinkage.pdf")
+plt.close(fig)
+print(f"wrote {len(MACROS)} numbers, 11 tables, 8 figures under {OUT}")

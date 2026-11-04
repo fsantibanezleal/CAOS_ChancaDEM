@@ -375,7 +375,7 @@
   "key": "inputs_sha256"
  },
  "shaDoc": {
-  "value": "2ad1ae736c7c8a6559be448ea6fa67b732d051e17ea7d8be7487863f7e0fb96c",
+  "value": "f284ec33a390dbafb207c66ca7b5c6a196e746251c252958c1023682e9075778",
   "artifact": "data/derived/hp500/crusherbayes.json",
   "key": "sha256 of the file",
   "note": "computed by make_figs.py"
@@ -809,5 +809,2020 @@
   "value": "16",
   "artifact": "data/derived/hp500/crusherbayes.json",
   "key": "contraction (length)"
+ },
+ "cbTphMapeBoot": {
+  "value": "12.00",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "mean absolute percentage error of cb (tph), recomputed"
+ },
+ "cbTphMapeLo": {
+  "value": "7.7",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "2.5 percent bootstrap quantile of the MAPE of cb (tph), 20000 resamples, seed 42"
+ },
+ "cbTphMapeHi": {
+  "value": "15.9",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "97.5 percent bootstrap quantile of the MAPE of cb (tph)"
+ },
+ "cbTphCovLo": {
+  "value": "0.49",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "Wilson 95 percent lower bound of the coverage of cb (tph)"
+ },
+ "cbTphCovHi": {
+  "value": "0.94",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "Wilson 95 percent upper bound of the coverage of cb (tph)"
+ },
+ "backTphMapeBoot": {
+  "value": "12.09",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "mean absolute percentage error of back (tph), recomputed"
+ },
+ "backTphMapeLo": {
+  "value": "6.0",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "2.5 percent bootstrap quantile of the MAPE of back (tph), 20000 resamples, seed 42"
+ },
+ "backTphMapeHi": {
+  "value": "18.7",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "97.5 percent bootstrap quantile of the MAPE of back (tph)"
+ },
+ "backTphCovLo": {
+  "value": "0.49",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "Wilson 95 percent lower bound of the coverage of back (tph)"
+ },
+ "backTphCovHi": {
+  "value": "0.94",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "Wilson 95 percent upper bound of the coverage of back (tph)"
+ },
+ "freeTphMapeBoot": {
+  "value": "12.18",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "mean absolute percentage error of free (tph), recomputed"
+ },
+ "freeTphMapeLo": {
+  "value": "7.6",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "2.5 percent bootstrap quantile of the MAPE of free (tph), 20000 resamples, seed 42"
+ },
+ "freeTphMapeHi": {
+  "value": "16.3",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "97.5 percent bootstrap quantile of the MAPE of free (tph)"
+ },
+ "freeTphCovLo": {
+  "value": "0.49",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "Wilson 95 percent lower bound of the coverage of free (tph)"
+ },
+ "freeTphCovHi": {
+  "value": "0.94",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "Wilson 95 percent upper bound of the coverage of free (tph)"
+ },
+ "residTphMapeBoot": {
+  "value": "13.45",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "mean absolute percentage error of resid (tph), recomputed"
+ },
+ "residTphMapeLo": {
+  "value": "8.6",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "2.5 percent bootstrap quantile of the MAPE of resid (tph), 20000 resamples, seed 42"
+ },
+ "residTphMapeHi": {
+  "value": "17.7",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "97.5 percent bootstrap quantile of the MAPE of resid (tph)"
+ },
+ "blinTphMapeBoot": {
+  "value": "13.67",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "mean absolute percentage error of blin (tph), recomputed"
+ },
+ "blinTphMapeLo": {
+  "value": "9.7",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "2.5 percent bootstrap quantile of the MAPE of blin (tph), 20000 resamples, seed 42"
+ },
+ "blinTphMapeHi": {
+  "value": "18.0",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "97.5 percent bootstrap quantile of the MAPE of blin (tph)"
+ },
+ "blinTphCovLo": {
+  "value": "0.49",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "Wilson 95 percent lower bound of the coverage of blin (tph)"
+ },
+ "blinTphCovHi": {
+  "value": "0.94",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "Wilson 95 percent upper bound of the coverage of blin (tph)"
+ },
+ "constTphMapeBoot": {
+  "value": "18.29",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "mean absolute percentage error of const (tph), recomputed"
+ },
+ "constTphMapeLo": {
+  "value": "9.2",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "2.5 percent bootstrap quantile of the MAPE of const (tph), 20000 resamples, seed 42"
+ },
+ "constTphMapeHi": {
+  "value": "28.5",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "97.5 percent bootstrap quantile of the MAPE of const (tph)"
+ },
+ "pubTphMapeBoot": {
+  "value": "11.55",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "mean absolute percentage error of pub (tph), recomputed"
+ },
+ "pubTphMapeLo": {
+  "value": "7.4",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "2.5 percent bootstrap quantile of the MAPE of pub (tph), 20000 resamples, seed 42"
+ },
+ "pubTphMapeHi": {
+  "value": "16.2",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "97.5 percent bootstrap quantile of the MAPE of pub (tph)"
+ },
+ "cbKwMapeBoot": {
+  "value": "14.31",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "mean absolute percentage error of cb (kW), recomputed"
+ },
+ "cbKwMapeLo": {
+  "value": "9.0",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "2.5 percent bootstrap quantile of the MAPE of cb (kW), 20000 resamples, seed 42"
+ },
+ "cbKwMapeHi": {
+  "value": "19.5",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "97.5 percent bootstrap quantile of the MAPE of cb (kW)"
+ },
+ "cbKwCovLo": {
+  "value": "0.60",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "Wilson 95 percent lower bound of the coverage of cb (kW)"
+ },
+ "cbKwCovHi": {
+  "value": "0.98",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "Wilson 95 percent upper bound of the coverage of cb (kW)"
+ },
+ "blinKwMapeBoot": {
+  "value": "12.78",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "mean absolute percentage error of blin (kW), recomputed"
+ },
+ "blinKwMapeLo": {
+  "value": "7.4",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "2.5 percent bootstrap quantile of the MAPE of blin (kW), 20000 resamples, seed 42"
+ },
+ "blinKwMapeHi": {
+  "value": "18.4",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "97.5 percent bootstrap quantile of the MAPE of blin (kW)"
+ },
+ "blinKwCovLo": {
+  "value": "0.49",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "Wilson 95 percent lower bound of the coverage of blin (kW)"
+ },
+ "blinKwCovHi": {
+  "value": "0.94",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "Wilson 95 percent upper bound of the coverage of blin (kW)"
+ },
+ "freeKwMapeBoot": {
+  "value": "14.03",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "mean absolute percentage error of free (kW), recomputed"
+ },
+ "freeKwMapeLo": {
+  "value": "8.4",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "2.5 percent bootstrap quantile of the MAPE of free (kW), 20000 resamples, seed 42"
+ },
+ "freeKwMapeHi": {
+  "value": "19.7",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "97.5 percent bootstrap quantile of the MAPE of free (kW)"
+ },
+ "freeKwCovLo": {
+  "value": "0.49",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "Wilson 95 percent lower bound of the coverage of free (kW)"
+ },
+ "freeKwCovHi": {
+  "value": "0.94",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "Wilson 95 percent upper bound of the coverage of free (kW)"
+ },
+ "mnlKwMapeBoot": {
+  "value": "15.22",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "mean absolute percentage error of mnl (kW), recomputed"
+ },
+ "mnlKwMapeLo": {
+  "value": "6.4",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "2.5 percent bootstrap quantile of the MAPE of mnl (kW), 20000 resamples, seed 42"
+ },
+ "mnlKwMapeHi": {
+  "value": "24.9",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "97.5 percent bootstrap quantile of the MAPE of mnl (kW)"
+ },
+ "backKwMapeBoot": {
+  "value": "25.94",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "mean absolute percentage error of back (kW), recomputed"
+ },
+ "backKwMapeLo": {
+  "value": "17.3",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "2.5 percent bootstrap quantile of the MAPE of back (kW), 20000 resamples, seed 42"
+ },
+ "backKwMapeHi": {
+  "value": "34.9",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "97.5 percent bootstrap quantile of the MAPE of back (kW)"
+ },
+ "backKwCovLo": {
+  "value": "0.60",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "Wilson 95 percent lower bound of the coverage of back (kW)"
+ },
+ "backKwCovHi": {
+  "value": "0.98",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "Wilson 95 percent upper bound of the coverage of back (kW)"
+ },
+ "residKwMapeBoot": {
+  "value": "25.37",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "mean absolute percentage error of resid (kW), recomputed"
+ },
+ "residKwMapeLo": {
+  "value": "16.0",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "2.5 percent bootstrap quantile of the MAPE of resid (kW), 20000 resamples, seed 42"
+ },
+ "residKwMapeHi": {
+  "value": "37.9",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "97.5 percent bootstrap quantile of the MAPE of resid (kW)"
+ },
+ "morKwMapeBoot": {
+  "value": "38.08",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "mean absolute percentage error of mor (kW), recomputed"
+ },
+ "morKwMapeLo": {
+  "value": "24.4",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "2.5 percent bootstrap quantile of the MAPE of mor (kW), 20000 resamples, seed 42"
+ },
+ "morKwMapeHi": {
+  "value": "54.1",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "97.5 percent bootstrap quantile of the MAPE of mor (kW)"
+ },
+ "constKwMapeBoot": {
+  "value": "24.48",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "mean absolute percentage error of const (kW), recomputed"
+ },
+ "constKwMapeLo": {
+  "value": "15.2",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "2.5 percent bootstrap quantile of the MAPE of const (kW), 20000 resamples, seed 42"
+ },
+ "constKwMapeHi": {
+  "value": "35.2",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "97.5 percent bootstrap quantile of the MAPE of const (kW)"
+ },
+ "bondKwMapeBoot": {
+  "value": "26.88",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "mean absolute percentage error of bond (kW), recomputed"
+ },
+ "bondKwMapeLo": {
+  "value": "20.0",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "2.5 percent bootstrap quantile of the MAPE of bond (kW), 20000 resamples, seed 42"
+ },
+ "bondKwMapeHi": {
+  "value": "33.2",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "97.5 percent bootstrap quantile of the MAPE of bond (kW)"
+ },
+ "pubKwMapeBoot": {
+  "value": "47.58",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "mean absolute percentage error of pub (kW), recomputed"
+ },
+ "pubKwMapeLo": {
+  "value": "24.6",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "2.5 percent bootstrap quantile of the MAPE of pub (kW), 20000 resamples, seed 42"
+ },
+ "pubKwMapeHi": {
+  "value": "73.5",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "97.5 percent bootstrap quantile of the MAPE of pub (kW)"
+ },
+ "dBackTph": {
+  "value": "-0.09",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "mean over surveys of APE(CrusherBayes) - APE(back) (tph), points"
+ },
+ "dBackTphLo": {
+  "value": "-6.30",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "2.5 percent paired-bootstrap quantile (tph, back)"
+ },
+ "dBackTphHi": {
+  "value": "6.06",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "97.5 percent paired-bootstrap quantile (tph, back)"
+ },
+ "dBackTphWins": {
+  "value": "5",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "surveys where CrusherBayes has the lower APE (tph, back)"
+ },
+ "dFreeTph": {
+  "value": "-0.18",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "mean over surveys of APE(CrusherBayes) - APE(free) (tph), points"
+ },
+ "dFreeTphLo": {
+  "value": "-1.36",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "2.5 percent paired-bootstrap quantile (tph, free)"
+ },
+ "dFreeTphHi": {
+  "value": "1.01",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "97.5 percent paired-bootstrap quantile (tph, free)"
+ },
+ "dFreeTphWins": {
+  "value": "6",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "surveys where CrusherBayes has the lower APE (tph, free)"
+ },
+ "dResidTph": {
+  "value": "-1.45",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "mean over surveys of APE(CrusherBayes) - APE(resid) (tph), points"
+ },
+ "dResidTphLo": {
+  "value": "-2.06",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "2.5 percent paired-bootstrap quantile (tph, resid)"
+ },
+ "dResidTphHi": {
+  "value": "-0.76",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "97.5 percent paired-bootstrap quantile (tph, resid)"
+ },
+ "dResidTphWins": {
+  "value": "9",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "surveys where CrusherBayes has the lower APE (tph, resid)"
+ },
+ "dBlinTph": {
+  "value": "-1.67",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "mean over surveys of APE(CrusherBayes) - APE(blin) (tph), points"
+ },
+ "dBlinTphLo": {
+  "value": "-4.61",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "2.5 percent paired-bootstrap quantile (tph, blin)"
+ },
+ "dBlinTphHi": {
+  "value": "2.23",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "97.5 percent paired-bootstrap quantile (tph, blin)"
+ },
+ "dBlinTphWins": {
+  "value": "8",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "surveys where CrusherBayes has the lower APE (tph, blin)"
+ },
+ "dConstTph": {
+  "value": "-6.29",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "mean over surveys of APE(CrusherBayes) - APE(const) (tph), points"
+ },
+ "dConstTphLo": {
+  "value": "-15.85",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "2.5 percent paired-bootstrap quantile (tph, const)"
+ },
+ "dConstTphHi": {
+  "value": "2.19",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "97.5 percent paired-bootstrap quantile (tph, const)"
+ },
+ "dConstTphWins": {
+  "value": "5",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "surveys where CrusherBayes has the lower APE (tph, const)"
+ },
+ "dPubTph": {
+  "value": "0.45",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "mean over surveys of APE(CrusherBayes) - APE(pub) (tph), points"
+ },
+ "dPubTphLo": {
+  "value": "-3.44",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "2.5 percent paired-bootstrap quantile (tph, pub)"
+ },
+ "dPubTphHi": {
+  "value": "4.49",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "97.5 percent paired-bootstrap quantile (tph, pub)"
+ },
+ "dPubTphWins": {
+  "value": "6",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "surveys where CrusherBayes has the lower APE (tph, pub)"
+ },
+ "dBlinKw": {
+  "value": "1.54",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "mean over surveys of APE(CrusherBayes) - APE(blin) (kW), points"
+ },
+ "dBlinKwLo": {
+  "value": "-1.11",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "2.5 percent paired-bootstrap quantile (kW, blin)"
+ },
+ "dBlinKwHi": {
+  "value": "4.10",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "97.5 percent paired-bootstrap quantile (kW, blin)"
+ },
+ "dBlinKwWins": {
+  "value": "5",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "surveys where CrusherBayes has the lower APE (kW, blin)"
+ },
+ "dFreeKw": {
+  "value": "0.28",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "mean over surveys of APE(CrusherBayes) - APE(free) (kW), points"
+ },
+ "dFreeKwLo": {
+  "value": "-3.36",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "2.5 percent paired-bootstrap quantile (kW, free)"
+ },
+ "dFreeKwHi": {
+  "value": "3.77",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "97.5 percent paired-bootstrap quantile (kW, free)"
+ },
+ "dFreeKwWins": {
+  "value": "6",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "surveys where CrusherBayes has the lower APE (kW, free)"
+ },
+ "dMnlKw": {
+  "value": "-0.90",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "mean over surveys of APE(CrusherBayes) - APE(mnl) (kW), points"
+ },
+ "dMnlKwLo": {
+  "value": "-8.71",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "2.5 percent paired-bootstrap quantile (kW, mnl)"
+ },
+ "dMnlKwHi": {
+  "value": "6.89",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "97.5 percent paired-bootstrap quantile (kW, mnl)"
+ },
+ "dMnlKwWins": {
+  "value": "5",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "surveys where CrusherBayes has the lower APE (kW, mnl)"
+ },
+ "dBackKw": {
+  "value": "-11.63",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "mean over surveys of APE(CrusherBayes) - APE(back) (kW), points"
+ },
+ "dBackKwLo": {
+  "value": "-18.25",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "2.5 percent paired-bootstrap quantile (kW, back)"
+ },
+ "dBackKwHi": {
+  "value": "-4.47",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "97.5 percent paired-bootstrap quantile (kW, back)"
+ },
+ "dBackKwWins": {
+  "value": "7",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "surveys where CrusherBayes has the lower APE (kW, back)"
+ },
+ "dResidKw": {
+  "value": "-11.06",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "mean over surveys of APE(CrusherBayes) - APE(resid) (kW), points"
+ },
+ "dResidKwLo": {
+  "value": "-21.30",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "2.5 percent paired-bootstrap quantile (kW, resid)"
+ },
+ "dResidKwHi": {
+  "value": "-3.63",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "97.5 percent paired-bootstrap quantile (kW, resid)"
+ },
+ "dResidKwWins": {
+  "value": "8",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "surveys where CrusherBayes has the lower APE (kW, resid)"
+ },
+ "dMorKw": {
+  "value": "-23.77",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "mean over surveys of APE(CrusherBayes) - APE(mor) (kW), points"
+ },
+ "dMorKwLo": {
+  "value": "-39.44",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "2.5 percent paired-bootstrap quantile (kW, mor)"
+ },
+ "dMorKwHi": {
+  "value": "-9.70",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "97.5 percent paired-bootstrap quantile (kW, mor)"
+ },
+ "dMorKwWins": {
+  "value": "9",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "surveys where CrusherBayes has the lower APE (kW, mor)"
+ },
+ "dConstKw": {
+  "value": "-10.16",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "mean over surveys of APE(CrusherBayes) - APE(const) (kW), points"
+ },
+ "dConstKwLo": {
+  "value": "-19.32",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "2.5 percent paired-bootstrap quantile (kW, const)"
+ },
+ "dConstKwHi": {
+  "value": "-0.72",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "97.5 percent paired-bootstrap quantile (kW, const)"
+ },
+ "dConstKwWins": {
+  "value": "6",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "surveys where CrusherBayes has the lower APE (kW, const)"
+ },
+ "dBondKw": {
+  "value": "-12.56",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "mean over surveys of APE(CrusherBayes) - APE(bond) (kW), points"
+ },
+ "dBondKwLo": {
+  "value": "-21.98",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "2.5 percent paired-bootstrap quantile (kW, bond)"
+ },
+ "dBondKwHi": {
+  "value": "-3.58",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "97.5 percent paired-bootstrap quantile (kW, bond)"
+ },
+ "dBondKwWins": {
+  "value": "7",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "surveys where CrusherBayes has the lower APE (kW, bond)"
+ },
+ "dPubKw": {
+  "value": "-33.27",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "mean over surveys of APE(CrusherBayes) - APE(pub) (kW), points"
+ },
+ "dPubKwLo": {
+  "value": "-56.55",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "2.5 percent paired-bootstrap quantile (kW, pub)"
+ },
+ "dPubKwHi": {
+  "value": "-12.16",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "97.5 percent paired-bootstrap quantile (kW, pub)"
+ },
+ "dPubKwWins": {
+  "value": "8",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "surveys where CrusherBayes has the lower APE (kW, pub)"
+ },
+ "nBoot": {
+  "value": "20000",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "bootstrap resamples (make_figs.py constant)"
+ },
+ "bootSeed": {
+  "value": "42",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "bootstrap seed (make_figs.py constant)"
+ },
+ "refitZeta": {
+  "value": "-2.41",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "power_parity.refit_pc.zeta"
+ },
+ "refitPn": {
+  "value": "828.6",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "power_parity.refit_pc.pn"
+ },
+ "pubKwMapeDoc": {
+  "value": "47.58",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "power_parity.engine_pc_1p30_110.mape_pct"
+ },
+ "bondKwMapeDoc": {
+  "value": "26.88",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "power_parity.bare_bond.mape_pct"
+ },
+ "pubTphMapeDoc": {
+  "value": "11.55",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "tph_parity.backbone.mape_pct"
+ },
+ "residTphMapeDoc": {
+  "value": "13.45",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "loo.tph.strict.M1_residual.mape_pct"
+ },
+ "residKwMapeDoc": {
+  "value": "25.37",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "loo.kW.strict.M1_residual.mape_pct"
+ },
+ "micMin": {
+  "value": "3.70",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "loo.kW.strict.morrell_fit.m_ic_kwh_t (min)"
+ },
+ "micMax": {
+  "value": "4.21",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "loo.kW.strict.morrell_fit.m_ic_kwh_t (max)"
+ },
+ "noloadMin": {
+  "value": "591",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "loo.kW.strict.morrell_fit.no_load_kw (min)"
+ },
+ "noloadMax": {
+  "value": "727",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "loo.kW.strict.morrell_fit.no_load_kw (max)"
+ },
+ "rTphCss": {
+  "value": "0.81",
+  "artifact": "data/examples/hp500-surveys.csv",
+  "key": "Pearson r of feed_tph with css_mm (derived)"
+ },
+ "rKwTph": {
+  "value": "-0.85",
+  "artifact": "data/examples/hp500-surveys.csv",
+  "key": "Pearson r of power_kw with feed_tph (derived)"
+ },
+ "rKwPeighty": {
+  "value": "-0.14",
+  "artifact": "data/derived/hp500/backbone.json",
+  "key": "Pearson r of power_kw with surveys[*].backbone.p80_mm (derived)"
+ },
+ "peightyMin": {
+  "value": "21.2",
+  "artifact": "data/derived/hp500/backbone.json",
+  "key": "surveys[*].backbone.p80_mm (min)"
+ },
+ "peightyMax": {
+  "value": "36.6",
+  "artifact": "data/derived/hp500/backbone.json",
+  "key": "surveys[*].backbone.p80_mm (max)"
+ },
+ "abFullTphMape": {
+  "value": "12.00",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "loo.tph.scores.mape_pct"
+ },
+ "abFullTphCov": {
+  "value": "0.8",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "loo.tph.scores.coverage_80"
+ },
+ "abFullTphWidth": {
+  "value": "439.12",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "loo.tph.scores.mean_width"
+ },
+ "abFullTphLpd": {
+  "value": "-6.68",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "loo.tph.scores.lpd_mean"
+ },
+ "abFullKwMape": {
+  "value": "14.31",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "loo.kW.scores.mape_pct"
+ },
+ "abFullKwCov": {
+  "value": "0.9",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "loo.kW.scores.coverage_80"
+ },
+ "abFullKwWidth": {
+  "value": "117.74",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "loo.kW.scores.mean_width"
+ },
+ "abFullKwLpd": {
+  "value": "-5.35",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "loo.kW.scores.lpd_mean"
+ },
+ "abFullConv": {
+  "value": "11",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full.json",
+  "key": "convergence.folds[*].converged (count)"
+ },
+ "abFullTauMax": {
+  "value": "84.8",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full.json",
+  "key": "convergence.folds[*].tau_max (max)"
+ },
+ "abFullTauMin": {
+  "value": "48.0",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full.json",
+  "key": "convergence.folds[*].tau_max (min)"
+ },
+ "abFullQRefContr": {
+  "value": "0.454",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full.json",
+  "key": "contraction[name=q_ref_tph].contraction"
+ },
+ "abFullWiContr": {
+  "value": "0.854",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full.json",
+  "key": "contraction[name=wi_kwh_t].contraction"
+ },
+ "abFullZetaContr": {
+  "value": "0.733",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full.json",
+  "key": "contraction[name=zeta].contraction"
+ },
+ "abFullPnContr": {
+  "value": "0.795",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full.json",
+  "key": "contraction[name=pn_kw].contraction"
+ },
+ "abFullKThreeContr": {
+  "value": "0.992",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full.json",
+  "key": "contraction[name=k3].contraction"
+ },
+ "abFullDKwCssMean": {
+  "value": "-57.1",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full.json",
+  "key": "contraction[name=discrepancy_kW_css].posterior_mean"
+ },
+ "abFullDTphCssMean": {
+  "value": "100.8",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full.json",
+  "key": "contraction[name=discrepancy_tph_css].posterior_mean"
+ },
+ "abFullKillA": {
+  "value": "holds",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.a_holds"
+ },
+ "abFullKillB": {
+  "value": "fails",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.b_holds"
+ },
+ "abFullVerdict": {
+  "value": "kept",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.verdict"
+ },
+ "abSeedBTphMape": {
+  "value": "11.99",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed43.json",
+  "key": "loo.tph.scores.mape_pct"
+ },
+ "abSeedBTphCov": {
+  "value": "0.8",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed43.json",
+  "key": "loo.tph.scores.coverage_80"
+ },
+ "abSeedBTphWidth": {
+  "value": "437.94",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed43.json",
+  "key": "loo.tph.scores.mean_width"
+ },
+ "abSeedBTphLpd": {
+  "value": "-6.68",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed43.json",
+  "key": "loo.tph.scores.lpd_mean"
+ },
+ "abSeedBKwMape": {
+  "value": "14.29",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed43.json",
+  "key": "loo.kW.scores.mape_pct"
+ },
+ "abSeedBKwCov": {
+  "value": "0.9",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed43.json",
+  "key": "loo.kW.scores.coverage_80"
+ },
+ "abSeedBKwWidth": {
+  "value": "117.81",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed43.json",
+  "key": "loo.kW.scores.mean_width"
+ },
+ "abSeedBKwLpd": {
+  "value": "-5.35",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed43.json",
+  "key": "loo.kW.scores.lpd_mean"
+ },
+ "abSeedBConv": {
+  "value": "11",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed43.json",
+  "key": "convergence.folds[*].converged (count)"
+ },
+ "abSeedBTauMax": {
+  "value": "79.8",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed43.json",
+  "key": "convergence.folds[*].tau_max (max)"
+ },
+ "abSeedBTauMin": {
+  "value": "49.9",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed43.json",
+  "key": "convergence.folds[*].tau_max (min)"
+ },
+ "abSeedBWall": {
+  "value": "28.3",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed43.json",
+  "key": "wall_seconds / 60"
+ },
+ "abSeedBQRefContr": {
+  "value": "0.450",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed43.json",
+  "key": "contraction[name=q_ref_tph].contraction"
+ },
+ "abSeedBWiContr": {
+  "value": "0.864",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed43.json",
+  "key": "contraction[name=wi_kwh_t].contraction"
+ },
+ "abSeedBZetaContr": {
+  "value": "0.720",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed43.json",
+  "key": "contraction[name=zeta].contraction"
+ },
+ "abSeedBPnContr": {
+  "value": "0.811",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed43.json",
+  "key": "contraction[name=pn_kw].contraction"
+ },
+ "abSeedBKThreeContr": {
+  "value": "1.005",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed43.json",
+  "key": "contraction[name=k3].contraction"
+ },
+ "abSeedBDKwCssMean": {
+  "value": "-57.3",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed43.json",
+  "key": "contraction[name=discrepancy_kW_css].posterior_mean"
+ },
+ "abSeedBDTphCssMean": {
+  "value": "99.6",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed43.json",
+  "key": "contraction[name=discrepancy_tph_css].posterior_mean"
+ },
+ "abSeedBKillA": {
+  "value": "holds",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.a_holds"
+ },
+ "abSeedBKillB": {
+  "value": "fails",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.b_holds"
+ },
+ "abSeedBVerdict": {
+  "value": "kept",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.verdict"
+ },
+ "abSeedCTphMape": {
+  "value": "11.99",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed44.json",
+  "key": "loo.tph.scores.mape_pct"
+ },
+ "abSeedCTphCov": {
+  "value": "0.8",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed44.json",
+  "key": "loo.tph.scores.coverage_80"
+ },
+ "abSeedCTphWidth": {
+  "value": "439.28",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed44.json",
+  "key": "loo.tph.scores.mean_width"
+ },
+ "abSeedCTphLpd": {
+  "value": "-6.67",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed44.json",
+  "key": "loo.tph.scores.lpd_mean"
+ },
+ "abSeedCKwMape": {
+  "value": "14.31",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed44.json",
+  "key": "loo.kW.scores.mape_pct"
+ },
+ "abSeedCKwCov": {
+  "value": "0.9",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed44.json",
+  "key": "loo.kW.scores.coverage_80"
+ },
+ "abSeedCKwWidth": {
+  "value": "117.74",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed44.json",
+  "key": "loo.kW.scores.mean_width"
+ },
+ "abSeedCKwLpd": {
+  "value": "-5.35",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed44.json",
+  "key": "loo.kW.scores.lpd_mean"
+ },
+ "abSeedCConv": {
+  "value": "11",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed44.json",
+  "key": "convergence.folds[*].converged (count)"
+ },
+ "abSeedCTauMax": {
+  "value": "73.3",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed44.json",
+  "key": "convergence.folds[*].tau_max (max)"
+ },
+ "abSeedCTauMin": {
+  "value": "47.2",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed44.json",
+  "key": "convergence.folds[*].tau_max (min)"
+ },
+ "abSeedCWall": {
+  "value": "28.0",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed44.json",
+  "key": "wall_seconds / 60"
+ },
+ "abSeedCQRefContr": {
+  "value": "0.450",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed44.json",
+  "key": "contraction[name=q_ref_tph].contraction"
+ },
+ "abSeedCWiContr": {
+  "value": "0.846",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed44.json",
+  "key": "contraction[name=wi_kwh_t].contraction"
+ },
+ "abSeedCZetaContr": {
+  "value": "0.721",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed44.json",
+  "key": "contraction[name=zeta].contraction"
+ },
+ "abSeedCPnContr": {
+  "value": "0.807",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed44.json",
+  "key": "contraction[name=pn_kw].contraction"
+ },
+ "abSeedCKThreeContr": {
+  "value": "1.000",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed44.json",
+  "key": "contraction[name=k3].contraction"
+ },
+ "abSeedCDKwCssMean": {
+  "value": "-56.9",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed44.json",
+  "key": "contraction[name=discrepancy_kW_css].posterior_mean"
+ },
+ "abSeedCDTphCssMean": {
+  "value": "99.8",
+  "artifact": "manuscripts/crusherbayes/data/ablation/full-seed44.json",
+  "key": "contraction[name=discrepancy_tph_css].posterior_mean"
+ },
+ "abSeedCKillA": {
+  "value": "holds",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.a_holds"
+ },
+ "abSeedCKillB": {
+  "value": "fails",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.b_holds"
+ },
+ "abSeedCVerdict": {
+  "value": "kept",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.verdict"
+ },
+ "abNoDiscTphMape": {
+  "value": "11.98",
+  "artifact": "manuscripts/crusherbayes/data/ablation/no-discrepancy.json",
+  "key": "loo.tph.scores.mape_pct"
+ },
+ "abNoDiscTphCov": {
+  "value": "0.7",
+  "artifact": "manuscripts/crusherbayes/data/ablation/no-discrepancy.json",
+  "key": "loo.tph.scores.coverage_80"
+ },
+ "abNoDiscTphWidth": {
+  "value": "450.51",
+  "artifact": "manuscripts/crusherbayes/data/ablation/no-discrepancy.json",
+  "key": "loo.tph.scores.mean_width"
+ },
+ "abNoDiscTphLpd": {
+  "value": "-6.76",
+  "artifact": "manuscripts/crusherbayes/data/ablation/no-discrepancy.json",
+  "key": "loo.tph.scores.lpd_mean"
+ },
+ "abNoDiscKwMape": {
+  "value": "27.15",
+  "artifact": "manuscripts/crusherbayes/data/ablation/no-discrepancy.json",
+  "key": "loo.kW.scores.mape_pct"
+ },
+ "abNoDiscKwCov": {
+  "value": "0.7",
+  "artifact": "manuscripts/crusherbayes/data/ablation/no-discrepancy.json",
+  "key": "loo.kW.scores.coverage_80"
+ },
+ "abNoDiscKwWidth": {
+  "value": "190.21",
+  "artifact": "manuscripts/crusherbayes/data/ablation/no-discrepancy.json",
+  "key": "loo.kW.scores.mean_width"
+ },
+ "abNoDiscKwLpd": {
+  "value": "-5.82",
+  "artifact": "manuscripts/crusherbayes/data/ablation/no-discrepancy.json",
+  "key": "loo.kW.scores.lpd_mean"
+ },
+ "abNoDiscConv": {
+  "value": "11",
+  "artifact": "manuscripts/crusherbayes/data/ablation/no-discrepancy.json",
+  "key": "convergence.folds[*].converged (count)"
+ },
+ "abNoDiscTauMax": {
+  "value": "76.3",
+  "artifact": "manuscripts/crusherbayes/data/ablation/no-discrepancy.json",
+  "key": "convergence.folds[*].tau_max (max)"
+ },
+ "abNoDiscTauMin": {
+  "value": "54.0",
+  "artifact": "manuscripts/crusherbayes/data/ablation/no-discrepancy.json",
+  "key": "convergence.folds[*].tau_max (min)"
+ },
+ "abNoDiscWall": {
+  "value": "33.2",
+  "artifact": "manuscripts/crusherbayes/data/ablation/no-discrepancy.json",
+  "key": "wall_seconds / 60"
+ },
+ "abNoDiscQRefContr": {
+  "value": "0.195",
+  "artifact": "manuscripts/crusherbayes/data/ablation/no-discrepancy.json",
+  "key": "contraction[name=q_ref_tph].contraction"
+ },
+ "abNoDiscWiContr": {
+  "value": "0.850",
+  "artifact": "manuscripts/crusherbayes/data/ablation/no-discrepancy.json",
+  "key": "contraction[name=wi_kwh_t].contraction"
+ },
+ "abNoDiscZetaContr": {
+  "value": "0.663",
+  "artifact": "manuscripts/crusherbayes/data/ablation/no-discrepancy.json",
+  "key": "contraction[name=zeta].contraction"
+ },
+ "abNoDiscPnContr": {
+  "value": "0.741",
+  "artifact": "manuscripts/crusherbayes/data/ablation/no-discrepancy.json",
+  "key": "contraction[name=pn_kw].contraction"
+ },
+ "abNoDiscKThreeContr": {
+  "value": "1.016",
+  "artifact": "manuscripts/crusherbayes/data/ablation/no-discrepancy.json",
+  "key": "contraction[name=k3].contraction"
+ },
+ "abNoDiscDKwCssMean": {
+  "value": "-0.0",
+  "artifact": "manuscripts/crusherbayes/data/ablation/no-discrepancy.json",
+  "key": "contraction[name=discrepancy_kW_css].posterior_mean"
+ },
+ "abNoDiscDTphCssMean": {
+  "value": "-0.0",
+  "artifact": "manuscripts/crusherbayes/data/ablation/no-discrepancy.json",
+  "key": "contraction[name=discrepancy_tph_css].posterior_mean"
+ },
+ "abNoDiscKillA": {
+  "value": "holds",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.a_holds"
+ },
+ "abNoDiscKillB": {
+  "value": "fails",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.b_holds"
+ },
+ "abNoDiscVerdict": {
+  "value": "kept",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.verdict"
+ },
+ "abEngFixTphMape": {
+  "value": "11.95",
+  "artifact": "manuscripts/crusherbayes/data/ablation/engine-fixed.json",
+  "key": "loo.tph.scores.mape_pct"
+ },
+ "abEngFixTphCov": {
+  "value": "0.8",
+  "artifact": "manuscripts/crusherbayes/data/ablation/engine-fixed.json",
+  "key": "loo.tph.scores.coverage_80"
+ },
+ "abEngFixTphWidth": {
+  "value": "424.66",
+  "artifact": "manuscripts/crusherbayes/data/ablation/engine-fixed.json",
+  "key": "loo.tph.scores.mean_width"
+ },
+ "abEngFixTphLpd": {
+  "value": "-6.67",
+  "artifact": "manuscripts/crusherbayes/data/ablation/engine-fixed.json",
+  "key": "loo.tph.scores.lpd_mean"
+ },
+ "abEngFixKwMape": {
+  "value": "15.99",
+  "artifact": "manuscripts/crusherbayes/data/ablation/engine-fixed.json",
+  "key": "loo.kW.scores.mape_pct"
+ },
+ "abEngFixKwCov": {
+  "value": "0.7",
+  "artifact": "manuscripts/crusherbayes/data/ablation/engine-fixed.json",
+  "key": "loo.kW.scores.coverage_80"
+ },
+ "abEngFixKwWidth": {
+  "value": "124.50",
+  "artifact": "manuscripts/crusherbayes/data/ablation/engine-fixed.json",
+  "key": "loo.kW.scores.mean_width"
+ },
+ "abEngFixKwLpd": {
+  "value": "-5.36",
+  "artifact": "manuscripts/crusherbayes/data/ablation/engine-fixed.json",
+  "key": "loo.kW.scores.lpd_mean"
+ },
+ "abEngFixConv": {
+  "value": "11",
+  "artifact": "manuscripts/crusherbayes/data/ablation/engine-fixed.json",
+  "key": "convergence.folds[*].converged (count)"
+ },
+ "abEngFixTauMax": {
+  "value": "39.1",
+  "artifact": "manuscripts/crusherbayes/data/ablation/engine-fixed.json",
+  "key": "convergence.folds[*].tau_max (max)"
+ },
+ "abEngFixTauMin": {
+  "value": "33.8",
+  "artifact": "manuscripts/crusherbayes/data/ablation/engine-fixed.json",
+  "key": "convergence.folds[*].tau_max (min)"
+ },
+ "abEngFixWall": {
+  "value": "46.5",
+  "artifact": "manuscripts/crusherbayes/data/ablation/engine-fixed.json",
+  "key": "wall_seconds / 60"
+ },
+ "abEngFixQRefContr": {
+  "value": "0.875",
+  "artifact": "manuscripts/crusherbayes/data/ablation/engine-fixed.json",
+  "key": "contraction[name=q_ref_tph].contraction"
+ },
+ "abEngFixWiContr": {
+  "value": "0.845",
+  "artifact": "manuscripts/crusherbayes/data/ablation/engine-fixed.json",
+  "key": "contraction[name=wi_kwh_t].contraction"
+ },
+ "abEngFixZetaContr": {
+  "value": "0.845",
+  "artifact": "manuscripts/crusherbayes/data/ablation/engine-fixed.json",
+  "key": "contraction[name=zeta].contraction"
+ },
+ "abEngFixPnContr": {
+  "value": "0.878",
+  "artifact": "manuscripts/crusherbayes/data/ablation/engine-fixed.json",
+  "key": "contraction[name=pn_kw].contraction"
+ },
+ "abEngFixKThreeContr": {
+  "value": "0.854",
+  "artifact": "manuscripts/crusherbayes/data/ablation/engine-fixed.json",
+  "key": "contraction[name=k3].contraction"
+ },
+ "abEngFixDKwCssMean": {
+  "value": "-55.8",
+  "artifact": "manuscripts/crusherbayes/data/ablation/engine-fixed.json",
+  "key": "contraction[name=discrepancy_kW_css].posterior_mean"
+ },
+ "abEngFixDTphCssMean": {
+  "value": "100.4",
+  "artifact": "manuscripts/crusherbayes/data/ablation/engine-fixed.json",
+  "key": "contraction[name=discrepancy_tph_css].posterior_mean"
+ },
+ "abEngFixKillA": {
+  "value": "holds",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.a_holds"
+ },
+ "abEngFixKillB": {
+  "value": "fails",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.b_holds"
+ },
+ "abEngFixVerdict": {
+  "value": "kept",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.verdict"
+ },
+ "abBalFixTphMape": {
+  "value": "11.99",
+  "artifact": "manuscripts/crusherbayes/data/ablation/balance-fixed.json",
+  "key": "loo.tph.scores.mape_pct"
+ },
+ "abBalFixTphCov": {
+  "value": "0.8",
+  "artifact": "manuscripts/crusherbayes/data/ablation/balance-fixed.json",
+  "key": "loo.tph.scores.coverage_80"
+ },
+ "abBalFixTphWidth": {
+  "value": "439.35",
+  "artifact": "manuscripts/crusherbayes/data/ablation/balance-fixed.json",
+  "key": "loo.tph.scores.mean_width"
+ },
+ "abBalFixTphLpd": {
+  "value": "-6.67",
+  "artifact": "manuscripts/crusherbayes/data/ablation/balance-fixed.json",
+  "key": "loo.tph.scores.lpd_mean"
+ },
+ "abBalFixKwMape": {
+  "value": "14.08",
+  "artifact": "manuscripts/crusherbayes/data/ablation/balance-fixed.json",
+  "key": "loo.kW.scores.mape_pct"
+ },
+ "abBalFixKwCov": {
+  "value": "0.8",
+  "artifact": "manuscripts/crusherbayes/data/ablation/balance-fixed.json",
+  "key": "loo.kW.scores.coverage_80"
+ },
+ "abBalFixKwWidth": {
+  "value": "117.70",
+  "artifact": "manuscripts/crusherbayes/data/ablation/balance-fixed.json",
+  "key": "loo.kW.scores.mean_width"
+ },
+ "abBalFixKwLpd": {
+  "value": "-5.33",
+  "artifact": "manuscripts/crusherbayes/data/ablation/balance-fixed.json",
+  "key": "loo.kW.scores.lpd_mean"
+ },
+ "abBalFixConv": {
+  "value": "11",
+  "artifact": "manuscripts/crusherbayes/data/ablation/balance-fixed.json",
+  "key": "convergence.folds[*].converged (count)"
+ },
+ "abBalFixTauMax": {
+  "value": "54.4",
+  "artifact": "manuscripts/crusherbayes/data/ablation/balance-fixed.json",
+  "key": "convergence.folds[*].tau_max (max)"
+ },
+ "abBalFixTauMin": {
+  "value": "46.0",
+  "artifact": "manuscripts/crusherbayes/data/ablation/balance-fixed.json",
+  "key": "convergence.folds[*].tau_max (min)"
+ },
+ "abBalFixWall": {
+  "value": "33.0",
+  "artifact": "manuscripts/crusherbayes/data/ablation/balance-fixed.json",
+  "key": "wall_seconds / 60"
+ },
+ "abBalFixQRefContr": {
+  "value": "0.444",
+  "artifact": "manuscripts/crusherbayes/data/ablation/balance-fixed.json",
+  "key": "contraction[name=q_ref_tph].contraction"
+ },
+ "abBalFixWiContr": {
+  "value": "0.848",
+  "artifact": "manuscripts/crusherbayes/data/ablation/balance-fixed.json",
+  "key": "contraction[name=wi_kwh_t].contraction"
+ },
+ "abBalFixZetaContr": {
+  "value": "0.687",
+  "artifact": "manuscripts/crusherbayes/data/ablation/balance-fixed.json",
+  "key": "contraction[name=zeta].contraction"
+ },
+ "abBalFixPnContr": {
+  "value": "0.802",
+  "artifact": "manuscripts/crusherbayes/data/ablation/balance-fixed.json",
+  "key": "contraction[name=pn_kw].contraction"
+ },
+ "abBalFixKThreeContr": {
+  "value": "0.982",
+  "artifact": "manuscripts/crusherbayes/data/ablation/balance-fixed.json",
+  "key": "contraction[name=k3].contraction"
+ },
+ "abBalFixDKwCssMean": {
+  "value": "-54.3",
+  "artifact": "manuscripts/crusherbayes/data/ablation/balance-fixed.json",
+  "key": "contraction[name=discrepancy_kW_css].posterior_mean"
+ },
+ "abBalFixDTphCssMean": {
+  "value": "99.9",
+  "artifact": "manuscripts/crusherbayes/data/ablation/balance-fixed.json",
+  "key": "contraction[name=discrepancy_tph_css].posterior_mean"
+ },
+ "abBalFixKillA": {
+  "value": "holds",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.a_holds"
+ },
+ "abBalFixKillB": {
+  "value": "fails",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.b_holds"
+ },
+ "abBalFixVerdict": {
+  "value": "kept",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.verdict"
+ },
+ "abWideTphMape": {
+  "value": "12.08",
+  "artifact": "manuscripts/crusherbayes/data/ablation/wide-priors.json",
+  "key": "loo.tph.scores.mape_pct"
+ },
+ "abWideTphCov": {
+  "value": "0.8",
+  "artifact": "manuscripts/crusherbayes/data/ablation/wide-priors.json",
+  "key": "loo.tph.scores.coverage_80"
+ },
+ "abWideTphWidth": {
+  "value": "440.15",
+  "artifact": "manuscripts/crusherbayes/data/ablation/wide-priors.json",
+  "key": "loo.tph.scores.mean_width"
+ },
+ "abWideTphLpd": {
+  "value": "-6.67",
+  "artifact": "manuscripts/crusherbayes/data/ablation/wide-priors.json",
+  "key": "loo.tph.scores.lpd_mean"
+ },
+ "abWideKwMape": {
+  "value": "14.43",
+  "artifact": "manuscripts/crusherbayes/data/ablation/wide-priors.json",
+  "key": "loo.kW.scores.mape_pct"
+ },
+ "abWideKwCov": {
+  "value": "0.9",
+  "artifact": "manuscripts/crusherbayes/data/ablation/wide-priors.json",
+  "key": "loo.kW.scores.coverage_80"
+ },
+ "abWideKwWidth": {
+  "value": "119.24",
+  "artifact": "manuscripts/crusherbayes/data/ablation/wide-priors.json",
+  "key": "loo.kW.scores.mean_width"
+ },
+ "abWideKwLpd": {
+  "value": "-5.39",
+  "artifact": "manuscripts/crusherbayes/data/ablation/wide-priors.json",
+  "key": "loo.kW.scores.lpd_mean"
+ },
+ "abWideConv": {
+  "value": "10",
+  "artifact": "manuscripts/crusherbayes/data/ablation/wide-priors.json",
+  "key": "convergence.folds[*].converged (count)"
+ },
+ "abWideTauMax": {
+  "value": "141.7",
+  "artifact": "manuscripts/crusherbayes/data/ablation/wide-priors.json",
+  "key": "convergence.folds[*].tau_max (max)"
+ },
+ "abWideTauMin": {
+  "value": "60.1",
+  "artifact": "manuscripts/crusherbayes/data/ablation/wide-priors.json",
+  "key": "convergence.folds[*].tau_max (min)"
+ },
+ "abWideWall": {
+  "value": "19.4",
+  "artifact": "manuscripts/crusherbayes/data/ablation/wide-priors.json",
+  "key": "wall_seconds / 60"
+ },
+ "abWideQRefContr": {
+  "value": "0.314",
+  "artifact": "manuscripts/crusherbayes/data/ablation/wide-priors.json",
+  "key": "contraction[name=q_ref_tph].contraction"
+ },
+ "abWideWiContr": {
+  "value": "0.889",
+  "artifact": "manuscripts/crusherbayes/data/ablation/wide-priors.json",
+  "key": "contraction[name=wi_kwh_t].contraction"
+ },
+ "abWideZetaContr": {
+  "value": "0.776",
+  "artifact": "manuscripts/crusherbayes/data/ablation/wide-priors.json",
+  "key": "contraction[name=zeta].contraction"
+ },
+ "abWidePnContr": {
+  "value": "0.750",
+  "artifact": "manuscripts/crusherbayes/data/ablation/wide-priors.json",
+  "key": "contraction[name=pn_kw].contraction"
+ },
+ "abWideKThreeContr": {
+  "value": "1.006",
+  "artifact": "manuscripts/crusherbayes/data/ablation/wide-priors.json",
+  "key": "contraction[name=k3].contraction"
+ },
+ "abWideDKwCssMean": {
+  "value": "-55.7",
+  "artifact": "manuscripts/crusherbayes/data/ablation/wide-priors.json",
+  "key": "contraction[name=discrepancy_kW_css].posterior_mean"
+ },
+ "abWideDTphCssMean": {
+  "value": "97.0",
+  "artifact": "manuscripts/crusherbayes/data/ablation/wide-priors.json",
+  "key": "contraction[name=discrepancy_tph_css].posterior_mean"
+ },
+ "abWideKillA": {
+  "value": "holds",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.a_holds"
+ },
+ "abWideKillB": {
+  "value": "fails",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.b_holds"
+ },
+ "abWideVerdict": {
+  "value": "kept",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.verdict"
+ },
+ "abTauHalfTphMape": {
+  "value": "11.89",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-half.json",
+  "key": "loo.tph.scores.mape_pct"
+ },
+ "abTauHalfTphCov": {
+  "value": "0.9",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-half.json",
+  "key": "loo.tph.scores.coverage_80"
+ },
+ "abTauHalfTphWidth": {
+  "value": "434.94",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-half.json",
+  "key": "loo.tph.scores.mean_width"
+ },
+ "abTauHalfTphLpd": {
+  "value": "-6.66",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-half.json",
+  "key": "loo.tph.scores.lpd_mean"
+ },
+ "abTauHalfKwMape": {
+  "value": "17.85",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-half.json",
+  "key": "loo.kW.scores.mape_pct"
+ },
+ "abTauHalfKwCov": {
+  "value": "0.8",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-half.json",
+  "key": "loo.kW.scores.coverage_80"
+ },
+ "abTauHalfKwWidth": {
+  "value": "134.98",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-half.json",
+  "key": "loo.kW.scores.mean_width"
+ },
+ "abTauHalfKwLpd": {
+  "value": "-5.43",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-half.json",
+  "key": "loo.kW.scores.lpd_mean"
+ },
+ "abTauHalfConv": {
+  "value": "11",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-half.json",
+  "key": "convergence.folds[*].converged (count)"
+ },
+ "abTauHalfTauMax": {
+  "value": "108.2",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-half.json",
+  "key": "convergence.folds[*].tau_max (max)"
+ },
+ "abTauHalfTauMin": {
+  "value": "49.1",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-half.json",
+  "key": "convergence.folds[*].tau_max (min)"
+ },
+ "abTauHalfWall": {
+  "value": "28.1",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-half.json",
+  "key": "wall_seconds / 60"
+ },
+ "abTauHalfQRefContr": {
+  "value": "0.294",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-half.json",
+  "key": "contraction[name=q_ref_tph].contraction"
+ },
+ "abTauHalfWiContr": {
+  "value": "0.842",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-half.json",
+  "key": "contraction[name=wi_kwh_t].contraction"
+ },
+ "abTauHalfZetaContr": {
+  "value": "0.677",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-half.json",
+  "key": "contraction[name=zeta].contraction"
+ },
+ "abTauHalfPnContr": {
+  "value": "0.760",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-half.json",
+  "key": "contraction[name=pn_kw].contraction"
+ },
+ "abTauHalfKThreeContr": {
+  "value": "1.017",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-half.json",
+  "key": "contraction[name=k3].contraction"
+ },
+ "abTauHalfDKwCssMean": {
+  "value": "-37.7",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-half.json",
+  "key": "contraction[name=discrepancy_kW_css].posterior_mean"
+ },
+ "abTauHalfDTphCssMean": {
+  "value": "68.7",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-half.json",
+  "key": "contraction[name=discrepancy_tph_css].posterior_mean"
+ },
+ "abTauHalfKillA": {
+  "value": "holds",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.a_holds"
+ },
+ "abTauHalfKillB": {
+  "value": "fails",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.b_holds"
+ },
+ "abTauHalfVerdict": {
+  "value": "kept",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.verdict"
+ },
+ "abTauDoubleTphMape": {
+  "value": "12.12",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-double.json",
+  "key": "loo.tph.scores.mape_pct"
+ },
+ "abTauDoubleTphCov": {
+  "value": "0.8",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-double.json",
+  "key": "loo.tph.scores.coverage_80"
+ },
+ "abTauDoubleTphWidth": {
+  "value": "446.28",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-double.json",
+  "key": "loo.tph.scores.mean_width"
+ },
+ "abTauDoubleTphLpd": {
+  "value": "-6.69",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-double.json",
+  "key": "loo.tph.scores.lpd_mean"
+ },
+ "abTauDoubleKwMape": {
+  "value": "13.85",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-double.json",
+  "key": "loo.kW.scores.mape_pct"
+ },
+ "abTauDoubleKwCov": {
+  "value": "0.8",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-double.json",
+  "key": "loo.kW.scores.coverage_80"
+ },
+ "abTauDoubleKwWidth": {
+  "value": "117.32",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-double.json",
+  "key": "loo.kW.scores.mean_width"
+ },
+ "abTauDoubleKwLpd": {
+  "value": "-5.35",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-double.json",
+  "key": "loo.kW.scores.lpd_mean"
+ },
+ "abTauDoubleConv": {
+  "value": "11",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-double.json",
+  "key": "convergence.folds[*].converged (count)"
+ },
+ "abTauDoubleTauMax": {
+  "value": "89.0",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-double.json",
+  "key": "convergence.folds[*].tau_max (max)"
+ },
+ "abTauDoubleTauMin": {
+  "value": "47.1",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-double.json",
+  "key": "convergence.folds[*].tau_max (min)"
+ },
+ "abTauDoubleWall": {
+  "value": "27.7",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-double.json",
+  "key": "wall_seconds / 60"
+ },
+ "abTauDoubleQRefContr": {
+  "value": "0.638",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-double.json",
+  "key": "contraction[name=q_ref_tph].contraction"
+ },
+ "abTauDoubleWiContr": {
+  "value": "0.905",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-double.json",
+  "key": "contraction[name=wi_kwh_t].contraction"
+ },
+ "abTauDoubleZetaContr": {
+  "value": "0.797",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-double.json",
+  "key": "contraction[name=zeta].contraction"
+ },
+ "abTauDoublePnContr": {
+  "value": "0.863",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-double.json",
+  "key": "contraction[name=pn_kw].contraction"
+ },
+ "abTauDoubleKThreeContr": {
+  "value": "1.026",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-double.json",
+  "key": "contraction[name=k3].contraction"
+ },
+ "abTauDoubleDKwCssMean": {
+  "value": "-64.6",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-double.json",
+  "key": "contraction[name=discrepancy_kW_css].posterior_mean"
+ },
+ "abTauDoubleDTphCssMean": {
+  "value": "114.1",
+  "artifact": "manuscripts/crusherbayes/data/ablation/tau-double.json",
+  "key": "contraction[name=discrepancy_tph_css].posterior_mean"
+ },
+ "abTauDoubleKillA": {
+  "value": "holds",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.a_holds"
+ },
+ "abTauDoubleKillB": {
+  "value": "fails",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.b_holds"
+ },
+ "abTauDoubleVerdict": {
+  "value": "kept",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.verdict"
+ },
+ "abStretchTphMape": {
+  "value": "12.00",
+  "artifact": "manuscripts/crusherbayes/data/ablation/stretch-move.json",
+  "key": "loo.tph.scores.mape_pct"
+ },
+ "abStretchTphCov": {
+  "value": "0.8",
+  "artifact": "manuscripts/crusherbayes/data/ablation/stretch-move.json",
+  "key": "loo.tph.scores.coverage_80"
+ },
+ "abStretchTphWidth": {
+  "value": "439.88",
+  "artifact": "manuscripts/crusherbayes/data/ablation/stretch-move.json",
+  "key": "loo.tph.scores.mean_width"
+ },
+ "abStretchTphLpd": {
+  "value": "-6.68",
+  "artifact": "manuscripts/crusherbayes/data/ablation/stretch-move.json",
+  "key": "loo.tph.scores.lpd_mean"
+ },
+ "abStretchKwMape": {
+  "value": "14.29",
+  "artifact": "manuscripts/crusherbayes/data/ablation/stretch-move.json",
+  "key": "loo.kW.scores.mape_pct"
+ },
+ "abStretchKwCov": {
+  "value": "0.9",
+  "artifact": "manuscripts/crusherbayes/data/ablation/stretch-move.json",
+  "key": "loo.kW.scores.coverage_80"
+ },
+ "abStretchKwWidth": {
+  "value": "117.83",
+  "artifact": "manuscripts/crusherbayes/data/ablation/stretch-move.json",
+  "key": "loo.kW.scores.mean_width"
+ },
+ "abStretchKwLpd": {
+  "value": "-5.34",
+  "artifact": "manuscripts/crusherbayes/data/ablation/stretch-move.json",
+  "key": "loo.kW.scores.lpd_mean"
+ },
+ "abStretchConv": {
+  "value": "0",
+  "artifact": "manuscripts/crusherbayes/data/ablation/stretch-move.json",
+  "key": "convergence.folds[*].converged (count)"
+ },
+ "abStretchTauMax": {
+  "value": "200.5",
+  "artifact": "manuscripts/crusherbayes/data/ablation/stretch-move.json",
+  "key": "convergence.folds[*].tau_max (max)"
+ },
+ "abStretchTauMin": {
+  "value": "126.4",
+  "artifact": "manuscripts/crusherbayes/data/ablation/stretch-move.json",
+  "key": "convergence.folds[*].tau_max (min)"
+ },
+ "abStretchWall": {
+  "value": "31.8",
+  "artifact": "manuscripts/crusherbayes/data/ablation/stretch-move.json",
+  "key": "wall_seconds / 60"
+ },
+ "abStretchQRefContr": {
+  "value": "0.436",
+  "artifact": "manuscripts/crusherbayes/data/ablation/stretch-move.json",
+  "key": "contraction[name=q_ref_tph].contraction"
+ },
+ "abStretchWiContr": {
+  "value": "0.835",
+  "artifact": "manuscripts/crusherbayes/data/ablation/stretch-move.json",
+  "key": "contraction[name=wi_kwh_t].contraction"
+ },
+ "abStretchZetaContr": {
+  "value": "0.715",
+  "artifact": "manuscripts/crusherbayes/data/ablation/stretch-move.json",
+  "key": "contraction[name=zeta].contraction"
+ },
+ "abStretchPnContr": {
+  "value": "0.843",
+  "artifact": "manuscripts/crusherbayes/data/ablation/stretch-move.json",
+  "key": "contraction[name=pn_kw].contraction"
+ },
+ "abStretchKThreeContr": {
+  "value": "1.002",
+  "artifact": "manuscripts/crusherbayes/data/ablation/stretch-move.json",
+  "key": "contraction[name=k3].contraction"
+ },
+ "abStretchDKwCssMean": {
+  "value": "-57.1",
+  "artifact": "manuscripts/crusherbayes/data/ablation/stretch-move.json",
+  "key": "contraction[name=discrepancy_kW_css].posterior_mean"
+ },
+ "abStretchDTphCssMean": {
+  "value": "99.0",
+  "artifact": "manuscripts/crusherbayes/data/ablation/stretch-move.json",
+  "key": "contraction[name=discrepancy_tph_css].posterior_mean"
+ },
+ "abStretchKillA": {
+  "value": "holds",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.a_holds"
+ },
+ "abStretchKillB": {
+  "value": "fails",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.b_holds"
+ },
+ "abStretchVerdict": {
+  "value": "kept",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "kill_criterion.verdict"
+ },
+ "seedSpreadTph": {
+  "value": "0.01",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "max - min over seeds 42, 43, 44 of loo.tph.scores.mape_pct"
+ },
+ "seedWidthSpreadTph": {
+  "value": "1.3",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "max - min over seeds 42, 43, 44 of loo.tph.scores.mean_width"
+ },
+ "seedSpreadKw": {
+  "value": "0.02",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "max - min over seeds 42, 43, 44 of loo.kW.scores.mape_pct"
+ },
+ "seedWidthSpreadKw": {
+  "value": "0.1",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "max - min over seeds 42, 43, 44 of loo.kW.scores.mean_width"
+ },
+ "balFixGainKw": {
+  "value": "0.23",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "loo.kW.scores.mape_pct (method) - the same of data/ablation/balance-fixed.json"
+ },
+ "wallMin": {
+  "value": "19",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "min of ablation wall_seconds / 60"
+ },
+ "wallMax": {
+  "value": "47",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "max of ablation wall_seconds / 60"
+ },
+ "ablCpu": {
+  "value": "32",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "ablation machine.cpu_count"
+ },
+ "thOutOfSpan": {
+  "value": "2.9\\times 10^{-16}",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "throughput_shape_out_of_span_rel"
+ },
+ "thRidge": {
+  "value": "9.1\\times 10^{-14}",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "kw_jacobian_wi_minus_zeta_rel"
+ },
+ "thCorrWz": {
+  "value": "-0.27",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "laplace_corr_wi_zeta"
+ },
+ "thLamTph": {
+  "value": "1.08",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "shrinkage.tph.lambda_method"
+ },
+ "thAtMethodTph": {
+  "value": "11.91",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "shrinkage.tph.at_method.mape_pct"
+ },
+ "thOlsTph": {
+  "value": "12.18",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "shrinkage.tph.curve[lambda=0].mape_pct"
+ },
+ "thBigTph": {
+  "value": "11.53",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "shrinkage.tph.curve[lambda=1000].mape_pct"
+ },
+ "thWeightTph": {
+  "value": "0.10",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "shrinkage.tph.engine_weight_at_method"
+ },
+ "thMinTph": {
+  "value": "10.78",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "shrinkage.tph.curve (min mape_pct)"
+ },
+ "thArgminTph": {
+  "value": "17.8",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "shrinkage.tph.curve (lambda at the min)"
+ },
+ "thLamKw": {
+  "value": "1.16",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "shrinkage.kW.lambda_method"
+ },
+ "thAtMethodKw": {
+  "value": "15.39",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "shrinkage.kW.at_method.mape_pct"
+ },
+ "thOlsKw": {
+  "value": "13.12",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "shrinkage.kW.curve[lambda=0].mape_pct"
+ },
+ "thBigKw": {
+  "value": "47.17",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "shrinkage.kW.curve[lambda=1000].mape_pct"
+ },
+ "thWeightKw": {
+  "value": "0.10",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "shrinkage.kW.engine_weight_at_method"
+ },
+ "thMinKw": {
+  "value": "13.12",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "shrinkage.kW.curve (min mape_pct)"
+ },
+ "thArgminKw": {
+  "value": "0.0",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "shrinkage.kW.curve (lambda at the min)"
+ },
+ "thSpanMin": {
+  "value": "0.906",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "information[*].kW.fraction_in_span (min)"
+ },
+ "thSpanTShift": {
+  "value": "0.906",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "information[t10_shift_pct].kW.fraction_in_span"
+ },
+ "thSpanKOne": {
+  "value": "0.976",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "information[k1_scale].kW.fraction_in_span"
+ },
+ "thLapMaxDev": {
+  "value": "0.115",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "max |laplace[*].predicted_ratio - sampler_ratio|"
+ },
+ "thLapQRef": {
+  "value": "0.457",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "laplace[q_ref_tph].predicted_ratio"
+ },
+ "thLapZeta": {
+  "value": "0.848",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "laplace[zeta].predicted_ratio"
+ },
+ "thLapWi": {
+  "value": "0.920",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "laplace[wi_kwh_t].predicted_ratio"
+ },
+ "thLapPn": {
+  "value": "0.852",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "laplace[pn_kw].predicted_ratio"
+ },
+ "thEngSlope": {
+  "value": "8.5",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "engine_power_affine_coef[1]"
+ },
+ "thMeasSlope": {
+  "value": "-56.0",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "measured_power_affine_coef[1]"
+ },
+ "thEngLevel": {
+  "value": "401",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "engine_power_affine_coef[0]"
+ },
+ "thMeasLevel": {
+  "value": "288",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "measured_power_affine_coef[0]"
+ },
+ "thSvMin": {
+  "value": "2.44",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "design_singular_values (min)"
+ },
+ "thSvMax": {
+  "value": "3.75",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "design_singular_values (max)"
  }
 }
