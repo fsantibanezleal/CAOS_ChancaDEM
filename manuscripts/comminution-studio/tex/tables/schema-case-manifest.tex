@@ -53,7 +53,7 @@ Field & Type & Range or values & Req. & Meaning \\
 \texttt{artifact.bytes} & integer & >= 1 & yes & -- \\
 \texttt{artifact.sha256} & string & pattern \textasciicircum{}\allowbreak{}[\allowbreak{}0\allowbreak{}-\allowbreak{}9\allowbreak{}a\allowbreak{}-\allowbreak{}f\allowbreak{}]\allowbreak{}\{\allowbreak{}6\allowbreak{}4\allowbreak{}\}\allowbreak{}\$ & yes & SHA-256 of the trace file bytes as committed. \\
 \texttt{lane} & enum & live, precompute & yes & -- \\
-\texttt{gate} & object & -- & yes & The measured lane verdict of data-pipeline/pipeline/core/gate.py classify\_lane: the engine run is timed in the bake (the median of several warmed ... \\
+\texttt{gate} & object & -- & yes & The measured lane decision of data-pipeline/pipeline/core/gate.py classify\_lane: the engine run is timed in the bake (the median of several warmed ... \\
 \texttt{gate.lane} & enum & live, precompute & yes & -- \\
 \texttt{gate.pure\_python} & boolean & -- & yes & -- \\
 \texttt{gate.wheels} & array of string & -- & yes & -- \\

@@ -437,6 +437,7 @@ def schema_longtable(cid: str, schema_path: Path) -> None:
             desc = re.sub(r"\s+", " ", desc)
             if len(desc) > 150:
                 desc = desc[:147].rsplit(" ", 1)[0] + " ..."
+            desc = desc.replace("verdict", "decision")   # the report's vocabulary; the field names stay verbatim
             rows.append([r"\texttt{" + tex(name) + "}", tex(_type_of(v, defs)), breakable(tex(rng)) if rng else DASH,
                          "yes" if k in required else "no", tex(desc) if desc else DASH])
             sub = v
@@ -456,7 +457,8 @@ def schema_longtable(cid: str, schema_path: Path) -> None:
              r"\begin{longtable}{@{}p{0.21\textwidth} p{0.10\textwidth} p{0.19\textwidth} p{0.05\textwidth} p{0.33\textwidth}@{}}",
              r"\toprule", r"Field & Type & Range or values & Req. & Meaning \\", r"\midrule", r"\endhead",
              r"\bottomrule", r"\endfoot"]
-    lines += [" & ".join(r) + r" \\" for r in rows]
+    # a schema field named verdict is quoted verbatim: the voice check is told so on that line
+    lines += [" & ".join(r) + r" \\" + (" % voice-ok: schema field name" if "verdict" in r[0] else "") for r in rows]
     lines += [r"\end{longtable}", r"\endgroup"]
     write(f"schema-{cid}", "\n".join(lines))
 
