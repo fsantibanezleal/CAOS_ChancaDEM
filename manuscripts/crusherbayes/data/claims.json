@@ -1031,7 +1031,7 @@
   "key": "Wilson 95 percent upper bound of the coverage of free (kW)"
  },
  "mnlKwMapeBoot": {
-  "value": "15.22",
+  "value": "15.21",
   "artifact": "data/derived/hp500/loo.json",
   "key": "mean absolute percentage error of mnl (kW), recomputed"
  },
@@ -2771,29 +2771,104 @@
   "key": "information[k1_scale].kW.fraction_in_span"
  },
  "thLapMaxDev": {
-  "value": "0.115",
+  "value": "0.096",
   "artifact": "manuscripts/crusherbayes/data/theory.json",
-  "key": "max |laplace[*].predicted_ratio - sampler_ratio|"
+  "key": "max |laplace[*].predicted_ratio_natural - sampler_ratio|"
+ },
+ "thLapMaxDevRest": {
+  "value": "0.024",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "max |laplace[*].predicted_ratio_natural - sampler_ratio| over the parameters other than the largest"
  },
  "thLapQRef": {
+  "value": "0.442",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "laplace[q_ref_tph].predicted_ratio_natural"
+ },
+ "thLapLogQRef": {
   "value": "0.457",
   "artifact": "manuscripts/crusherbayes/data/theory.json",
-  "key": "laplace[q_ref_tph].predicted_ratio"
+  "key": "laplace[q_ref_tph].predicted_ratio (sampled scale)"
  },
  "thLapZeta": {
+  "value": "0.733",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "laplace[zeta].predicted_ratio_natural"
+ },
+ "thLapLogZeta": {
   "value": "0.848",
   "artifact": "manuscripts/crusherbayes/data/theory.json",
-  "key": "laplace[zeta].predicted_ratio"
+  "key": "laplace[zeta].predicted_ratio (sampled scale)"
  },
  "thLapWi": {
+  "value": "0.866",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "laplace[wi_kwh_t].predicted_ratio_natural"
+ },
+ "thLapLogWi": {
   "value": "0.920",
   "artifact": "manuscripts/crusherbayes/data/theory.json",
-  "key": "laplace[wi_kwh_t].predicted_ratio"
+  "key": "laplace[wi_kwh_t].predicted_ratio (sampled scale)"
  },
  "thLapPn": {
+  "value": "0.891",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "laplace[pn_kw].predicted_ratio_natural"
+ },
+ "thLapLogPn": {
   "value": "0.852",
   "artifact": "manuscripts/crusherbayes/data/theory.json",
-  "key": "laplace[pn_kw].predicted_ratio"
+  "key": "laplace[pn_kw].predicted_ratio (sampled scale)"
+ },
+ "thLapKOne": {
+  "value": "0.965",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "laplace[k1_scale].predicted_ratio_natural"
+ },
+ "thLapLogKOne": {
+  "value": "0.918",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "laplace[k1_scale].predicted_ratio (sampled scale)"
+ },
+ "thLapKTwo": {
+  "value": "1.014",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "laplace[k2_scale].predicted_ratio_natural"
+ },
+ "thLapLogKTwo": {
+  "value": "0.980",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "laplace[k2_scale].predicted_ratio (sampled scale)"
+ },
+ "thLapKThree": {
+  "value": "1.016",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "laplace[k3].predicted_ratio_natural"
+ },
+ "thLapLogKThree": {
+  "value": "0.994",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "laplace[k3].predicted_ratio (sampled scale)"
+ },
+ "thLapTShift": {
+  "value": "0.997",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "laplace[t10_shift_pct].predicted_ratio_natural"
+ },
+ "thLapLogTShift": {
+  "value": "0.994",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "laplace[t10_shift_pct].predicted_ratio (sampled scale)"
+ },
+ "thLapPbMin": {
+  "value": "0.96",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "min laplace[population-balance scalars].predicted_ratio_natural"
+ },
+ "thLapPbMax": {
+  "value": "1.02",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "max laplace[population-balance scalars].predicted_ratio_natural"
  },
  "thEngSlope": {
   "value": "8.5",
@@ -2824,5 +2899,220 @@
   "value": "3.75",
   "artifact": "manuscripts/crusherbayes/data/theory.json",
   "key": "design_singular_values (max)"
+ },
+ "seedRatioSpread": {
+  "value": "0.039",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "max over parameters of (max - min over seeds 42, 43, 44 of contraction[name].contraction)"
+ },
+ "seedRatioSpreadRest": {
+  "value": "0.023",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "the same maximum over the parameters other than k1_scale"
+ },
+ "essAll": {
+  "value": "2469",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "walkers * post_burn_steps / tau_max of the fit to all ten surveys (derived)"
+ },
+ "pmKOne": {
+  "value": "1.011",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "prior_mean_natural.k1_scale"
+ },
+ "seedMeanKOneMin": {
+  "value": "1.062",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "min over seeds of contraction[name=k1_scale].posterior_mean"
+ },
+ "seedMeanKOneMax": {
+  "value": "1.068",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "max over seeds of contraction[name=k1_scale].posterior_mean"
+ },
+ "shiftKOneMin": {
+  "value": "0.33",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "min over seeds of (posterior_mean - prior mean) / prior_sd, k1_scale"
+ },
+ "shiftKOneMax": {
+  "value": "0.37",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "max over seeds of (posterior_mean - prior mean) / prior_sd, k1_scale"
+ },
+ "mcseKOne": {
+  "value": "0.003",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=k1_scale].posterior_sd / sqrt(essAll) (derived)"
+ },
+ "seedMeanSpreadKOne": {
+  "value": "0.007",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "max - min over seeds of the posterior mean of k1_scale"
+ },
+ "pmKTwo": {
+  "value": "1.011",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "prior_mean_natural.k2_scale"
+ },
+ "seedMeanKTwoMin": {
+  "value": "1.051",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "min over seeds of contraction[name=k2_scale].posterior_mean"
+ },
+ "seedMeanKTwoMax": {
+  "value": "1.053",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "max over seeds of contraction[name=k2_scale].posterior_mean"
+ },
+ "shiftKTwoMin": {
+  "value": "0.26",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "min over seeds of (posterior_mean - prior mean) / prior_sd, k2_scale"
+ },
+ "shiftKTwoMax": {
+  "value": "0.27",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "max over seeds of (posterior_mean - prior mean) / prior_sd, k2_scale"
+ },
+ "mcseKTwo": {
+  "value": "0.003",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=k2_scale].posterior_sd / sqrt(essAll) (derived)"
+ },
+ "seedMeanSpreadKTwo": {
+  "value": "0.002",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "max - min over seeds of the posterior mean of k2_scale"
+ },
+ "pmKOneRatio": {
+  "value": "0.965",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=k1_scale].contraction"
+ },
+ "pmKTwoRatio": {
+  "value": "1.026",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=k2_scale].contraction"
+ },
+ "pmKThreeRatio": {
+  "value": "0.992",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=k3].contraction"
+ },
+ "pmTShiftRatio": {
+  "value": "0.990",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "contraction[name=t10_shift_pct].contraction"
+ },
+ "gridFeightySeven": {
+  "value": "118.9",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "feed_f80[survey=7].f80_engine_grid_mm"
+ },
+ "measFeightySeven": {
+  "value": "140",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "feed_f80[survey=7].f80_measured_mm"
+ },
+ "gridFeightyEight": {
+  "value": "109.9",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "feed_f80[survey=8].f80_engine_grid_mm"
+ },
+ "measFeightyEight": {
+  "value": "123",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "feed_f80[survey=8].f80_measured_mm"
+ },
+ "gridFeightyGapRest": {
+  "value": "3.1",
+  "artifact": "manuscripts/crusherbayes/data/theory.json",
+  "key": "max |f80_engine_grid_mm - f80_measured_mm| over surveys other than 7 and 8"
+ },
+ "outCbTph": {
+  "value": "1 and 3",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "surveys whose measurement lies outside loo.tph.lo80..hi80 (derived)"
+ },
+ "outBackTph": {
+  "value": "1 and 6",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "surveys outside the nested residual band of loo.tph.strict M0 (derived)"
+ },
+ "halfCbTphMin": {
+  "value": "165",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "min of (hi80 - lo80) / 2, tph"
+ },
+ "halfCbTphMax": {
+  "value": "277",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "max of (hi80 - lo80) / 2, tph"
+ },
+ "halfBackTphMin": {
+  "value": "158",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "min of the residual-band half-width of M0, tph"
+ },
+ "halfBackTphMax": {
+  "value": "253",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "max of the residual-band half-width of M0, tph"
+ },
+ "cbTphCovN": {
+  "value": "8",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "surveys inside loo.tph.lo80..hi80 (count, derived)"
+ },
+ "outCbKw": {
+  "value": "4",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "surveys whose measurement lies outside loo.kW.lo80..hi80 (derived)"
+ },
+ "outBackKw": {
+  "value": "7",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "surveys outside the nested residual band of loo.kW.strict M0 (derived)"
+ },
+ "halfCbKwMin": {
+  "value": "38",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "min of (hi80 - lo80) / 2, kW"
+ },
+ "halfCbKwMax": {
+  "value": "69",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "max of (hi80 - lo80) / 2, kW"
+ },
+ "halfBackKwMin": {
+  "value": "89",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "min of the residual-band half-width of M0, kW"
+ },
+ "halfBackKwMax": {
+  "value": "111",
+  "artifact": "data/derived/hp500/loo.json",
+  "key": "max of the residual-band half-width of M0, kW"
+ },
+ "cbKwCovN": {
+  "value": "9",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "surveys inside loo.kW.lo80..hi80 (count, derived)"
+ },
+ "balFixOverSeed": {
+  "value": "11",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "balFixGainKw / seedSpreadKw (unrounded, derived)"
+ },
+ "engineMs": {
+  "value": "1.4",
+  "artifact": "manuscripts/crusherbayes/data/engine_timing.json",
+  "key": "ms_per_evaluation_median"
+ },
+ "engineMsEvals": {
+  "value": "300",
+  "artifact": "manuscripts/crusherbayes/data/engine_timing.json",
+  "key": "evaluations"
  }
 }

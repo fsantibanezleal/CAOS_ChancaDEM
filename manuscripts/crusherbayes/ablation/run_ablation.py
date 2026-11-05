@@ -7,7 +7,8 @@ and the seed 42 unless the variant names another. The comparators of every docum
 (``data/derived/hp500/loo.json``). The committed method itself is ``data/derived/hp500/crusherbayes.json`` and is not re-run.
 
 Writes ``manuscripts/crusherbayes/data/ablation/<variant>.json``: the ``chancadem.hp500.crusherbayes/v1`` document of the
-variant plus ``variant`` (its name and its change) and ``wall_seconds`` (the wall time of the run on the machine that ran it).
+variant plus ``variant`` (its name and its change), ``wall_seconds`` (the wall time of the run on the machine that ran it)
+and ``machine`` (the processor count, the platform, the Python version and the number of worker processes).
 A variant whose document exists is skipped, so an interrupted run resumes.
 
 Run (from anywhere):  python manuscripts/crusherbayes/ablation/run_ablation.py [--only NAME ...] [--workers N]
@@ -46,8 +47,9 @@ def run(name: str, workers: int | None) -> dict:
     wall = time.perf_counter() - t0
     doc["variant"] = {"name": name, "change": variants.VARIANTS[name]}
     doc["wall_seconds"] = round(wall, 1)
-    doc["machine"] = {"cpu_count": __import__("os").cpu_count(), "platform": platform.platform(),
-                      "python": platform.python_version()}
+    cpus = __import__("os").cpu_count()
+    doc["machine"] = {"cpu_count": cpus, "platform": platform.platform(), "python": platform.python_version(),
+                      "workers": max(1, workers if workers is not None else (cpus or 1))}   # as cb.build resolves it
     return doc
 
 

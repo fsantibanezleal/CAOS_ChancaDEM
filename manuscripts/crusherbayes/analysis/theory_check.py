@@ -9,12 +9,20 @@ Three checks, each a direct consequence of the propositions of the paper:
    the fit to all ten surveys (central finite differences in the sampled scale), split into the part inside the column
    space of the design (discounted by the discrepancy) and the part outside it. From the linearized model, the Laplace
    approximation of the posterior gives a predicted ratio of posterior to prior standard deviation for every scalar and
-   every discrepancy coefficient, set beside the ratio the sampler measured.
+   every discrepancy coefficient, set beside the ratio the sampler measured. The sampler's ratio is on the natural scale
+   (``crusherbayes.build``: the standard deviation of exp(theta) over the natural-scale prior standard deviation), so the
+   linearized standard deviation of a log-sampled scalar is mapped to the natural scale by the delta method,
+   sd_natural = x_hat * sd_log with x_hat the posterior mean, before it is divided by the same natural-scale prior
+   standard deviation. Both ratios are written: ``predicted_ratio`` (sampled scale) and ``predicted_ratio_natural``.
 3. The predictive mean given the scalars is a ridge regression of the survey on the standardized setting and feed size,
    shrunk toward the engine's best affine approximation, plus the engine's non-affine remainder. With the scalars at their
    nominal value and the noise at the posterior mean of the fit to all ten surveys, the leave-one-survey-out MAPE of that
    closed form is computed over a range of the shrinkage lambda = sigma^2 / tau^2, from ordinary least squares (lambda = 0)
    to the engine line (lambda large); the value at the tau of the method is marked.
+
+Also written: the prior mean of each engine scalar on the natural scale (seeded rejection sampling of its truncated prior,
+the procedure and seed of ``crusherbayes.prior_sd_natural``), and the feed F80 the engine evaluates on its sieve grid for
+every survey (``engine.grid_f80``), beside the measured f80.
 
 Writes ``manuscripts/crusherbayes/data/theory.json``. Deterministic: no random numbers.
 Run:  python manuscripts/crusherbayes/analysis/theory_check.py
@@ -34,6 +42,7 @@ sys.path.insert(0, str(ROOT / "data-pipeline"))
 
 from pipeline.hp500 import crusherbayes as cb  # noqa: E402
 from pipeline.model.crusher import operating_from_survey  # noqa: E402
+from pipeline.model.crusher.engine import grid_f80  # noqa: E402
 
 DER = ROOT / "data" / "derived" / "hp500"
 OUT = HERE.parent / "data" / "theory.json"
@@ -60,6 +69,14 @@ def engine(theta_s: np.ndarray, ops) -> dict[str, np.ndarray]:
 def to_sampled(name: str, value: float) -> float:
     p = next(q for q in cb.PRIORS if q.name == name)
     return math.log(value) if p.log else value
+
+
+def prior_mean_natural(p, n: int = 400_000, seed: int = 7) -> float:
+    """Mean of a prior on its natural scale; the sampling of ``crusherbayes.prior_sd_natural`` (same n and seed)."""
+    rng = np.random.default_rng(seed)
+    x = rng.normal(p.mu, p.sd, n)
+    x = x[(x >= p.lo) & (x <= p.hi)]
+    return float(np.mean(np.exp(x) if p.log else x))
 
 
 def main() -> int:
@@ -115,8 +132,17 @@ def main() -> int:
     prior_sd = np.array([p.sd for p in cb.PRIORS] + [tau["tph"]] * 3 + [tau["kW"]] * 3)
     cov = np.linalg.inv(np.diag(1 / prior_sd ** 2) + F)
     names = [p.name for p in cb.PRIORS] + [f"discrepancy_{t}_{term}" for t in cb.TARGETS for term in cb.DISCREPANCY_TERMS]
-    laplace = [{"name": nm, "predicted_ratio": float(math.sqrt(cov[i, i]) / prior_sd[i]),
-                "sampler_ratio": post[nm]["contraction"]} for i, nm in enumerate(names)]
+    laplace = []
+    for i, nm in enumerate(names):
+        sd_lin = math.sqrt(cov[i, i])
+        if i < cb.N_ENGINE:
+            p = cb.PRIORS[i]
+            sd_nat = math.exp(theta_hat[i]) * sd_lin if p.log else sd_lin   # delta method for a log-sampled scalar
+            ratio_nat = sd_nat / post[nm]["prior_sd"]                        # the natural-scale prior SD of the sampler
+        else:
+            ratio_nat = sd_lin / prior_sd[i]                                 # discrepancy coefficients: one scale
+        laplace.append({"name": nm, "predicted_ratio": float(sd_lin / prior_sd[i]),
+                        "predicted_ratio_natural": float(ratio_nat), "sampler_ratio": post[nm]["contraction"]})
     iw, iz = names.index("wi_kwh_t"), names.index("zeta")
     corr_wz = float(cov[iw, iz] / math.sqrt(cov[iw, iw] * cov[iz, iz]))
     dlog = J["kW"][:, iw] - J["kW"][:, iz]
@@ -151,6 +177,9 @@ def main() -> int:
     # the affine approximation of the engine power and its slope sign
     b_kw = np.linalg.lstsq(Z, f_nom["kW"], rcond=None)[0]
     b_y = np.linalg.lstsq(Z, y["kW"], rcond=None)[0]
+    prior_means = {p.name: prior_mean_natural(p) for p in cb.PRIORS}
+    feed_grid = [{"survey": i + 1, "f80_measured_mm": float(f80[i]), "f80_engine_grid_mm": float(grid_f80(ops[i]))}
+                 for i in range(n)]
     res = {
         "schema": "chancadem.crusherbayes.theory/v1",
         "note": "computed by manuscripts/crusherbayes/analysis/theory_check.py with the product's engine",
@@ -158,14 +187,15 @@ def main() -> int:
         "throughput_shape_max_dev_from_css_plus_17_over_38": css_affine,
         "design_singular_values": S.tolist(),
         "sigma_used": sigma, "tau": tau, "step": STEP,
-        "information": rows, "laplace": laplace,
+        "information": rows, "laplace": laplace, "prior_mean_natural": prior_means, "feed_f80": feed_grid,
         "laplace_corr_wi_zeta": corr_wz, "kw_jacobian_wi_minus_zeta_rel": ridge_ratio,
         "shrinkage": sweep,
         "engine_power_affine_coef": b_kw.tolist(), "measured_power_affine_coef": b_y.tolist(),
     }
     OUT.write_text(json.dumps(res, indent=1) + "\n", encoding="utf-8")
     print(json.dumps({"out_of_span": out_of_span, "css_affine": css_affine, "corr_wz": corr_wz, "ridge_ratio": ridge_ratio,
-                      "laplace": [(r["name"], round(r["predicted_ratio"], 3), r["sampler_ratio"]) for r in laplace],
+                      "laplace": [(r["name"], round(r["predicted_ratio_natural"], 3), r["sampler_ratio"]) for r in laplace],
+                      "prior_mean_natural": prior_means, "feed_f80": feed_grid,
                       "frac_in_span_kW": [(r["name"], round(r["kW"]["fraction_in_span"] or 0, 3)) for r in rows],
                       "at_method": {t: sweep[t]["at_method"] for t in sweep},
                       "lambda": {t: sweep[t]["lambda_method"] for t in sweep},

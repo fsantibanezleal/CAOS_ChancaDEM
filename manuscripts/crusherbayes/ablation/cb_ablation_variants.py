@@ -9,7 +9,7 @@ Variants (name: what changes):
 
   full-seed43, full-seed44   the method as committed, with another seed (Monte Carlo spread of the sampler)
   no-discrepancy             the discrepancy prior scale tau is 1e-6 of its value: the likelihood is the engine plus noise
-  engine-fixed               the eight engine scalars are held at their nominal value (prior sd 1e-4 of its value): only
+  engine-fixed               the eight engine scalars are held at their nominal value (prior sd 1e-4 of the method's): only
                              the discrepancy and the noise are learned
   balance-fixed              the four population-balance scalars (s_K1, s_K2, K3, t10 shift) are held at their nominal value;
                              capacity, work index and power form are sampled
