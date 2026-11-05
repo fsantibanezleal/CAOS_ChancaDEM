@@ -155,15 +155,18 @@ class ResidualFit(NamedTuple):
 
 
 def fit_residual(features: np.ndarray, backbone_pred: np.ndarray, measured: np.ndarray, train_idx: np.ndarray, i: int,
-                 resid_target: np.ndarray | None = None) -> ResidualFit:
+                 resid_target: np.ndarray | None = None, *, ridge: float = RIDGE_LAMBDA,
+                 clip: float = RESID_CLIP_FRAC) -> ResidualFit:
     """M1: a ridge regression of the residual on standardized [CSS, f80] fitted on the train rows, evaluated at row i.
-    ``resid_target`` overrides the residual (the label-shuffle control). The residual is clipped to +-RESID_CLIP_FRAC of the
-    backbone value at row i (a physical bound); M1 is ``backbone_pred[i] + clipped``."""
+    ``resid_target`` overrides the residual (the label-shuffle control). The residual is clipped to +-``clip`` of the
+    backbone value at row i (a physical bound); M1 is ``backbone_pred[i] + clipped``. ``ridge`` (the penalty on the two
+    slopes) and ``clip`` (the band, a fraction of the backbone value) are keywords so a sensitivity study can vary them;
+    their defaults are the pre-registered RIDGE_LAMBDA and RESID_CLIP_FRAC, which the committed document uses."""
     r = (measured - backbone_pred) if resid_target is None else resid_target
     trX, xi = _standardize(features[train_idx], features[i])
-    coef = _fit_ridge(trX, r[train_idx], RIDGE_LAMBDA)
+    coef = _fit_ridge(trX, r[train_idx], ridge)
     raw = float(coef[0] + xi @ coef[1:])
-    bound = RESID_CLIP_FRAC * abs(backbone_pred[i])
+    bound = clip * abs(backbone_pred[i])
     return ResidualFit(coef, raw, max(-bound, min(bound, raw)))
 
 

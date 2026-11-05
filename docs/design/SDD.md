@@ -273,8 +273,8 @@ CrusherCal (M10) is the evaluation protocol every method above is held to, not a
   is set beside the in-sample error of the same backbone computed here. The synthetic secondary-cone cases of the App
   carry the relative half-width of that band as a labelled lower bound (the held-out error of the same model family once
   calibrated, read from the committed document at run time); the other machine types have no measured data and show no
-  band. Covered by a level 4 notebook in each language
-  (`notebooks/*/06-crushercal/`).
+  band. Covered by level 2 and level 3 notebooks in each language (`notebooks/*/06-crushercal/`): CrusherCal is the
+  evaluation protocol, not a proposed method, so it has no level 4 notebook.
 
 ## Deploy driver
 
