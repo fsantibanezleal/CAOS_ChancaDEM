@@ -168,6 +168,8 @@ def fig_physics() -> None:
     a1.legend(fontsize=6.8, frameon=True, facecolor="white", edgecolor=GRID, loc="upper left")
     _clean(a1)
     for cid, m in machine.items():
+        if cid in CONTROLS:
+            continue                        # the three controls are not machines of the circuit
         s = _json(DER / cid / "trace.json")["summary"]
         col, _lab, mk, _ls = MACH[m]
         a2.scatter(s["p80_mm"], s["throughput_tph"], s=30, color=col, marker=mk, edgecolor=INK, linewidth=0.4, zorder=3)
@@ -337,7 +339,7 @@ def fig_bands() -> None:
         ax.set_xlabel("held-out survey")
         ax.set_ylabel(f"measured minus backbone ({lab})")
         ax.set_title(f"{title}: coverage {uq['nested_coverage']:.2f}", fontsize=8.6)
-        ax.legend(fontsize=6.4, frameon=True, facecolor="white", edgecolor=GRID, loc="lower left")
+        ax.legend(fontsize=6.4, frameon=False, loc="upper center", bbox_to_anchor=(0.5, -0.2), ncol=3)
         _clean(ax)
     _save(fig, "fig-bands.pdf")
 
@@ -367,9 +369,20 @@ def fig_morrell() -> None:
     _save(fig, "fig-morrell.pdf")
 
 
+SYMBOL = {"q_ref_tph": "$Q_T$", "wi_kwh_t": "$W_i$", "zeta": r"$\zeta$", "pn_kw": "$P_n$", "k1_scale": "$s_1$ (on $K_1$)",
+          "k2_scale": "$s_2$ (on $K_2$)", "k3": "$K_3$", "t10_shift_pct": r"$\Delta t_{10}$", "sigma_tph": r"$\sigma_Q$",
+          "sigma_kW": r"$\sigma_P$", "discrepancy_tph_constant": "$d_{Q0}$", "discrepancy_tph_css": "$d_{Q1}$ (setting)",
+          "discrepancy_tph_f80": "$d_{Q2}$ ($f_{80}$)", "discrepancy_kW_constant": "$d_{P0}$",
+          "discrepancy_kW_css": "$d_{P1}$ (setting)", "discrepancy_kW_f80": "$d_{P2}$ ($f_{80}$)"}
+OUTPUT_LABEL = {"p80_mm": "$P_{80}$", "p50_mm": "$P_{50}$", "p20_mm": "$P_{20}$", "pass_1": "passing 1 mm",
+                "pass_4": "passing 4 mm", "pass_8": "passing 8 mm", "pass_16": "passing 16 mm", "pass_32": "passing 32 mm",
+                "throughput_tph": "throughput $Q$", "power_kw": "power $P$"}
+CONTROLS = ("CP1", "CI1", "CK1")
+
+
 def fig_contraction() -> None:
     rows = _json(HP / "crusherbayes.json")["contraction"]
-    names = [r["name"].replace("_", " ") for r in rows]
+    names = [SYMBOL[r["name"]] for r in rows]
     vals = np.array([r["contraction"] for r in rows])
     order = np.argsort(vals)
     fig, ax = plt.subplots(figsize=(6.6, 3.9))
@@ -396,18 +409,18 @@ def fig_surrogate() -> None:
     mape = [po[k]["mape_pct"] for k in keys]
     x = np.arange(len(keys))
     fig, ax = plt.subplots(figsize=(6.6, 3.0))
-    ax.bar(x, r2, color=BLUE, edgecolor=INK, linewidth=0.5, width=0.6, zorder=3)
-    ax.set_ylim(0.95, 1.001)
-    ax.set_ylabel("$R^2$ against the engine (bars)")
+    ax.bar(x, mape, color=BLUE, edgecolor=INK, linewidth=0.5, width=0.6, zorder=3)
+    for xi, mp in zip(x, mape):
+        ax.text(xi, mp + 0.15, f"{mp:.1f}", ha="center", va="bottom", fontsize=6.8, color=INK)
+    ax.set_ylim(0, max(mape) * 1.25)
+    ax.set_ylabel("MAPE against the engine (%, bars)")
     ax.set_xticks(x)
-    ax.set_xticklabels([k.replace("_", " ") for k in keys], rotation=35, ha="right", fontsize=7.4)
+    ax.set_xticklabels([OUTPUT_LABEL[k] for k in keys], rotation=35, ha="right", fontsize=7.4)
     _clean(ax)
     ax2 = ax.twinx()
-    ax2.plot(x, mape, "s--", color=ORANGE, lw=1.3, ms=4.5, zorder=4)
-    for xi, mp in zip(x, mape):
-        ax2.text(xi, mp + 0.3, f"{mp:.1f}", ha="center", va="bottom", fontsize=6.6, color="#c15a22")
-    ax2.set_ylabel("MAPE (%, squares)")
-    ax2.set_ylim(0, max(mape) * 1.4)
+    ax2.plot(x, r2, "s", color=INK, ms=4.5, mfc="white", zorder=4)
+    ax2.set_ylabel("$R^2$ against the engine (open squares)")
+    ax2.set_ylim(0.97, 1.0)
     ax2.spines["top"].set_visible(False)
     _save(fig, "fig-surrogate.pdf")
 

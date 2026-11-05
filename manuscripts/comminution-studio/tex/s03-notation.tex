@@ -22,7 +22,7 @@ those laws are printed; throughput is in tonnes per hour; power in kilowatts; sp
 revolutions per minute; angles in degrees. Percentages are written with the percent sign; a difference between two
 percentage errors is written in points.
 
-\emph{Survey indices and folds.} Survey $i$ runs from $1$ to $n=10$ in the order of the published table. A fold of the
+\emph{Survey indices and folds.} Survey $i$ runs from $1$ to $N_s=10$ in the order of the published table. A fold of the
 leave-one-survey-out evaluation is indexed by its held-out survey; $\mathcal T_{-i}$ is the set of the other nine surveys,
 and a quantity fitted on them carries the subscript $-i$. A standardised variable is written $z$, with the mean and
 standard deviation of the training surveys of the fold. In CrusherBayes, $\boldsymbol\theta$ is the vector of the eight
@@ -50,7 +50,7 @@ $T_{ref}$ & design throw of a machine class & mm \\
 $N$, $N_{opt}$ & eccentric speed and the speed of maximum capacity & rpm \\
 $A$, $b$, $A\!\times\!b$ & JKMRC ore competence parameters and their product & \%, t/kWh, -- \\
 $E_{cs}$ & specific comminution energy per nip & kWh/t \\
-$t_{10}$ & fraction of progeny passing one tenth of the parent size & -- or \% \\
+$t_{10}$ & fraction of progeny passing one tenth of the parent size (written in percent where stated) & -- \\
 $B(u)$, $\varphi$, $\gamma$, $\beta$ & Austin cumulative appearance function of relative size $u$, its weight and slopes & -- \\
 $\mathrm B$, $B_{ij}$ & breakage matrix, fraction of broken class-$j$ mass reporting to class $i$ & -- \\
 $C(d)$, $\mathbf c$, $\mathrm C$ & classification probability of size $d$, its vector and diagonal matrix & -- \\
@@ -65,7 +65,7 @@ $\zeta$, $P_n$ & slope and no-load term of the current-based power form & --, kW
 $M_{ic}$, $W_c$, $S_c$ & Morrell crushing work index, crusher specific energy, hardness correction & kWh/t, kWh/t, -- \\
 $x_1$, $x_2$ & feed and product $80\%$ passing sizes in the Morrell equation & $\mu$m \\
 $\alpha$, $\mu_f$ & nip angle and friction coefficient of the grip limit & deg, -- \\
-$\mathcal D$, $n$ & set of surveys and their number ($10$) & -- \\
+$\mathcal D$, $N_s$ & set of surveys and their number ($10$) & -- \\
 $\mathcal T_{-i}$ & training surveys of the fold that holds out survey $i$ & -- \\
 $y_{t,i}$, $\hat y_{t,i}$ & measured value and held-out prediction of target $t$ at survey $i$ & t/h or kW \\
 $\sigma$, $\sigma_{-i}$ & residual standard deviation, and that of the nine other surveys & t/h or kW \\

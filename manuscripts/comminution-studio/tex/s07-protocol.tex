@@ -16,25 +16,41 @@ are not scored.
 
 For a target with measured values $y_i$ and held-out predictions $\hat y_i$, $i=1,\dots,n$, the point scores are
 \begin{equation}
-\mathrm{MAPE} = \frac{100}{n}\sum_{i=1}^{n}\left|\frac{\hat y_i - y_i}{y_i}\right|,\qquad
-\mathrm{RMSE} = \sqrt{\frac1n\sum_{i=1}^{n}\left(\hat y_i - y_i\right)^2},\qquad
+\mathrm{MAPE} = \frac{100}{N_s}\sum_{i=1}^{N_s}\left|\frac{\hat y_i - y_i}{y_i}\right|,\qquad
+\mathrm{RMSE} = \sqrt{\frac{1}{N_s}\sum_{i=1}^{N_s}\left(\hat y_i - y_i\right)^2},\qquad
 R^2 = 1 - \frac{\sum_i(y_i-\hat y_i)^2}{\sum_i(y_i-\bar y)^2},
 \label{eq:scores}
 \end{equation}
 and the largest deviation $\max_i|\hat y_i-y_i|/y_i$ in percent. A held-out $R^2$ can be negative: a predictor worse than the mean of the
 measured values scores below zero. For an interval $[\ell_i,u_i]$ the coverage and the mean width are
 \begin{equation}
-\mathrm{cov} = \frac1n\sum_{i=1}^{n}\mathbb 1\!\left[\ell_i\le y_i\le u_i\right],\qquad
-\bar w = \frac1n\sum_{i=1}^{n}(u_i-\ell_i),
+\mathrm{cov} = \frac{1}{N_s}\sum_{i=1}^{N_s}\mathbb 1\!\left[\ell_i\le y_i\le u_i\right],\qquad
+\bar w = \frac{1}{N_s}\sum_{i=1}^{N_s}(u_i-\ell_i),
 \label{eq:coverage}
 \end{equation}
-and the mean log predictive density of a predictive distribution with density $p_i$ is $\overline{\mathrm{lpd}}=\frac1n\sum_i\log p_i(y_i)$.
+and the mean log predictive density of a predictive distribution with density $p_i$ is $\overline{\mathrm{lpd}}=\frac{1}{N_s}\sum_i\log p_i(y_i)$.
 For CrusherBayes $p_i$ is the posterior predictive density, estimated as the log of the mean over the retained samples of the Gaussian
 predictive density at each sample; for a residual-band predictor it is the normal density with standard deviation $\sigma_{-i}$ at its
 residual. The contraction of a parameter is the ratio of its posterior to its prior standard deviation on its natural scale; below $0.5$ the
 surveys identify the parameter, and near one it stays at its prior. For the learned models, $R^2$ and MAPE are computed per output in the
 original units over the $2196$ held-out points; the false-alarm rate is the share of held-out points that raise an alarm and the detection
 rate the share of planted points that do.
+
+\emph{Uncertainty of a held-out error.} Ten surveys give each MAPE a sampling error that is of the order of the differences between the
+predictors, so every held-out MAPE of the surveys carries a nonparametric bootstrap interval over the surveys. With $a_{k,i}$ the absolute
+percentage error of predictor $k$ at survey $i$ and $I^{(b)}$ the $b$-th of $B=\uqB$ resamples of the ten survey indices with replacement
+(seed $\uqSeed$),
+\begin{equation}
+\mathrm{MAPE}^{(b)}_k = \frac{1}{N_s}\sum_{i\in I^{(b)}} a_{k,i},\qquad
+\Delta^{(b)}_{k,l} = \mathrm{MAPE}^{(b)}_k - \mathrm{MAPE}^{(b)}_l ,
+\label{eq:bootstrap}
+\end{equation}
+and the $95\%$ interval of a MAPE, or of the difference of two predictors, is the $2.5$th to the $97.5$th percentile of its $B$ values. The
+same resampled surveys serve every predictor, so a difference is paired: a survey that is hard for both predictors moves both errors
+together. A ranking of two predictors is stated only when the interval of their difference excludes zero; otherwise the two are reported as
+not distinguishable on these surveys. The predictions are those of the committed documents (the strict CrusherCal predictions and the
+CrusherBayes predictive means), and the computation is the report's script \texttt{figures/\allowbreak{}heldout\_uq.py}, which recomputes every
+committed MAPE from them before it resamples.
 
 \subsection{Baselines and controls}\label{sec:protocol-baselines}
 
@@ -43,9 +59,10 @@ Every comparison has a baseline that a method must beat before it claims skill. 
 feature, no physics), which is the bar for any claim on power. For the surrogate the baseline is the engine itself, which is what the slot
 answers with when its bundle is invalid; for the autoencoder the baseline is the envelope check. The leaky variant of every survey fit is
 reported beside the strict one, so that the optimism of letting a survey into its own fit is measured and not assumed. The published
-calibration is a baseline of a different kind: its own error on the surveys is not available to the product (Section~\ref{sec:val-published}),
-so the comparison with it is made by running its constants in the engine and refitting its scalars per fold, never by quoting a number. A
-predictor that does not beat the setting-only line on a target by more than the noise of ten surveys has no claim of skill on that target.
+calibration enters twice and is run, never quoted: its classification, $t_{10}$ and power constants are run in the engine, with the engine's
+scalars refit per fold, and its separate throughput model (Equation~\eqref{eq:rocha}) is run on the ten surveys as a throughput predictor,
+with its fitted factor as published and refit per fold. A predictor whose difference to the setting-only line has an interval that includes
+zero has no claim of skill over the line on that target.
 
 \subsection{The protocol shared by every survey predictor}\label{sec:protocol-shared}
 
@@ -53,22 +70,24 @@ All predictors of the surveys use the same ten folds, the same targets in the sa
 construction (Section~\ref{sec:m-crushercal}); CrusherBayes uses its posterior predictive interval in place of the band. In every fold every
 fitted quantity, the capacity base, the power-form constants, the ridge and free-form coefficients, the line, $M_{ic}$ and the no-load power,
 and the whole CrusherBayes posterior, is refit on the nine training surveys, and the held-out survey enters only the prediction. A test plants
-an absurd target in one survey and checks that every other fold's prediction moves and the planted survey's own does not. With $n=10$ the
-protocol has a resolution of $0.1$ in coverage, and a difference below about three points of MAPE is treated as noise; the adoption rule of
-CrusherBayes uses that margin. No predictor is tuned on the held-out scores: every constant of every fit was set before the first run and is
+an absurd target in one survey and checks that every other fold's prediction moves and the planted survey's own does not. With $N_s=10$ the
+protocol has a resolution of $0.1$ in coverage, and the uncertainty of the errors is the bootstrap of Section~\ref{sec:protocol-metrics}. The
+adoption rule of CrusherBayes uses a margin of three points of MAPE, fixed before the run as a rule; it is not a measured noise level, and the
+bootstrap intervals of the differences between the predictors are wider (Section~\ref{sec:results-uq}). No predictor is tuned on the held-out scores: every constant of every fit was set before the first run and is
 recorded in its document.
 
 \subsection{Seeds, repetitions, hardware and run times}\label{sec:protocol-seeds}
 
-The survey evaluation is deterministic given the seed $42$, which fixes the label-shuffle permutation; CrusherBayes spawns one seed per
+The survey evaluation is deterministic given the seed $42$, which fixes the label-shuffle permutation (one per target, shared by the strict
+and the leaky folds); CrusherBayes spawns one seed per
 posterior from a seed sequence started at $42$, uses that seed plus one for the predictive draws of the posterior, and its document is byte-identical whatever the number of worker
 processes. The learned models use the training seed $12345$ and the held-out seed $67890$, with torch single-threaded. The
 particle-replacement check of Section~\ref{sec:validation} uses five seeds per parcel count. Each posterior is one chain of twenty walkers;
-its repetition is the eleven posteriors of the folds, whose convergence diagnostics are reported. The measured run times, on a Windows 11
-workstation with Python $3.13$ and Node $24$, are in Table~\ref{tab:resources}: $7.3$~s for the bake before CrusherBayes, $48$~s to train and
-evaluate both learned models on the processor, and a median of $1.34$~ms per engine evaluation. No stage uses a graphics processor. The
-wall time of the CrusherBayes sampler is not recorded in the committed documents; its size, $140{,}000$ log-probability evaluations per
-posterior, is (Section~\ref{sec:arch-resources}).
+its repetition is the eleven posteriors of the folds, whose convergence diagnostics are reported. The bootstrap of the held-out errors uses the seed $\uqSeed$. The measured run times of release 0.12.001, on a
+Windows 11 workstation with Python $\resPython$ and Node $24$, are in Table~\ref{tab:resources}: about $\resBakeMin$~minutes for the whole bake,
+of which about $\resHpMin$ are the HP500 step with the CrusherBayes sampler ($140{,}000$ log-probability evaluations per posterior, eleven
+posteriors), $\resModelsS$~s to train and evaluate both learned models on the processor, and a median of $\resEngineMed$~ms per engine
+evaluation. No stage uses a graphics processor.
 
 \subsection{Acceptance criteria}\label{sec:protocol-acceptance}
 
@@ -100,7 +119,7 @@ Bond power and current-based form & positive and finite at every valid point; th
 Morrell's energy & equation B4 as printed, the units kWh/t and kW, the rule on $S_c$; the held-out results reported as computed, the negative $M_{ic}$ flagged \\
 HP500 calibration & the calibrated engine at each survey equals the backbone document; the surveys are physically plausible \\
 Setting-only line & reproduces $12.78\%$ (power) and $13.67\%$ (throughput); a planted survey moves every fold but its own \\
-CrusherCal & the label-shuffle control does not beat the backbone; the backbone beats the constant mean on throughput; the optimism gap is exposed; coverage reported \\
+CrusherCal & the label-shuffle control does not beat the backbone and draws one permutation for both fold modes; the backbone beats the constant mean on throughput; the optimism gap is exposed; coverage reported \\
 Envelope check & an implausible point is invalid; a calibrated point outside the support is flagged as extrapolating \\
 Surrogate & $R^2$ of every output from the shipped graph; $P_{80}$ monotone in the setting; the engine answers, labelled, with an invalid bundle \\
 Autoencoder & false-alarm and detection rates beside those of the envelope check; the envelope check answers, labelled, with an invalid bundle \\

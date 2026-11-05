@@ -20,7 +20,7 @@ Let $F_{80}$ be the engine's feed 80 percent passing size and $e_0 = 256$ mm the
   stage). Their bounds and sources are in the [envelope card](../15_envelope-gate/envelope.md).
 
 The nip angle (`nip_angle`) is $\alpha = \alpha_0 + 6\,(\mathrm{CSS}/g_{ref} - 1)/2$ degrees with $\alpha_0 = 22$ (19 for
-the jaw), rising modestly with the setting. The grip limit is $2\arctan\mu$ with $\mu = 0.35$, that is 38.2 degrees
+the jaw), rising modestly with the setting. The grip limit is $2\arctan\mu$ with $\mu = 0.35$, that is 38.58 degrees
 (`nip_limit`); a particle is nipped when the nip angle is at or below it. The code reports both and draws them in the
 chamber geometry view (the chamber view, `frontend/src/views/`); the nip angle does not set the regime.
 

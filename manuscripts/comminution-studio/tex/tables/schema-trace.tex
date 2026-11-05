@@ -16,7 +16,7 @@ Field & Type & Range or values & Req. & Meaning \\
 \texttt{feed\_mass} & array of number & 2 to 200 items & yes & Feed mass fraction in each class (sums to 1). \\
 \texttt{product\_mass} & array of number & 2 to 200 items & yes & Product mass fraction in each class (sums to 1 within the mass-closure tolerance). \\
 \texttt{classification} & array of number & 2 to 200 items & yes & Whiten classification function C(d) at each class mid-size: the probability a particle of that size is selected for breakage. \\
-\texttt{appearance\_t10} & number & >= 0; <= 100 & yes & The t10 of the breakage appearance function used, percent passing one tenth of the parent size. \\
+\texttt{appearance\_t10} & number & >= 0; <= 100 & yes & The t10 of the breakage appearance function used: the fraction of the progeny passing one tenth of the parent size, in [0, 0.44] (the engine caps ... \\
 \texttt{summary} & object & -- & yes & -- \\
 \texttt{summary.f80\_mm} & number & >= 0 & yes & -- \\
 \texttt{summary.p80\_mm} & number & >= 0 & yes & -- \\

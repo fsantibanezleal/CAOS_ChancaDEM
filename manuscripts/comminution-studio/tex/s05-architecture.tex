@@ -14,8 +14,8 @@ its unit's range stops the bake. The model step (\texttt{run.py models}) is sepa
 Latin-hypercube sweeps, labels them with the engine, trains the surrogate and the autoencoder, exports them to ONNX, quantises the
 surrogate to int8, evaluates both through onnxruntime on the held-out draw, and refreshes the index and readiness. The bake never
 trains; it reads the released model bundles as they stand. Every random draw comes from one seeded generator factory, so a run is
-a pure function of its inputs and seeds: a re-bake into a sandbox on 27 October 2026, before the CrusherBayes document existed,
-reproduced every committed trace and both validation documents of that build byte for byte.
+a pure function of its inputs and seeds: a full re-bake of release 0.12.001 into a sandbox output root reproduces every committed trace
+and the three HP500 documents, CrusherBayes included, byte for byte (Section~\ref{sec:repro}).
 
 \begin{figure}[!t]
 \centering
@@ -41,8 +41,8 @@ case in TypeScript and compares it with its trace to the six significant digits 
 
 The lane of a case is decided by measurement. A case may be re-run live in the browser only when its engine is pure Python with
 dependencies inside an allowed set (\texttt{numpy}), when one run completes within $1500$~ms and when its trace is at most
-$256$~KiB; otherwise the web would replay the committed artifact. The canonical engine evaluates a case in a median of $1.34$~ms
-(the median over the $27$ cases of the median of seven warmed runs; at most $2.03$~ms), and the largest trace is $4{,}127$~bytes,
+$256$~KiB; otherwise the web would replay the committed artifact. The canonical engine evaluates a case in a median of $\resEngineMed$~ms
+(the median over the $27$ cases of the median of seven runs after a warm-up; at most $\resEngineMax$~ms), and the largest trace is $4{,}127$~bytes,
 so every case is live-eligible. The measured decision and the two budgets are written into each manifest; the raw run time is not,
 because a manifest must not change between two bakes of the same inputs.
 
@@ -66,30 +66,21 @@ contract tests and is not deployed.
 
 \subsection{Resources}\label{sec:arch-resources}
 
-Table~\ref{tab:resources} gives what each stage needs on the development workstation (Windows 11, Python $3.13$, Node $24$), measured
-with a process-tree monitor that polls the peak memory every $20$~ms, on an archive copy of the release branch so that the working tree
-is not touched. No stage needs a graphics processor or a network after the installation. The site is $16.8$~MB, of which $13.5$~MB is
-the ONNX Runtime WebAssembly binary; the committed artifacts are $286$~KB. The CrusherBayes sampler is part of the HP500 step and was
-added after these measurements; its configuration fixes the work at $20\times7000=140{,}000$ log-probability evaluations per
-posterior, each of which evaluates the engine on the nine or ten training surveys of its fold, for eleven posteriors, and its wall time
-is not recorded in the committed documents.
+Table~\ref{tab:resources} gives what each stage of release 0.12.001 needs on the development workstation (Windows 11, Python
+$\resPython$ in the pipeline environment, Node $24$, a processor with $\resThreads$ threads), measured on $\resDate$ with a
+process-tree monitor that polls the peak memory of the command and of every process it starts every $20$~ms. The three pipeline
+stages that write artifacts (the bake, the HP500 step and the training) were run into a sandbox output root, so the committed artifacts were not rewritten; the disk column of a
+sandbox run is the bytes it wrote there, without the released model bundles that the committed tree also holds. No stage needs a
+graphics processor or a network after the installation. The bake takes about $\resBakeMin$~minutes, of which the HP500 step takes about
+$\resHpMin$: the CrusherBayes sampler fixes the work at $20\times7000=140{,}000$ log-probability evaluations per posterior, each of which
+evaluates the engine on the nine or ten training surveys of its fold, for eleven posteriors, which the step spreads over the processor's
+threads. Every other stage takes seconds to minutes. The built site is $\resSite$~MB, of which $\resWasm$~MB is the ONNX Runtime WebAssembly binary.
 
 \begin{table}[!t]
 \centering
-\caption{Measured resources of each stage on the development workstation: peak memory of the process tree, disk written and wall
-time, from the product's measured-resources record of the release that introduced the present engine and models.}
+\caption{Measured resources of each stage of release 0.12.001 on the development workstation: peak memory of the process tree, disk
+written and wall time. Generated from \texttt{data/\allowbreak{}resources.json} of the report, which records each measurement.}
 \label{tab:resources}
 \footnotesize
-\begin{tabular}{@{}p{0.45\textwidth} r r r l@{}}
-\toprule
-Stage & Peak memory & Disk & Time & Where it runs \\
-\midrule
-Bake (\texttt{run.py all}, 27 cases and the HP500 documents, before CrusherBayes) & 67 MB & 286 KB & 7.3 s & workstation \\
-Training (\texttt{run.py models}: sweeps, two networks, export, evaluation) & 453 MB & 58 KB & 48 s & workstation, CPU \\
-Python tests (the whole suite) & 268 MB & temporary & 962 s & workstation \\
-Web install (\texttt{npm ci}) & 644 MB & 328 MB & 25 s & workstation, CI \\
-Web build (\texttt{npm run build}) & 567 MB & 16.8 MB & 12 s & workstation, CI \\
-Web unit tests (309 tests) & 1951 MB & none & 10 s & workstation, CI \\
-\bottomrule
-\end{tabular}
+\input{tables/tab-resources}
 \end{table}

@@ -69,7 +69,8 @@ $1.30\,P_d+110$ on that draw and the refit form, with the closed-side setting of
 
 \emph{Theory.} Morrell's method gives the specific energy of comminution circuits from the feed and product sizes and ore work indices
 measured by the SMC Test; for a conventional crusher the guideline of the Global Mining Standards and Guidelines Group prints, in its
-Annex B (equations B4 and B5)~\cite{gmsg}, following Morrell~\cite{morrell2009},
+Annex B (equations B4 and B5)~\cite{gmsg}; the method is Morrell's~\cite{morrell2009}, and the equations below are used as the
+guideline prints them,
 \begin{align}
 W_c &= S_c\,K_2\,M_{ic}\;4\left(x_2^{\,f(x_2)} - x_1^{\,f(x_1)}\right)\ [\mathrm{kWh/t}],\qquad f(x) = -\left(0.295 + \frac{x}{10^{6}}\right),
 \label{eq:morrell}\\
@@ -80,7 +81,6 @@ with $x_1$ and $x_2$ the feed and product $80\%$ passing sizes in micrometres, $
 classifying screen ($1.19$ in open circuit) and $M_{ic}$ the crushing work index of the ore in kWh/t. The term $x^{f(x)}$ is a size in
 micrometres raised to a small negative power, a pure number, so $W_c$ carries the unit of $M_{ic}$, and the power is $W_c\,Q$ in kW. The
 guideline defines the net power as the motor power less the no-load power, so a measured motor power is the net power plus a no-load term.
-The primary paper was not opened; the equations are taken from the guideline as printed.
 
 \emph{The fit on the HP500 surveys.} The $M_{ic}$ of the Minas Rio itabirite is not published, so it is a fitted scalar, and so is the
 no-load power; both are refit on the nine training surveys of every fold and the held-out survey never enters. The design column of a survey
@@ -108,7 +108,7 @@ open-circuit factor would only rescale the fitted $M_{ic}$; the two fitted scala
 $x^{f(x)}$ falls steeply with size and the size reduction term is dominated by the product size $x_2$. With the sizes of the surveys ($x_1$ from $47{,}000$ to
 $140{,}000~\mu$m and $x_2$ from $21{,}230$ to $36{,}600~\mu$m, the backbone's $P_{80}$), $K_s(x_1x_2)^{-0.2}$ is below one, so $S_c$ applies.
 
-\emph{Cost.} $O(1)$ per survey and an $O(n)$ fit per fold. \emph{Assumptions and limits.} Only the conventional-crusher branch of the method
+\emph{Cost.} $O(1)$ per survey and an $O(N_s)$ fit per fold. \emph{Assumptions and limits.} Only the conventional-crusher branch of the method
 is used: no tumbling-mill terms, no open-circuit $K_2$ in the fit (it would be absorbed by $M_{ic}$), and no size-distribution correction.
 The method is not part of the live engine and is not shown as a predictor in the App.
 
@@ -135,9 +135,25 @@ independent of the throw, and
 t_{10}\,[\%] = 64 - 0.12\,s - 0.23\,f_{80},\qquad Q = Q_T\;\frac{s+T/2}{g_{ref}}\;\sigma_Ne^{1-\sigma_N},\quad Q_T = 647\ \mathrm{t/h},
 \label{eq:hp500t10}
 \end{equation}
-with the power of Equation~\eqref{eq:pc}. The constants are carried from the product's code and its earlier documentation; the publisher page of
-the paper refused automated access to every documenting attempt, so their correspondence to the numbered tables of the paper (Tables 1, 4 and 5
-in the code's attributions) is not re-verified here.
+with the power of Equation~\eqref{eq:pc}. The constants of Equation~\eqref{eq:hp500class}, of the $t_{10}$ relation and of
+Equation~\eqref{eq:pc} are those of Table 5 of the paper ($K_3=2.3$ is the value the authors keep constant), and the ore values those of
+its Table 1, where $7.2$ and $10.6$~kWh/t are the impact work indices of the compact and the supercompact itabirite; the blend value
+$9.0$ between them is the product's. The capacity base is not a fit of the paper. Rocha et al.\ model the maximum throughput of the
+crusher separately, by a multiplicative correction of the capacity of a vendor base case,
+\begin{equation}
+Q_{max} = \lambda\,Q_T\,\frac{\rho_a}{1600}\left(\frac{16}{W_i}\right)^{\eta}\left(\frac{100}{f_{80}}\right)^{\epsilon}\delta(\omega)
+\left(\frac{s}{38}\right)^{\nu},\qquad Q_T=647\ \mathrm{t/h},
+\label{eq:rocha}
+\end{equation}
+with $\rho_a$ the bulk density in kg/m$^3$, $W_i$ the impact work index in kWh/t, $f_{80}$ and $s$ in millimetres, $\delta(\omega)$ a
+moisture factor equal to one below $1\%$ moisture, the exponents $\eta=0.15$, $\epsilon=0.26$ and $\nu=1.27$ fitted to simulations of the
+vendor's software, and $\lambda=0.84$ fitted to survey 10 (their Equations 10 to 15 and Table 4); $Q_T$ is the capacity of the base case of
+that software (a granite of work index $16$~kWh/t and bulk density $1600$~kg/m$^3$, a feed $f_{80}$ of $100$~mm, a setting of $38$~mm and a
+medium cavity). The engine takes only the number $647$ from this model and puts it into the reduced Evertsson form of
+Equation~\eqref{eq:capacity}, where it means a different capacity (Section~\ref{sec:m-capacity}). The model of Equation~\eqref{eq:rocha}
+itself is not part of the engine; the report runs it on the ten surveys as a published comparator of the throughput
+(Section~\ref{sec:m-crushercal}), with the bulk density of $2088$~kg/m$^3$ the paper measured, the blend work index of $9.0$~kWh/t and
+$\delta=1$, because the paper prints neither a blend work index nor the moisture of each survey.
 
 \emph{The backbone.} The calibrated engine evaluated at each survey is the backbone (Table~\ref{tab:surveys}). Its throughput depends only on the
 setting at the fixed throw and speed: from $936.45$~t/h at $38$~mm to $1225.89$~t/h at $55$~mm, linear in the setting. Its product $P_{80}$ ranges
@@ -154,13 +170,19 @@ other. The coarser the feed, the lower the fitted fineness of the progeny, which
 of $-0.23$ points per millimetre dominates the setting coefficient of $-0.12$ over the range of the surveys. Because the product size is not
 measured, none of these values is checked against data; they enter the two measured targets only through the Bond term of the power.
 
-\emph{Parameters and how they were set.} Every constant of Equations~\eqref{eq:hp500class} and~\eqref{eq:hp500t10} is the published fit; the
+\emph{Parameters and how they were set.} The classification and $t_{10}$ constants of Equations~\eqref{eq:hp500class}
+and~\eqref{eq:hp500t10} are the published fit; $Q_T$ is the published base-case capacity used in another form, as above; the
 nominal throw and speed are the product's assumptions (a representative mid-point of the HP500 throw range and the secondary cone's capacity
 optimum); the feed exponent is the product's assumption. The calibrated support is the range of the surveys, a setting of $38$ to $55$~mm and a
 feed $f_{80}$ of $47$ to $140$~mm; outside it the envelope check flags extrapolation.
 
 \emph{Cost.} One engine evaluation per survey. \emph{Assumptions and limits.} The fit is the paper's: the product holds it to the ten surveys out
-of sample and does not perform the calibration. One machine and one ore, so the lane does not transfer.
+of sample and does not perform the calibration. One machine and one ore, so the lane does not transfer. The paper fits its relations on the
+measured $f_{80}$, while the engine feeds them its grid $F_{80}$; the two differ by more than half a millimetre on $\gridGapCount$ of the ten
+surveys, most on survey $\gridGapSurvey$ (grid $\gridGapGrid$~mm against the measured $\gridGapMeas$~mm, $\gridGap$~mm), where the deviation
+moves $K_1$ by $\gridGapKone$~mm, $K_2$ by $\gridGapKtwo$~mm and $t_{10}$ by $\gridGapTten$ points from the values of the published relations.
+Neither measured target depends on $K_1$, $K_2$ or $t_{10}$ except through the Bond term of the power, so the deviation changes the
+product size the engine reports at a survey and leaves its throughput unchanged.
 
 \emph{Implementation and tests.} \texttt{model/\allowbreak{}crusher/\allowbreak{}hp500.py} (\texttt{HP500\_NOMINAL}, \texttt{Hp500Scalars}, \texttt{operating\_from\_survey}),
 \texttt{classification.py} (\texttt{hp500\_params}), \texttt{breakage.py} (\texttt{t10\_calibrated}), \texttt{capacity.py}
@@ -187,7 +209,7 @@ $8.5$~kW and $32$~t/h on this machine and ore.
 \emph{Held-out residuals in closed form.} For an ordinary least-squares fit the leave-one-out residual has a closed form, which makes
 the held-out error of the line transparent. With the leverage of survey $i$ on the setting,
 \begin{equation}
-h_{ii} = \frac1n + \frac{(s_i-\bar s)^2}{\sum_{j=1}^{n}(s_j-\bar s)^2},\qquad
+h_{ii} = \frac{1}{N_s} + \frac{(s_i-\bar s)^2}{\sum_{j=1}^{N_s}(s_j-\bar s)^2},\qquad
 y_{t,i}-\hat y_{t,i} = \frac{e_{t,i}}{1-h_{ii}},
 \label{eq:loo-ols}
 \end{equation}
@@ -201,12 +223,12 @@ survey; the gap of the more flexible predictors in that table is larger because 
 numbers are computed by \texttt{make\_tables.py} from the survey table, as a check on the protocol, and agree with the committed document.
 
 \emph{Why it is the baseline.} A constant mean ignores the one lever that the surveys vary most, and a free-form fit on the setting and $f_{80}$
-spends a second coefficient on a variable that, on these data, adds no held-out skill on power. An exploratory screen of predictor sets on the same
+spends a coefficient on a second variable that, on these data, adds no held-out skill on power. An exploratory screen of predictor sets on the same
 folds, run before the line was added to the product, placed the setting alone ahead of the setting with $f_{80}$, of $1/s$, of the setting with
 the measured throughput, and of the measured throughput times the Bond size term; the line was then added as a named predictor with its own
 acceptance criterion. The screen is the reason for the choice and not a result of the report, because several forms were tried on ten points.
 
-\emph{Parameters.} Two coefficients per target and fold, both fitted. \emph{Cost.} $O(n)$ per fold. \emph{Assumptions and limits.} Linear in the
+\emph{Parameters.} Two coefficients per target and fold, both fitted. \emph{Cost.} $O(N_s)$ per fold. \emph{Assumptions and limits.} Linear in the
 setting over $38$ to $55$~mm; it has no meaning outside the surveyed range, and it predicts no product size. Its power coefficient is not a
 mechanism: on these surveys the feed rate is set by the plant together with the setting (correlation $+0.81$), so the line on the setting also
 carries the effect of the feed rate on power, and a plant that changed the feed rate at a fixed setting would break it. It is a description of
@@ -214,9 +236,9 @@ how this machine was operated over the surveyed period, and it is exactly the ki
 before it can claim to add anything.
 
 \emph{Implementation and tests.} \texttt{hp500/\allowbreak{}blin.py} (\texttt{fit\_line}, \texttt{predict\_line}), called by \texttt{hp500/\allowbreak{}loo.py}. The
-acceptance criterion is that it reproduces the held-out errors of $12.78\%$ (power) and $13.67\%$ (throughput) of the exploratory screen on the
-same folds, and that a survey planted with an absurd target moves every other fold and not its own
-(\texttt{test\_b\_lin\_reproduces\_the\_dossier\_numbers}, \texttt{test\_adversarial\_a\_fold\_never\_sees\_its\_held\_out\_survey}).
+acceptance criteria, each checked by a test of \texttt{tests/\allowbreak{}test\_hp500\_loo.py}, are that it reproduces the held-out errors of
+$12.78\%$ (power) and $13.67\%$ (throughput) of the exploratory screen on the same folds, and that a survey planted with an absurd target moves
+every other fold and not its own.
 
 \subsection{CrusherCal: leave-one-survey-out evaluation with controls and a predictive band}\label{sec:m-crushercal}
 
@@ -227,8 +249,16 @@ It is a protocol and not a predictor of its own; every number it produces is com
 \emph{The predictors.} For each target, in each fold, on the nine training surveys:
 \begin{itemize}
 \item \emph{Calibrated backbone.} The engine with its global scalars refit. For throughput, $\hat Q_i=Q_{T,-i}\,\phi_i$ with $\phi_i$ the engine's
-capacity factor (the backbone throughput over $647$~t/h) and $Q_{T,-i}=\sum_j\phi_jQ_j/\sum_j\phi_j^2$; for power, the form of
-Equation~\eqref{eq:pc} with $(\zeta,P_n)$ refit by ordinary least squares on the Bond draws of the training surveys.
+capacity factor (the backbone throughput over $647$~t/h) and $Q_{T,-i}=\sum_j\phi_jQ_j/\sum_j\phi_j^2$, which ranges from $\qtFoldLo$ to
+$\qtFoldHi$~t/h over the folds; for power, the form of Equation~\eqref{eq:pc} with $(\zeta,P_n)$ refit by ordinary least squares on the Bond
+draws of the training surveys. In every fold that refit has a negative slope, $\zeta$ from $\zetaFoldLo$ to $\zetaFoldHi$, with $P_n$ from
+$\pnFoldLo$ to $\pnFoldHi$~kW: the held-out power of the calibrated engine is a line that falls as the Bond draw rises, a fit and not the
+physics of the form.
+\item \emph{Published throughput model.} Equation~\eqref{eq:rocha} of Rocha et al., for throughput only, twice: with $\lambda=0.84$ as
+published, and with $\lambda$ refit by least squares through the origin on the nine training surveys of each fold, the way the backbone
+refits its capacity base. With $\lambda$ as published the model was fitted by its authors on one of the ten surveys, survey 10; for the
+other nine it is a prediction of surveys its fit did not use. It is computed by the report's script \texttt{figures/\allowbreak{}heldout\_uq.py}
+and is not part of the committed CrusherCal document.
 \item \emph{Backbone with a bounded residual.} A ridge regression (penalty $\lambda=1$, intercept not penalised) of the backbone residual on the
 standardised setting and $f_{80}$, evaluated at the held-out survey and clipped to $\pm20\%$ of the backbone value, added to the backbone.
 \item \emph{Free-form fit.} Ordinary least squares of the raw target on the setting and $f_{80}$, with no physics.
@@ -252,8 +282,9 @@ training mean and standard deviation.
 \sigma_{-i}^2 = \frac{1}{n-2}\sum_{j\ne i}\left(r_j - \bar r_{-i}\right)^2,\quad r_j = y_{t,j} - \hat y_{t,j},
 \label{eq:band}
 \end{equation}
-where $r_j$ are the strict held-out residuals and $\sigma_{-i}$ their sample standard deviation over the other nine surveys, so the survey whose
-coverage is checked never contributes to its own band (nested coverage). The document also reports the in-sample coverage, in which $\sigma$ comes
+where $r_j$ are the strict held-out residuals and $\sigma_{-i}$ their sample standard deviation over the other nine surveys, so the residual of
+the survey whose coverage is checked is left out of its own band (nested coverage). The survey still enters $\sigma_{-i}$ indirectly: each of the
+other nine residuals comes from a fold whose fit used survey $i$. The document also reports the in-sample coverage, in which $\sigma$ comes
 from the same ten residuals it is checked against, only to show the difference. The factor $1.2816$ is the two-sided normal quantile of a central
 $80\%$ interval. The same nested band, applied to the residuals of the setting-only line and of the free-form fit, gives those predictors the bands
 that CrusherBayes is compared with.
@@ -265,12 +296,12 @@ difference between the two errors is the optimism of an evaluation that lets a s
 \caption{CrusherCal: the strict and leaky leave-one-survey-out evaluation of one target, as \texttt{hp500/\allowbreak{}loo.py} runs it.}
 \label{alg:crushercal}
 \begin{algorithmic}[1]
-\Require surveys $(s_j,f_{80,j},y_j)_{j=1}^{n}$; backbone capacity factors $\phi_j$ or Bond draws $P_{d,j}$; seed $42$
+\Require surveys $(s_j,f_{80,j},y_j)_{j=1}^{N_s}$; backbone capacity factors $\phi_j$ or Bond draws $P_{d,j}$; seed $42$
 \Ensure held-out predictions of every predictor, their scores, the band and its nested coverage
 \State $\tilde{\mathbf y}\gets$ a seeded permutation of $\mathbf y$ \Comment{label-shuffle control}
 \For{mode $\in\{$strict, leaky$\}$}
-  \For{$i=1$ \textbf{to} $n$}
-    \State $\mathcal T\gets\{1..n\}\setminus\{i\}$ if strict, else $\{1..n\}$
+  \For{$i=1$ \textbf{to} $N_s$}
+    \State $\mathcal T\gets\{1..N_s\}\setminus\{i\}$ if strict, else $\{1..N_s\}$
     \State fit the backbone scalars on $\mathcal T$; $\hat y^{\mathrm{bb}}_i\gets$ backbone at survey $i$
     \State fit the ridge residual on $\mathcal T$; $\hat y^{\mathrm{res}}_i\gets\hat y^{\mathrm{bb}}_i+\mathrm{clip}(\hat r_i,\pm0.2\,|\hat y^{\mathrm{bb}}_i|)$
     \State fit the free-form fit, the setting-only line and, for power, both Morrell variants on $\mathcal T$; predict survey $i$
@@ -286,15 +317,15 @@ difference between the two errors is the optimism of an evaluation that lets a s
 \emph{Parameters and how they were set.} The clip fraction $0.20$ (a physical bound on a correction to a physics prediction), the ridge penalty
 $1.0$ (to keep a fit on nine points humble), the seed $42$; all three were set before the first run and are recorded in the document. The
 expectation stated before the run was that the bounded residual would give a marginal or null improvement over the backbone; Section~\ref{sec:results}
-reports what came out. \emph{Cost.} Per target and mode, $n$ least-squares fits of at most three coefficients for each predictor; the engine is
-evaluated once per survey, by the backbone, and not inside the folds. \emph{Limits.} With $n=10$, one survey moves a coverage by $0.1$, and a difference below about three points of MAPE is within noise;
-the protocol is not a significance test.
+reports what came out. \emph{Cost.} Per target and mode, $N_s$ least-squares fits of at most three coefficients for each predictor; the engine is
+evaluated once per survey, by the backbone, and not inside the folds. \emph{Limits.} With $N_s=10$, one survey moves a coverage by $0.1$. The protocol is not a significance test; the uncertainty of every held-out
+error and of every difference between two predictors is given by a bootstrap over the surveys (Section~\ref{sec:protocol-metrics}).
 
 \emph{Implementation and tests.} \texttt{hp500/\allowbreak{}loo.py} (\texttt{fold\_indices}, \texttt{fit\_capacity\_base}, \texttt{fit\_power\_form},
 \texttt{fit\_residual}, \texttt{fit\_freeform}, \texttt{predictive\_band}, \texttt{nested\_band\_coverage}, \texttt{band\_factor}). The acceptance
-criteria are that the label-shuffle control does not beat the backbone, that the backbone beats the constant mean on throughput, that the
-leaky-strict gap is exposed and that the band's coverage is reported (\texttt{test\_adversarial\_the\_label\_shuffle\_control\_does\_not\_beat\_the\_backbone},
-\texttt{test\_tph\_backbone\_has\_real\_skill}, \texttt{test\_adversarial\_the\_leaky\_folds\_expose\_the\_optimism\_gap}).
+criteria, each checked by a test of \texttt{tests/\allowbreak{}test\_hp500\_loo.py}, are that the label-shuffle control does not beat the backbone, that
+it draws one permutation of the labels shared by the strict and the leaky folds, that the backbone beats the constant mean on throughput, that
+the leaky-strict gap is exposed and that the band's coverage is reported.
 
 \subsection{The envelope check}\label{sec:m-envelope}
 

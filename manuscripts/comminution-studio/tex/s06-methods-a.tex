@@ -155,7 +155,7 @@ linear in the setting and in the throw,
 K_1 = a_1 + b_1\,s,\qquad K_2 = \max\!\left(a_2 + b_2\,s + \tfrac12\,b_2\,(T - T_{ref}),\ 1.05\,K_1\right),
 \label{eq:k1k2}
 \end{equation}
-so $K_2$ tracks the open-side setting $s+T$: a wider throw lets larger particles escape during the open phase of the cycle and
+so $K_2$ tracks the mean gap $s+T/2$ (half the throw enters it): a wider throw lets larger particles escape during the open phase of the cycle and
 coarsens the product at a fixed setting, in the direction of the flow model of Evertsson~\cite{evertsson1999}, and at the design
 throw the term vanishes. The floor at $1.05\,K_1$ keeps the window from inverting. Figure~\ref{fig:chamber}(a) shows $C(d)$ of case
 S01 at three settings: at the case's $32$~mm, $K_1=29.0$~mm and $K_2=68.4$~mm.
@@ -276,7 +276,7 @@ $P_{20}=1.83$~mm, a reduction ratio of $4.55$, and $15.0\%$ of its mass passes $
 
 \emph{Cost.} Building $\mathrm M$ and the proxy are $O(K^2)$; the factorisation is $O(K^3)$, about $2K^3/3\approx1.5\times10^{4}$
 floating-point operations for $K=28$; the two triangular solves are $O(K^2)$. One full evaluation of the engine, with the feed, both
-functions, the solve, the readouts, the capacity, the power and the checks, takes a median of $1.34$~ms in Python
+functions, the solve, the readouts, the capacity, the power and the checks, takes a median of $\resEngineMed$~ms in Python
 (Section~\ref{sec:arch-engine}).
 
 \emph{Assumptions and limits.} One breakage zone, steady state, no spatial resolution of the chamber, no wear and no segregation. The
@@ -325,8 +325,12 @@ Equation~\eqref{eq:t10} also grows with speed and makes the product finer (Secti
 \emph{Parameters and how they were set.} Table~\ref{tab:machines} gives $Q_{ref}$, $N_{opt}$ and $g_{ref}$ per class: for the secondary
 cone $520$~t/h, $360$~rpm and $38$~mm, so S01 (setting $32$~mm, throw $30$~mm, $360$~rpm) gives $520\times47/38=643.16$~t/h. The circuit
 values are illustrative of their class; only the shape (unimodal in speed, increasing in setting and throw) is claimed for them. On the
-calibrated lane $Q_{ref}$ is the capacity base $Q_T=647$~t/h carried from the calibration of Rocha et al.~\cite{rocha2024}, which
-CrusherCal refits per fold and CrusherBayes samples.
+calibrated lane $Q_{ref}$ is replaced by $Q_T=647$~t/h, the number Rocha et al.\ give as the capacity of the HP500 in the base case
+of the vendor's simulator (granite, work index $16$~kWh/t, feed $f_{80}$ of $100$~mm, setting $38$~mm, medium cavity), where it is
+the base of a different, multiplicative throughput model (Section~\ref{sec:m-hp500})~\cite{rocha2024}. Put into
+Equation~\eqref{eq:capacity} it means something else: at the base-case setting of $38$~mm, the HP500 throw of $34$~mm and the
+optimum speed, the reduced form gives $647\times(38+17)/38=936$~t/h, not $647$~t/h. CrusherCal refits this scalar per fold and
+CrusherBayes samples it, so the engine's throughput on the surveys does not rest on its published value.
 
 \emph{Cost and numerical scheme.} A closed form, $O(1)$; the floor at zero keeps the throughput non-negative for any input.
 
@@ -398,8 +402,9 @@ the proxy are the engine's. The nip angle is reported and drawn in the chamber v
 
 \emph{Assumptions and limits.} \emph{Choke} is the label when no rule fires; it is not a choke-feed model. The rules are not a safety
 check of a real machine. The pass-through rule compares the setting with the feed's $F_{80}$ on the grid, so a coarse feed whose grid value
-is truncated (Section~\ref{sec:m-feed}) can sit on either side of the rule depending on the grid; the survey HP500-03 shows the opposite
-case, a fine feed whose grid value of $47.15$~mm lies just below its setting of $48$~mm although its measured $f_{80}$ of $47$~mm would also.
+is truncated (Section~\ref{sec:m-feed}) can sit on either side of the rule depending on the grid. The survey HP500-03 is a fine feed:
+its grid $F_{80}$ of $47.15$~mm and its measured $f_{80}$ of $47$~mm both lie just below its setting of $48$~mm, so the rule fires on
+either value.
 In both cases the engine still returns a product, flagged, and the manifest records the codes \texttt{pass\_through} and \texttt{f80\_lt\_css};
 the web shows the flags beside every number of such a case and never presents it as a confident answer.
 

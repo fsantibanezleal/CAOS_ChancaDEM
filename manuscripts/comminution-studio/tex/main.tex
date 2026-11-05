@@ -19,6 +19,9 @@
 
 \graphicspath{{../figures/}}
 \input{tables/numbers}
+\input{tables/numbers-uq}
+\input{tables/numbers-fits}
+\input{tables/numbers-resources}
 \setlength{\parskip}{0.35em}
 \setlength{\LTcapwidth}{\textwidth}
 \renewcommand{\topfraction}{0.9}
@@ -64,23 +67,23 @@ Not peer reviewed. Source code, data and computational records: \href{https://\d
 \headerblock
 
 \begin{abstract}
-\noindent A cone crusher turns a feed into a product whose size, throughput and power are set by four levers: the
-closed-side setting, the eccentric throw, the eccentric speed and the feed size distribution. In Chilean copper mining
-the concentrator, where crushing and grinding sit, took $55.7\%$ of the sector's electricity in 2024, so the setting of a
-crusher is an energy decision. ChancaDEM is an open studio that couples a Whiten population balance with an Andersen and
-Napier-Munn classification, a JKMRC $t_{10}$ breakage function, a reduced Evertsson capacity model, Bond's power law and
-Morrell's size-specific energy in one engine written in Python and in TypeScript, runs it in the browser, and holds it
-against ten measured surveys of a Metso HP500 secondary cone crusher on itabirite iron ore (Rocha et al., 2024, CC BY).
-Every fitted quantity is refit without the held-out survey (strict leave-one-survey-out), with a constant-mean baseline,
-a label-shuffle control and a nested $80\%$ predictive band. A one-feature line on the setting reaches a held-out mean
-absolute percentage error of $13.67\%$ on throughput and $12.78\%$ on power; the calibrated engine reaches $12.09\%$ on
-throughput and $25.94\%$ on power, because its Bond draw is nearly flat ($196$ to $237$~kW) against measured values of
-$187$ to $355$~kW. CrusherBayes, the Bayesian calibration with a Kennedy and O'Hagan structural discrepancy that the
-product proposes, reaches $12.00\%$ and $14.31\%$ with $80\%$ intervals of coverage $0.80$ and $0.90$ that are $7\%$ and
-$44\%$ narrower than the band of the calibrated engine; it does not beat the line on power. The surveys identify the
-capacity base (posterior over prior standard deviation $0.45$), the noise and the discrepancy slopes on the setting, and
-leave the classification and breakage scalars at their prior. A learned surrogate emulates the engine at $R^2$ from
-$0.979$ to $0.998$ on an independent draw of $2196$ points.
+\noindent The product size, throughput and power of a cone crusher are set by the closed-side setting, the eccentric
+throw and speed, and the feed size distribution. In Chilean copper mining
+the concentrator, where crushing and grinding sit, took $55.7\%$ of the sector's electricity in 2024. ChancaDEM is an
+open studio that couples a Whiten population balance with an Andersen and Napier-Munn classification, a JKMRC $t_{10}$
+breakage function, a reduced Evertsson capacity model, Bond's power law and Morrell's size-specific energy in one engine
+in Python and TypeScript that runs in the browser, and holds it against ten measured surveys of a Metso HP500
+secondary cone crusher on itabirite iron ore (Rocha et al., 2024). Every fitted quantity is refit without the held-out
+survey, beside a constant-mean baseline, a label-shuffle control, a nested $80\%$ band and bootstrap intervals over the
+surveys. The calibrated engine reaches a held-out mean absolute percentage error of $\uqQBb\%$ ($95\%$ interval $\uqQBblo$
+to $\uqQBbhi$) on throughput and $\uqPBb\%$ ($\uqPBblo$ to $\uqPBbhi$) on power, because its Bond draw is nearly flat
+against measured values of $187$ to $355$~kW; a line on the setting reaches $\uqQLine\%$ and $\uqPLine\%$ ($\uqPLinelo$ to
+$\uqPLinehi$), and the published throughput model of Rocha et al.\ $\uqQRocha\%$ on throughput. CrusherBayes, the proposed Bayesian calibration
+with a Kennedy and O'Hagan structural discrepancy, reaches $\uqQCb\%$ and $\uqPCb\%$ with $80\%$
+intervals of coverage $0.80$ and $0.90$, $7\%$ and $44\%$ narrower than the calibrated engine's band; on ten
+surveys its power error is not distinguishable from the line's. The surveys identify the capacity base, the noise and the
+discrepancy slopes on the setting and on $f_{80}$, and leave the classification and breakage scalars at their prior. A
+learned surrogate emulates the engine at $R^2$ from $0.979$ to $0.998$ on an independent draw of $2196$ points.
 \end{abstract}
 
 \noindent\textbf{Keywords.} Comminution, cone crusher, population balance, Whiten model, Bond, Morrell, Bayesian

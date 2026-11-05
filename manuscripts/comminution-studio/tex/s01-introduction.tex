@@ -45,10 +45,12 @@ algorithm) at full-scale aggregate plants~\cite{hulthen2010}, and the common opi
 gain of $20$ to $25\%$ when liner wear is compensated~\cite{evertsson2015}; the optimised chamber geometry changes as the
 liners wear~\cite{lindqvist2003}.
 
-The practical gap that this report addresses lies between the first two families. A calibrated population balance is
-judged, in the work cited above, on the surveys it was fitted to; ten surveys of one machine leave little room for a
-free-form correction; and the uncertainty of a prediction for a survey the model has not seen is not reported. A
-decision maker who reads a calibrated model at a new setting needs the error the model makes out of sample, a band that
+The practical gap that this report addresses lies between the first two families. The calibrations cited above are
+judged on product size distributions, and some of them out of sample: Duarte et al.\ calibrate on two datasets and
+validate on a third that the calibration did not use~\cite{duarte2021}, and Rocha et al.\ compare one global parameter
+set, fitted to all ten surveys, with fits made survey by survey~\cite{rocha2024}. Neither reports the uncertainty of a prediction for a survey the
+model has not seen, and neither holds the model to every survey in turn against baselines that use no physics; ten
+surveys of one machine also leave little room for a free-form correction. A decision maker who reads a calibrated model at a new setting needs the error the model makes out of sample, a band that
 covers the measured value at the stated rate, and a baseline that says how much of the skill is physics and how much
 is the setting alone.
 
@@ -77,10 +79,13 @@ and an envelope check) with its equations, constants and numerical scheme, imple
 relative difference of $\refworst$ over $\nrefpoints$ reference points.
 \item A strict leave-one-survey-out evaluation of nine predictors on the ten HP500 surveys, the same folds for every
 predictor, with a constant-mean baseline, a label-shuffle control, the optimism of a leaky evaluation measured beside the
-strict one, and a nested $80\%$ predictive band whose coverage is computed out of sample.
-\item The finding that a line on the closed-side setting alone is the strongest power predictor on these data ($12.78\%$
-held-out error), that the Bond draw of the calibrated engine carries little of the measured power variation, and that
-Morrell's energy with a fitted crushing work index does not beat the line.
+strict one, and a nested $80\%$ predictive band whose coverage is computed out of sample, and a bootstrap over the surveys that gives every
+held-out error and every difference between two predictors its interval.
+\item The finding that a line on the closed-side setting alone has the lowest held-out power error on these data
+($12.78\%$, $95\%$ interval $\uqPLinelo$ to $\uqPLinehi$), not distinguishable on ten surveys from the free-form fit,
+CrusherBayes and Morrell's energy with a no-load term, that the Bond draw of the calibrated engine carries little of the
+measured power variation, and that the published throughput model of Rocha et al., run on the same surveys, predicts the
+feed rate as well as the calibrated engine.
 \item CrusherBayes, a Bayesian calibration of the engine's eight fitted scalars with a structural discrepancy per target
 and a differential-evolution sampler, whose held-out intervals are calibrated and narrower than the residual band, and
 whose posterior shows which scalars ten surveys identify; the method is reported in full in its own

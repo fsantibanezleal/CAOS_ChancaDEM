@@ -8,10 +8,12 @@ computation.
 \emph{The ten HP500 surveys.} Table A1 of Rocha, Campos, Silva and Tavares~\cite{rocha2024} (Minerals, MDPI, open access
 under CC BY 4.0, \url{https://doi.org/10.3390/min14090919}) gives, for ten surveys of a Metso HP500 secondary cone crusher at
 an itabirite iron-ore operation, the closed-side setting, the feed $80\%$ passing size $f_{80}$, the solid feed rate and the
-motor power estimated from the measured current. The abstract of the paper, read through its OpenAlex record because the
-publisher page refused automated access, describes surveys collected over several years, an Andersen-Whiten model
-implemented in an integrated extraction simulator and a fit-for-purpose throughput model; the exact dates of the surveys are
-not printed in the material available to the product. The table is transcribed into \texttt{data/\allowbreak{}examples/\allowbreak{}hp500-surveys.csv}
+motor power estimated from the measured current. The paper states that the ten surveys were carried out over three years
+of operation of the secondary crushing stage of the Minas Rio plant, which runs four HP500 crushers in parallel in closed
+circuit with $25$~mm screens, all designed with a nominal setting of $38$~mm, an installed power of $355$~kW and a medium
+cavity, and that the surveys were taken with the crushers operating with a full chamber; it gives no date per survey. Its
+model is an Andersen-Whiten crusher model implemented in the Integrated Extraction Simulator, with a separate empirical
+model of the maximum throughput (Section~\ref{sec:m-hp500}). The table is transcribed into \texttt{data/\allowbreak{}examples/\allowbreak{}hp500-surveys.csv}
 (ten rows, five columns, $210$~bytes) and validated by the \texttt{hp500-survey} contract below. Table~\ref{tab:surveys}
 lists the ten rows beside the calibrated engine's outputs at each of them. Across the surveys the setting spans $38$ to
 $55$~mm, the feed $f_{80}$ $47$ to $140$~mm, the feed rate $813$ to $1639$~t/h and the power $187$ to $355$~kW. The measured
@@ -120,7 +122,7 @@ measured closed-side setting (above $0$ and at most $200$~mm), the measured soli
 most $5000$~t/h) and the crusher power estimated from the measured current \texttt{power\_kw} (above $0$ and at most
 $1000$~kW). The bounds are wide on purpose: they refuse a unit error, such as a power in watts, and a typing error, not a
 plausible survey. The producer is the transcription of Table A1, its consumers the HP500 cases, the backbone, CrusherCal and
-CrusherBayes. A kill criterion of the product applies to this contract alone: if a re-transcription of the published table
+CrusherBayes. An acceptance rule of the product applies to this contract alone: if a re-transcription of the published table
 disagrees with the committed file, the real lane is removed from the build until the table is corrected. Missing-data behaviour: with no
 survey table, readiness says \emph{missing}, the bake skips the ten real cases and the three HP500 documents, the case selector
 lists no real survey, and the survey views of the web say that the data are not available with the reason; a rejected row is
@@ -163,7 +165,7 @@ available and the other cases work, and the interface answers $404$ for it; stal
 The \texttt{trace} contract (version $1.0.0$, \texttt{data/\allowbreak{}derived/\allowbreak{}<case>/\allowbreak{}trace.json}, schema \texttt{chancadem.trace/\allowbreak{}v1}) holds
 what the engine computed at the operating point of a case: the $29$ sieve edges and $28$ mid-sizes in millimetres, the feed
 and product cumulative passing at each edge and mass per class (fractions in $[0,1]$), the classification $C(d)$ at each
-mid-size, the $t_{10}$ of the appearance function in percent ($0$ to $100$), a summary of scalars ($F_{80}$, $P_{80}$, $P_{50}$
+mid-size, the $t_{10}$ of the appearance function as a fraction in $[0, 0.44]$ ($0.364$ for S01), a summary of scalars ($F_{80}$, $P_{80}$, $P_{50}$
 and $P_{20}$ in mm, the reduction ratio, the passing at $1$, $4$, $8$, $16$ and $32$~mm, the throughput in t/h, the power in kW,
 the specific energy in kWh/t, the open-side setting, the nip angle and its limit in degrees, the regime, the validity and
 envelope flags, the mass closure and the conditioning proxy, which may be the string \texttt{Infinity} for a singular solve),
@@ -272,7 +274,7 @@ SHA-256 of the catalog it was computed from (with line endings normalised), and 
 identifier, version, catalog status, provenance (real, baseline, a provider kind, or null), state (one of the six of
 Section~\ref{sec:data-catalog}), a bilingual reason when the state is not \emph{available}, and the list of missing paths. It is
 computed by \texttt{pipeline/\allowbreak{}core/\allowbreak{}readiness.py} from the catalog and the repository, so editing the catalog makes it stale until it
-is recomputed, and a check fails meanwhile. In the committed build twelve rows are \emph{available} and the interface row is
+is recomputed, and a check fails meanwhile. In the committed build eleven of its twelve rows are \emph{available} and the interface row is
 \emph{missing}, with the reason that the interface is dormant and the site reads the committed documents. Every view of the web
 reads it, and so does the interface. Missing-data behaviour: without it the site build stops at its copy step; if it cannot be
 loaded at run time the views keep working and each says that readiness is unknown; the interface answers $503$ with the state

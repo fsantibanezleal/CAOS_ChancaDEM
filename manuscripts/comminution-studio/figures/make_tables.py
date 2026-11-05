@@ -13,6 +13,9 @@ Sources read (nothing else):
   data/derived/model-metrics.json, data/derived/models/*.json         the learned models
   docs/contracts/catalog.md, docs/contracts/schemas/*.schema.json     the data contracts
   data-pipeline/pipeline/model/crusher/ (KMODEL, CAP, REF_THROW_MM), data-pipeline/pipeline/model/sweep.py (RANGES)
+  manuscripts/comminution-studio/data/resources.json                  the measured stages (measure_resources.py)
+  figures/heldout_uq.py                                               the bootstrap over surveys and the published
+                                                                      throughput model of Rocha et al. (tab-uncertainty)
 
 Run:  python manuscripts/comminution-studio/figures/make_tables.py     (any working directory; numpy only)
 """
@@ -54,7 +57,7 @@ def tex(s: object) -> str:
            "~": r"\textasciitilde{}", "^": r"\textasciicircum{}"}
     s = "".join(rep.get(c, c) for c in s)
     uni = {"≥": r"$\geq$", "≤": r"$\leq$", "≈": r"$\approx$", "×": r"$\times$", "−": "-",
-           "–": "--", "—": ", ", "→": "to", "±": r"$\pm$", "é": r"\'e", "á": r"\'a",
+           "\u2013": "--", "\u2014": ", ", "\u2192": "to","±": r"$\pm$", "é": r"\'e", "á": r"\'a",
            "ó": r"\'o", "í": r"\'i", "ú": r"\'u", "ñ": r"\~n", "’": "'", "“": "``",
            "”": "''", "²": r"$^2$", "μ": r"$\mu$"}
     s = "".join(uni.get(c, c) for c in s)
@@ -210,6 +213,150 @@ def tab_leaky() -> None:
               r" \cmidrule(lr){2-4}\cmidrule(lr){5-7}")
     head = ["Method", "Strict", "Leaky", "Gap", "Strict", "Leaky", "Gap"]
     write("tab-leaky", tabular("@{}l rrr rrr@{}", head, rows, groups))
+
+
+UQ_ROWS = [("constant_mean", "Constant mean"), ("label_shuffle", "Label-shuffle control"), ("M0", "Calibrated backbone"),
+           ("M1", "Backbone with bounded residual"), ("M2", "Free-form fit on CSS and $f_{80}$"), ("B_lin", "Setting-only line"),
+           ("Morrell", "Morrell, through the origin"), ("Morrell_noload", "Morrell with a no-load term"),
+           ("CrusherBayes", "CrusherBayes (predictive mean)"), ("Rocha_published", r"Rocha et al.\ throughput model, $\lambda=0.84$"),
+           ("Rocha_refit", r"Rocha et al.\ throughput model, $\lambda$ refit per fold")]
+UQ_MACRO = {"constant_mean": "Mean", "label_shuffle": "Shuf", "M0": "Bb", "M1": "Res", "M2": "Free", "B_lin": "Line",
+            "Morrell": "Mor", "Morrell_noload": "Mornl", "CrusherBayes": "Cb", "Rocha_published": "Rocha",
+            "Rocha_refit": "Rocharef"}
+
+
+def _ci(v: float, lo: float, hi: float, sign: bool = False) -> str:
+    """A value with its interval in brackets, compact enough for a seven-column table."""
+    f = "+.2f" if sign else ".2f"
+    g = "+.1f" if sign else ".1f"
+    return f"${v:{f}}$ [${lo:{g}}$, ${hi:{g}}$]"
+
+
+def tab_uncertainty() -> None:
+    """The bootstrap over surveys of every held-out MAPE and of the paired differences (figures/heldout_uq.py), and the
+    published throughput model of Rocha et al. run on the surveys; with the macros the text cites."""
+    import heldout_uq as uq
+
+    errs = uq.heldout_errors()
+    res = uq.bootstrap(errs)
+    rows = []
+    for key, name in UQ_ROWS:
+        row = [name]
+        q = res["tph"].get(key)
+        row += ([_ci(q["mape"], q["lo"], q["hi"]),
+                 DASH if key == "B_lin" else _ci(q["d_B_lin"], q["d_B_lin_lo"], q["d_B_lin_hi"], True),
+                 DASH if key == "M0" else _ci(q["d_M0"], q["d_M0_lo"], q["d_M0_hi"], True)] if q else [DASH] * 3)
+        p = res["kW"].get(key)
+        row += ([_ci(p["mape"], p["lo"], p["hi"]),
+                 DASH if key == "B_lin" else _ci(p["d_B_lin"], p["d_B_lin_lo"], p["d_B_lin_hi"], True)] if p else [DASH] * 2)
+        rows.append(row)
+    groups = (r" & \multicolumn{3}{c}{Throughput} & \multicolumn{2}{c}{Power} \\"
+              r" \cmidrule(lr){2-4}\cmidrule(lr){5-6}")
+    head = ["Predictor", r"MAPE [95\%]", "Minus line", "Minus backbone", r"MAPE [95\%]", "Minus line"]
+    write("tab-uncertainty", tabular("@{}l rrr rr@{}", head, rows, groups))
+
+    macros = [f"\\newcommand{{\\uqB}}{{{uq.B:,}}}".replace(",", "{,}"), f"\\newcommand{{\\uqSeed}}{{{uq.BOOT_SEED}}}"]
+    for t, tl in (("tph", "Q"), ("kW", "P")):
+        for key, r in res[t].items():
+            m = "uq" + tl + UQ_MACRO[key]
+            vals = {"": r["mape"], "lo": r["lo"], "hi": r["hi"], "dl": r["d_B_lin"], "dllo": r["d_B_lin_lo"],
+                    "dlhi": r["d_B_lin_hi"], "db": r["d_M0"], "dblo": r["d_M0_lo"], "dbhi": r["d_M0_hi"]}
+            for suf, v in vals.items():
+                fmt = f"{v:.2f}" if suf in ("", "dl", "db") else f"{v:.1f}"
+                macros.append(f"\\newcommand{{\\{m}{suf}}}{{{fmt}}}")
+    # the published throughput model: its parameters, the refit lambda and the work-index sensitivity
+    bb = _json(HP / "backbone.json")["surveys"]
+    import numpy as np
+
+    css = np.array([s["measured"]["css_mm"] for s in bb], float)
+    f80 = np.array([s["measured"]["f80_mm"] for s in bb], float)
+    q = np.array([s["measured"]["feed_tph"] for s in bb], float)
+    r = uq.rocha_throughput(css, f80, q)
+    lo_wi, hi_wi = (uq.rocha_throughput(css, f80, q, w) for w in uq.WI_BOUNDS)
+    from pipeline.hp500.loo import mape, r2
+
+    macros += [f"\\newcommand{{\\rochaLamLo}}{{{r['lam_fold'].min():.3f}}}",
+               f"\\newcommand{{\\rochaLamHi}}{{{r['lam_fold'].max():.3f}}}",
+               f"\\newcommand{{\\rochaLamAll}}{{{r['lam_all']:.3f}}}",
+               f"\\newcommand{{\\rochaRsq}}{{{r2(q, r['published']):.3f}}}",
+               f"\\newcommand{{\\rochaTen}}{{{r['published'][9]:.0f}}}",
+               f"\\newcommand{{\\rochaWiLo}}{{{mape(q, lo_wi['published']):.2f}}}",
+               f"\\newcommand{{\\rochaWiHi}}{{{mape(q, hi_wi['published']):.2f}}}"]
+    write("numbers-uq", "\n".join(macros))
+
+
+RESOURCE_ROWS = [("bake", r"Bake (\texttt{run.py all}: 27 cases, the three HP500 documents, index, readiness)", "workstation"),
+                 ("hp500", r"HP500 step alone (\texttt{run.py hp500}: backbone, CrusherCal, the CrusherBayes sampler)", "workstation"),
+                 ("models", r"Training (\texttt{run.py models}: sweeps, two networks, export, evaluation)", "workstation, CPU"),
+                 ("tests", "Python tests, the whole suite", "workstation"),
+                 ("install", r"Web install (\texttt{npm ci})", "workstation, CI"),
+                 ("build", r"Web build (\texttt{npm run build})", "workstation, CI"),
+                 ("webtests", "Web unit tests", "workstation, CI")]
+
+
+def _bytes(b: int) -> str:
+    return f"{b / 1e6:.1f} MB" if b >= 1e6 else f"{b / 1e3:.0f} KB"
+
+
+def _secs(s: float) -> str:
+    return f"{s / 60:.1f} min" if s >= 120 else f"{s:.1f} s"
+
+
+def tab_resources() -> None:
+    """The measured resources of every stage, from data/resources.json (written once by measure_resources.py)."""
+    doc = _json(DATA / "resources.json")
+    st = {s["label"]: s for s in doc["stages"]}
+    rows = []
+    for label, name, where in RESOURCE_ROWS:
+        s = st[label]
+        sizes = s.get("sizes", {})
+        disk = next(iter(sizes.values()))["bytes"] if sizes else None
+        rows.append([name + (f" ({tex(s['note'])})" if s.get("note") else ""), f"{s['peak_mb']:.0f} MB",
+                     _bytes(disk) if disk is not None else "none", _secs(s["seconds"]), where])
+    write("tab-resources", tabular("@{}p{0.47\\textwidth} r r r l@{}", ["Stage", "Peak memory", "Disk", "Time", "Where it runs"],
+                                   rows))
+    e = doc["engine"]
+    write("numbers-resources", "\n".join([
+        f"\\newcommand{{\\resDate}}{{{doc['measured_on']}}}", f"\\newcommand{{\\resPython}}{{{doc['host']['python']}}}",
+        f"\\newcommand{{\\resThreads}}{{{doc['host']['processor_threads']}}}",
+        f"\\newcommand{{\\resEngineMed}}{{{e['median_of_medians_ms']:.2f}}}", f"\\newcommand{{\\resEngineMax}}{{{e['max_median_ms']:.2f}}}",
+        f"\\newcommand{{\\resBakeMin}}{{{st['bake']['seconds'] / 60:.0f}}}", f"\\newcommand{{\\resHpMin}}{{{st['hp500']['seconds'] / 60:.0f}}}",
+        f"\\newcommand{{\\resModelsS}}{{{st['models']['seconds']:.0f}}}",
+        f"\\newcommand{{\\resSite}}{{{doc['site']['bytes'] / 1e6:.1f}}}",
+        f"\\newcommand{{\\resWasm}}{{{doc['site']['wasm_bytes'] / 1e6:.1f}}}",
+        f"\\newcommand{{\\resDrift}}{{{124 * e['median_of_medians_ms'] / 1000:.2f}}}",
+    ]))
+
+
+def numbers_fits() -> None:
+    """Per-fold refits of the calibrated backbone that the documents do not store (the capacity base Q_T and the power
+    form (zeta, P_n)), and the gap between the grid F80 and the measured f80 that the calibrated relations are fed."""
+    import numpy as np
+    from pipeline.hp500 import loo as L
+
+    bb = _json(HP / "backbone.json")["surveys"]
+    q = np.array([s["measured"]["feed_tph"] for s in bb], float)
+    p = np.array([s["measured"]["power_kw"] for s in bb], float)
+    shape = np.array([s["backbone"]["throughput_tph"] for s in bb], float) / 647.0
+    pd_ = np.array([s["backbone"]["bond_power_kw"] for s in bb], float)
+    f80 = np.array([s["measured"]["f80_mm"] for s in bb], float)
+    grid = np.array([s["backbone"]["f80_model_mm"] for s in bb], float)
+    n = q.size
+    qt = np.array([L.fit_capacity_base(shape, q, L.fold_indices(n, i, False)) for i in range(n)])
+    pf = np.array([L.fit_power_form(pd_, p, L.fold_indices(n, i, False)) for i in range(n)])
+    gap = f80 - grid
+    k = int(np.argmax(np.abs(gap)))
+    write("numbers-fits", "\n".join([
+        f"\\newcommand{{\\qtFoldLo}}{{{qt.min():.1f}}}", f"\\newcommand{{\\qtFoldHi}}{{{qt.max():.1f}}}",
+        f"\\newcommand{{\\qtAll}}{{{L.fit_capacity_base(shape, q, np.arange(n)):.1f}}}",
+        f"\\newcommand{{\\zetaFoldLo}}{{{pf[:, 0].min():.2f}}}", f"\\newcommand{{\\zetaFoldHi}}{{{pf[:, 0].max():.2f}}}",
+        f"\\newcommand{{\\pnFoldLo}}{{{pf[:, 1].min():.0f}}}", f"\\newcommand{{\\pnFoldHi}}{{{pf[:, 1].max():.0f}}}",
+        f"\\newcommand{{\\gridGapSurvey}}{{{k + 1}}}", f"\\newcommand{{\\gridGapGrid}}{{{grid[k]:.2f}}}",
+        f"\\newcommand{{\\gridGapMeas}}{{{f80[k]:.0f}}}", f"\\newcommand{{\\gridGap}}{{{gap[k]:.1f}}}",
+        f"\\newcommand{{\\gridGapKone}}{{{0.30 * gap[k]:.1f}}}", f"\\newcommand{{\\gridGapKtwo}}{{{0.40 * gap[k]:.1f}}}",
+        f"\\newcommand{{\\gridGapTten}}{{{0.23 * gap[k]:.1f}}}",
+        f"\\newcommand{{\\gridGapCount}}{{{int(np.sum(np.abs(gap) > 0.5))}}}",
+    ]))
 
 
 def tab_band() -> None:
@@ -551,6 +698,9 @@ if __name__ == "__main__":
     tab_bench()
     tab_lpd()
     tab_leaky()
+    tab_uncertainty()
+    numbers_fits()
+    tab_resources()
     tab_band()
     tab_morrell()
     tab_priors()

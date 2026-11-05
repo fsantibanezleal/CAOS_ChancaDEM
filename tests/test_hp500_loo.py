@@ -7,6 +7,7 @@ from __future__ import annotations
 import copy
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from pipeline.hp500 import backbone, loo
@@ -37,6 +38,47 @@ def test_adversarial_the_label_shuffle_control_does_not_beat_the_backbone(bb: di
     for target in ("tph", "kW"):
         strict = res["loo"][target]["strict"]
         assert strict["M1_label_shuffle"]["mape_pct"] > strict["M0_backbone"]["mape_pct"], target
+
+
+class _CountingRng:
+    """A seeded generator that counts its permutations (the only draw the label-shuffle control makes)."""
+
+    def __init__(self, seed: int) -> None:
+        self.rng, self.shuffles = np.random.default_rng(seed), 0
+
+    def shuffle(self, x: np.ndarray) -> None:
+        self.shuffles += 1
+        self.rng.shuffle(x)
+
+
+def test_the_label_shuffle_control_draws_one_permutation_per_target(bb: dict) -> None:
+    """The strict and the leaky folds share ONE permutation of the labels, so the leaky-strict gap of the control measures
+    the leak and not the chance of two different permutations."""
+    meas = np.array([s["measured"]["feed_tph"] for s in bb["surveys"]], float)
+    feat = np.column_stack([[s["measured"]["css_mm"] for s in bb["surveys"]], [s["measured"]["f80_mm"] for s in bb["surveys"]]])
+    bb_tph = np.array([s["backbone"]["throughput_tph"] for s in bb["surveys"]], float)
+    rng = _CountingRng(42)
+    loo._run_target("tph", meas, feat, bb_tph, bb_tph / 647.0, None, rng)
+    assert rng.shuffles == 1
+
+
+def test_the_leaky_label_shuffle_uses_the_strict_permutation(bb: dict) -> None:
+    """Recompute the control on power in both modes with the one permutation the seed gives: both MAPEs must match."""
+    meas = np.array([s["measured"]["power_kw"] for s in bb["surveys"]], float)
+    feat = np.column_stack([[s["measured"]["css_mm"] for s in bb["surveys"]], [s["measured"]["f80_mm"] for s in bb["surveys"]]])
+    pd_ = np.array([s["backbone"]["bond_power_kw"] for s in bb["surveys"]], float)
+    shuffled = meas.copy()
+    np.random.default_rng(loo.SEED + 1).shuffle(shuffled)
+    res = loo.build(bb, VERSION)["loo"]["kW"]
+    n = meas.size
+    for tag, leaky in (("strict", False), ("leaky", True)):
+        base = np.empty(n)
+        for i in range(n):
+            zeta, pn = loo.fit_power_form(pd_, meas, loo.fold_indices(n, i, leaky))
+            base[i] = zeta * pd_[i] + pn
+        ctrl = np.array([base[i] + loo.fit_residual(feat, base, shuffled, loo.fold_indices(n, i, leaky), i,
+                                                    resid_target=shuffled - base).clipped for i in range(n)])
+        assert res[tag]["M1_label_shuffle"]["mape_pct"] == round(loo.mape(meas, ctrl), 2), tag
 
 
 def test_tph_backbone_has_real_skill(bb: dict) -> None:
