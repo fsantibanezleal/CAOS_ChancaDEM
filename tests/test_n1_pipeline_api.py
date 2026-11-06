@@ -79,6 +79,40 @@ def test_residual_inside_the_band_is_not_clipped() -> None:
     assert fit.clipped == fit.raw
 
 
+
+def test_residual_keywords_default_to_the_module_constants() -> None:
+    feat = np.array([[1.0, 1.0], [2.0, 1.0], [3.0, 2.0], [4.0, 2.0], [5.0, 3.0]])
+    bbp = np.full(5, 100.0)
+    meas = bbp + np.array([3.0, -2.0, 5.0, 1.0, 4.0])
+    plain = loo.fit_residual(feat, bbp, meas, np.array([0, 1, 2, 3]), 4)
+    explicit = loo.fit_residual(feat, bbp, meas, np.array([0, 1, 2, 3]), 4,
+                                ridge=loo.RIDGE_LAMBDA, clip=loo.RESID_CLIP_FRAC)
+    assert np.array_equal(plain.coef, explicit.coef)
+    assert (plain.raw, plain.clipped) == (explicit.raw, explicit.clipped)
+
+
+def test_residual_clip_keyword_sets_the_band_without_touching_the_module() -> None:
+    feat = np.array([[1.0, 1.0], [2.0, 1.0], [3.0, 2.0], [4.0, 2.0], [5.0, 3.0]])
+    bbp = np.full(5, 100.0)
+    meas = bbp + 1000.0 * feat[:, 0]
+    shipped = (loo.RIDGE_LAMBDA, loo.RESID_CLIP_FRAC)
+    narrow = loo.fit_residual(feat, bbp, meas, np.array([0, 1, 2, 3]), 4, clip=0.05)
+    wide = loo.fit_residual(feat, bbp, meas, np.array([0, 1, 2, 3]), 4, clip=1000.0)
+    assert narrow.clipped == pytest.approx(5.0)
+    assert wide.clipped == wide.raw
+    assert (loo.RIDGE_LAMBDA, loo.RESID_CLIP_FRAC) == shipped
+
+
+def test_residual_ridge_keyword_shrinks_the_slopes_only() -> None:
+    feat = np.array([[1.0, 1.0], [2.0, 1.0], [3.0, 2.0], [4.0, 2.0], [5.0, 3.0]])
+    bbp = np.full(5, 100.0)
+    meas = bbp + 4.0 * feat[:, 0] + 7.0
+    loose = loo.fit_residual(feat, bbp, meas, np.array([0, 1, 2, 3]), 4, ridge=1e-6, clip=10.0)
+    stiff = loo.fit_residual(feat, bbp, meas, np.array([0, 1, 2, 3]), 4, ridge=1e6, clip=10.0)
+    assert np.abs(stiff.coef[1:]).max() < 1e-3 < np.abs(loose.coef[1:]).max()
+    assert stiff.coef[0] == pytest.approx(loose.coef[0])   # the intercept is not penalised
+
+
 # ---- metrics ----------------------------------------------------------------------------------------------------------
 
 

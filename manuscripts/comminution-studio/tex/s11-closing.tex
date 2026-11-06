@@ -1,0 +1,62 @@
+\section{Reproducibility}\label{sec:repro}
+
+\emph{Repository and release.} The source code, the data, the committed artifacts and the sources of this report are in the public repository
+\url{https://github.com/fsantibanezleal/CAOS_ChancaDEM} (MIT licence for the code and the product's own data; CC BY 4.0 for the survey table and
+everything derived from it). Every number of the report is read from the artifacts of release 0.12.001, or computed from them by the report's scripts; the studio runs at
+\url{https://chancadem.fasl-work.com}.
+
+\emph{Commands.} From the repository root, with the pipeline environment of \texttt{requirements-precompute.txt}:
+\begin{itemize}
+\item \texttt{python data-pipeline/\allowbreak{}run.py all} bakes the $27$ cases, the three HP500 documents (the sampler of CrusherBayes runs in this step), the index
+and the readiness document; \texttt{python data-pipeline/\allowbreak{}run.py hp500} rebuilds only the three HP500 documents;
+\item \texttt{python data-pipeline/\allowbreak{}run.py models} draws the sweeps, trains and exports the two learned models and scores them held out (torch on the
+processor);
+\item \texttt{python manuscripts/\allowbreak{}comminution-studio/\allowbreak{}figures/\allowbreak{}make\_tables.py} regenerates every table of the report from the committed artifacts, the
+catalog and the schemas, recomputes the engine parity figure, runs the bootstrap over the surveys and the published throughput model
+(\texttt{heldout\_uq.py}), and writes the digests of \texttt{data/\allowbreak{}sha256.txt};
+\item \texttt{python manuscripts/\allowbreak{}comminution-studio/\allowbreak{}figures/\allowbreak{}measure\_resources.py} records the measured resources of the stages, each run into a sandbox
+output root under a process-tree monitor, and the engine time per case, in \texttt{data/\allowbreak{}resources.json};
+\item \texttt{python manuscripts/\allowbreak{}comminution-studio/\allowbreak{}figures/\allowbreak{}make\_figs.py} regenerates the thirteen figures as vector PDF (matplotlib, from the
+notebook environment); two of them call the engine code (the chamber functions and the particle-replacement walk);
+\item \texttt{latexmk -pdf main.tex}, run in \texttt{manuscripts/\allowbreak{}comminution-studio/\allowbreak{}tex}, builds the report.
+\end{itemize}
+
+\emph{Versions.} Python $3.13$ on the workstation ($3.12$ in continuous integration), numpy $2.4.6$, emcee $3.1.6$, torch $2.12.1$ on the processor, onnx
+$1.22.0$, onnxruntime $1.27.0$ and onnxruntime-web $1.27.0$, matplotlib $3.11.2$, Node $24$. The committed artifacts record the engine release 0.12.001
+and the seeds $42$ (surveys), $12345$ and $67890$ (learned models).
+
+\emph{Archived artifacts.} Table~\ref{tab:hashes} gives the SHA-256 digests of the artifacts the report reads; the full digests are in
+\texttt{manuscripts/\allowbreak{}comminution-studio/\allowbreak{}data/\allowbreak{}sha256.txt}, and the CrusherBayes document records the digest of its own inputs
+(\texttt{483d24c5\ldots b0ce605a}). A full bake of release 0.12.001 into a sandbox output root reproduces every committed trace and the three
+HP500 documents byte for byte; its manifests differ from the committed ones only in the field that records which model answered each slot, and
+its index only in the list of model files, because a sandbox root holds no released model bundle and the slots answer with their baselines.
+
+\emph{Notebooks.} \texttt{notebooks/\allowbreak{}en} and \texttt{notebooks/\allowbreak{}es} hold the same didactic notebooks, from getting started and the size distributions and the breakage and
+classification functions to the capacity and the power, the real surveys, the held-out validation, the learned models, Morrell's energy and CrusherBayes,
+on the product's own data and modules.
+
+\begin{table}[!t]
+\centering
+\caption{SHA-256 digests (first sixteen hexadecimal digits) of the committed artifacts every table and figure of the report is generated from, written by
+\texttt{make\_tables.py} together with the full digests.}
+\label{tab:hashes}
+\footnotesize
+\input{tables/tab-hashes}
+\end{table}
+
+\section{Conclusions}\label{sec:conclusions}
+
+On ten industrial surveys of one cone crusher, a calibrated Whiten, Evertsson and Bond engine predicts the throughput of a survey it has not seen with a
+mean absolute percentage error of $12.09\%$ ($95\%$ interval $\uqQBblo$ to $\uqQBbhi$), against $11.55\%$ in sample and $18.29\%$ for the constant
+mean, with a nested $80\%$ band that covers eight surveys of ten; the published throughput model of Rocha et al., run with its own parameters,
+scores $\uqQRocha\%$, not distinguishable from it. It does not predict the power: its Bond draw is flat across the surveys, and its held-out power error of $25.94\%$ is worse than the constant
+mean. A line on the closed-side setting alone has the lowest power error ($12.78\%$, interval $\uqPLinelo$ to $\uqPLinehi$, chosen on the same
+surveys); Morrell's size-specific energy with a fitted work index is worse ($38.08\%$), and with a no-load term whose fitted index is negative in
+every fold ($15.21\%$) it is, like CrusherBayes ($14.31\%$) and the free-form fit, not distinguishable from the line on ten surveys. CrusherBayes gives
+held-out intervals of the stated coverage that are $44\%$ narrower than the backbone band on power, about as wide as the band of the line there,
+and $7\%$ narrower on throughput, and its posterior shows that the
+ten surveys identify the capacity base, the noise and the dependence of the discrepancy on the setting, and cannot identify the classification and breakage
+scalars. A leaky evaluation would have ranked the free-form fit first on both targets and the bounded residual second on throughput; held out the
+bounded residual is behind the backbone on throughput. The next steps are measurements, not models: the
+product size distribution of each survey, which the population balance needs to be calibrated; the crushing work index and the no-load power of the machine,
+which would turn Morrell's method into a prediction; and more surveys, which would resolve differences of a few points that ten cannot.

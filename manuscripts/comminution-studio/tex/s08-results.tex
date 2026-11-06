@@ -1,0 +1,318 @@
+\section{Results}\label{sec:results}
+
+\subsection{The engine across the circuit cases}\label{sec:results-engine}
+
+Figure~\ref{fig:physics} and Table~\ref{tab:cases} give the coupled engine over the circuit. The engine reproduces the size-reduction ladder
+of a crushing circuit: the gyratory case G01 gives a coarse product ($P_{80}=153.6$~mm) at a high throughput ($4629$~t/h) with a reduction
+ratio of $1.17$; the jaw J01 an intermediate product ($126.4$~mm at $923$~t/h); the secondary cone S01 $27.7$~mm at $643$~t/h and a reduction
+ratio of $4.55$; the tertiary cone T01 $7.1$~mm at $240$~t/h; and the short-head cone H01 $4.6$~mm at $216$~t/h, the finest product of the
+set. Within the secondary class the setting and the speed move the product as expected: S03, run past the speed optimum at $470$~rpm, gives
+$856$~t/h on the falling side of its hump (Figure~\ref{fig:sweeps}(a)), and S06, at a setting of $12$~mm, the finest secondary product
+($9.1$~mm) with a reduction ratio of $9.80$, above the typical ceiling of one stage and flagged as such. The setting sweep of S01
+(Figure~\ref{fig:sweeps}(b)) shows the trade-off a process engineer reads: between $16$ and $48$~mm, $P_{80}$ rises from about $14$ to $42$~mm and
+the throughput from about $420$ to $860$~t/h, both close to linear, because the capacity is linear in the setting at a fixed throw and speed and
+the classification window moves with the setting. The three controls behave as stated: CP1 is pass-through with a reduction ratio of $1.12$,
+CI1 is invalid with a reduction ratio of one and zero power, and CK1 is a valid choke point. Every case lies inside its declared expected ranges,
+otherwise the bake would have stopped. What this shows is that the coupled models behave as the cited models are known to behave; it is not a
+validation against a plant, which only the HP500 lane can give.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig-physics.pdf}
+\caption{The coupled engine over the circuit cases, from the committed traces: (a) product size distributions of one gyratory (G01), jaw (J01),
+secondary cone (S01), tertiary cone (T01) and short-head cone (H01) case; (b) throughput against product $P_{80}$ for the fourteen circuit cases
+of the five machine classes, by machine type; the three controls (CP1, CI1 and CK1) are left out of panel (b).}
+\label{fig:physics}
+\end{figure}
+
+\subsection{Benchmark on the ten HP500 surveys}\label{sec:results-bench}
+
+Table~\ref{tab:bench} gives every predictor on the same ten surveys under strict leave-one-survey-out, and Figure~\ref{fig:loo} the held-out
+predictions against the measured values. Table~\ref{tab:uncertainty} gives the $95\%$ bootstrap interval of every number below and of the differences between the predictors
+(Section~\ref{sec:results-uq}). On throughput the predictors that use the setting and the capacity physics sit between $12.00\%$ and
+$13.67\%$, and the published throughput model of Rocha et al.\ at $\uqQRocha\%$ with its fitted factor as published; no difference among them
+excludes zero. The calibrated backbone beats the constant mean ($18.29\%$; difference $\uqQMeandb$ points, interval $\uqQMeandblo$ to
+$\uqQMeandbhi$), and the label-shuffle control ($25.04\%$) is worse than the backbone, as it must be. The calibrated backbone, with one fitted
+scalar and the engine's shape, matches the three-coefficient free-form fit ($12.09\%$ against $12.18\%$), and its in-sample error is $11.55\%$,
+so its held-out number is not an artifact of the fit. The bounded residual does not improve on the backbone held out ($13.45\%$), the null
+result stated as the expectation before the run. The published throughput model reaches its point estimate with no parameter fitted to nine of
+the ten surveys; refit per fold by least squares, its factor $\lambda$ moves from $0.84$ to between $\rochaLamLo$ and $\rochaLamHi$ and its
+error rises to $\uqQRocharef\%$, because a least-squares fit of the feed rate weighs the large feed rates most while the score weighs relative
+errors. With the work index of either itabirite in place of the blend value it scores $\rochaWiLo\%$ ($7.2$~kWh/t) or $\rochaWiHi\%$
+($10.6$~kWh/t).
+
+On power the picture is different. The calibrated backbone, whose power is the Bond draw refit in the published form, is worse than the constant
+mean ($25.94\%$ against $24.48\%$, held-out $R^2=-0.62$), because the Bond draw is nearly flat while the measured power is not
+(Section~\ref{sec:m-bond}). The setting-only line has the lowest power error ($12.78\%$, interval $\uqPLinelo$ to $\uqPLinehi$, $R^2=0.48$), followed by the
+free-form fit ($14.03\%$), CrusherBayes ($14.31\%$) and Morrell with a no-load term ($15.21\%$). None of these three is distinguishable from the
+line on ten surveys: the intervals of their differences to the line are $\uqPFreedllo$ to $\uqPFreedlhi$, $\uqPCbdllo$ to $\uqPCbdlhi$ and
+$\uqPMornldllo$ to $\uqPMornldlhi$ points. The line is clearly ahead only of the calibrated backbone ($\uqPBbdllo$ to $\uqPBbdlhi$ points),
+the bounded residual, Morrell through the origin ($38.08\%$, the worst size-aware model), the constant mean and the control. Its own number is
+also biased low: the line was chosen as the baseline by a screen of predictor sets on the same ten surveys (Section~\ref{sec:m-line}). The mean log predictive densities
+(Table~\ref{tab:lpd}) rank the four predictive distributions the same way: on power the line ($-5.341$) and CrusherBayes ($-5.346$) are tied and
+the backbone band is the worst ($-5.847$); on throughput the free-form fit ($-6.647$) and CrusherBayes ($-6.678$) are ahead of the line
+($-6.709$) and the backbone ($-6.896$), by differences that one survey can reverse.
+
+\subsection{Uncertainty of the held-out errors}\label{sec:results-uq}
+
+Table~\ref{tab:uncertainty} gives, for every predictor, the held-out MAPE with its $95\%$ bootstrap interval over the ten surveys and the paired
+difference to the setting-only line (and, on throughput, to the calibrated backbone) with its interval (Equation~\eqref{eq:bootstrap}). The
+intervals of a single MAPE are wide, about $\pm4$ to $\pm7$ points around the best predictors, because one survey with a large error moves a mean of
+ten by a tenth of that error. A paired difference is narrower when the two predictors err on the same surveys (CrusherBayes against the line on
+power, $\uqPCbdllo$ to $\uqPCbdlhi$ points) and not when they err on different ones (the published throughput model against the backbone,
+$\uqQRochadblo$ to $\uqQRochadbhi$ points). Three readings follow. On throughput no predictor that uses the setting is distinguishable from another, the published throughput model
+included; the calibrated backbone beats the constant mean, and every predictor beats the label-shuffle control. On power the calibrated backbone,
+whose power is the refit Bond draw, is worse than the line by $\uqPBbdllo$ to $\uqPBbdlhi$ points, and so are the bounded residual, Morrell
+through the origin, the constant mean and the control; the free-form fit, CrusherBayes and Morrell with a no-load term are not distinguishable from
+the line. The adoption margin of three points used by CrusherBayes (Section~\ref{sec:m-crusherbayes}) is smaller than the width of most of these
+intervals, so it is a rule fixed before the run and not a noise level.
+
+\begin{table}[!t]
+\centering
+\caption{Held-out MAPE (\%) of every predictor on the ten HP500 surveys with its $95\%$ bootstrap interval over the surveys, and the paired
+difference of its MAPE minus that of the setting-only line and, on throughput, minus that of the calibrated backbone, in points, with the
+interval in brackets ($B=\uqB$ resamples, Equation~\eqref{eq:bootstrap}). The two rows of the throughput model of Rocha et al.\ are run by the
+report's script with their published parameters (Equation~\eqref{eq:rocha}). Generated from \texttt{loo.json} and \texttt{crusherbayes.json}
+through \texttt{heldout\_uq.py}.}
+\label{tab:uncertainty}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\resizebox{\textwidth}{!}{\input{tables/tab-uncertainty}}
+\end{table}
+
+\begin{table}[!t]
+\centering
+\caption{Strict leave-one-survey-out scores of every predictor on the same ten HP500 surveys: MAPE in percent, RMSE in the unit of the target,
+held-out $R^2$, coverage of the $80\%$ interval and its mean width in the unit of the target. Residual-band predictors carry the nested band of
+their own held-out residuals; CrusherBayes carries its posterior predictive interval. A dash marks a score that is not defined. Generated from
+\texttt{loo.json} and \texttt{crusherbayes.json}.}
+\label{tab:bench}
+\scriptsize
+\input{tables/tab-bench}
+\end{table}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig-loo.pdf}
+\caption{Held-out predictions against the measured values on the ten HP500 surveys, for (a) throughput and (b) power: the calibrated backbone, the
+free-form fit, the setting-only line and, for power, Morrell with a no-load term, and the CrusherBayes predictive mean with its $80\%$ interval. The
+dotted line is parity.}
+\label{fig:loo}
+\end{figure}
+
+\begin{table}[!t]
+\centering
+\caption{Mean log predictive density of the held-out surveys for the four predictors that give a distribution: three residual-band predictors with
+their nested Gaussian band and CrusherBayes with its posterior predictive. Higher is better. Generated from \texttt{crusherbayes.json}.}
+\label{tab:lpd}
+\footnotesize
+\input{tables/tab-lpd}
+\end{table}
+
+\subsection{Optimism of an evaluation that leaks}\label{sec:results-leaky}
+
+Table~\ref{tab:leaky} gives the same predictors when the held-out survey is allowed into its own fit. The fits that adapt most to the data gain
+most: the bounded residual falls from $13.45\%$ to $8.51\%$ on throughput and from $25.37\%$ to $12.00\%$ on power, a gap of $13.37$ points, and the
+free-form fit from $12.18\%$ to $8.24\%$ on throughput and from $14.03\%$ to $9.46\%$ on power. The calibrated backbone, with one scalar for
+throughput, gains $1.14$ points. The label-shuffle control uses one permutation of the labels in both modes, so its gap measures what the leak
+gives a fit of noise: on power it falls from $40.19\%$ to $28.49\%$, a gap of $11.70$ points, and on throughput from $25.04\%$ to $21.34\%$. In the
+leaky mode the control's fit contains the held-out survey's permuted label, not its own, so the gap is the gain of a flexible fit from one more
+training point near the survey; it is of the size of the gap of the bounded residual on throughput and close to that on power, which says that
+most of the leaky gain of the bounded residual on power is not skill. The setting-only line has one of the smallest gaps ($2.75$ points on
+power), as a two-coefficient fit on one feature should. An evaluation of these predictors on the surveys they were fitted to would therefore
+have ranked the free-form fit first on both targets, with the bounded residual second on throughput and third on power, behind the line; held
+out, the bounded residual ranks behind the backbone on throughput and is not better than the backbone on power.
+
+\begin{table}[!t]
+\centering
+\caption{MAPE in percent of every predictor with the held-out survey outside its fit (strict) and inside it (leaky), and their difference in points,
+on the same ten surveys and folds. Generated from \texttt{loo.json}.}
+\label{tab:leaky}
+\footnotesize
+\input{tables/tab-leaky}
+\end{table}
+
+\subsection{The predictive band of the calibrated backbone}\label{sec:results-band}
+
+Table~\ref{tab:band} and Figure~\ref{fig:bands} give the band survey by survey. With $\sigma$ from all ten held-out residuals, the band's half-width
+is $238.5$~t/h ($20.8\%$ of the mean throughput) and $105.1$~kW ($36.5\%$ of the mean power), and its in-sample coverage is $0.90$ on both targets.
+Nested, with $\sigma_{-i}$ from the other nine residuals, the coverage is $0.80$ on throughput and $0.90$ on power. Two surveys fall outside the
+throughput band: survey 1, whose measured feed rate of $1639$~t/h is the largest of the set and $407$~t/h above the backbone, and survey 6, $235$~t/h
+below it; survey 9 lies inside by $3$~t/h. On power one survey falls outside, survey 7 ($151$~kW below the backbone), whose feed $f_{80}$ of $140$~mm is
+the coarsest of the set. The in-sample coverage of $0.90$ on throughput flatters the band; the nested $0.80$ is the figure a reader can rely on, and
+with ten surveys either moves by $0.1$ per survey. The relative half-width on throughput, $20.81\%$, is the lower bound the studio shows as a band on
+the synthetic secondary-cone cases, read at run time from the document: an uncalibrated case cannot be more accurate than the same model family once
+calibrated.
+
+\begin{table}[!t]
+\centering
+\caption{The nested $80\%$ band of the calibrated backbone per held-out survey: the held-out residual (measured minus prediction), the standard
+deviation $\sigma_{-i}$ of the other nine residuals, the half-width $1.2816\,\sigma_{-i}$ and whether the survey lies inside. Generated from
+\texttt{loo.json}.}
+\label{tab:band}
+\footnotesize
+\input{tables/tab-band}
+\end{table}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig-bands.pdf}
+\caption{The held-out residual of the calibrated backbone per survey against its nested $80\%$ band, for (a) throughput and (b) power, with the
+surveys outside the band marked by crosses; the nested coverage of each target is in the panel title.}
+\label{fig:bands}
+\end{figure}
+
+\subsection{Morrell's size-specific energy}\label{sec:results-morrell}
+
+Table~\ref{tab:morrell} and Figure~\ref{fig:morrell} give the two Morrell variants fold by fold. Without a no-load term the fit is one positive
+scalar, $M_{ic}$ between $3.70$ and $4.21$~kWh/t across the folds, and the held-out error is $38.08\%$ ($R^2=-2.28$). With a no-load term the error
+falls to $15.21\%$, but the fit is not Morrell's physics: in every fold the fitted $M_{ic}$ is negative, from $-6.29$ to $-4.16$~kWh/t, with a no-load
+power of $591$ to $727$~kW, about twice the largest measured power of $355$~kW. The measured power falls as the throughput rises (correlation
+$-0.85$), and the design column $g_i$ rises with the throughput, so the least-squares line through it has a negative slope and a large intercept. The
+variant is a descriptive line on that column and not an estimate of $M_{ic}$ or of a no-load power. Both variants are worse than the setting-only line;
+the difference of $2.4$ points for the variant with a no-load term has an interval of $\uqPMornldllo$ to $\uqPMornldlhi$ points and does not
+separate it from the line, while the $25$ points of the variant without it ($\uqPMordllo$ to $\uqPMordlhi$) do. On these
+ten surveys the size-specific energy adds no predictive skill. An SMC Test of the ore and a no-load reading of the machine would replace the two
+fitted scalars by measurements and turn the method into a prediction.
+
+\begin{table}[!t]
+\centering
+\caption{The Morrell fits per fold, each on the nine training surveys: $M_{ic}$ of the variant through the origin, $M_{ic}$ and no-load power of the
+variant with a no-load term, and whether that variant's $M_{ic}$ is positive. Generated from \texttt{loo.json}.}
+\label{tab:morrell}
+\footnotesize
+\input{tables/tab-morrell}
+\end{table}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig-morrell.pdf}
+\caption{The two Morrell variants fold by fold: (a) the fitted crushing work index $M_{ic}$ through the origin and with a no-load term; (b) the fitted
+no-load power against the largest measured motor power of the ten surveys.}
+\label{fig:morrell}
+\end{figure}
+
+\subsection{CrusherBayes: held-out scores, adoption and what the surveys identify}\label{sec:results-cb}
+
+On throughput CrusherBayes has the lowest held-out MAPE ($12.00\%$, RMSE $168.6$~t/h) and the narrowest interval ($439.1$~t/h against $473.8$~t/h for
+the backbone band, $7\%$ narrower) at coverage $0.80$; on power its MAPE is $14.31\%$, its interval $117.7$~kW wide, $44\%$ narrower than the backbone
+band ($209.8$~kW) at the same coverage of $0.90$, and about the width of the line's band ($119.6$~kW at coverage $0.80$). The power coverage of $0.90$ for a nominal $0.80$ sits on the upper
+edge of the acceptable range of $0.7$ to $0.9$, where one survey moves it by $0.1$, and on power the line's nested band is as narrow
+($119.6$ against $117.7$~kW), sits at the nominal coverage and ties on the log predictive density ($-5.341$ against $-5.346$); the gain of the
+interval of CrusherBayes on power is over the band of the calibrated engine, not over the line. Table~\ref{tab:adoption}
+evaluates the adoption rule term by term. Condition (a) holds: the power MAPE is $1.53$ points above the line's, not three below, and the throughput
+MAPE only $0.09$ points below the backbone's. Condition (b) does not hold: both coverages, $0.80$ and $0.90$, lie inside $0.7$ to $0.9$, and both intervals
+are narrower than the backbone's band. The rule drops the method only when both conditions hold, so it keeps CrusherBayes. That is the outcome of the
+rule as written and not a claim of skill over the line: the method gives an interval at the stated coverage that is narrower than the band of the
+calibrated engine, and does not predict the power better than one feature.
+
+\begin{table}[!t]
+\centering
+\caption{The adoption rule of CrusherBayes evaluated term by term on the held-out scores: the value of CrusherBayes, the reference predictor's value, the
+difference, the condition stated before the run and whether CrusherBayes meets it. Generated from \texttt{crusherbayes.json}.}
+\label{tab:adoption}
+\footnotesize
+\input{tables/tab-adoption}
+\end{table}
+
+Figure~\ref{fig:contraction} and Table~\ref{tab:contraction} give the contraction of the posterior fitted to all ten surveys. The capacity base is
+identified (contraction $0.454$), with a posterior mean of $646.3$~t/h that stays at the prior centre of $647$ while the discrepancy constant
+$d_{Q0}$ takes $+53.4$~t/h: the two enter the throughput together, so the data fix their sum better than either (a least-squares refit of the
+capacity base alone gives $\qtAll$~t/h on the ten surveys). Identified as well are the two noise scales ($0.301$ and $0.332$) and the four
+discrepancy slopes on the setting and on $f_{80}$ ($0.340$ to $0.381$). The posterior noise is $145.2$~t/h and $38.8$~kW, much larger than the prior
+medians of $60$~t/h and $15$~kW. The discrepancy slope on the setting is large on both targets, $+100.8$~t/h and $-57.1$~kW per standard deviation of the
+setting: the engine's dependence on the setting differs from the measured one, on power by about $57$~kW per standard deviation, of the same order as the
+slope of the setting-only line ($-8.49$~kW/mm) times the standard deviation of the setting over the ten surveys ($5.94$~mm), about $-50$~kW. The work index, $\zeta$ and $P_n$ contract weakly ($0.854$, $0.733$ and $0.795$), and $\zeta$
+and $W_i$ enter the power only as a product. The two classification multipliers, $K_3$, the $t_{10}$ shift and the two discrepancy constants stay at their
+prior ($0.878$ to $1.026$). The scalars that set the product size are not identified because the two measured targets carry the product size only through
+the Bond term of the power, and the power follows the setting, not the product size. Ten surveys without a measured product size cannot calibrate the
+population balance.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.85\textwidth]{fig-contraction.pdf}
+\caption{Posterior over prior standard deviation of each CrusherBayes parameter for the posterior fitted to all ten surveys. Below $0.5$ (dashed) the surveys
+identify the parameter; near one (dotted) it stays at its prior. Plain bars are identified, dotted bars weakly identified, hatched bars not identified.}
+\label{fig:contraction}
+\end{figure}
+
+\begin{table}[!t]
+\centering
+\caption{Prior and posterior of every CrusherBayes parameter for the fit to all ten surveys, on the natural scale: prior centre and standard deviation,
+posterior mean and standard deviation, and their ratio (the contraction). Discrepancy rows are the exact conditional given the engine scalars. Generated from
+\texttt{crusherbayes.json}.}
+\label{tab:contraction}
+\footnotesize
+\input{tables/tab-contraction}
+\end{table}
+
+Table~\ref{tab:convergence} gives the convergence of the eleven posteriors. All are converged under the criterion of fifty autocorrelation times: the largest
+autocorrelation time is $48.0$ to $84.8$ steps and the $6000$ post-burn steps are $70.7$ to $125.0$ times it, with acceptance fractions between $0.171$ and
+$0.204$. The posterior of the fold that holds out survey 4 mixes slowest ($84.8$ steps); it still passes with a margin of $1.4$ over the criterion.
+
+\begin{table}[!t]
+\centering
+\caption{Convergence of the eleven CrusherBayes posteriors (ten folds and the fit to all ten surveys): largest integrated autocorrelation time, post-burn
+steps, their ratio, acceptance fraction, retained samples and whether the criterion of fifty autocorrelation times holds. Generated from \texttt{crusherbayes.json}.}
+\label{tab:convergence}
+\footnotesize
+\input{tables/tab-convergence}
+\end{table}
+
+\subsection{The learned models}\label{sec:results-learned}
+
+The surrogate reproduces every output of the engine on the independent held-out draw of $2196$ points (Figure~\ref{fig:surrogate},
+Table~\ref{tab:surrogate}): $R^2$ from $0.9792$ (power) to $0.9984$ (throughput) and MAPE from $2.73\%$ (passing $32$~mm) to $9.21\%$ ($P_{20}$). The error
+grows toward the fine tail of the product ($P_{80}$ $4.06\%$, $P_{50}$ $5.73\%$, $P_{20}$ $9.21\%$), where the passing fractions are small and a relative error
+is large for a small absolute error. $P_{80}$ is monotone in the setting on all fifteen test curves. The export is faithful: the largest absolute
+difference of the standardised outputs between the trained torch module and the float32 graph is $1.7\times10^{-6}$. The int8 graph's largest difference
+from the float32 one is $0.235$ in standardised units, yet its MAPE stays within $0.51$ points of the float32 MAPE on every output, and on power it is
+$0.035$ points lower.
+
+The autoencoder raises an alarm on $1.00\%$ of the held-out points, as its threshold at the $99$th percentile of the training scores implies, and on
+$27.96\%$ of the planted off-manifold points; the envelope check raises none on the held-out points and flags $13.89\%$ of the planted ones
+(Table~\ref{tab:anomaly}). The score therefore doubles the detection of the rule-based check, at a false-alarm rate of one percent, and still misses most
+planted points: it is a complement to the check, not a replacement. Neither learned model is held to the HP500 surveys; both are compared with the engine.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.85\textwidth]{fig-surrogate.pdf}
+\caption{The surrogate against the engine per output on the independent held-out draw of $2196$ points: MAPE in percent (bars, left axis) and $R^2$
+(open squares, right axis, which starts at $0.97$), computed through onnxruntime on the shipped float32 graph. Read from \texttt{model-metrics.json}.}
+\label{fig:surrogate}
+\end{figure}
+
+\begin{table}[!t]
+\centering
+\caption{Surrogate accuracy per output against the engine on the held-out draw: $R^2$ and MAPE of the float32 graph, MAPE of the int8 graph and the difference
+in points. Generated from \texttt{model-metrics.json}.}
+\label{tab:surrogate}
+\footnotesize
+\input{tables/tab-surrogate}
+\end{table}
+
+\begin{table}[!t]
+\centering
+\caption{The autoencoder's extrapolation score against the envelope check on the same $2196$ held-out points and $2196$ planted off-manifold points:
+false-alarm and detection rates, and the threshold and mean training score of the score. Generated from \texttt{model-metrics.json} and \texttt{psd-ae.json}.}
+\label{tab:anomaly}
+\footnotesize
+\input{tables/tab-anomaly}
+\end{table}
+
+\subsection{The drift projection}\label{sec:results-drift}
+
+Figure~\ref{fig:drift} gives the drift projection of case S01 for the three targets of the shared reference table. A target $3\%$ above the current
+$P_{80}$ ($28.53$~mm) allows the setting to open by $1.04$~mm, a target $10\%$ above ($30.47$~mm) by $3.21$~mm, and a target $30\%$ above ($36.01$~mm) by
+$8.67$~mm. The hours to the target are inversely proportional to the drift rate: at $0.1$~mm/h the three openings last $10.4$, $32.1$ and $86.7$~h. The
+$45$~h re-set interval of one plant is reached by the $10\%$ target at a drift of $0.071$~mm/h; at a faster drift that target is left before the
+re-set. The figure is a what-if on the engine: the product asserts no drift rate, and the reader supplies the one measured at the plant, for example
+from the movement of the adjustment ring between two liner changes.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.72\textwidth]{fig-drift.pdf}
+\caption{Operating hours until the product $P_{80}$ of case S01 reaches a target, against the drift rate of the closed-side setting, for targets $3$, $10$ and
+$30\%$ above the current $P_{80}$ from the shared reference table, with the $45$~h re-set interval of one plant as reference.}
+\label{fig:drift}
+\end{figure}

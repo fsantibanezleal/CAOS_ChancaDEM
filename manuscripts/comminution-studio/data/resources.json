@@ -1,0 +1,178 @@
+{
+ "schema": "chancadem.report.resources/v1",
+ "product_version": "0.12.001",
+ "measured_on": "2026-11-05",
+ "host": {
+  "os": "Windows 11",
+  "python": "3.12.15",
+  "processor_threads": 32
+ },
+ "monitor": "process-tree peak memory polled every 20 ms (CAOS_MANAGE tools/audit/measure_command.py)",
+ "stages": [
+  {
+   "command": [
+    "python.exe",
+    "data-pipeline/run.py",
+    "all",
+    "--output",
+    "<sandbox>"
+   ],
+   "exit": 0,
+   "seconds": 4172.72,
+   "peak_bytes": 1460043776,
+   "peak_mb": 1460.0,
+   "sizes": {
+    "output": {
+     "bytes": 240715
+    }
+   },
+   "label": "bake"
+  },
+  {
+   "command": [
+    "python.exe",
+    "data-pipeline/run.py",
+    "hp500",
+    "--output",
+    "<sandbox>"
+   ],
+   "exit": 0,
+   "seconds": 3505.04,
+   "peak_bytes": 1455882240,
+   "peak_mb": 1455.9,
+   "sizes": {
+    "output": {
+     "bytes": 27728
+    }
+   },
+   "label": "hp500"
+  },
+  {
+   "command": [
+    "python.exe",
+    "data-pipeline/run.py",
+    "models",
+    "--output",
+    "<sandbox>"
+   ],
+   "exit": 0,
+   "seconds": 108.42,
+   "peak_bytes": 462143488,
+   "peak_mb": 462.1,
+   "sizes": {
+    "output": {
+     "bytes": 59480
+    }
+   },
+   "label": "models"
+  },
+  {
+   "command": [
+    "python.exe",
+    "-m",
+    "pytest",
+    "-q",
+    "-p",
+    "no:cacheprovider",
+    "--basetemp",
+    "<sandbox>",
+    "tests"
+   ],
+   "exit": 1,
+   "seconds": 1743.04,
+   "peak_bytes": 306221056,
+   "peak_mb": 306.2,
+   "sizes": {},
+   "label": "tests",
+   "note": "while other jobs used the workstation"
+  },
+  {
+   "command": [
+    "npm",
+    "ci"
+   ],
+   "exit": 0,
+   "seconds": 32.4,
+   "peak_bytes": 640962560,
+   "peak_mb": 641.0,
+   "sizes": {
+    "node_modules": {
+     "bytes": 327986259,
+     "files": 11424
+    }
+   },
+   "label": "install"
+  },
+  {
+   "command": [
+    "npm",
+    "run",
+    "build"
+   ],
+   "exit": 0,
+   "seconds": 8.06,
+   "peak_bytes": 617631744,
+   "peak_mb": 617.6,
+   "sizes": {
+    "dist": {
+     "bytes": 17062469,
+     "files": 165
+    }
+   },
+   "label": "build"
+  },
+  {
+   "command": [
+    "npm",
+    "test"
+   ],
+   "exit": 0,
+   "seconds": 6.83,
+   "peak_bytes": 2650939392,
+   "peak_mb": 2650.9,
+   "sizes": {},
+   "label": "webtests",
+   "note": "409 tests"
+  }
+ ],
+ "engine": {
+  "cases": 27,
+  "runs_per_case": 7,
+  "median_of_medians_ms": 2.842,
+  "max_median_ms": 9.096,
+  "per_case_median_ms": {
+   "CI1": 2.849,
+   "CK1": 2.842,
+   "CP1": 2.632,
+   "G01": 2.477,
+   "G02": 3.218,
+   "H01": 2.639,
+   "H02": 3.126,
+   "HP500-01": 6.643,
+   "HP500-02": 3.49,
+   "HP500-03": 9.096,
+   "HP500-04": 3.33,
+   "HP500-05": 3.091,
+   "HP500-06": 3.23,
+   "HP500-07": 2.842,
+   "HP500-08": 2.5,
+   "HP500-09": 2.558,
+   "HP500-10": 3.08,
+   "J01": 2.384,
+   "J02": 2.545,
+   "S01": 2.884,
+   "S02": 2.759,
+   "S03": 1.722,
+   "S04": 2.69,
+   "S05": 3.009,
+   "S06": 1.88,
+   "T01": 2.795,
+   "T02": 2.7
+  }
+ },
+ "site": {
+  "bytes": 17062469,
+  "files": 165,
+  "wasm_bytes": 13479978
+ }
+}

@@ -24,7 +24,8 @@ MAIN.loader.exec_module(GATES)
 @pytest.fixture(scope="module")
 def base(tmp_path_factory: pytest.TempPathFactory) -> Path:
     dest = tmp_path_factory.mktemp("nbc-base")
-    make_tree(dest, "notebooks", "docs/design/SDD.md", ".github", "data/derived", "data/examples", "README.md", "data-pipeline",
+    # the notebooks read what the release gate copies (scripts/run_notebooks.py): data, docs, content and models in full
+    make_tree(dest, "notebooks", "docs", "content", "models", ".github", "data", "README.md", "data-pipeline",
               "scripts/check_notebooks.py", "scripts/notebook_bar.json", "product.json", "scripts/check_template_residue.py", "scripts/run_notebooks.py", "scripts/check_readme_areas.py",
               "scripts/check_tech_matrix.py", "VERSION", "requirements*.txt", "frontend/package.json", "frontend/package-lock.json", "pyproject.toml")
     return dest
@@ -124,8 +125,9 @@ def test_a_rosin_rammler_oracle_with_a_perturbed_exponent_fails_the_closed_form(
 @pytest.mark.skipif(NOTEBOOK_PYTHON is None, reason="the notebook environment is not built (scripts/setup.sh --notebooks)")
 @pytest.mark.parametrize("lang", ["en", "es"])
 def test_a_figure_cell_that_loses_its_case_is_stale(repo: Path, lang: str, tmp_path: Path) -> None:
-    """NB-040, local-only: the figure says Case S01; a cell that binds the last loop case instead writes other numbers and the
-    release gate finds the committed outputs stale."""
+    """NB-040, local-only: the figure says Case S01; a cell that binds another case (S02) instead writes other numbers and the
+    release gate finds the committed outputs stale. The other case is named, not the last loop variable: the loop may end on a
+    refused case, and a crash is not the staleness this gate must catch."""
     only = f"notebooks/{lang}/{GATES.FIGURE_CASE_NOTEBOOK}"
     temp = tmp_path / "gate"
     r = run_release_gate(repo, "--check", "--only", only, "--tmp", str(temp))
@@ -134,7 +136,7 @@ def test_a_figure_cell_that_loses_its_case_is_stale(repo: Path, lang: str, tmp_p
     def lose_case(doc: dict) -> None:
         cell = next(c for c in doc["cells"] if c["cell_type"] == "code" and "np.linspace(0.5, 1.5, 11)" in "".join(c["source"]))
         assert any(f'manifests["{GATES.FIGURE_CASE}"]' in ln for ln in cell["source"])
-        cell["source"] = [ln.replace(f'manifests["{GATES.FIGURE_CASE}"]', "manifests[k]") for ln in cell["source"]]
+        cell["source"] = [ln.replace(f'manifests["{GATES.FIGURE_CASE}"]', 'manifests["S02"]') for ln in cell["source"]]
         assert not any(f'manifests["{GATES.FIGURE_CASE}"]' in ln for ln in cell["source"])
     jedit(repo, only, lose_case)
     r = run_release_gate(repo, "--check", "--only", only, "--tmp", str(temp))

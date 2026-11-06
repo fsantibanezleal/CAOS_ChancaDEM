@@ -1,0 +1,18 @@
+\begin{tabular}{@{}lrrrrrrrr@{}}
+\toprule
+Variant & \multicolumn{3}{c}{Throughput} & \multicolumn{3}{c}{Power} & $\tau_{\max}$ & Converged \\
+ & MAPE & Cov. & Width & MAPE & Cov. & Width & (steps) & \\
+\midrule
+The method (seed 42) & 12.00 & 0.8 & 439 & 14.31 & 0.9 & 117.7 & 48--85 & 11 of 11 \\
+The method, seed 43 & 11.99 & 0.8 & 438 & 14.29 & 0.9 & 117.8 & 50--80 & 11 of 11 \\
+The method, seed 44 & 11.99 & 0.8 & 439 & 14.31 & 0.9 & 117.7 & 47--73 & 11 of 11 \\
+\midrule
+Without the discrepancy & 11.98 & 0.7 & 451 & 27.15 & 0.7 & 190.2 & 54--76 & 11 of 11 \\
+Engine scalars fixed at nominal & 11.95 & 0.8 & 425 & 15.99 & 0.7 & 124.5 & 34--39 & 11 of 11 \\
+Population-balance scalars fixed & 11.99 & 0.8 & 439 & 14.08 & 0.8 & 117.7 & 46--54 & 11 of 11 \\
+Engine prior widths doubled & 12.08 & 0.8 & 440 & 14.43 & 0.9 & 119.2 & 60--142 & 10 of 11 \\
+Discrepancy scale $\tau_t$ halved & 11.89 & 0.9 & 435 & 17.85 & 0.8 & 135.0 & 49--108 & 11 of 11 \\
+Discrepancy scale $\tau_t$ doubled & 12.12 & 0.8 & 446 & 13.85 & 0.8 & 117.3 & 47--89 & 11 of 11 \\
+Stretch move instead of differential evolution & 12.00 & 0.8 & 440 & 14.29 & 0.9 & 117.8 & 126--200 & 0 of 11 \\
+\bottomrule
+\end{tabular}
