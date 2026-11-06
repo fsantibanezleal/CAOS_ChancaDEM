@@ -1,0 +1,37 @@
+{
+  "kind": "technical-report",
+  "title_support": ["tab:bench", "fig:loo", "tab:leaky", "tab:band", "fig:physics", "tab:cases"],
+  "methods": {
+    "M1": "sec:m-feed",
+    "M2": "sec:m-breakage",
+    "M3": "sec:m-class",
+    "M4": "sec:m-whiten",
+    "M5": "sec:m-capacity",
+    "M6": "sec:m-regimes",
+    "M7": "sec:m-bond",
+    "M8": "sec:m-hp500",
+    "M9": "sec:m-envelope",
+    "M10": "sec:m-crushercal",
+    "M11": "sec:m-surrogate",
+    "M12": "sec:m-ae",
+    "M13": "sec:m-drift",
+    "M14": "sec:m-morrell",
+    "B-lin": "sec:m-line",
+    "BS-2": "sec:m-crusherbayes"
+  },
+  "contracts": {
+    "params-record": "sec:data-params",
+    "hp500-survey": "sec:data-survey",
+    "case-index": "sec:data-index",
+    "case-manifest": "sec:data-manifest",
+    "trace": "sec:data-trace",
+    "hp500-backbone": "sec:data-backbone",
+    "hp500-loo": "sec:data-loo",
+    "hp500-crusherbayes": "sec:data-cb",
+    "surrogate-model": "sec:data-surrogate",
+    "anomaly-model": "sec:data-anomaly",
+    "model-metrics": "sec:data-metrics",
+    "readiness": "sec:data-readiness",
+    "api": "sec:data-api"
+  }
+}

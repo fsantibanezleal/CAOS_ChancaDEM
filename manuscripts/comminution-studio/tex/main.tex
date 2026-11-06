@@ -1,47 +1,46 @@
-\documentclass[journal]{IEEEtran}
+\documentclass[10pt,a4paper]{article}
 
 \usepackage[T1]{fontenc}
 \usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=2.3cm]{geometry}
 \usepackage{amsmath,amssymb,amsfonts}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage{array}
+\usepackage{longtable}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage[font=small,labelfont=bf]{caption}
 \usepackage{xurl}\Urlmuskip=0mu plus 1mu\relax
 \usepackage{xcolor}
 \usepackage[hidelinks]{hyperref}
 \usepackage{orcidlink}
-\usepackage{balance}
 
 \graphicspath{{../figures/}}
-
-\renewcommand{\topfraction}{0.92}
-\renewcommand{\bottomfraction}{0.75}
-\renewcommand{\textfraction}{0.08}
-\renewcommand{\floatpagefraction}{0.80}
-
-% IEEEtran hard-codes an em-dash after the abstract and index-terms names; the CAOS
-% content standard (ADR-0067) excludes em-dashes, so the separator is a full stop.
-\makeatletter
-\def\abstract{\normalfont
-    \if@twocolumn
-      \@IEEEabskeysecsize\bfseries\textit{\abstractname}.\ \relax
-    \else
-      \bgroup\par\addvspace{0.5\baselineskip}\centering\vspace{-1.78ex}\@IEEEabskeysecsize\textbf{\abstractname}\par\addvspace{0.5\baselineskip}\egroup\quotation\@IEEEabskeysecsize
-    \fi\@IEEEgobbleleadPARNLSP}
-\def\IEEEkeywords{\normalfont
-    \if@twocolumn
-      \@IEEEabskeysecsize\bfseries\textit{\IEEEkeywordsname}.\ \relax
-    \else
-      \bgroup\par\addvspace{0.5\baselineskip}\centering\@IEEEabskeysecsize\textbf{\IEEEkeywordsname}\par\addvspace{0.5\baselineskip}\egroup\quotation\@IEEEabskeysecsize
-    \fi\@IEEEgobbleleadPARNLSP}
-\makeatother
+\input{tables/numbers}
+\input{tables/numbers-uq}
+\input{tables/numbers-fits}
+\input{tables/numbers-resources}
+\setlength{\parskip}{0.35em}
+\setlength{\LTcapwidth}{\textwidth}
+\renewcommand{\topfraction}{0.9}
+\renewcommand{\bottomfraction}{0.7}
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\floatpagefraction}{0.8}
+\allowdisplaybreaks
+\sloppy
+\setlength{\emergencystretch}{3em}
+% code identifiers (module paths, test names) break after an underscore or a slash
+\renewcommand{\_}{\textunderscore\allowbreak}
+\newcommand{\sla}{/\allowbreak}
 
 % Page-1 header block (conventions/manuscript-header-standard.md). The four document
 % macros are set by the publishing tool when the version DOI is reserved.
 \newcommand{\doctype}{Technical report}
-\newcommand{\docversion}{v0.12.000}
-\newcommand{\docdate}{31 October 2026}
-\newcommand{\versiondoi}{10.5281/zenodo.23848284}
+\newcommand{\docversion}{v0.12.001}
+\newcommand{\docdate}{4 November 2026}
+\newcommand{\versiondoi}{10.5281/zenodo.21518356}
 \newcommand{\conceptdoi}{10.5281/zenodo.21518356}
 \newcommand{\docrepo}{github.com/fsantibanezleal/CAOS\_ChancaDEM}
 \newcommand{\headerblock}{%
@@ -53,568 +52,60 @@ Version DOI \href{https://doi.org/\versiondoi}{\texttt{\versiondoi}} \quad$\cdot
 concept DOI (always latest) \href{https://doi.org/\conceptdoi}{\texttt{\conceptdoi}}\\[2pt]
 Not peer reviewed. Source code, data and computational records: \href{https://\docrepo}{\texttt{\docrepo}}
 }}
-\end{center}}
+\end{center}
+\vspace{4pt}}
+
+\title{ChancaDEM: A Crusher-Comminution Studio and a Held-Out Evaluation of Cone-Crusher Models on Ten Industrial Surveys}
+\author{Felipe Santib\'a\~nez-Leal~\orcidlink{0000-0002-0150-3246}\\
+\small CAOS open-research programme, Santiago, Chile \quad (fsantibanez@gmail.com)}
+\date{}
 
 \begin{document}
 
-\title{ChancaDEM: A Crusher-Comminution Studio and a Held-Out Evaluation of Cone-Crusher Models on Ten Industrial Surveys}
-
-\author{Felipe~Santib\'a\~nez-Leal~\orcidlink{0000-0002-0150-3246}%
-\thanks{F. Santib\'a\~nez-Leal is with the CAOS open-research programme, Santiago, Chile
-(e-mail: fsantibanez@gmail.com; ORCID 0000-0002-0150-3246).}%
-\thanks{Interactive studio and reproducible pipeline (MIT) at
-\url{https://github.com/fsantibanezleal/CAOS_ChancaDEM}; the studio is available at
-\url{https://chancadem.fasl-work.com}.}}
-
-% The leading {} lets IEEEtran's \MakeUppercase reach \doctype, so the whole head is set in capitals.
-\markboth{{}\doctype\ \docversion, 2026}%
-{Santib\'a\~nez-Leal: Held-out evaluation of cone-crusher models}
-
-\IEEEaftertitletext{\vspace{-0.6\baselineskip}\headerblock\vspace{0.2\baselineskip}}
-
 \maketitle
+\vspace{-2em}
+\headerblock
 
 \begin{abstract}
-A cone crusher turns a feed into a product whose size, throughput and power are set by four levers: the closed-side
-setting, the eccentric throw, the eccentric speed and the feed size distribution. ChancaDEM is an open studio that
-couples a Whiten population balance, an Evertsson capacity model and Bond's power law in one engine, runs it in the
-browser, and holds it against ten measured surveys of a Metso HP500 secondary cone crusher at an itabirite iron-ore
-operation (Rocha et al., 2024, CC BY). This report states the problem, the data, every method and the evaluation
-protocol, and reports one benchmark on the same ten surveys: the calibrated engine, a bounded residual correction, a
-free-form fit, a setting-only line, Morrell's size-specific energy and CrusherBayes, a Bayesian calibration of the engine
-with a Kennedy and O'Hagan structural discrepancy sampled by differential-evolution moves. Every method is refit
-without the held-out survey (strict leave-one-survey-out), with a label-shuffle control and a nested $80\%$
-predictive band. The setting-only line, with one feature, reaches a held-out mean absolute percentage error of
-$13.67\%$ on throughput and $12.78\%$ on power; CrusherBayes reaches $12.00\%$ and $14.31\%$, with $80\%$ bands
-of coverage $0.80$ and $0.90$ that are $7\%$ and $44\%$ narrower than the band of the calibrated engine.
-CrusherBayes does not beat the line on power. The ten surveys identify the capacity scale, the noise and the
-discrepancy slopes on the setting, and leave the classification, breakage and $t_{10}$ scalars at their prior.
-Morrell's energy, with its crushing work index and no-load power fitted per fold because the ore's index is not
-published, reaches $38.08\%$ and, with a no-load term whose fitted index is negative in every fold, $15.21\%$.
-The discrete-element package that the product plans is not part of the results.
+\noindent The product size, throughput and power of a cone crusher are set by the closed-side setting, the eccentric
+throw and speed, and the feed size distribution. In Chilean copper mining
+the concentrator, where crushing and grinding sit, took $55.7\%$ of the sector's electricity in 2024. ChancaDEM is an
+open studio that couples a Whiten population balance with an Andersen and Napier-Munn classification, a JKMRC $t_{10}$
+breakage function, a reduced Evertsson capacity model, Bond's power law and Morrell's size-specific energy in one engine
+in Python and TypeScript that runs in the browser, and holds it against ten measured surveys of a Metso HP500
+secondary cone crusher on itabirite iron ore (Rocha et al., 2024). Every fitted quantity is refit without the held-out
+survey, beside a constant-mean baseline, a label-shuffle control, a nested $80\%$ band and bootstrap intervals over the
+surveys. The calibrated engine reaches a held-out mean absolute percentage error of $\uqQBb\%$ ($95\%$ interval $\uqQBblo$
+to $\uqQBbhi$) on throughput and $\uqPBb\%$ ($\uqPBblo$ to $\uqPBbhi$) on power, because its Bond draw is nearly flat
+against measured values of $187$ to $355$~kW; a line on the setting reaches $\uqQLine\%$ and $\uqPLine\%$ ($\uqPLinelo$ to
+$\uqPLinehi$), and the published throughput model of Rocha et al.\ $\uqQRocha\%$ on throughput. CrusherBayes, the proposed Bayesian calibration
+with a Kennedy and O'Hagan structural discrepancy, reaches $\uqQCb\%$ and $\uqPCb\%$ with $80\%$
+intervals of coverage $0.80$ and $0.90$, $7\%$ and $44\%$ narrower than the calibrated engine's band; on ten
+surveys its power error is not distinguishable from the line's. The surveys identify the capacity base, the noise and the
+discrepancy slopes on the setting and on $f_{80}$, and leave the classification and breakage scalars at their prior. A
+learned surrogate emulates the engine at $R^2$ from $0.979$ to $0.998$ on an independent draw of $2196$ points.
 \end{abstract}
 
-\begin{IEEEkeywords}
-Comminution, cone crusher, population balance, Bayesian calibration, structural discrepancy, leave-one-out
-validation, Morrell, Bond, mineral processing.
-\end{IEEEkeywords}
-
-\section{Problem and Executive Context}\label{sec:problem}
-
-\IEEEPARstart{C}{rushing} is the first stage of comminution, and its setting decides how much work the grinding mill
-downstream must do. In Chilean copper mining the concentrator took $56{,}970$~TJ, $55.7\%$ of the $102{,}307$~TJ of
-electricity the sector used in 2024, and the electricity per tonne of fine copper in concentrates rose from $8{,}946$ to
-$13{,}079$~MJ between 2010 and 2024, an increase of $46.2\%$, while the national average ore grade fell from $0.75\%$
-to $0.62\%$~\cite{cochilco2025}. The same agency attributes the rise to deeper deposits and harder rock that
-``directly affect comminution'' and projects the electricity of the copper sector to grow by $20.2\%$ from 2025 to 2034,
-from $27.6$ to $33.2$~TWh, against $8.3\%$ for fine copper~\cite{cochilco2026}. The decision that follows belongs to
-the process engineer and the plant operator: at which setting, speed and feed condition to run a crusher, and how much
-of the size reduction to leave to the mill.
-
-Three outcomes are measured on a plant: the product size ($P_{80}$, the size passing $80\%$ of the mass), the throughput
-and the motor power. They depend on the four levers through a non-linear chain: a tighter setting gives a finer product
-and less capacity, the capacity rises with eccentric speed up to an optimum and falls past it, and a wider throw
-coarsens the product at a fixed setting. Mechanistic models of this chain exist and are calibrated on survey data of
-the machine; the practical question is how well a calibrated model predicts a survey it was not fitted to, because
-the calibrations in the literature are judged on the surveys they were fitted on, and ten surveys leave little room
-for a free-form correction. The report measures that, with a one-feature baseline and an uncertainty band that a
-decision maker can read.
-
-\section{Data}\label{sec:data}
-
-\subsection{The ten HP500 surveys}
-
-The measured data are Table A1 of Rocha et al.~\cite{rocha2024}: ten surveys of a Metso HP500 secondary cone crusher
-(CC BY 4.0), each with the closed-side setting (CSS), the feed $F_{80}$, the feed rate and the motor power. Across the
-ten surveys the CSS spans $38$ to $55$~mm (mean $46.9$), the feed $F_{80}$ $47$ to $140$~mm (mean $87.3$), the feed
-rate $813$ to $1639$~t/h (mean $1145.9$) and the power $187$ to $355$~kW (mean $288.0$). The power is correlated with
-the setting ($r=-0.82$) and with the feed rate ($r=-0.85$), and the feed rate with the setting ($r=0.81$): a tighter
-setting draws more power at a lower feed rate. The product size distributions of the paper are figures, not tables, so
-$P_{80}$ is not measured here and is never a target; the engine's $P_{80}$ at a survey is a model output. The throw
-(34~mm) and speed (360~rpm) are the nominal values of the machine.
-
-\subsection{The cases}
-
-The studio carries 27 cases: 17 circuit cases that span the machine classes (two gyratory, two jaw, six secondary cone,
-two tertiary cone, two short-head cone, and three controls: a pass-through case, an invalid case and a synthetic anchor)
-and the ten surveys. The circuit cases are illustrative of their machine class and are not calibrated; only the HP500
-lane is calibrated, to one machine on one ore. Every prediction passes a unit check in the bake: it must be finite and
-lie inside the observable's range widened by a full range on each side, so that a throughput is never read as a power.
-
-\section{Related Work and Methods}\label{sec:methods}
-
-\subsection{Population balance, capacity and power}
-
-The product gradation follows the Whiten classification and breakage balance~\cite{whiten}. For a feed vector
-$\mathbf f$, a classification matrix $\mathbf C$ and a breakage matrix $\mathbf B$,
-\begin{equation}
-\mathbf p = (\mathbf I-\mathbf C)\,(\mathbf I-\mathbf B\mathbf C)^{-1}\,\mathbf f .
-\end{equation}
-The classification uses the Andersen and Napier-Munn form with the constants $K_1$, $K_2$ and $K_3$, where $K_2$
-tracks the open-side setting~\cite{napier}. The breakage matrix comes from the JKMRC $t_{10}$ energy-fineness relation
-and an appearance function~\cite{napier}. The capacity follows the flow model of Evertsson~\cite{evertsson99,evertsson},
-unimodal in eccentric speed. The power follows Bond's third theory~\cite{bond},
-$W = 10\,W_i\,(1/\sqrt{P_{80}} - 1/\sqrt{F_{80}})$ in kWh/t, multiplied by the throughput. The feed is a
-Rosin--Rammler distribution on a $\sqrt2$ sieve grid. The engine exists as a canonical Python implementation and a
-TypeScript port that runs in the browser; the two agree to a relative difference of $2.3\times10^{-12}$ on a shared
-reference of 121 operating points, and one evaluation takes about $1.3$~ms.
-
-\subsection{The calibration of Rocha et al. as replicated}
-
-Rocha et al.~\cite{rocha2024} fit an Andersen--Whiten model to the ten surveys: $K_1 = 0.23\,\mathrm{CSS}+0.30\,f_{80}$,
-$K_2 = 12.0+0.55\,\mathrm{CSS}+0.40\,f_{80}$, $K_3=2.3$, $t_{10}=64-0.12\,\mathrm{CSS}-0.23\,f_{80}$, a capacity base
-$Q_T\approx647$~t/h and a power form $P_c=\zeta P_d+P_n$ with $\zeta=1.30$ and $P_n=110$~kW. The engine carries these
-constants (the calibrated backbone) and is run at each survey's measured setting and $f_{80}$. The paper's power
-constants apply to its size-specific net power $P_d$, not to the Bond draw of the engine; applied to the Bond draw they
-give a mean absolute percentage error of $47.58\%$ in sample, and the bare Bond draw $26.88\%$ (Table~\ref{tab:parity}).
-The Bond draw is nearly flat ($196$ to $237$~kW) against a measured spread of $187$ to $355$~kW. A least-squares refit
-of the paper's form on the Bond draw reaches $19.28\%$ in sample with a negative slope $\zeta=-2.41$ and
-$P_n=829$~kW, which is a fit to the survey mean and not a physical constant.
-
-\begin{table}[!t]
-\centering
-\caption{In-sample power of the calibrated engine against the ten measured values (kW). The paper's constants
-$\zeta=1.30$, $P_n=110$ apply to its size-specific $P_d$, not to the Bond draw.}
-\label{tab:parity}
-\footnotesize
-\begin{tabular}{@{}l r r@{}}
-\toprule
-Power model & MAPE (\%) & RMSE (kW) \\
-\midrule
-Constant mean                      & $22.03$ & $61.65$ \\
-Bare Bond draw                     & $26.88$ & $93.22$ \\
-Paper form $1.30\,P_d+110$ on Bond & $47.58$ & $132.85$ \\
-Refit of the paper form on Bond    & $19.28$ & $54.97$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Setting-only line}
-
-The baseline for every method is an ordinary-least-squares line of one target on the closed-side setting alone,
-$y=a+b\,\mathrm{CSS}$, for throughput and for power, refit on the training surveys of each fold. It carries no physics.
-Its value is that the claim of any other method is the margin over it.
-
-\subsection{Bounded residual and free-form fits}
-
-Two corrections to the calibrated backbone are held out beside it. The bounded residual adds a ridge regression
-($\lambda=1$) on the standardized setting and feed $f_{80}$, clipped to $\pm20\%$ of the backbone value. The free-form
-fit is an unconstrained least-squares regression of the raw target on the same two features. A constant-mean
-predictor and a label-shuffle control (the residual targets permuted) bound the skill from below.
-
-\subsection{Morrell's size-specific energy}
-
-Morrell's method gives the specific energy of a conventional crusher from the feed and product sizes and the crushing
-work index $M_{ic}$~\cite{morrell09,gmsg}. With the equations B4 and B5 of the guideline~\cite{gmsg},
-\begin{align}
-W_c &= S_c\,K_2\,M_{ic}\;4\left(x_2^{f(x_2)} - x_1^{f(x_1)}\right)\ [\mathrm{kWh/t}],\\
-f(x) &= -\left(0.295 + x/10^{6}\right),\qquad S_c = K_s\,(x_1x_2)^{-0.2},
-\end{align}
-with $x_1$ and $x_2$ the feed and product $P_{80}$ in micrometres, $K_s=55$, $K_2=1.0$ for a crusher in closed circuit
-with a classifying screen, and $S_c$ applied when it is below one and taken as one above. The power is $W_c$ times the
-throughput. The index $M_{ic}$ of the Minas Rio itabirite is not published, so it is a fitted scalar, and so is the
-no-load power; both are refit on the nine training surveys of every fold. The design column of a survey uses the
-measured $f_{80}$, the measured feed rate and the engine's $P_{80}$ (a model output used as an input). Two variants
-are held out: $\mathrm{kW}=M_{ic}\,g$, and $\mathrm{kW}=M_{ic}\,g+P_{noload}$. The primary paper was not opened; the
-equations are taken from the guideline.
-
-\subsection{Learned surrogate and denoising autoencoder}
-
-A multilayer perceptron (11-64-64-32-10) trained on a Latin-hypercube sweep of the engine ($6430$ training points)
-emulates its ten outputs, so that what-if exploration is instant; the approach follows the surrogate of a
-phenomenological comminution model of Koh et al.~\cite{koh}. A denoising autoencoder (14-16-6-16-14) scores how far a
-point lies from the training manifold, as a warning that the surrogate is asked to extrapolate. Both are scored on an
-independent second draw ($2196$ points, seed $67890$), through onnxruntime on the graph the browser runs. Both emulate
-the engine, not the plant, and neither is a predictor for the HP500 surveys.
-
-\section{Proposed Method: CrusherBayes}\label{sec:cb}
-
-Rocha et al.'s calibration is a point fit. CrusherBayes places a prior on the engine's fitted scalars, adds an explicit
-structural discrepancy per target in the form of Kennedy and O'Hagan~\cite{kennedy}, and returns a posterior
-predictive distribution for a survey that was not used in the fit. For survey $i$ and target $t$ (throughput in t/h,
-power in kW),
-\begin{equation}
-y_{t,i} = f_t(\boldsymbol\theta;\,\mathrm{CSS}_i, f_{80,i}) + \delta_t(\mathbf z_i) + \varepsilon_{t,i},
-\end{equation}
-\begin{align}
-\delta_t(\mathbf z) &= d_{t0} + d_{t1} z_{\mathrm{CSS}} + d_{t2} z_{f_{80}},\\
-d_{tj}&\sim N(0,\tau_t^2),\qquad \varepsilon_{t,i}\sim N(0,\sigma_t^2),
-\end{align}
-with $\mathbf z$ the setting and feed $f_{80}$ standardized on the training surveys, $\tau=140$~t/h and $36$~kW, and
-$\boldsymbol\theta$ the eight engine scalars of Table~\ref{tab:priors}. Given $\boldsymbol\theta$ the discrepancy and
-the noise are Gaussian, so the discrepancy is integrated out exactly,
-$\mathbf y_t\sim N\!\left(f_t(\boldsymbol\theta),\,\sigma_t^2\mathbf I+\tau_t^2\mathbf Z\mathbf Z^{\top}\right)$,
-and the sampler explores ten dimensions (the eight scalars and the two noise scales); the discrepancy coefficients are
-then drawn from their exact Gaussian conditional. The noise has $\ln\sigma_t\sim N(\ln 60\ \mathrm{t/h},1)$ and
-$N(\ln 15\ \mathrm{kW},1)$. The engine is its own simulator, so no emulator is used.
-
-The sampler is the ensemble sampler \texttt{emcee} $3.1.6$~\cite{emcee} with differential-evolution moves
-(\texttt{DEMove} $0.8$ and \texttt{DESnookerMove} $0.2$)~\cite{terbraak06,terbraak08}: $20$ walkers, $7000$ steps,
-$1000$ discarded, thinned by $10$, seeded. The affine-invariant stretch move of Goodman and Weare~\cite{goodman} was
-tried first and did not converge: its autocorrelation time stayed above $100$ steps and grew with the chain, along the
-parameters the surveys do not identify. A posterior is recorded as converged when the post-burn chain is at least
-$50$ integrated autocorrelation times long. The predictive interval of a held-out survey is the 10th to 90th
-percentile of $20$ predictive draws per retained posterior sample.
-
-\begin{table}[!t]
-\centering
-\caption{Priors of the engine scalars: truncated normal around the engine's own values, in the log space where marked.
-Nominal values are those of Rocha et al.~\cite{rocha2024} (Tables 1, 4 and 5); the widths are the author's.}
-\label{tab:priors}
-\footnotesize
-\begin{tabular}{@{}l l r l@{}}
-\toprule
-Scalar & Unit & Nominal & Prior width \\
-\midrule
-$Q_T$ (capacity base)     & t/h   & $647$   & log sd $0.25$ \\
-$W_i$ (blend work index)  & kWh/t & $9.0$   & log sd $0.17$ \\
-$\zeta$                   & --    & $1.30$  & log sd $0.23$ \\
-$P_n$ (no-load power)     & kW    & $110$   & sd $50$ \\
-$K_1$ multiplier          & --    & $1.0$   & log sd $0.15$ \\
-$K_2$ multiplier          & --    & $1.0$   & log sd $0.15$ \\
-$K_3$                     & --    & $2.3$   & sd $0.5$ \\
-$t_{10}$ shift            & points & $0$    & sd $4$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\section{Evaluation Protocol}\label{sec:protocol}
-
-The protocol is shared by every method and is called CrusherCal.
-\begin{itemize}
-\item \textbf{Strict leave-one-survey-out.} For each of the ten surveys, every fitted quantity (the capacity base, the
-power-form constants, the ridge and free-form coefficients, the line, $M_{ic}$ and the no-load power, and the whole
-CrusherBayes posterior) is refit on the other nine, and the held-out survey enters only the prediction. A test plants an
-absurd target in one survey and shows that every other fold moves and its own does not.
-\item \textbf{Leaky folds.} The same fits on all ten surveys expose the optimism of an evaluation that lets the held-out
-survey into the fit.
-\item \textbf{Controls.} A constant-mean predictor, and a label-shuffle control that must not beat the backbone.
-\item \textbf{Nested $80\%$ band.} The band of the calibrated backbone is the prediction $\pm1.2816\,\sigma$, with
-$\sigma$ of each survey taken from the held-out residuals of the other nine surveys only. A band whose $\sigma$ comes
-from the same ten residuals it is checked against is in sample, and is reported only to show the difference.
-\item \textbf{Scores.} MAPE in percent, RMSE in the target's unit, $R^2$, and for the bands the share of surveys inside
-the interval (coverage) and the mean width in the target's unit. With $n=10$, one survey moves a coverage by $0.1$, and a
-difference below about $3$ MAPE points is within noise.
-\item \textbf{Stopping criterion stated before the run.} CrusherBayes is dropped as a predictor if (a) its power MAPE is
-not below that of the line by at least $3$ points and its throughput MAPE is not below that of the calibrated
-backbone by at least $3$ points, and (b) on either target its coverage lies outside $0.7$ to $0.9$ or its mean band is
-wider than the band of the calibrated backbone. The identifiability table is reported in either case.
-\end{itemize}
-
-\section{Results}\label{sec:results}
-
-\subsection{The engine across the circuit cases}
-
-\begin{figure*}[!t]
-\centering
-\includegraphics[width=0.84\textwidth]{fig-physics.pdf}
-\caption{The coupled engine over the circuit cases. \textbf{(a)} Product size distributions of one gyratory (G01), jaw
-(J01), secondary cone (S01), tertiary cone (T01) and short-head cone (H01) case. \textbf{(b)} Product $P_{80}$ against
-throughput for the 17 circuit cases, coloured by machine type.}
-\label{fig:physics}
-\end{figure*}
-
-The engine reproduces the size-reduction ladder of a crushing circuit (Fig.~\ref{fig:physics}). The gyratory case G01
-gives a coarse product ($P_{80}=153.6$~mm) at high throughput ($4629$~t/h), the jaw case J01 an intermediate one
-($126.4$~mm, $923$~t/h), the secondary cone S01 $27.7$~mm at $643$~t/h, the tertiary cone T01 $7.1$~mm at $240$~t/h and
-the short-head cone H01 $4.6$~mm at $216$~t/h. This shows that the coupled models behave as the cited models are
-known to behave; it is not a validation against a plant.
-
-\subsection{Benchmark on the ten HP500 surveys}
-
-\begin{table*}[!t]
-\centering
-\caption{Strict leave-one-survey-out scores of every method on the same ten HP500 surveys. MAPE in percent, RMSE in the
-unit of the target, coverage of the nested $80\%$ band and its mean width in the unit of the target. A dash means the
-method gives no band or the score is not defined. The line, the free-form fit and the calibrated backbone carry the
-nested band of the backbone residuals; CrusherBayes carries its posterior predictive interval.}
-\label{tab:bench}
-\footnotesize
-\begin{tabular}{@{}l r r r r r r r r@{}}
-\toprule
- & \multicolumn{4}{c}{Throughput (t/h)} & \multicolumn{4}{c}{Power (kW)} \\
-\cmidrule(lr){2-5}\cmidrule(lr){6-9}
-Method & MAPE & RMSE & Cov. & Width & MAPE & RMSE & Cov. & Width \\
-\midrule
-Constant mean                    & $18.29$ & $258.52$ & -- & -- & $24.48$ & $68.50$ & -- & -- \\
-Label-shuffle control            & $25.04$ & $322.81$ & -- & -- & $40.19$ & $110.53$ & -- & -- \\
-Calibrated backbone              & $12.09$ & $176.67$ & $0.80$ & $473.76$ & $25.94$ & $78.52$ & $0.90$ & $209.79$ \\
-Backbone, bounded residual       & $13.45$ & $189.49$ & -- & -- & $25.37$ & $92.09$ & -- & -- \\
-Free-form fit                    & $12.18$ & $174.42$ & $0.80$ & $468.51$ & $14.03$ & $48.67$ & $0.80$ & $129.82$ \\
-Setting-only line                & $13.67$ & $177.75$ & $0.80$ & $478.76$ & $12.78$ & $44.56$ & $0.80$ & $119.60$ \\
-Morrell                          & -- & -- & -- & -- & $38.08$ & $111.67$ & -- & -- \\
-Morrell with no-load term        & -- & -- & -- & -- & $15.21$ & $46.53$ & -- & -- \\
-CrusherBayes                     & $12.00$ & $168.57$ & $0.80$ & $439.12$ & $14.31$ & $44.68$ & $0.90$ & $117.74$ \\
-\bottomrule
-\end{tabular}
-\end{table*}
-
-\begin{figure}[!t]
-\centering
-\includegraphics[width=\columnwidth]{fig-loo.pdf}
-\caption{Held-out predictions against the measured values on the ten surveys. Markers of the calibrated backbone, the
-free-form fit, the setting-only line and (for power) Morrell with a no-load term, and the CrusherBayes mean with its
-$80\%$ interval. The dotted line is parity.}
-\label{fig:loo}
-\end{figure}
-
-Table~\ref{tab:bench} and Fig.~\ref{fig:loo} give the benchmark. On throughput the methods that use the setting and
-the capacity physics sit between $12.00\%$ and $13.67\%$, inside the noise of $n=10$, and all beat the constant mean
-($18.29\%$); the label-shuffle control ($25.04\%$) is worse than the backbone, as it must be. CrusherBayes has the
-lowest throughput MAPE ($12.00\%$) and the narrowest band ($439$~t/h against $474$~t/h for the backbone, $7\%$
-narrower), at coverage $0.80$.
-
-On power the picture is different. The calibrated backbone, whose power is the Bond draw refit in the paper's form,
-is worse than the constant mean ($25.94\%$ against $24.48\%$) because the Bond draw is nearly flat while the measured
-power is not. The setting-only line is the best on power ($12.78\%$), followed by the free-form fit ($14.03\%$),
-CrusherBayes ($14.31\%$) and Morrell with a no-load term ($15.21\%$). CrusherBayes is $1.53$ points behind the line,
-which is within the noise of $n=10$ and is not a gain. Its power band ($118$~kW) is $44\%$ narrower than the band of
-the calibrated backbone ($210$~kW) at coverage $0.90$ and equals the width of the line's band ($120$~kW), which has
-coverage $0.80$. The stopping criterion of Section~\ref{sec:protocol} is evaluated as written: condition (a) holds
-(power $-1.53$ points against the line, throughput $+0.09$ points against the backbone), and condition (b) does not
-(coverage $0.80$ and $0.90$, both inside $0.7$ to $0.9$, and both bands narrower than the backbone's). The rule does not
-drop the method. The result is a calibrated band, not a predictive gain over the line.
-
-\subsection{Optimism of an evaluation that leaks}
-
-Table~\ref{tab:leaky} gives the same methods when the held-out survey is allowed into the fit. The fits that adapt
-to the data gain most: the bounded residual falls from $13.45\%$ to $8.51\%$ on throughput and from $25.37\%$ to
-$12.00\%$ on power, and the free-form fit from $14.03\%$ to $9.46\%$ on power. The calibrated backbone, with one
-scalar, gains less ($12.09\%$ to $10.95\%$ on throughput). The label-shuffle control on power falls from $40.19\%$ to
-$15.50\%$, which shows how much of the apparent skill of a leaky evaluation is the fit absorbing the survey.
-
-\begin{table}[!t]
-\centering
-\caption{MAPE (\%) with the held-out survey outside the fit (strict) and inside it (leaky), same ten surveys.}
-\label{tab:leaky}
-\footnotesize
-\begin{tabular}{@{}l r r r r@{}}
-\toprule
- & \multicolumn{2}{c}{Throughput} & \multicolumn{2}{c}{Power} \\
-\cmidrule(lr){2-3}\cmidrule(lr){4-5}
-Method & strict & leaky & strict & leaky \\
-\midrule
-Constant mean              & $18.29$ & $16.46$ & $24.48$ & $22.03$ \\
-Label-shuffle control      & $25.04$ & $21.18$ & $40.19$ & $15.50$ \\
-Calibrated backbone        & $12.09$ & $10.95$ & $25.94$ & $19.28$ \\
-Bounded residual           & $13.45$ & $8.51$  & $25.37$ & $12.00$ \\
-Free-form fit              & $12.18$ & $8.24$  & $14.03$ & $9.46$ \\
-Setting-only line          & $13.67$ & $10.60$ & $12.78$ & $10.03$ \\
-Morrell                    & -- & -- & $38.08$ & $33.81$ \\
-Morrell, no-load term      & -- & -- & $15.21$ & $11.50$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\subsection{Morrell's size-specific energy}
-
-Without a no-load term the fit is one positive scalar, $M_{ic}$ between $3.70$ and $4.21$~kWh/t across the folds, and
-the held-out error is $38.08\%$, the largest of the size-aware models. With a no-load term the error falls to
-$15.21\%$, but the fit is not Morrell's physics: in every fold the fitted $M_{ic}$ is negative ($-6.29$ to
-$-4.16$~kWh/t) with a no-load power of $591$ to $727$~kW, about twice the largest measured power. The measured power
-falls as the throughput rises, and the design column rises with it, so the least-squares line has a negative slope.
-The variant is a descriptive line on that column and not an estimate of $M_{ic}$. Both variants are worse than the
-setting-only line; the difference of $2.4$ points for the no-load variant is within the noise, and the $25$ points of
-the variant without it are not. The size-specific energy adds no predictive skill on these ten surveys. An SMC Test of
-the ore and a no-load reading of the machine would settle the fit.
-
-\subsection{What the ten surveys identify}
-
-\begin{figure}[!t]
-\centering
-\includegraphics[width=\columnwidth]{fig-contraction.pdf}
-\caption{Posterior over prior standard deviation of each CrusherBayes parameter, fit to all ten surveys. Below $0.5$
-(dashed line) the surveys identify the parameter; near $1$ (dotted line) it stays at its prior.}
-\label{fig:contraction}
-\end{figure}
-
-Fig.~\ref{fig:contraction} gives the contraction of the posterior against the prior. The capacity base $Q_T$
-(contraction $0.45$, posterior mean $646$~t/h against the nominal $647$), the two noise scales
-($0.30$ and $0.33$) and the discrepancy slopes on the setting and on $f_{80}$ ($0.34$ to $0.38$) are identified. The
-posterior noise is $145$~t/h and $38.8$~kW, much larger than the prior medians ($60$~t/h and $15$~kW), and the
-discrepancy slope on the setting is large ($+100.8$~t/h and $-57.1$~kW per standardized unit): the engine's dependence
-on the setting differs from the measured one, in power by about $57$~kW per standard deviation of the setting. The work
-index, $\zeta$ and $P_n$ contract weakly ($0.85$, $0.73$ and $0.80$; $\zeta$ and $W_i$ enter the power only as a
-product). The $K_1$ and $K_2$ multipliers, $K_3$, the $t_{10}$ shift and the discrepancy constants stay at their prior
-(contraction $0.88$ to $1.03$). The scalars that set the product size are not identified because the two measured
-targets carry the product size only through the Bond term of the power, and the power follows the setting, not the
-product size. Ten surveys without a measured product size cannot calibrate the population balance.
-
-All eleven posteriors (ten folds and the fit to all surveys) are converged under the criterion of $50$ autocorrelation
-times: the largest autocorrelation time is $48$ to $85$ steps and the $6000$ post-burn steps are $71$ to $125$ times
-it, with acceptance fractions between $0.17$ and $0.20$.
-
-\subsection{Learned models}
-
-\begin{figure}[!t]
-\centering
-\includegraphics[width=\columnwidth]{fig-surrogate.pdf}
-\caption{The surrogate against the engine, per output, on the independent held-out draw ($2196$ points): $R^2$ (bars)
-and MAPE (line), computed through onnxruntime on the shipped float32 graph.}
-\label{fig:surrogate}
-\end{figure}
-
-\begin{table}[!t]
-\centering
-\caption{Surrogate accuracy per output against the engine on the held-out draw.}
-\label{tab:surrogate}
-\footnotesize
-\begin{tabular}{@{}l r r r@{}}
-\toprule
-Output & $R^2$ & MAPE (\%) & MAPE int8 (\%) \\
-\midrule
-$P_{80}$       & $0.9970$ & $4.06$ & $4.57$ \\
-$P_{50}$       & $0.9947$ & $5.73$ & $6.13$ \\
-$P_{20}$       & $0.9886$ & $9.21$ & $9.48$ \\
-passing 1 mm   & $0.9868$ & $8.12$ & $8.33$ \\
-passing 4 mm   & $0.9884$ & $7.70$ & $7.91$ \\
-passing 8 mm   & $0.9930$ & $5.30$ & $5.64$ \\
-passing 16 mm  & $0.9936$ & $5.29$ & $5.54$ \\
-passing 32 mm  & $0.9971$ & $2.73$ & $2.87$ \\
-throughput     & $0.9984$ & $5.02$ & $5.43$ \\
-power          & $0.9792$ & $6.47$ & $6.43$ \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-The surrogate reproduces every output of the engine at $R^2$ between $0.979$ (power) and $0.998$ (throughput) and a
-MAPE of $2.7\%$ to $9.2\%$, worst on the fine $P_{20}$ tail (Fig.~\ref{fig:surrogate}, Table~\ref{tab:surrogate});
-the product $P_{80}$ is monotone in the setting on all 15 curves tested, and the 8-bit quantized graph stays within
-about half a percentage point of the float32 one. The autoencoder raises an alarm on $1\%$ of the held-out points
-(threshold $0.2445$) and on $27.96\%$ of planted points moved outside the training range, against $0\%$ and $13.89\%$
-for the rule that flags only physically implausible inputs. Neither learned model is held to the HP500 surveys; the
-comparison is with the engine.
-
-\section{Limits and Negative Results}\label{sec:limits}
-
-\begin{itemize}
-\item \textbf{Sample size.} $n=10$ surveys, one machine, one ore. A difference below about $3$ MAPE points is noise,
-and one survey moves a coverage by $0.1$. The coverage of $0.80$ and $0.90$ are coarse estimates.
-\item \textbf{CrusherBayes does not beat the setting-only line on power} ($14.31\%$ against $12.78\%$), and beats the
-calibrated backbone on throughput by $0.09$ points. Its contribution on these data is a calibrated and narrower band
-and the identifiability result.
-\item \textbf{The population-balance scalars are not identified.} $K_1$, $K_2$, $K_3$ and the $t_{10}$ shift stay at
-their prior, because $P_{80}$ is not measured. Their posterior is the prior and must not be read as an estimate.
-\item \textbf{The priors' widths are the author's.} No published range of these fitted scalars for this ore was found.
-\item \textbf{Bond on the measured power.} The Bond draw does not track the measured power spread; the paper's power
-constants applied to it give $47.58\%$ in sample.
-\item \textbf{Morrell.} $M_{ic}$ and the no-load power are fitted, not measured; the negative fitted $M_{ic}$ of the
-no-load variant means that variant is descriptive. The equations are taken from the guideline; the primary paper was
-not opened. Only the conventional-crusher branch of the method is used.
-\item \textbf{Scope of the engine.} The studio couples calibrated models, not a plant. The synthetic machines are not
-calibrated. The three-dimensional chamber view is a kinematic animation and not a discrete-element solve. The
-learned models emulate the engine, not a plant.
-\item \textbf{Discrete-element simulation.} The package that is planned for it is not validated and no result of it is
-reported.
-\item \textbf{Prior art.} Searches found no Bayesian calibration with structural discrepancy of a cone-crusher
-population-balance model evaluated held out; they were not exhaustive (Scopus and Web of Science were not searched).
-\end{itemize}
-
-\section{Conclusion}
-
-On ten industrial surveys of one cone crusher, a one-feature line on the closed-side setting is a hard baseline: it
-reaches $13.67\%$ on throughput and $12.78\%$ on power held out, and the calibrated physics, a free-form fit, Morrell's
-size-specific energy and a Bayesian calibration with structural discrepancy all land within the noise of it or worse.
-CrusherBayes gives a posterior predictive band of the right coverage that is $44\%$ narrower than the band of the
-calibrated engine on power and $7\%$ narrower on throughput, shows that ten surveys identify the capacity scale, the
-noise and the setting dependence of the discrepancy, and shows that they cannot identify the classification and
-breakage scalars. Measuring the product size distribution of each survey is the data that would change that.
-
-\appendices
-\section{Reproduction}\label{app:repro}
-
-\paragraph*{Commands}
-From the repository root:
-\begin{itemize}
-\item \texttt{python data-pipeline/run.py hp500} bakes the backbone, the leave-one-survey-out document and the
-CrusherBayes document (the sampler runs in this step only);
-\item \texttt{python data-pipeline/run.py models} trains and scores the learned models;
-\item \texttt{python manuscripts/\allowbreak comminution-studio/\allowbreak figures/\allowbreak make\_figs.py} regenerates every figure from the committed
-artifacts;
-\item \texttt{latexmk -pdf main.tex}, run in \texttt{manuscripts/\allowbreak comminution-studio/\allowbreak tex}, builds the report.
-\end{itemize}
-
-\paragraph*{Versions}
-Python 3.13 (3.12 in continuous integration), numpy 2.4.6, emcee 3.1.6, torch 2.12.1, onnx 1.22.0, onnxruntime
-1.27.0, matplotlib 3.11.2, Node 24. The artifacts record the engine build 0.11.000 and the seed 42.
-
-\paragraph*{Artifact hashes (SHA-256)}
-\begin{center}\footnotesize
-\begin{tabular}{@{}l l@{}}
-\texttt{hp500-surveys.csv} & \texttt{ab9609a7...39b19f7a} \\
-\texttt{backbone.json}     & \texttt{204ebb46...9ce94fc9} \\
-\texttt{loo.json}          & \texttt{269b3148...ae98edba} \\
-\texttt{crusherbayes.json} & \texttt{2ad1ae73...7e0fb96c} \\
-\texttt{model-metrics.json}& \texttt{1f77b2d4...e1e6f11f} \\
-\end{tabular}
-\end{center}
-The full digests are in \texttt{manuscripts/\allowbreak comminution-studio/\allowbreak data/\allowbreak sha256.txt}; the sampler input digest recorded in
-\texttt{crusherbayes.json} is \texttt{483d24c5...\allowbreak b0ce605a}.
-
-\paragraph*{Notebooks}
-\texttt{notebooks/en} and \texttt{notebooks/es} hold the same notebooks: getting started, size distributions, breakage
-and classification, capacity and power, the real surveys, the held-out validation, the learned models and
-CrusherBayes.
-
-\balance
-
-\begin{thebibliography}{00}
-
-\bibitem{cochilco2025} Cochilco, \emph{Consumo de energ\'ia en la miner\'ia del cobre, actualizaci\'on a\~no 2024}.
-Santiago: Comisi\'on Chilena del Cobre, 2025.
-\url{https://www.cochilco.cl/web/download/991/2025/15151/consumo-de-energia-en-la-mineria-del-cobre-actualizacion-ano-2024.pdf}
-
-\bibitem{cochilco2026} Cochilco, \emph{Proyecci\'on de consumo de energ\'ia el\'ectrica de la miner\'ia del cobre,
-per\'iodo 2025--2034} (DEPP 03/2026). Santiago: Comisi\'on Chilena del Cobre, 2026.
-\url{https://www.cochilco.cl/web/download/1014/2026/15677/proyeccion-de-consumo-de-energia-electrica-de-la-mineria-del-cobre-periodo-2025-2034.pdf}
-
-\bibitem{rocha2024} B.~K.~N. Rocha, T.~M. Campos, J.~Silva, and L.~M. Tavares, ``Fit-for-purpose model of HP500 cone
-crusher in size reduction of itabirite iron ore,'' \emph{Minerals}, vol.~14, no.~9, art.~919, 2024.
-doi:10.3390/min14090919.
-
-\bibitem{whiten} W.~J. Whiten, ``The simulation of crushing plants with models developed using multiple spline
-regression,'' \emph{Journal of the South African Institute of Mining and Metallurgy}, vol.~72, pp.~257--264, 1972.
-
-\bibitem{napier} T.~J. Napier-Munn, S.~Morrell, R.~D. Morrison, and T.~Kojovic, \emph{Mineral Comminution
-Circuits: Their Operation and Optimisation}. Brisbane: Julius Kruttschnitt Mineral Research Centre, 1996.
-
-\bibitem{evertsson99} C.~M. Evertsson, ``Modelling of flow in cone crushers,'' \emph{Minerals Engineering}, vol.~12,
-no.~12, pp.~1479--1499, 1999. doi:10.1016/S0892-6875(99)00136-3.
-
-\bibitem{evertsson} C.~M. Evertsson, \emph{Cone Crusher Performance}, Ph.D. dissertation, Chalmers University of
-Technology, G\"oteborg, Sweden, 2000.
-
-\bibitem{bond} F.~C. Bond, ``The third theory of comminution,'' \emph{Transactions of the American Institute of
-Mining, Metallurgical and Petroleum Engineers}, vol.~193, pp.~484--494, 1952.
-
-\bibitem{morrell09} S.~Morrell, ``Predicting the overall specific energy requirement of crushing, high pressure
-grinding roll and tumbling mill circuits,'' \emph{Minerals Engineering}, vol.~22, no.~6, pp.~544--549, 2009.
-doi:10.1016/j.mineng.2009.01.005.
-
-\bibitem{gmsg} Global Mining Standards and Guidelines Group, \emph{Morrell Method for Determining Comminution Circuit
-Specific Energy and Assessing Energy Utilization Efficiency of Existing Circuits}, Annex B.
-\url{https://www.smctesting.com/documents/Morrell_method_for_determining_comminution_circuit_specific_energy_and_assessing_energy_utilization_efficiency_of_existing_circuits.pdf}
-
-\bibitem{koh} E.~J.~Y. Koh, E.~Amini, G.~J. McLachlan, and N.~Beaton, ``Utilising a deep neural network as a surrogate model to
-approximate phenomenological models of a comminution circuit,'' \emph{Minerals Engineering}, vol.~170, art.~107026, 2021.
-doi:10.1016/j.mineng.2021.107026.
-
-\bibitem{kennedy} M.~C. Kennedy and A.~O'Hagan, ``Bayesian calibration of computer models,'' \emph{Journal of the
-Royal Statistical Society: Series B}, vol.~63, no.~3, pp.~425--464, 2001. doi:10.1111/1467-9868.00294.
-
-\bibitem{terbraak06} C.~J.~F. ter~Braak, ``A Markov chain Monte Carlo version of the genetic algorithm Differential
-Evolution: easy Bayesian computing for real parameter spaces,'' \emph{Statistics and Computing}, vol.~16, pp.~239--249,
-2006. doi:10.1007/s11222-006-8769-1.
-
-\bibitem{terbraak08} C.~J.~F. ter~Braak and J.~A. Vrugt, ``Differential Evolution Markov Chain with snooker updater
-and fewer chains,'' \emph{Statistics and Computing}, vol.~18, pp.~435--446, 2008. doi:10.1007/s11222-008-9104-9.
-
-\bibitem{goodman} J.~Goodman and J.~Weare, ``Ensemble samplers with affine invariance,'' \emph{Communications in
-Applied Mathematics and Computational Science}, vol.~5, no.~1, pp.~65--80, 2010. doi:10.2140/camcos.2010.5.65.
-
-\bibitem{emcee} D.~Foreman-Mackey, D.~W. Hogg, D.~Lang, and J.~Goodman, ``emcee: The MCMC hammer,''
-\emph{Publications of the Astronomical Society of the Pacific}, vol.~125, pp.~306--312, 2013. doi:10.1086/670067.
-
-\end{thebibliography}
+\noindent\textbf{Keywords.} Comminution, cone crusher, population balance, Whiten model, Bond, Morrell, Bayesian
+calibration, structural discrepancy, leave-one-out validation, neural surrogate, mineral processing.
+
+\input{s01-introduction}
+\input{s02-problem}
+\input{s03-notation}
+\input{s04-data}
+\input{s05-architecture}
+\input{s06-methods-a}
+\input{s06-methods-b}
+\input{s06-methods-c}
+\input{s07-protocol}
+\input{s08-results}
+\input{s09-validation}
+\input{s10-discussion}
+\input{s11-closing}
+
+\input{references}
+
+\appendix
+\input{s12-appendix}
 
 \end{document}

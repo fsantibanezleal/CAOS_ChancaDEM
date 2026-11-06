@@ -1,0 +1,115 @@
+\section{Parameter tables}\label{app:params}
+
+Table~\ref{tab:machines} gives the per-machine constants of the engine, generated from the engine's own modules: the classification constants of
+Equation~\eqref{eq:k1k2}, the design throw that enters the specific energy of Equation~\eqref{eq:t10} and the throw term of $K_2$, the capacity
+constants of Equation~\eqref{eq:capacity}, and the ranges of the setting and the speed over which the Latin-hypercube sweeps of the learned models
+draw each machine class (the sweeps also draw the throw, $x_{63}$, $n$ and $A\times b$ over per-class ranges recorded in the surrogate contract). The
+circuit constants are typical values of their class; only the secondary cone is replaced, on the calibrated lane, by the fitted relations of
+Section~\ref{sec:m-hp500}. Table~\ref{tab:constants} collects the remaining constants of the engine, the evaluation and CrusherBayes, each with the module
+that holds it; every one of them is named in the methods where it acts. A reimplementation that changes any of them changes the numbers of the report,
+which is why they are listed with their exact values rather than rounded.
+
+\begin{table}[!t]
+\centering
+\caption{Per-machine constants of the engine, generated from \texttt{classification.py}, \texttt{capacity.py}, \texttt{machines.py} and \texttt{sweep.py}:
+classification constants, design throw, reference capacity, optimum speed, reference gap, and the setting and speed ranges of the learned-model sweeps.}
+\label{tab:machines}
+\scriptsize
+\input{tables/tab-machines}
+\end{table}
+
+\begin{table}[!t]
+\centering
+\caption{Further constants of the engine, of the leave-one-survey-out evaluation and of CrusherBayes, with their values as the code holds them and the
+module of \texttt{data-pipeline/\allowbreak{}pipeline/\allowbreak{}} that defines each.}
+\label{tab:constants}
+\scriptsize
+\begin{tabular}{@{}l l l@{}}
+\toprule
+Constant & Value & Module \\
+\midrule
+Top of the sieve grid, number of classes, ratio & $256$~mm, $28$, $\sqrt2$ & \texttt{model/\allowbreak{}crusher/\allowbreak{}engine.py}, \texttt{sieve.py} \\
+Readout sizes & $1$, $4$, $8$, $16$, $32$~mm & \texttt{model/\allowbreak{}crusher/\allowbreak{}engine.py} \\
+Ill-conditioning threshold of $\kappa$ & $10^{6}$ & \texttt{model/\allowbreak{}crusher/\allowbreak{}engine.py} \\
+Reduction ratio flagged as negligible & below $1.05$ & \texttt{model/\allowbreak{}crusher/\allowbreak{}engine.py} \\
+Austin slopes $\gamma$, $\beta$ & $0.35$, $4.2$ & \texttt{model/\allowbreak{}crusher/\allowbreak{}breakage.py} \\
+$A$; energy coefficient; reference speed & $60\%$; $0.033$~kWh/t per mm; $350$~rpm & \texttt{model/\allowbreak{}crusher/\allowbreak{}breakage.py} \\
+Cap of $t_{10}$; clamp of $\varphi$ & $0.44$; $[0.02, 0.98]$ & \texttt{model/\allowbreak{}crusher/\allowbreak{}breakage.py} \\
+Throw fraction of $K_2$; floor of $K_2$ & $0.5$; $1.05\,K_1$ & \texttt{model/\allowbreak{}crusher/\allowbreak{}classification.py} \\
+Nip angle base (cones, gyratory; jaw); friction & $22^\circ$; $19^\circ$; $\mu_f=0.35$ & \texttt{model/\allowbreak{}crusher/\allowbreak{}capacity.py} \\
+HP500 throw and speed; feed exponent; blend $W_i$ & $34$~mm, $360$~rpm; $0.9$; $9.0$~kWh/t & \texttt{model/\allowbreak{}crusher/\allowbreak{}hp500.py} \\
+HP500 support (setting, feed $F_{80}$) & $38$ to $55$~mm, $47$ to $140$~mm & \texttt{model/\allowbreak{}crusher/\allowbreak{}envelope.py} \\
+Lane budgets (run time, trace size) & $1500$~ms, $256$~KiB & \texttt{core/\allowbreak{}gate.py} \\
+Units slack & one full range on each side & \texttt{core/\allowbreak{}unit\_gate.py} \\
+Residual clip; ridge penalty; band factor; seed & $0.20$; $1.0$; $1.2816$; $42$ & \texttt{hp500/\allowbreak{}loo.py} \\
+Morrell $K_s$; $K_2$ (closed, open circuit) & $55$; $1.0$, $1.19$ & \texttt{model/\allowbreak{}crusher/\allowbreak{}morrell.py} \\
+Discrepancy prior sd $\tau_Q$, $\tau_P$ & $140$~t/h, $36$~kW & \texttt{hp500/\allowbreak{}crusherbayes.py} \\
+Noise prior medians; log sd; log bounds & $60$~t/h, $15$~kW; $1$; $[\ln1, \ln1000]$ & \texttt{hp500/\allowbreak{}crusherbayes.py} \\
+Walkers; steps; burn-in; thinning; draws & $20$; $7000$; $1000$; $10$; $20$ & \texttt{hp500/\allowbreak{}crusherbayes.py} \\
+Moves (DE, DE-snooker); convergence factor; margin & $0.8$, $0.2$; $50$; $3$ points & \texttt{hp500/\allowbreak{}crusherbayes.py} \\
+Drift projection grid; bisection steps; slack & $64$; $60$; $4$ ulp & \texttt{model/\allowbreak{}crusher/} (drift functions) \\
+Learned models: epochs; learning rate; weight decay & $500$ and $400$; $2\times10^{-3}$; $10^{-5}$ & \texttt{stages/\allowbreak{}train.py} \\
+Learned models: points per class; seeds; noise; opset & $1400$ and $480$; $12345$, $67890$; $0.05$; $17$ & \texttt{stages/\allowbreak{}train.py} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{The integrated discrepancy of CrusherBayes}\label{app:derivation}
+
+The marginal likelihood of Equation~\eqref{eq:cbmarginal} and the conditional of Equation~\eqref{eq:cbcond} follow from the Gaussian structure of the
+model. For one target and one fold, write the residual of the engine on the $m$ training surveys as $\mathbf r=\mathbf y-f(\boldsymbol\vartheta)$. By
+Equation~\eqref{eq:cbmodel}, $\mathbf r=\mathrm Z\mathbf d+\boldsymbol\varepsilon$ with $\mathbf d\sim N(\mathbf 0,\tau^2\mathrm I_3)$ independent of
+$\boldsymbol\varepsilon\sim N(\mathbf 0,\sigma^2\mathrm I_m)$, so $\mathbf r$ is Gaussian with mean zero and covariance
+\begin{equation}
+\mathrm{Cov}[\mathbf r] = \mathrm Z\,\mathrm{Cov}[\mathbf d]\,\mathrm Z^{\top} + \mathrm{Cov}[\boldsymbol\varepsilon] = \tau^2\mathrm Z\mathrm Z^{\top} + \sigma^2\mathrm I_m = \boldsymbol\Sigma ,
+\label{eq:app-cov}
+\end{equation}
+which is Equation~\eqref{eq:cbmarginal}. The pair $(\mathbf d,\mathbf r)$ is jointly Gaussian with $\mathrm{Cov}[\mathbf d,\mathbf r]=\tau^2\mathrm Z^{\top}$,
+so the conditional of $\mathbf d$ given $\mathbf r$ is Gaussian with
+\begin{equation}
+\mathbb E[\mathbf d\mid\mathbf r] = \tau^2\mathrm Z^{\top}\boldsymbol\Sigma^{-1}\mathbf r,\qquad
+\mathrm{Cov}[\mathbf d\mid\mathbf r] = \tau^2\mathrm I_3 - \tau^4\,\mathrm Z^{\top}\boldsymbol\Sigma^{-1}\mathrm Z ,
+\label{eq:app-cond}
+\end{equation}
+which is Equation~\eqref{eq:cbcond}. The log density of Equation~\eqref{eq:cbmarginal} is evaluated with the Cholesky factor $\mathrm L$ of
+$\boldsymbol\Sigma$ as $-\tfrac12\|\mathrm L^{-1}\mathbf r\|^2-\sum_k\ln L_{kk}-\tfrac m2\ln2\pi$, and a covariance that is not positive definite returns
+minus infinity, so the sampler rejects that point. Because $\mathrm Z$ has three columns and $m=9$ or $10$ rows, $\boldsymbol\Sigma$ is a $9\times9$ or
+$10\times10$ matrix, and the integration replaces six sampled dimensions per fold by one factorisation per target and posterior evaluation, which keeps each evaluation at the cost of the engine runs. The code checks
+the marginal against a Monte Carlo of the model with the coefficients drawn explicitly.
+
+\section{Contract schemas}\label{app:schemas}
+
+The tables below are generated from the schema files of \texttt{docs/\allowbreak{}contracts/\allowbreak{}schemas/\allowbreak{}} and from the OpenAPI document by \texttt{make\_tables.py}. Each
+row is one field: its dotted path (one level of nesting is expanded; \texttt{[]} marks the items of an array), its type, its range or allowed values as the
+schema states them, whether it is required at its level, and its description, shortened where it is long. A field described only by a reference to a
+shared definition carries the type of that definition. Rules that a schema cannot state, such as a count that must equal the length of a list or a path that
+must exist, are checked by the producer and consumer tests of each contract and are described in Section~\ref{sec:data}; the units of each field are in its
+description or in the subsection of that section. The catalog row of every contract, with its producer, its consumers, its swap test and its missing-data
+behaviour, is the authority when this appendix and the catalog differ.
+
+\subsubsection*{params-record}
+\input{tables/schema-params-record}
+\subsubsection*{hp500-survey}
+\input{tables/schema-hp500-survey}
+\subsubsection*{case-index}
+\input{tables/schema-case-index}
+\subsubsection*{case-manifest}
+\input{tables/schema-case-manifest}
+\subsubsection*{trace}
+\input{tables/schema-trace}
+\subsubsection*{hp500-backbone}
+\input{tables/schema-hp500-backbone}
+\subsubsection*{hp500-loo}
+\input{tables/schema-hp500-loo}
+\subsubsection*{hp500-crusherbayes}
+\input{tables/schema-hp500-crusherbayes}
+\subsubsection*{surrogate-model}
+\input{tables/schema-surrogate-model}
+\subsubsection*{anomaly-model}
+\input{tables/schema-anomaly-model}
+\subsubsection*{model-metrics}
+\input{tables/schema-model-metrics}
+\subsubsection*{readiness}
+\input{tables/schema-readiness}
+\subsubsection*{api (OpenAPI routes)}
+\input{tables/schema-api}

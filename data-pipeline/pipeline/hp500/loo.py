@@ -225,6 +225,10 @@ def _run_target(name: str, meas: np.ndarray, feat: np.ndarray,
                 rng: np.random.Generator, morrell_g: np.ndarray | None = None) -> dict:
     n = meas.size
     out: dict = {"target": name, "measured": [round(float(v), 2) for v in meas]}
+    # label-shuffle control: ONE seeded permutation of the measured values, shared by the strict and the leaky folds, so
+    # the leaky-strict gap of the control measures the leak and not the chance of two different permutations
+    shuffled = meas.copy()
+    rng.shuffle(shuffled)
 
     for leaky in (False, True):
         tag = "leaky" if leaky else "strict"
@@ -238,8 +242,6 @@ def _run_target(name: str, meas: np.ndarray, feat: np.ndarray,
         fit_m, fit_m_nl, fit_p_nl = np.empty(n), np.empty(n), np.empty(n)
         # a per-fold backbone (refit scalars) so M1's residual sits on the SAME backbone it will be added to
         bb = np.empty(n)
-        shuffled = meas.copy()
-        rng.shuffle(shuffled)  # label-shuffle control: permuted measured values (seeded)
         for i in range(n):
             idx = fold_indices(n, i, leaky)
             if name == "tph":

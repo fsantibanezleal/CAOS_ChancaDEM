@@ -1,0 +1,109 @@
+\section{Introduction}\label{sec:intro}
+
+\subsection{Crushing as an energy and capacity decision}\label{sec:intro-context}
+
+Crushing is the first stage of comminution, and its setting decides how much size reduction is left to the grinding mill
+downstream. In Chilean copper mining the concentrator, the plant that holds the crushing and grinding circuits, took
+$56{,}970$~TJ of electricity in 2024, $55.7\%$ of the $102{,}307$~TJ the sector used, and the national copper commission
+states that this electricity goes especially to the crushing and grinding operations~\cite{cochilco2025}. The electricity
+per tonne of fine copper in concentrates rose from $8{,}946$ to $13{,}079$~MJ between 2010 and 2024, an increase of
+$46.2\%$, while the national average ore grade fell from $0.75\%$ to $0.62\%$; the same report ties the rise to deeper
+deposits and harder rock that directly affect comminution~\cite{cochilco2025}. The projection of the same agency for
+2025 to 2034 has the electricity of the copper sector growing by $20.2\%$, from $27.6$ to $33.2$~TWh, against $8.3\%$ for
+fine copper, with concentration alone at $18.1$~TWh in 2034~\cite{cochilco2026}. Outside Chile, an analysis of global
+metallic mining reports a decline of average copper ore grades of about a quarter over ten years together with a rise in
+energy use larger than the rise in production~\cite{calvo2016}, and the International Energy Agency names declining ore
+grades among the reasons for an implied supply deficit of copper in 2035 under its stated-policies scenario~\cite{iea2025}.
+
+The energy is not spent efficiently. The United States Department of Energy bandwidth study of mining (data year 2000)
+attributes $494$ of $1{,}246$ trillion Btu per year to grinding and $52$ to crushing, and records that one percent is the
+most common estimate of the efficiency of grinding against about fifty percent for crushing on a mechanical basis, with
+the warning that the estimates depend on the metric~\cite{doe2007}. An exergy analysis of the comminution of a central-Chile
+copper ore in a laboratory ball mill finds an efficiency of about three percent against the Hukki and Morrell
+benchmark~\cite{jacob2017}. A coarser crusher product passes work to grinding, the more energy-intensive step, so the
+setting of a crusher is a decision about the energy of the whole circuit and not only about the crusher.
+
+\subsection{Who decides, and how it is decided today}\label{sec:intro-roles}
+
+Three roles carry the decision. The comminution or process engineer chooses the flowsheet, the machines and their
+settings at design and at each review; the plant operator and the control-room supervisor move the setting and the speed
+day to day; the maintenance and reliability team decides when the liners are changed. Four families of tools serve them.
+Empirical energy laws, of which the Bond work index is the best known, size machines and estimate energy and have been
+used for about sixty years in mill design, but they cannot give a full circuit mass balance or a size
+distribution~\cite{lacerda2016}, and design test data and benchmarks are often modified, worn or misapplied in
+practice~\cite{bailey2009}. Population-balance crusher models in the Whiten and Andersen tradition fit industrial
+surveys closely when calibrated: a review classifies $61$ works on cone-crusher models and control~\cite{yamashita2021},
+a calibration with industrial data from two iron-ore mines treats every entry of the breakage matrix as a fitted
+parameter~\cite{duarte2021}, and a fit-for-purpose model of a Metso HP500 secondary cone was calibrated on ten surveys
+over several settings and feeds~\cite{rocha2024}. Discrete-element simulation reproduces the coarse part of the product
+and the control signals of a crusher with relatively good correspondence~\cite{quist2016,johansson2017}, and particle-replacement
+models carry breakage into industrial compression crushers~\cite{cleary2015,delaney2015}, at a cost that one bonded-particle
+study of a quarter section of an industrial cone put at $172$ and $404$ CPU hours for about four seconds of
+operation~\cite{quist2012}. Automatic setting regulation and real-time
+control raised the saleable yield of a crushing stage by $3.5\%$ (setting algorithm) and $4.2$ to $6.9\%$ (speed
+algorithm) at full-scale aggregate plants~\cite{hulthen2010}, and the common opinion quoted by the same group is a yield
+gain of $20$ to $25\%$ when liner wear is compensated~\cite{evertsson2015}; the optimised chamber geometry changes as the
+liners wear~\cite{lindqvist2003}.
+
+The practical gap that this report addresses lies between the first two families. The calibrations cited above are
+judged on product size distributions, and some of them out of sample: Duarte et al.\ calibrate on two datasets and
+validate on a third that the calibration did not use~\cite{duarte2021}, and Rocha et al.\ compare one global parameter
+set, fitted to all ten surveys, with fits made survey by survey~\cite{rocha2024}. Neither reports the uncertainty of a prediction for a survey the
+model has not seen, and neither holds the model to every survey in turn against baselines that use no physics; ten
+surveys of one machine also leave little room for a free-form correction. A decision maker who reads a calibrated model at a new setting needs the error the model makes out of sample, a band that
+covers the measured value at the stated rate, and a baseline that says how much of the skill is physics and how much
+is the setting alone.
+
+\subsection{What the product does}\label{sec:intro-product}
+
+ChancaDEM is a static web studio with an offline pipeline behind it. A reader picks one of $27$ crushing cases (seventeen
+circuit cases, fourteen across five machine classes and three controls, and the ten measured HP500 surveys of Rocha et
+al.~\cite{rocha2024}), changes the closed-side setting, the throw, the speed, the feed and the ore, and reads the product
+gradation, the throughput and the power from one engine: a Whiten population balance~\cite{whiten1972,napier1996} with an
+Andersen and Napier-Munn classification~\cite{andersen1988}, a JKMRC $t_{10}$ energy-fineness relation with an Austin
+appearance function~\cite{napier1996,austin1984}, a reduced form of the Evertsson capacity model~\cite{evertsson2000}, the
+Bond power law~\cite{bond1952}, and, held out beside it, the Morrell size-specific crusher energy~\cite{morrell2009,gmsg}.
+The engine runs in the browser in a TypeScript port held to the canonical Python engine by a shared reference of $\nrefpoints$
+operating points. Two learned models, a multilayer perceptron that emulates the engine in the manner of Koh et
+al.~\cite{koh2021} and a denoising autoencoder that scores how far a result lies from the training manifold, run in the
+browser through ONNX Runtime. A projection of the hours until the product leaves a size target as the setting drifts
+open, with the drift rate supplied by the user, completes the operating view.
+
+\subsection{Contributions}\label{sec:intro-contrib}
+
+The report documents every method of the product and the evaluation that holds them to measured data. Its contributions
+are:
+\begin{enumerate}
+\item A complete account of a crusher engine (feed, breakage, classification, the Whiten solve, capacity, power, regimes
+and an envelope check) with its equations, constants and numerical scheme, implemented twice and held equal to a largest
+relative difference of $\refworst$ over $\nrefpoints$ reference points.
+\item A strict leave-one-survey-out evaluation of nine predictors on the ten HP500 surveys, the same folds for every
+predictor, with a constant-mean baseline, a label-shuffle control, the optimism of a leaky evaluation measured beside the
+strict one, and a nested $80\%$ predictive band whose coverage is computed out of sample, and a bootstrap over the surveys that gives every
+held-out error and every difference between two predictors its interval.
+\item The finding that a line on the closed-side setting alone has the lowest held-out power error on these data
+($12.78\%$, $95\%$ interval $\uqPLinelo$ to $\uqPLinehi$), not distinguishable on ten surveys from the free-form fit,
+CrusherBayes and Morrell's energy with a no-load term, that the Bond draw of the calibrated engine carries little of the
+measured power variation, and that the published throughput model of Rocha et al., run on the same surveys, predicts the
+feed rate as well as the calibrated engine.
+\item CrusherBayes, a Bayesian calibration of the engine's eight fitted scalars with a structural discrepancy per target
+and a differential-evolution sampler, whose held-out intervals are calibrated and narrower than the residual band, and
+whose posterior shows which scalars ten surveys identify; the method is reported in full in its own
+manuscript~\cite{crusherbayes2026} and summarised here.
+\item An inventory of thirteen data contracts with their schemas, producers, consumers and missing-data behaviour, which
+lets a reader replace any component and keep the rest.
+\end{enumerate}
+
+\subsection{Structure of the report}\label{sec:intro-structure}
+
+Section~\ref{sec:problem} states the problem as an estimation problem with its inputs, outputs and assumptions, and
+Section~\ref{sec:notation} collects the notation. Section~\ref{sec:data} describes the data sources and every data
+contract. Section~\ref{sec:arch} describes the pipeline, the engine, the web and the dormant interface. Section~\ref{sec:methods}
+gives one subsection per method, from the feed distribution to CrusherBayes. Section~\ref{sec:protocol} states the cases,
+the metrics, the baselines and the acceptance criterion of each method; Section~\ref{sec:results} reports every result the
+studio shows; Section~\ref{sec:validation} explains how the results are known to be correct. Sections~\ref{sec:discussion}
+and~\ref{sec:limits} discuss what the results mean and what bounds them, Section~\ref{sec:repro} lists the commands that
+rebuild every table and figure, and Section~\ref{sec:conclusions} concludes. The appendices hold the parameter tables, the derivation
+of the integrated discrepancy of CrusherBayes, and the field tables of every contract schema. A reader interested only in the evaluation
+on the measured surveys can read Sections~\ref{sec:m-hp500} to~\ref{sec:m-crushercal}, \ref{sec:m-crusherbayes} and~\ref{sec:results-bench}
+to~\ref{sec:results-cb}; a reader who wants to reimplement the engine needs Sections~\ref{sec:m-feed} to~\ref{sec:m-bond} and the appendices.

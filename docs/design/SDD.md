@@ -163,7 +163,7 @@ of the whole process tree polled every 20 ms, and the bytes left). The commands 
 - Replay: the committed artifacts, copied into the site by `frontend/scripts/copy-data.mjs` (exactly the files the index
   declares) and drawn as the dashed replay curves and the Validation views.
 - Live: `frontend/src/engine/`, the TypeScript engine the product shipped since 0.02.000, held to the Python engine by
-  the shared reference `tests/fixtures/engine-reference.json` (121 operating points, the largest relative difference
+  the shared reference `tests/fixtures/engine-reference.json` (124 operating points, the largest relative difference
   2.3e-12) and to the baked traces by `frontend/src/engine/crusher.parity.test.ts`; the two ONNX models run in the
   browser through onnxruntime-web 1.27.0 with its WASM served by the site. The basis for the live lane is measured: the
   lane gate (`data-pipeline/pipeline/core/gate.py`) judges each case's engine time against 1500 ms and its trace against
