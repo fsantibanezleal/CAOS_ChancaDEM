@@ -147,6 +147,7 @@ versions were read at the package registries on 2026-10-26 (the sizing record li
 | build | @vitejs/plugin-react | 6.1.1 | the React transform for vite | none |
 | build | typescript | 5.9.3 | type check of the web and the generated contract types | none |
 | build | openapi-typescript | 7.13.0 | generates `contract.gen.ts` from the OpenAPI document | hand-written types, rejected: they drift (the build checks them) |
+| build | minimatch | 11.0.1 | scoped patched glob dependency of the contract generator (the `overrides` of `frontend/package.json`); the guarded adapter `frontend/scripts/codegen-compatibility.mjs` preserves its legacy consumer, @redocly/openapi-core 1.34.22 | Redocly 2.x override, rejected: incompatible private imports |
 | build | @types/node | 24.19.1 | types of the build scripts and the reference writer | none |
 | build | @types/react | 19.3.0 | types of React | none |
 | build | @types/react-dom | 19.3.0 | types of React DOM | none |
