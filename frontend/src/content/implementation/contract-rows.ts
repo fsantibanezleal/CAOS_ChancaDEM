@@ -33,7 +33,7 @@ export const ROWS: { id: string; version: string; schema: string; governs: [stri
   },
   {
     id: 'trace',
-    version: '1.0.0',
+    version: '1.0.1',
     schema: 'chancadem.trace/v1',
     governs: ['The replay of one case: gradations on the sieve grid, classification curve, result scalars and two sweeps.', 'La reproducción de un caso: granulometrías en la malla, curva de clasificación, escalares del resultado y dos barridos.'],
     missing: ['Partial: the replay views say not available yet with the reason, and the live lane still runs from the manifest.', 'Parcial: las vistas de reproducción dicen aún no disponible con la razón, y el carril en vivo sigue corriendo desde el manifiesto.'],
