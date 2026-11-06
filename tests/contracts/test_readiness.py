@@ -347,8 +347,22 @@ def test_run_all_writes_a_valid_readiness(tmp_path):
     assert entry(doc, "model-metrics")["state"] == "missing"       # run.py models writes it; the bake never trains
 
 
+def _as_product(root: Path) -> None:
+    """Since template 0.15.000 ``check_readiness.py <root>`` judges ``root`` with the readiness provider ``root`` declares in
+    its own ``scripts/local/workflow.json``, and that provider rules with the pipeline of the checkout it sits in. A copy is
+    judged as a checkout: it carries the product's pipeline, the schemas the model slots are judged by, the workflow
+    declaration and the provider."""
+    shutil.copytree(ROOT / "data-pipeline", root / "data-pipeline", ignore=shutil.ignore_patterns("__pycache__"))
+    shutil.copytree(ROOT / "docs" / "contracts" / "schemas", root / "docs" / "contracts" / "schemas", dirs_exist_ok=True)
+    (root / "scripts" / "local").mkdir(parents=True, exist_ok=True)
+    for name in ("workflow.json", "readiness_provider.py"):
+        shutil.copy(ROOT / "scripts" / "local" / name, root / "scripts" / "local" / name)
+
+
 def _check(root: Path | None = None, *, no_numpy: bool = False) -> subprocess.CompletedProcess:
     script = str(ROOT / "scripts" / "check_readiness.py")
+    if root:
+        _as_product(root)
     args = [str(root)] if root else []
     cmd = [sys.executable, "-c", NO_NUMPY, script, *args] if no_numpy else [sys.executable, script, *args]
     return subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT)

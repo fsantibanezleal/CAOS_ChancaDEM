@@ -1,9 +1,20 @@
 {
   "external_environments_required": true,
-  "environment_namespace": "caos-product-template",
+  "environment_namespace": "chancadem",
+  "product_admission": true,
+  "readiness_provider": "scripts/local/readiness_provider.py",
   "readiness_excludes": ["readiness"],
-  "stage_inputs": ["data/examples/params.csv"],
-  "readiness_exceptions": {"params-record": "partial", "api": "missing"},
+  "stage_inputs": [
+    "data/examples/params.csv",
+    "data/examples/hp500-surveys.csv",
+    "data/derived/models/surrogate.json",
+    "data/derived/models/surrogate.onnx",
+    "data/derived/models/surrogate.int8.onnx",
+    "data/derived/models/psd-ae.json",
+    "data/derived/models/psd-ae.onnx",
+    "data/derived/model-metrics.json"
+  ],
+  "readiness_exceptions": {"api": "missing"},
   "readiness_check": "scripts/check_readiness.py",
   "primary_environment": ".venv-pipeline",
   "generation_environments": [
@@ -36,15 +47,16 @@
   "required": [
     "data/derived/manifests/index.json",
     "data/derived/readiness.json",
-    "models/surrogate.json"
+    "data/derived/models/surrogate.json",
+    "data/derived/models/psd-ae.json",
+    "data/derived/model-metrics.json"
   ],
   "promote": [
-    "data/derived",
-    "models"
+    "data/derived"
   ],
   "api": {
     "environment": ".venv",
-    "active": "auto",
+    "active": false,
     "port": 8000,
     "health": "/health",
     "command": [
@@ -80,26 +92,13 @@
     {
       "script": "data-pipeline/run.py",
       "args": [
+        "all",
         "--output",
         "{derived}"
-      ]
-    },
-    {
-      "script": "scripts/local/producer_bridge.py",
-      "args": [
-        "template-finalize",
-        "{stage}"
       ]
     }
   ],
   "validators": [
-    {
-      "script": "scripts/local/producer_bridge.py",
-      "args": [
-        "template-validate",
-        "{stage}"
-      ]
-    },
     {
       "script": "scripts/check_artifacts.py",
       "args": [
@@ -114,6 +113,8 @@
     }
   ],
   "generation_modules": [
-    "numpy"
+    "numpy",
+    "jsonschema",
+    "emcee"
   ]
 }
