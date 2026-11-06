@@ -1,0 +1,5 @@
+{
+  "kind": "manuscript",
+  "claims": {"BS-2": "sec:method"},
+  "title_support": ["tab:identifiability", "tab:laplace", "tab:comparison", "tab:accuracy", "tab:paired", "tab:rule", "fig:comparison", "fig:band", "fig:contraction"]
+}
