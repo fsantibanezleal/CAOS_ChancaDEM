@@ -1,0 +1,15 @@
+{
+ "schema": "chancadem.crusherbayes.engine-timing/v1",
+ "note": "computed by manuscripts/crusherbayes/analysis/engine_timing.py with the product's engine",
+ "evaluations": 300,
+ "rounds": 30,
+ "ms_per_evaluation_median": 1.4449499984038994,
+ "ms_per_evaluation_min": 1.3970799976959825,
+ "ms_per_evaluation_max": 1.6321700008120388,
+ "machine": {
+  "cpu_count": 32,
+  "platform": "Windows-11-10.0.26300-SP0",
+  "python": "3.12.15",
+  "processor": "Intel64 Family 6 Model 183 Stepping 1, GenuineIntel"
+ }
+}

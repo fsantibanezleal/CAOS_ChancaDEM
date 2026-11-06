@@ -155,15 +155,18 @@ class ResidualFit(NamedTuple):
 
 
 def fit_residual(features: np.ndarray, backbone_pred: np.ndarray, measured: np.ndarray, train_idx: np.ndarray, i: int,
-                 resid_target: np.ndarray | None = None) -> ResidualFit:
+                 resid_target: np.ndarray | None = None, *, ridge: float = RIDGE_LAMBDA,
+                 clip: float = RESID_CLIP_FRAC) -> ResidualFit:
     """M1: a ridge regression of the residual on standardized [CSS, f80] fitted on the train rows, evaluated at row i.
-    ``resid_target`` overrides the residual (the label-shuffle control). The residual is clipped to +-RESID_CLIP_FRAC of the
-    backbone value at row i (a physical bound); M1 is ``backbone_pred[i] + clipped``."""
+    ``resid_target`` overrides the residual (the label-shuffle control). The residual is clipped to +-``clip`` of the
+    backbone value at row i (a physical bound); M1 is ``backbone_pred[i] + clipped``. ``ridge`` (the penalty on the two
+    slopes) and ``clip`` (the band, a fraction of the backbone value) are keywords so a sensitivity study can vary them;
+    their defaults are the pre-registered RIDGE_LAMBDA and RESID_CLIP_FRAC, which the committed document uses."""
     r = (measured - backbone_pred) if resid_target is None else resid_target
     trX, xi = _standardize(features[train_idx], features[i])
-    coef = _fit_ridge(trX, r[train_idx], RIDGE_LAMBDA)
+    coef = _fit_ridge(trX, r[train_idx], ridge)
     raw = float(coef[0] + xi @ coef[1:])
-    bound = RESID_CLIP_FRAC * abs(backbone_pred[i])
+    bound = clip * abs(backbone_pred[i])
     return ResidualFit(coef, raw, max(-bound, min(bound, raw)))
 
 
@@ -222,6 +225,10 @@ def _run_target(name: str, meas: np.ndarray, feat: np.ndarray,
                 rng: np.random.Generator, morrell_g: np.ndarray | None = None) -> dict:
     n = meas.size
     out: dict = {"target": name, "measured": [round(float(v), 2) for v in meas]}
+    # label-shuffle control: ONE seeded permutation of the measured values, shared by the strict and the leaky folds, so
+    # the leaky-strict gap of the control measures the leak and not the chance of two different permutations
+    shuffled = meas.copy()
+    rng.shuffle(shuffled)
 
     for leaky in (False, True):
         tag = "leaky" if leaky else "strict"
@@ -235,8 +242,6 @@ def _run_target(name: str, meas: np.ndarray, feat: np.ndarray,
         fit_m, fit_m_nl, fit_p_nl = np.empty(n), np.empty(n), np.empty(n)
         # a per-fold backbone (refit scalars) so M1's residual sits on the SAME backbone it will be added to
         bb = np.empty(n)
-        shuffled = meas.copy()
-        rng.shuffle(shuffled)  # label-shuffle control: permuted measured values (seeded)
         for i in range(n):
             idx = fold_indices(n, i, leaky)
             if name == "tph":

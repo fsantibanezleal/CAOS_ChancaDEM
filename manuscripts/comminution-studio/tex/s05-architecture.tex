@@ -1,0 +1,86 @@
+\section{System architecture}\label{sec:arch}
+
+\subsection{The offline pipeline, stage by stage}\label{sec:arch-pipeline}
+
+The pipeline is a module folder run by path (\texttt{data-pipeline/\allowbreak{}run.py}), not an installed package, and it runs on a
+workstation only; continuous integration validates the committed documents and never bakes or trains. Figure~\ref{fig:dataflow}
+shows its stages and the documents each writes. The release bake (\texttt{run.py all}) runs, in order: \emph{preprocess}, which
+reads \texttt{params.csv} and the survey table and applies the two ingestion contracts; \emph{infer}, which evaluates the
+canonical engine at the operating point of each of the $27$ cases; \emph{export}, which writes the trace and the manifest of each
+case, measures the lane of the case, checks the expected ranges and the units of every metric, and writes the index; the
+\emph{HP500} step, which writes the backbone, the leave-one-survey-out document and the CrusherBayes document; and the readiness
+step, which computes the state of every contract from the catalog and the repository. A failing expected range or a value outside
+its unit's range stops the bake. The model step (\texttt{run.py models}) is separate because it needs torch: it draws the two
+Latin-hypercube sweeps, labels them with the engine, trains the surrogate and the autoencoder, exports them to ONNX, quantises the
+surrogate to int8, evaluates both through onnxruntime on the held-out draw, and refreshes the index and readiness. The bake never
+trains; it reads the released model bundles as they stand. Every random draw comes from one seeded generator factory, so a run is
+a pure function of its inputs and seeds: a full re-bake of release 0.12.001 into a sandbox output root reproduces every committed trace
+and the three HP500 documents, CrusherBayes included, byte for byte (Section~\ref{sec:repro}).
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig-dataflow.pdf}
+\caption{Data flow of the product: the two source tables and the contract catalog enter the offline pipeline, whose stages write
+the case traces, manifests and index, the three HP500 documents, the model bundles and their metrics, and the readiness document,
+which the static web, the dormant interface and the notebooks read.}
+\label{fig:dataflow}
+\end{figure}
+
+\subsection{The engine in two languages}\label{sec:arch-engine}
+
+The engine is one vertical implementation written twice. The Python package \texttt{data-pipeline/\allowbreak{}pipeline/\allowbreak{}model/\allowbreak{}crusher/\allowbreak{}} is
+canonical: it labels the cases, the sweeps and the surveys. The TypeScript port \texttt{frontend/\allowbreak{}src/\allowbreak{}engine/\allowbreak{}} re-runs a case in the
+browser whenever the reader moves one of the six controls. Both are plain arithmetic on IEEE doubles. The Python engine
+deliberately avoids library linear algebra: the LU solve with partial pivoting is ported line for line, so the order of the
+floating-point operations is the TypeScript order, and a small module reproduces the JavaScript semantics where Python differs (a
+negative base with a fractional exponent is not a number, an exponent overflow is infinity, a division by zero is a signed
+infinity), so that an out-of-domain point returns a flagged result in both languages instead of raising. A shared reference file
+of $\nrefpoints$ operating points holds the two engines equal: every result field and every feature vector agrees within $10^{-9}$
+relative, and the largest relative difference measured over the file is $\refworst$. A second test re-runs every baked
+case in TypeScript and compares it with its trace to the six significant digits the trace is written with.
+
+The lane of a case is decided by measurement. A case may be re-run live in the browser only when its engine is pure Python with
+dependencies inside an allowed set (\texttt{numpy}), when one run completes within $1500$~ms and when its trace is at most
+$256$~KiB; otherwise the web would replay the committed artifact. The canonical engine evaluates a case in a median of $\resEngineMed$~ms
+(the median over the $27$ cases of the median of seven runs after a warm-up; at most $\resEngineMax$~ms), and the largest trace is $4{,}127$~bytes,
+so every case is live-eligible. The measured decision and the two budgets are written into each manifest; the raw run time is not,
+because a manifest must not change between two bakes of the same inputs.
+
+\subsection{The web, the learned models in the browser, and the interface}\label{sec:arch-web}
+
+The site is static and is deployed to GitHub Pages; it holds no secret and calls no server. A copy step places exactly the files the
+index declares into the site, and the web's types are generated from the contract schemas. The App is a workbench on the shared
+CAOS application shell: a case selector, the six controls, and groups of views for the product gradation, the performance (the
+capacity hump, the setting trade-off and the drift projection), the chamber (a two-dimensional section and a three-dimensional
+kinematic view of the chamber geometry, its motion and the engine's gradation, which is not a particle simulation), the learned
+models and the validation. Each view draws the live engine and, dashed, the replay of the committed trace. The two ONNX graphs run in
+the browser through onnxruntime-web $1.27.0$, the same release as the Python onnxruntime that evaluates them, as single-threaded
+WebAssembly served by the site itself, because a static host does not send the headers that threaded WebAssembly needs. Calls to one
+model are serialised, because the runtime forbids concurrent runs on one inference instance. The web encodes the inputs and decodes the outputs
+entirely from the model contracts, so a retrained model ships by replacing its contract and its graph.
+
+Every view shows the readiness of the contracts it reads, and every learned answer is labelled with the model that answered: the
+surrogate or, when the bundle is invalid or the point is outside the training ranges or on the calibrated lane, the engine. The
+dormant interface of \texttt{app/\allowbreak{}} is a FastAPI application with six read-only routes over the committed documents; it is run by its
+contract tests and is not deployed.
+
+\subsection{Resources}\label{sec:arch-resources}
+
+Table~\ref{tab:resources} gives what each stage of release 0.12.001 needs on the development workstation (Windows 11, Python
+$\resPython$ in the pipeline environment, Node $24$, a processor with $\resThreads$ threads), measured on $\resDate$ with a
+process-tree monitor that polls the peak memory of the command and of every process it starts every $20$~ms. The three pipeline
+stages that write artifacts (the bake, the HP500 step and the training) were run into a sandbox output root, so the committed artifacts were not rewritten; the disk column of a
+sandbox run is the bytes it wrote there, without the released model bundles that the committed tree also holds. No stage needs a
+graphics processor or a network after the installation. The bake takes about $\resBakeMin$~minutes, of which the HP500 step takes about
+$\resHpMin$: the CrusherBayes sampler fixes the work at $20\times7000=140{,}000$ log-probability evaluations per posterior, each of which
+evaluates the engine on the nine or ten training surveys of its fold, for eleven posteriors, which the step spreads over the processor's
+threads. Every other stage takes seconds to minutes. The built site is $\resSite$~MB, of which $\resWasm$~MB is the ONNX Runtime WebAssembly binary.
+
+\begin{table}[!t]
+\centering
+\caption{Measured resources of each stage of release 0.12.001 on the development workstation: peak memory of the process tree, disk
+written and wall time. Generated from \texttt{data/\allowbreak{}resources.json} of the report, which records each measurement.}
+\label{tab:resources}
+\footnotesize
+\input{tables/tab-resources}
+\end{table}

@@ -298,7 +298,7 @@ export interface components {
             product_mass: components["schemas"]["fractions"];
             /** @description Whiten classification function C(d) at each class mid-size: the probability a particle of that size is selected for breakage. */
             classification: components["schemas"]["fractions"];
-            /** @description The t10 of the breakage appearance function used, percent passing one tenth of the parent size. */
+            /** @description The t10 of the breakage appearance function used: the fraction of the progeny passing one tenth of the parent size, in [0, 0.44] (the engine caps it at 0.44). */
             appearance_t10: number;
             summary: {
                 f80_mm: number;
