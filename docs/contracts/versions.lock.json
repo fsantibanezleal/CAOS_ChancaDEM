@@ -20,9 +20,9 @@
     "sha256": "8c15d447186751e0851a7dfdf054191839f822e4d0579a5de551699973696bc6"
   },
   "trace": {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "schema": "docs/contracts/schemas/trace.schema.json",
-    "sha256": "31a8aefa92c3343ca0cc2d7dbe097a24c152071db98c777a0014ea1ef0e7bca7"
+    "sha256": "c9fd21842d2a853d7922a46826673097594e5a3e1bce43a2a84626a5b8e35f28"
   },
   "hp500-backbone": {
     "version": "1.0.0",
