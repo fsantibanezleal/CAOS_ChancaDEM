@@ -1,0 +1,119 @@
+{
+  "external_environments_required": true,
+  "environment_namespace": "caos-product-template",
+  "readiness_excludes": ["readiness"],
+  "stage_inputs": ["data/examples/params.csv"],
+  "readiness_exceptions": {"params-record": "partial", "api": "missing"},
+  "readiness_check": "scripts/check_readiness.py",
+  "primary_environment": ".venv-pipeline",
+  "generation_environments": [
+    ".venv-pipeline"
+  ],
+  "environments": [
+    {
+      "path": ".venv-pipeline",
+      "requirements": [
+        "requirements-precompute.txt",
+        "requirements-dev.txt"
+      ]
+    },
+    {
+      "path": ".venv",
+      "when": "api",
+      "requirements": [
+        "requirements-api.txt"
+      ]
+    },
+    {
+      "path": ".venv-notebooks",
+      "when": "notebooks",
+      "requirements": [
+        "notebooks/requirements.txt"
+      ]
+    }
+  ],
+  "node_stamp": ".caos-package-lock.sha256",
+  "required": [
+    "data/derived/manifests/index.json",
+    "data/derived/readiness.json",
+    "models/surrogate.json"
+  ],
+  "promote": [
+    "data/derived",
+    "models"
+  ],
+  "api": {
+    "environment": ".venv",
+    "active": "auto",
+    "port": 8000,
+    "health": "/health",
+    "command": [
+      "{python}",
+      "-m",
+      "uvicorn",
+      "app.main:app",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "{port}"
+    ]
+  },
+  "web_port": 5173,
+  "frontend_environment": {"CAOS_DATA_ROOT": "{root}/data/derived"},
+  "frontend_prepare": [
+    [
+      "{npm}",
+      "run",
+      "predev"
+    ]
+  ],
+  "frontend_command": [
+    "node",
+    "node_modules/vite/bin/vite.js",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "{web_port}",
+    "--strictPort"
+  ],
+  "generation": [
+    {
+      "script": "data-pipeline/run.py",
+      "args": [
+        "--output",
+        "{derived}"
+      ]
+    },
+    {
+      "script": "scripts/local/producer_bridge.py",
+      "args": [
+        "template-finalize",
+        "{stage}"
+      ]
+    }
+  ],
+  "validators": [
+    {
+      "script": "scripts/local/producer_bridge.py",
+      "args": [
+        "template-validate",
+        "{stage}"
+      ]
+    },
+    {
+      "script": "scripts/check_artifacts.py",
+      "args": [
+        "{stage}"
+      ]
+    },
+    {
+      "script": "scripts/check_documents.py",
+      "args": [
+        "{stage}"
+      ]
+    }
+  ],
+  "generation_modules": [
+    "numpy"
+  ]
+}

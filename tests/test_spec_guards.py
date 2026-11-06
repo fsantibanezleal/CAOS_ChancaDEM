@@ -24,6 +24,13 @@ def run(script: str, *args: str) -> subprocess.CompletedProcess:
 
 SECTIONS = ("Problem and non-goals", "Research basis", "Sizing and contracts", "Technology and versions", "Resources",
             "Lanes", "Method ladder", "Cases", "Oracles", "Deploy driver", "Risks and kill criteria", "ADR fit")
+VISUALIZATION_CATALOG = ("| id | question | data contract | kind | interactions | linked views | placement |\n|---|---|---|---|---|---|---|\n"
+                        "| V1 | System question | test.trace/v1 | System: 2D compartments | Select and inspect | V3 and V4 | App |\n"
+                        "| V2 | Transition question | test.trace/v1 | Inapplicable physical asset because model is abstract; replacement transition | Inspect transition equation and current rate | V1 and V5 | App |\n"
+                        "| V3 | Phase question | equations and trace | Domain phase plane | Hover and scrub | V1 and V4 | App |\n"
+                        "| V4 | Dynamics question | test.trace/v1 | State dynamics | Hover and scrub | V1 and V3 | App |\n"
+                        "| V5 | Method question | Euler step trace | Integration method at work | Step and inspect residual | V1 and V3 | App |\n"
+                        "| V6 | Comparison question | paired solver artifact | Shared axis comparison | Select and inspect delta | V3 and V4 | App |\n")
 RESEARCH = ("- Doe 1927, https://doi.org/10.1098/rspa.1927.0118\n- Miller 2012, doi 10.1007/s11538-012-9749-6\n"
             "- Roe 2000, https://doi.org/10.1137/S0036144500371907\n\nUNVERIFIED: none\n")
 RESOURCES = ("| stage | memory | disk | time | where it runs |\n|---|---|---|---|---|\n"
@@ -57,6 +64,8 @@ def sdd_text(research: str = RESEARCH, resources: str = RESOURCES, skip: str = "
             continue
         body = {"Research basis": research, "Resources": resources, "Method ladder": ladder}.get(name, "text\n")
         out.append(f"## {name}\n\n{body}\n")
+        if name == "Sizing and contracts":
+            out.append(f"## Visualization catalog\n\n{VISUALIZATION_CATALOG}\n")
         if name == brief_after and brief is not None:
             out.append(f"## Executive brief\n\n{brief}\n")
         if name == "Oracles" and beyond is not None:
@@ -566,6 +575,12 @@ def test_view_the_real_repository_passes():
     assert r.returncode == 0 and "check_sdd: OK" in r.stdout, r.stdout
 
 
+def test_adversarial_visualization_catalog_requires_each_kind_once(tmp_path):
+    text = sdd_text().replace(VISUALIZATION_CATALOG, VISUALIZATION_CATALOG.replace("| V5 |", "| V4 |", 1))
+    r = run("check_sdd.py", str(sdd_tree(tmp_path, validation=GOOD_VALIDATION, sdd=text)))
+    assert r.returncode == 1 and "missing V5" in r.stdout and "lists V4 2 times" in r.stdout, r.stdout
+
+
 def test_view_the_example_is_a_frame_of_the_problem_space_with_sourced_links():
     data = example_data()
     assert set(data["illustrations"]) == set(ILLUSTRATIONS)
@@ -964,7 +979,9 @@ ALLOWED_RUN = "        run: python -m pytest tests/adversarial\n"
     ("      - name: s\n        run: PYTEST_ADDOPTS=tests python -m pytest tests/adversarial\n", ""),
     ("      - name: s\n        run: |\n          export PYTEST_ADDOPTS=tests\n          python -m pytest tests/adversarial\n", ""),
 ])
-def test_rereview_m10d_a_pytest_environment_variable_widens_the_allowance(tmp_path, steps, top):
+@pytest.mark.parametrize("suite", ["tests/adversarial", "tests/template/adversarial"])
+def test_rereview_m10d_a_pytest_environment_variable_widens_the_allowance(tmp_path, steps, top, suite):
+    steps = steps.replace("tests/adversarial", suite)
     r = run("check_ci_budget.py", str(ci_raw(tmp_path, steps, top)))
     assert r.returncode == 1 and "PYTEST_" in r.stdout, r.stdout
 
@@ -1504,6 +1521,8 @@ def ci_block(tmp: Path, lines: list[str]) -> Path:
     "python -m pytest tests/adversarial",
     "pip install pytest==9.1.1 && python -m pytest tests/adversarial",
     "pip install pytest==9.1.1 && python -m pytest tests/adversarial tests/template/adversarial -q",  # the template's own (BD-3)
+    "python -m pytest tests/template/adversarial",
+    "pip install pytest==9.1.1 && python -m pytest tests/template/adversarial -q",
 ])
 def test_ci_budget_b6_the_allowance_in_its_exact_forms_passes(tmp_path, command):
     r = run("check_ci_budget.py", str(ci_tree(tmp_path, command)))
@@ -1535,7 +1554,9 @@ def test_ci_budget_b6_the_allowance_in_its_exact_forms_passes(tmp_path, command)
     "pip install pytest==9.1.1 numpy && python -m pytest tests/adversarial -q",
     "echo ok; python -m pytest tests/adversarial -q",
 ])
-def test_ci_budget_an_allowance_broader_than_the_adversarial_suite_fails(tmp_path, command):
+@pytest.mark.parametrize("suite", ["tests/adversarial", "tests/template/adversarial"])
+def test_ci_budget_an_allowance_broader_than_the_adversarial_suite_fails(tmp_path, command, suite):
+    command = command.replace("tests/adversarial", suite)
     r = run("check_ci_budget.py", str(ci_tree(tmp_path, command)))
     assert r.returncode == 1 and "tests run locally" in r.stdout, (command, r.stdout)
 
