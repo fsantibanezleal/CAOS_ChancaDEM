@@ -41,7 +41,7 @@ The app has three records, each under a concept DOI that always resolves to its 
 |---|---|---|
 | The repository | the software itself, archived from GitHub; each release is a version of this one record | [10.5281/zenodo.23686602](https://doi.org/10.5281/zenodo.23686602) |
 | The technical report | ChancaDEM: A Crusher-Comminution Studio and a Held-Out Evaluation of Cone-Crusher Models on Ten Industrial Surveys, the app and its content, in [`manuscripts/comminution-studio/`](manuscripts/comminution-studio/) | [10.5281/zenodo.21518356](https://doi.org/10.5281/zenodo.21518356) |
-| The manuscript | What Ten Industrial Surveys Identify in a Cone-Crusher Population Balance Model: Bayesian Calibration with Structural Discrepancy, the results of CrusherBayes, in [`manuscripts/crusherbayes/`](manuscripts/crusherbayes/) | [10.5281/zenodo.23843809](https://doi.org/10.5281/zenodo.23843809) |
+| The manuscript | What Ten Industrial Surveys Identify in a Cone-Crusher Population Balance Model: Bayesian Calibration with Structural Discrepancy Narrows the Engine's Power Band but Gives No Accuracy Gain over a Setting-Only Line, the results of CrusherBayes, in [`manuscripts/crusherbayes/`](manuscripts/crusherbayes/) | [10.5281/zenodo.23843809](https://doi.org/10.5281/zenodo.23843809) |
 
 ## Run it
 
