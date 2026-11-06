@@ -133,7 +133,7 @@ versions were read at the package registries on 2026-10-26 (the sizing record li
 | contracts | openapi-spec-validator | 0.9.0 | validates `docs/contracts/api.openapi.json` | none: the maintained validator for OpenAPI 3.1 |
 | API | fastapi | 0.143.0 | the dormant `app/`, run by the API contract tests | flask, rejected: no response models to compare with the OpenAPI document |
 | API | httpx | 0.28.1 | the test client of the dormant `app/` | requests, rejected: FastAPI's test client needs httpx |
-| shell | @fasl-work/caos-app-shell | 0.19.9 | the shared app shell, its workbench, charts, gate (pinned exactly, ADR-0078) | a hand-rolled shell, forbidden by ADR-0078 |
+| shell | @fasl-work/caos-app-shell | 0.23.0 | the shared app shell, its workbench, charts, story frame, gate (pinned exactly, ADR-0078) | a hand-rolled shell, forbidden by ADR-0078 |
 | web | react | 19.3.0 | the UI | none: the shell requires it |
 | web | react-dom | 19.3.0 | the UI renderer | none: the shell requires it |
 | web | react-router | 8.4.0 | the routes and the forward of the old focus links | none: the shell requires it |
@@ -330,5 +330,5 @@ The target is written in `deploy/TARGET` and checked by `scripts/check_deploy_pl
 | ADR-0071 | the page is the viewport; one tab row; the instrument at least half the App route | the shell's `CaseWorkbench`; the gate (G5, G6) |
 | ADR-0074 | CI runs cheap checks only; training and the bake are local | `.github/workflows/ci.yml`, `scripts/check_ci_budget.py` |
 | ADR-0075 | every requirement names its gate | `docs/design/features/`, `scripts/check_sdd.py` |
-| ADR-0078 | rules live in the base | shell 0.19.9 (pinned exactly) over template 0.14.000; no product re-implements them |
+| ADR-0078 | rules live in the base | shell 0.23.0 (pinned exactly) over template 0.15.000; no product re-implements them |
 | ADR-0080 | contract-first parallel delivery | `docs/contracts/`, `tests/contracts/`, `frontend/src/readiness/`, `scripts/check_contracts.py`, `scripts/check_readiness.py` |
