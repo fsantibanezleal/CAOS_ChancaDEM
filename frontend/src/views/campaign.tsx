@@ -12,6 +12,8 @@ import { evaluate } from '../engine/engine';
 import type { Operating } from '../engine/types';
 import type { Text } from '../lib/contract.types';
 import { Fill, Stack } from './draw';
+import { ChartCallouts, type CalloutSpec, type ChartPoint } from './callouts';
+import { useHours } from './linked';
 import { Pending, provenanceOf, useNum, useT, useView } from './shared';
 import { finAll, LIVE_COLOR, logSpace } from './series';
 
@@ -198,6 +200,184 @@ export function CampaignView() {
           />
         </Fill>
       </Stack>
+    </PlotCard>
+  );
+}
+
+// ---- Catalog row V4, state and dynamics: P80 against operating hours at the reader's drift rate (SH-010). The view opens with no drift
+// rate: until the reader sets one, the same curve is drawn against the opening of the setting in millimetres, the one axis the engine
+// answers without a wear rate. Once set, the axis is hours (the opening over the drift), the target P80 is the threshold, the hour it is
+// crossed is marked, the 45 h re-set of Ma et al. 2016 is a reference line and the hours cursor is the now line (V2 and V3 follow it).
+
+/** The engine's dP80/dCSS at the operating point [mm of P80 per mm of setting], by a central difference; null at an invalid point. */
+export function p80PerMm(op: Operating): number | null {
+  const h = Math.max(0.25, 0.01 * op.cssMm);
+  const lo = evaluate({ ...op, cssMm: op.cssMm - h });
+  const hi = evaluate({ ...op, cssMm: op.cssMm + h });
+  if (!lo.valid || !hi.valid || !Number.isFinite(lo.p80) || !Number.isFinite(hi.p80)) return null;
+  return (hi.p80 - lo.p80) / (2 * h);
+}
+
+export interface DriftCurve {
+  /** The opening of the setting at each point [mm]. */
+  openingMm: number[];
+  /** The hours at each point at the reader's drift rate, or null while no drift rate is set. */
+  hours: number[] | null;
+  p80: (number | null)[];
+  /** The opening at which P80 reaches the target [mm] (0 when already exceeded), or null when it is never reached. */
+  crossingMm: number | null;
+  crossingH: number | null;
+}
+
+const OPENING_SAMPLES = 41;
+
+/** P80 as the setting opens from its current value, to past the target's opening (or to the ceiling), and the hours when a drift is set. */
+export function driftCurve(op: Operating, p80TargetMm: number, cssMaxMm: number, driftMmPerH: number | null): DriftCurve {
+  const cssAt = cssAtP80Target(op, p80TargetMm, cssMaxMm);
+  const crossingMm = cssAt === null ? null : Math.max(0, cssAt - op.cssMm);
+  const room = Math.max(0, cssMaxMm - op.cssMm);
+  const span = crossingMm !== null && crossingMm > 0 ? Math.min(room, crossingMm * 2) : room;
+  const openingMm = Array.from({ length: OPENING_SAMPLES }, (_, i) => (span * i) / (OPENING_SAMPLES - 1));
+  const p80 = openingMm.map((d) => {
+    const r = evaluate({ ...op, cssMm: op.cssMm + d });
+    return r.valid && Number.isFinite(r.p80) ? r.p80 : null;
+  });
+  const rate = driftMmPerH !== null && driftMmPerH > 0 ? driftMmPerH : null;
+  return {
+    openingMm,
+    hours: rate === null ? null : openingMm.map((d) => d / rate),
+    p80,
+    crossingMm,
+    crossingH: rate !== null && crossingMm !== null ? hoursToTarget(crossingMm, rate) : null,
+  };
+}
+
+export const DRIFT_TEXT = {
+  control: {
+    en: 'Your drift rate: how fast the closed-side setting opens as the liners wear, in millimetres per hour. The product asserts no wear rate and sets none: until you enter yours the curve is drawn against the opening of the setting.',
+    es: 'Su velocidad de desplazamiento: cuán rápido se abre la abertura de descarga con el desgaste de los blindajes, en milímetros por hora. El producto no afirma ni fija ninguna tasa de desgaste: hasta que ingrese la suya, la curva se dibuja contra la apertura de la abertura.',
+  },
+  unset: {
+    en: 'No drift rate is set, so the axis is the opening of the setting in millimetres; enter your measured drift rate to read operating hours.',
+    es: 'No hay velocidad de desplazamiento fijada, así que el eje es la apertura de la abertura en milímetros; ingrese su velocidad medida para leer horas de operación.',
+  },
+} satisfies Record<string, Text>;
+
+/** The three callouts of the campaign view: the target, where it is crossed, and the P80 at the now line (or per millimetre of drift). */
+export function hoursCallouts(
+  caseId: string,
+  target: number,
+  curve: DriftCurve,
+  slope: number | null,
+  atCursorP80: number | null,
+  fmt: (v: number, o: { digits?: number }) => string,
+): CalloutSpec[] {
+  const source: Text = { en: `Live engine, ${caseId}`, es: `Motor en vivo, ${caseId}` };
+  const reader: Text = { en: 'Your target and your drift rate', es: 'Su objetivo y su velocidad de desplazamiento' };
+  const notReached: Text = { en: 'the target is not reached below the ceiling of the setting', es: 'el objetivo no se alcanza bajo el techo de la abertura' };
+  const useHours = curve.hours !== null;
+  return [
+    { id: 'target', eyebrow: { en: 'TARGET P80', es: 'P80 OBJETIVO' }, value: fmt(target, { digits: 3 }), unit: { en: 'mm', es: 'mm' }, state: 'warning', source: reader },
+    useHours
+      ? { id: 'cross', eyebrow: { en: 'TARGET CROSSED AT', es: 'OBJETIVO CRUZADO EN' }, value: curve.crossingH === null ? null : fmt(curve.crossingH, { digits: 3 }), unit: { en: 'h at your drift rate', es: 'h a su velocidad' }, state: 'alarm', source, missing: notReached }
+      : { id: 'cross', eyebrow: { en: 'OPENING ALLOWED', es: 'APERTURA PERMITIDA' }, value: curve.crossingMm === null ? null : fmt(curve.crossingMm, { digits: 3 }), unit: { en: 'mm of setting', es: 'mm de abertura' }, state: 'alarm', source, missing: notReached },
+    atCursorP80 !== null
+      ? { id: 'now', eyebrow: { en: 'P80 AT THE NOW LINE', es: 'P80 EN LA LÍNEA DE AHORA' }, value: fmt(atCursorP80, { digits: 3 }), unit: { en: 'mm', es: 'mm' }, state: 'selected', source }
+      : {
+          id: 'now',
+          eyebrow: { en: 'P80 PER MM OF DRIFT', es: 'P80 POR MM DE DESPLAZAMIENTO' },
+          value: slope === null ? null : fmt(slope, { digits: 3 }),
+          unit: { en: 'mm of P80 per mm of setting', es: 'mm de P80 por mm de abertura' },
+          state: 'selected',
+          source: { en: `dP80/dCSS of the live engine, ${caseId}`, es: `dP80/dCSS del motor en vivo, ${caseId}` },
+          missing: { en: 'the point is not valid for the engine', es: 'el punto no es válido para el motor' },
+        },
+  ];
+}
+
+export function HoursView() {
+  const { sel, target: sharedTarget, setTarget, drift, setDrift } = useView();
+  const stateKey = useWorkbenchState()?.stateKey;
+  const lang = useShellLang();
+  const num = useNum();
+  const { hours, setHours } = useHours();
+  if (!sel) return <Pending />;
+  const op = sel.op;
+  const target = sharedTarget > sel.result.p80 ? sharedTarget : defaultTarget(sel.result.p80);
+  const curve = driftCurve(op, target, CSS_MAX_MM[op.machine], drift);
+  const slope = p80PerMm(op);
+  const useHoursAxis = curve.hours !== null && drift !== null;
+  const xs = useHoursAxis ? curve.hours! : curve.openingMm;
+  const xMax = xs[xs.length - 1] || 1;
+  const cursorX = useHoursAxis && hours !== null ? Math.min(xMax, Math.max(0, hours)) : null;
+  const atCursor = cursorX !== null && drift !== null ? evaluate({ ...op, cssMm: op.cssMm + cursorX * drift }) : null;
+  const callouts = hoursCallouts(sel.data.manifest.case_id, target, curve, slope, atCursor && Number.isFinite(atCursor.p80) ? atCursor.p80 : null, (v, o) => num(v, o));
+  const crossX = useHoursAxis ? curve.crossingH : curve.crossingMm;
+  const p80s = curve.p80.filter((v): v is number => v !== null);
+  const yLo = Math.min(target, ...p80s) * 0.95;
+  const yHi = Math.max(target, ...p80s) * 1.05;
+  const points: ChartPoint[] = [
+    { id: 'target', x: xs[1] ?? 0, y: target },
+    { id: 'cross', x: crossX ?? xMax, y: target },
+    { id: 'now', x: cursorX ?? xs[0], y: atCursor ? atCursor.p80 : (curve.p80[0] ?? target) },
+  ];
+  const marks: { x: number; label: BiText }[] = [];
+  if (crossX !== null && crossX <= xMax) marks.push({ x: crossX, label: { en: 'target crossed', es: 'objetivo cruzado' } });
+  if (useHoursAxis && REFERENCE_RESET_H <= xMax) marks.push({ x: REFERENCE_RESET_H, label: REFERENCE_LABEL });
+  if (cursorX !== null) marks.push({ x: cursorX, label: { en: 'now', es: 'ahora' } });
+  return (
+    <PlotCard
+      fill
+      title={{ en: 'P80 as the setting drifts open', es: 'P80 a medida que la abertura se abre' }}
+      lane="live"
+      provenance={provenanceOf(sel)}
+      dataKey={stateKey}
+      note={{ en: `${CAMPAIGN_TEXT.measure.en}${useHoursAxis ? '' : ` ${DRIFT_TEXT.unset.en}`}`, es: `${CAMPAIGN_TEXT.measure.es}${useHoursAxis ? '' : ` ${DRIFT_TEXT.unset.es}`}` }}
+    >
+      <div className="cdem-stack" data-caos-flow="" data-drift={drift ?? ''} data-hours={cursorX ?? ''}>
+        <div className="cdem-controls">
+          <label title={CAMPAIGN_TEXT.control[lang]}>
+            {lang === 'es' ? 'P80 objetivo (mm) ' : 'P80 target (mm) '}
+            <input type="number" min={0.1} step={0.1} value={Math.round(target * 10) / 10} onChange={(e) => Number(e.target.value) > 0 && setTarget(Number(e.target.value))} style={{ width: '5.5rem' }} />
+          </label>
+          <label title={DRIFT_TEXT.control[lang]}>
+            {lang === 'es' ? 'Su velocidad (mm/h) ' : 'Your drift rate (mm/h) '}
+            <input
+              type="number"
+              min={0}
+              step={0.01}
+              value={drift ?? ''}
+              placeholder={lang === 'es' ? 'sin fijar' : 'not set'}
+              onChange={(e) => setDrift(e.target.value === '' || !(Number(e.target.value) > 0) ? null : Number(e.target.value))}
+              style={{ width: '5.5rem' }}
+              data-drift-input=""
+            />
+          </label>
+          <input
+            type="range"
+            min={0}
+            max={Math.max(1, Math.ceil(xMax))}
+            step={Math.max(0.1, Math.ceil(xMax) / 200)}
+            value={cursorX ?? 0}
+            disabled={!useHoursAxis}
+            aria-label={lang === 'es' ? 'Horas de operación (línea de ahora)' : 'Operating hours (the now line)'}
+            onChange={(e) => setHours(Number(e.target.value))}
+            data-hours-cursor=""
+          />
+          <span className="cdem-cursor-chip">{cursorX !== null ? `${num(cursorX, { digits: 3 })} h` : lang === 'es' ? 'horas: fije su velocidad' : 'hours: set your drift rate'}</span>
+        </div>
+        <ChartCallouts callouts={callouts} points={points} frame={{ x: [0, xMax], y: [yLo, yHi] }}>
+          <UPlotChart
+            title={{ en: 'P80 against operating hours', es: 'P80 contra horas de operación' }}
+            height="fill"
+            x={useHoursAxis ? { values: xs, label: { en: 'Operating hours', es: 'Horas de operación' }, unit: 'h' } : { values: xs, label: { en: 'Opening of the setting', es: 'Apertura de la abertura' }, unit: 'mm' }}
+            y={{ label: { en: 'Product P80', es: 'P80 del producto' }, unit: 'mm', range: [yLo, yHi] }}
+            series={[{ id: 'p80', label: { en: 'P80 (live engine)', es: 'P80 (motor en vivo)' }, values: curve.p80, color: LIVE_COLOR, width: 2.4 }]}
+            yMarks={[{ y: target, label: { en: 'target P80', es: 'P80 objetivo' }, tone: 'neutral' }]}
+            marks={marks}
+          />
+        </ChartCallouts>
+      </div>
     </PlotCard>
   );
 }

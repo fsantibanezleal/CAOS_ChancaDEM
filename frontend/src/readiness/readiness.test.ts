@@ -69,9 +69,9 @@ describe('the committed documents', () => {
   it('the provider tree says provider on every artifact row (its api row is missing, by the catalog); the note names the provider from the document', () => {
     for (const view of [...Object.keys(GROUP_ROWS), 'experiments', 'benchmark']) expect(viewState(fixture, VIEWS[view]).state, view).toBe('provider');
     expect(viewState(fixture, VIEWS.implementation).state).toBe('missing');
-    const html = renderToStaticMarkup(createElement(NoteLine, { view: viewState(fixture, VIEWS.chamber), lang: 'en' }));
+    const html = renderToStaticMarkup(createElement(NoteLine, { view: viewState(fixture, VIEWS.system), lang: 'en' }));
     expect(html).toContain('data-readiness="provider"');
-    for (const id of GROUP_ROWS.chamber) expect(html).toContain(fixture.contracts.find((c) => c.id === id)!.reason!.en);
+    for (const id of GROUP_ROWS.system) expect(html).toContain(fixture.contracts.find((c) => c.id === id)!.reason!.en);
   });
 });
 
@@ -131,7 +131,7 @@ describe('which model answers a slot', () => {
 
 describe('a missing readiness document', () => {
   it('adversarial: a null document is readiness unknown, in both languages', () => {
-    const view = viewState(null, VIEWS.chamber);
+    const view = viewState(null, VIEWS.system);
     expect(view.state).toBe('unknown');
     expect(renderToStaticMarkup(createElement(NoteLine, { view, lang: 'en' }))).toMatch(/data-readiness="unknown".*Readiness unknown/);
     expect(renderToStaticMarkup(createElement(NoteLine, { view, lang: 'es' }))).toMatch(/data-readiness="unknown".*Disponibilidad desconocida/);

@@ -130,8 +130,8 @@ function citations(): Array<{ source: string; tab: number }> {
 }
 
 describe('the example executive view', () => {
-  it('the shell is pinned exactly at 0.23.0 (0.14.0 brought flip cards, carousels, animated illustrations and Focus mode; 0.15.0 added the G19 value check; 0.16.0 gave SurfacePage Focus; 0.19.0 added Tier A chart interaction and accessible data tables; 0.20.0 added the showcase primitives and G21; 0.21.0 added immersiveRoutes and railWidth; 0.22.0 compact tab density; 0.23.0 the mobile story stage floor)', () => {
-    expect(pkg.dependencies['@fasl-work/caos-app-shell']).toBe('0.23.0');
+  it('the shell is pinned exactly at 0.23.1 (0.14.0 brought flip cards, carousels, animated illustrations and Focus mode; 0.15.0 added the G19 value check; 0.16.0 gave SurfacePage Focus; 0.19.0 added Tier A chart interaction and accessible data tables; 0.20.0 added the showcase primitives and G21; 0.21.0 added immersiveRoutes and railWidth; 0.22.0 compact tab density; 0.23.0 the mobile story stage floor; 0.23.1 the document-walk fix)', () => {
+    expect(pkg.dependencies['@fasl-work/caos-app-shell']).toBe('0.23.1');
     expect(EXECUTIVE_SCHEMA_VERSION).toBe('2.0.0');
   });
 

@@ -44,3 +44,180 @@
   padding-left: 1.1rem;
   font-size: var(--text-sm);
 }
+
+/* The host of a view with anchored callouts (views/callouts.tsx): the shell's callout layer covers it, the drawing sits under the
+   layer's header band. */
+.cdem-callout-host {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.cdem-callout-fill {
+  flex: 1 1 0;
+  min-height: 11rem;
+}
+
+.cdem-callout-drawing {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.cdem-callout-drawing > * {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* A row of view controls above a drawing: a scrubber, a play button, a toggle. */
+.cdem-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+  font-size: var(--text-sm);
+}
+
+.cdem-controls input[type='range'] {
+  flex: 1 1 10rem;
+  min-width: 8rem;
+}
+
+.cdem-controls button[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* The circuit (catalog row V1): the flow along a stream is a dash pattern moving at a speed bound to the case's throughput; under
+   reduced motion it stops and the arrowheads show the direction. */
+.cdem-stream-flow {
+  animation-name: cdem-flow;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.cdem-stage-node {
+  cursor: pointer;
+}
+
+.cdem-stage-node:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@keyframes cdem-flow {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cdem-stream-flow {
+    animation: none;
+  }
+}
+
+/* The value a linked cursor stands at, beside its scrubber (the marker the linked views share). */
+.cdem-cursor-chip {
+  flex: none;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.cdem-linkbtn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-accent);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cdem-linkbtn[aria-pressed='true'] {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* The story (pages/Story.tsx): the stage fills the shell's story stage; the panel is the evidence. */
+.cdem-story {
+  min-width: 0;
+}
+
+.cdem-story-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.cdem-story-stage > * {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.cdem-story-chart {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.cdem-story-chart > * {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.cdem-story-marker {
+  position: absolute;
+  right: var(--space-2);
+  bottom: var(--space-2);
+  flex: none;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.cdem-story-evidence {
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+}
+
+.cdem-story-evidence h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.cdem-story-evidence p {
+  margin: 0;
+  color: var(--color-fg-subtle);
+}
+
+.cdem-story-evidence small {
+  color: var(--color-fg-faint);
+}
+
+.cdem-story-state {
+  max-width: 70rem;
+  margin-inline: auto;
+  padding: 1rem;
+}

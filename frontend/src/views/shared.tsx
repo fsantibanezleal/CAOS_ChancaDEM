@@ -23,6 +23,11 @@ export interface ViewCtx {
   /** Sets the rail's closed-side setting so that the variant in force has this setting; false when the case's inputs are measured. */
   canApplyCss: boolean;
   applyCss: (mm: number) => void;
+  /** The reader's drift rate of the setting [mm/h] (catalog row V4); null until the reader sets one: the product asserts no wear rate. */
+  drift: number | null;
+  setDrift: (mmPerH: number | null) => void;
+  /** Opens a case of the index (a stage of the circuit, a survey of the comparison). */
+  pickCase: (caseId: string) => void;
 }
 
 export const ViewContext = createContext<ViewCtx>({
@@ -34,6 +39,9 @@ export const ViewContext = createContext<ViewCtx>({
   setTarget: () => undefined,
   canApplyCss: false,
   applyCss: () => undefined,
+  drift: null,
+  setDrift: () => undefined,
+  pickCase: () => undefined,
 });
 export const useView = (): ViewCtx => useContext(ViewContext);
 

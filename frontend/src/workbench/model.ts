@@ -297,7 +297,7 @@ export function syntheticBand(machine: string, loo: LooState | null, target: 'tp
 }
 
 /** The groups of the App, in the order of the tab row. The write-up is the tab after them. */
-export const GROUP_ORDER = ['chamber', 'product', 'performance', 'learned', 'validation'] as const;
+export const GROUP_ORDER = ['system', 'product', 'performance', 'learned', 'validation'] as const;
 export type GroupId = (typeof GROUP_ORDER)[number];
 
 /**
@@ -306,13 +306,43 @@ export type GroupId = (typeof GROUP_ORDER)[number];
  * the HP500 validation for the bands of a real survey (only a real case reads it), the model contracts and metrics for the learned views.
  */
 export const GROUP_ROWS: Record<GroupId | 'context', string[]> = {
-  chamber: ['case-manifest'],
+  system: ['case-index', 'case-manifest', 'trace'],
   product: ['trace'],
   performance: ['trace', 'hp500-loo'],
   learned: ['surrogate-model', 'anomaly-model', 'model-metrics'],
-  validation: ['trace', 'hp500-loo'],
+  validation: ['trace', 'hp500-loo', 'hp500-crusherbayes'],
   context: ['case-manifest'],
 };
 
 /** The rows of a group that a case reads: the HP500 validation matters to a real survey and to a synthetic case of the banded machine. */
-export const rowsFor = (group: GroupId | 'context', real: boolean, banded = false): string[] => GROUP_ROWS[group].filter((id) => real || banded || id !== 'hp500-loo');
+export const rowsFor = (group: GroupId | 'context', real: boolean, banded = false): string[] =>
+  GROUP_ROWS[group].filter((id) => group === 'validation' || real || banded || id !== 'hp500-loo');
+
+/**
+ * Where each view of the visualization catalog (docs/design/SDD.md) sits in the App: its group and its sub-view. A row whose placement
+ * says "first view" opens its group, so the group's stage is that view (ADR-0082 rule 2, SH-001).
+ */
+export const CATALOG_PLACEMENT = {
+  V1: { group: 'system', view: 'circuit', first: true },
+  V2: { group: 'system', view: 'chamber', first: false },
+  V3: { group: 'product', view: 'gradation', first: true },
+  V4: { group: 'performance', view: 'campaign', first: true },
+  V5: { group: 'product', view: 'passes', first: false },
+  V6: { group: 'validation', view: 'compare', first: true },
+} as const satisfies Record<string, { group: GroupId; view: string; first: boolean }>;
+
+/** The App's tab row is at most the shell's six tabs, the Context write-up included (ADR-0071 rule 5). */
+export const MAX_TABS = 6;
+
+/** What breaks the catalog's placement in an App made of these groups (in tab order) and their sub-views (in order); empty when it holds. */
+export function placementProblems(groups: readonly string[], subviews: Readonly<Record<string, readonly string[]>>): string[] {
+  const out: string[] = [];
+  if (groups.length + 1 > MAX_TABS) out.push(`${groups.length} groups and the Context tab make ${groups.length + 1} tabs; at most ${MAX_TABS}`);
+  for (const [id, p] of Object.entries(CATALOG_PLACEMENT)) {
+    const views = subviews[p.group];
+    if (!groups.includes(p.group) || !views) out.push(`${id}: the group ${p.group} is not in the App`);
+    else if (!views.includes(p.view)) out.push(`${id}: the view ${p.view} is not in the group ${p.group}`);
+    else if (p.first && views[0] !== p.view) out.push(`${id}: the group ${p.group} opens on ${views[0]}, not on ${p.view}`);
+  }
+  return out;
+}

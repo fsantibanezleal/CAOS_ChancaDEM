@@ -2,14 +2,20 @@
 // classification curve, and the mass balance per size class. Every chart is on the shell's `UPlotChart` or `BarChart`; the numbers
 // under the charts are the engine's (live) and the trace's (replay). A case whose replay is absent keeps the live lane running and
 // says the replay is not available yet, with the reason.
-import { BarChart, PlotCard, ViewsRow, useWorkbenchState, type BarDatum } from '@fasl-work/caos-app-shell';
+import { BarChart, PlotCard, ViewsRow, useWorkbenchState, type BarDatum, type BiText } from '@fasl-work/caos-app-shell';
+import { useMemo } from 'react';
 import { UPlotChart, type ChartSeries } from '@fasl-work/caos-app-shell/chart';
 import { appearanceCum, phiFromT10, tFamily } from '../engine/breakage';
 import { classificationParams, classify } from '../engine/classification';
+import { evaluate } from '../engine/engine';
+import type { Operating } from '../engine/types';
 import type { Text } from '../lib/contract.types';
-import { liveT10 } from '../workbench/model';
+import { liveT10, type Selection } from '../workbench/model';
+import { ChartCallouts, type CalloutSpec, type ChartPoint } from './callouts';
+import { linkedId, selectedClass, useHours, useLinkedSelection } from './linked';
+import { PassesView, passCurves, passSeriesOf, usePassCount } from './passes';
 import { Fill, Stack } from './draw';
-import { bare, GroupFrame, Pending, provenanceOf, READOUT_SIZES, useNum, useT, useView, type Sub } from './shared';
+import { bare, GroupFrame, Pending, provenanceOf, useNum, useT, useView, type Sub } from './shared';
 import { asc, FEED_COLOR, finAll, LIVE_COLOR, logSpace, REPLAY_COLOR, REPLAY_DASH } from './series';
 
 const REPLAY_NOTE: Text = {
@@ -23,56 +29,106 @@ function laneNote(reason: Text | null, hasReplay: boolean): Text {
   return { en: 'Solid: the live engine at the rail’s values. Dashed: the committed replay of the case.', es: 'Continua: el motor en vivo con los valores del panel. Segmentada: el replay comprometido del caso.' };
 }
 
-function GradationView() {
-  const { sel } = useView();
+/** The product the hours cursor stands for: the setting opened by the reader's drift rate times the hours (no wear rate is asserted). */
+export function productAtHours(op: Operating, hours: number | null, driftMmPerH: number | null) {
+  if (hours === null || !(hours > 0) || driftMmPerH === null || !(driftMmPerH > 0)) return null;
+  const cssMm = op.cssMm + driftMmPerH * hours;
+  return { hours, cssMm, result: evaluate({ ...op, cssMm }) };
+}
+
+/** The three callouts of the gradation: F80 on the feed, P80 on the product, and the passing at the selected size (or at 1 mm). */
+export function gradationCallouts(sel: Selection, cls: number | null, fmt: (v: number, o: { digits?: number; decimals?: number }) => string): { callouts: CalloutSpec[]; points: ChartPoint[] } {
+  const r = sel.result;
+  const source: Text = { en: `Live engine at the rail's values, ${sel.data.manifest.case_id}`, es: `Motor en vivo con los valores del panel, ${sel.data.manifest.case_id}` };
+  const edge = cls !== null ? r.product.edgesMm[cls] : 1;
+  const passing = cls !== null ? r.product.passing[cls] : r.pctPassing[1];
+  return {
+    callouts: [
+      { id: 'f80', eyebrow: { en: 'FEED F80', es: 'F80 DE LA ALIMENTACIÓN' }, value: Number.isFinite(r.f80) ? fmt(r.f80, { digits: 3 }) : null, unit: { en: 'mm', es: 'mm' }, state: 'normal', source },
+      { id: 'p80', eyebrow: { en: 'PRODUCT P80', es: 'P80 DEL PRODUCTO' }, value: Number.isFinite(r.p80) ? fmt(r.p80, { digits: 3 }) : null, unit: { en: 'mm', es: 'mm' }, state: 'selected', source },
+      {
+        id: 'class',
+        eyebrow: cls !== null ? { en: `PASSING ${fmt(edge, { digits: 3 })} MM`, es: `PASANTE ${fmt(edge, { digits: 3 })} MM` } : { en: 'PASSING 1 MM', es: 'PASANTE 1 MM' },
+        value: Number.isFinite(passing) ? fmt(passing * 100, { digits: 3 }) : null,
+        unit: { en: '% of the product', es: '% del producto' },
+        state: cls !== null ? 'selected' : 'normal',
+        source,
+      },
+    ],
+    points: [
+      { id: 'f80', x: r.f80, y: 0.8 },
+      { id: 'p80', x: r.p80, y: 0.8 },
+      { id: 'class', x: edge, y: passing },
+    ],
+  };
+}
+
+export function GradationView() {
+  const { sel, drift } = useView();
   const stateKey = useWorkbenchState()?.stateKey;
   const t = useT();
   const num = useNum();
-  if (!sel) return <Pending />;
+  const { selectedId, select } = useLinkedSelection();
+  const { hours } = useHours();
+  const series = useMemo(() => (sel ? passSeriesOf(sel.op) : null), [sel]);
+  const n = series?.n ?? 28;
+  const count = usePassCount(n);
+  if (!sel || !series) return <Pending />;
   const r = sel.result;
   const trace = sel.data.trace;
   const x = asc(r.feed.edgesMm);
-  const series: ChartSeries[] = [
-    { label: { en: 'Feed (live)', es: 'Alimentación (en vivo)' }, values: finAll(asc(r.feed.passing)), color: FEED_COLOR, width: 1.6 },
-    { label: { en: 'Product (live)', es: 'Producto (en vivo)' }, values: finAll(asc(r.product.passing)), color: LIVE_COLOR, width: 2.4 },
+  const cls = selectedClass(selectedId, n);
+  const params = classificationParams(sel.op.machine, sel.op.cssMm, { f80Mm: r.f80, calibrated: sel.op.calibrated, throwMm: sel.op.throwMm });
+  const lines: ChartSeries[] = [
+    { id: 'feed', label: { en: 'Feed (live)', es: 'Alimentación (en vivo)' }, values: finAll(asc(r.feed.passing)), color: FEED_COLOR, width: 1.6 },
+    { id: 'product', label: { en: 'Product (live)', es: 'Producto (en vivo)' }, values: finAll(asc(r.product.passing)), color: LIVE_COLOR, width: 2.4 },
   ];
-  if (trace) series.push({ label: { en: 'Product (replay)', es: 'Producto (replay)' }, values: finAll(asc(trace.product_passing)), color: REPLAY_COLOR, dash: REPLAY_DASH, width: 1.8 });
+  if (trace) lines.push({ id: 'replay', label: { en: 'Product (replay)', es: 'Producto (replay)' }, values: finAll(asc(trace.product_passing)), color: REPLAY_COLOR, dash: REPLAY_DASH, width: 1.8 });
+  lines.push({ id: 'classification', label: { en: 'Classification C (chance of breakage)', es: 'Clasificación C (probabilidad de fractura)' }, values: finAll(asc(r.feed.edgesMm.map((d) => classify(d, params)))), color: '--color-fg-faint', dash: [2, 3], width: 1.4 });
+  if (count < n) {
+    const { after } = passCurves(series, count);
+    lines.push({ id: 'after', label: { en: `Product after ${count} passes`, es: `Producto tras ${count} pasadas` }, values: finAll(asc(after)), color: '--color-good', width: 2.2 });
+  }
+  const atHours = productAtHours(sel.op, hours, drift);
+  if (atHours) lines.push({ id: 'hours', label: { en: `Product after ${num(atHours.hours, { digits: 3 })} h of drift`, es: `Producto tras ${num(atHours.hours, { digits: 3 })} h de desplazamiento` }, values: finAll(asc(atHours.result.product.passing)), color: '--color-bad', dash: [8, 3], width: 2 });
+  const { callouts, points } = gradationCallouts(sel, cls, (v, o) => num(v, o));
   const lead = [num(r.f80, { digits: 4 }), num(r.p80, { digits: 4 }), num(r.reductionRatio, { decimals: 2 })];
-  const passing = READOUT_SIZES.map((s) => num(r.pctPassing[s], { percent: true, decimals: 1 }));
-  const live = [...lead, ...passing];
-  const replay = trace
-    ? [
-        num(trace.summary.f80_mm, { digits: 4 }),
-        num(trace.summary.p80_mm, { digits: 4 }),
-        num(trace.summary.reduction_ratio, { decimals: 2 }),
-        ...READOUT_SIZES.map((s) => num(trace.summary.pct_passing[String(s)], { percent: true, decimals: 1 })),
-      ]
-    : null;
+  const replay = trace ? [num(trace.summary.f80_mm, { digits: 4 }), num(trace.summary.p80_mm, { digits: 4 }), num(trace.summary.reduction_ratio, { decimals: 2 })] : null;
+  const marks: { x: number; label: BiText }[] = [
+    { x: r.f80, label: { en: 'F80', es: 'F80' } },
+    { x: r.p80, label: { en: 'P80', es: 'P80' } },
+  ];
+  if (cls !== null) marks.push({ x: r.product.edgesMm[cls], label: { en: 'selected size', es: 'tamaño seleccionado' } });
+  // the chart's index runs fine to coarse over the edges; the class of an edge is the class it is the upper edge of
+  const toCls = (ascIndex: number) => x.length - 1 - ascIndex;
+  const note = laneNote(sel.data.traceReason, !!trace);
   return (
-    <PlotCard fill title={{ en: 'Feed and product gradation', es: 'Gradación de la alimentación y del producto' }} lane="live" provenance={provenanceOf(sel)} dataKey={stateKey} note={laneNote(sel.data.traceReason, !!trace)}>
-      <Stack>
+    <PlotCard
+      fill
+      title={{ en: 'Feed and product gradation', es: 'Gradación de la alimentación y del producto' }}
+      lane="live"
+      provenance={provenanceOf(sel)}
+      dataKey={stateKey}
+      note={{
+        en: `${note.en} The faint dotted curve is the classification C on the same size axis. Select a size on the chart to follow its class in the population balance.`,
+        es: `${note.es} La curva punteada tenue es la clasificación C sobre el mismo eje de tamaño. Seleccione un tamaño en el gráfico para seguir su clase en el balance poblacional.`,
+      }}
+    >
+      <div className="cdem-stack" data-caos-flow="" data-pass-count={count} data-selected-class={cls ?? ''} data-hours={atHours ? atHours.hours : ''}>
         <div className="cdem-tablewrap">
           <table className="caos-table" data-state="ready">
             <thead>
               <tr>
-                <th rowSpan={2}>{t('Lane', 'Carril')}</th>
-                <th rowSpan={2}>{t('F80 (mm)', 'F80 (mm)')}</th>
-                <th rowSpan={2}>{t('P80 (mm)', 'P80 (mm)')}</th>
-                <th rowSpan={2}>{t('Reduction', 'Reducción')}</th>
-                <th colSpan={READOUT_SIZES.length} style={{ textAlign: 'center' }}>
-                  {t('Passing at size (mm)', 'Pasante según tamaño (mm)')}
-                </th>
-              </tr>
-              <tr>
-                {READOUT_SIZES.map((sz) => (
-                  <th key={sz}>{num(sz, { decimals: 0 })}</th>
-                ))}
+                <th>{t('Lane', 'Carril')}</th>
+                <th>{t('F80 (mm)', 'F80 (mm)')}</th>
+                <th>{t('P80 (mm)', 'P80 (mm)')}</th>
+                <th>{t('Reduction', 'Reducción')}</th>
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td>{t('Live', 'En vivo')}</td>
-                {live.map((v, i) => (
+                {lead.map((v, i) => (
                   <td key={i}>{v}</td>
                 ))}
               </tr>
@@ -87,20 +143,21 @@ function GradationView() {
             </tbody>
           </table>
         </div>
-        <Fill>
+        <ChartCallouts callouts={callouts} points={points} frame={{ x: [x[0], x[x.length - 1]], y: [0, 1], xLog: true }}>
           <UPlotChart
             title={{ en: 'Cumulative passing against size', es: 'Pasante acumulado contra tamaño' }}
             height="fill"
             x={{ values: x, label: { en: 'Size', es: 'Tamaño' }, unit: 'mm', log: true }}
             y={{ label: { en: 'Passing', es: 'Pasante' }, range: [0, 1], format: { percent: true, decimals: 0 } }}
-            series={series}
-            marks={[
-              { x: r.f80, label: 'F80' },
-              { x: r.p80, label: 'P80' },
-            ]}
+            series={lines}
+            marks={marks}
+            onPick={(i) => {
+              const c = toCls(i);
+              if (c >= 0 && c < n) select(linkedId('class', c), 'scene');
+            }}
           />
-        </Fill>
-      </Stack>
+        </ChartCallouts>
+      </div>
     </PlotCard>
   );
 }
@@ -310,6 +367,7 @@ function BalanceView() {
 export function ProductGroup() {
   const tabs: Sub[] = [
     { id: 'gradation', label: { en: 'Gradation', es: 'Gradación' }, content: <GradationView /> },
+    { id: 'passes', label: { en: 'Population balance', es: 'Balance poblacional' }, content: <PassesView /> },
     { id: 'breakage', label: { en: 'Breakage', es: 'Fractura' }, content: <BreakageView /> },
     { id: 'balance', label: { en: 'Mass balance', es: 'Balance de masa' }, content: <BalanceView /> },
   ];

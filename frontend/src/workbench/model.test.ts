@@ -121,7 +121,7 @@ describe('the selection', () => {
 
 describe('the rows each group reads', () => {
   it('there is one list per group of the App, in the order the tab row shows them, and one for the write-up', () => {
-    expect(GROUP_ORDER).toEqual(['chamber', 'product', 'performance', 'learned', 'validation']);
+    expect(GROUP_ORDER).toEqual(['system', 'product', 'performance', 'learned', 'validation']);
     expect(Object.keys(GROUP_ROWS)).toEqual([...GROUP_ORDER, 'context']);
     for (const rows of Object.values(GROUP_ROWS)) expect(rows.length).toBeGreaterThan(0);
   });

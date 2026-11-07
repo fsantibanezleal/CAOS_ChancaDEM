@@ -3,10 +3,15 @@
 // is illustrative of the machine class (cone and gyratory as a surface of revolution, the jaw as a planar two-plate mechanism),
 // not the plant's own drawing, and the card says so; the numbers (the settings, the nip angle, the grip limit) are the engine's.
 // The 3D chamber is added to this group by the main session (unit U2b-2 writes views/chamber3d/).
-import { PlotCard, Stage, useShellLang, useWorkbenchState } from '@fasl-work/caos-app-shell';
-import { lazy, Suspense } from 'react';
+import { PlotCard, Stage, ViewsRow, useShellLang, useWorkbenchState } from '@fasl-work/caos-app-shell';
+import { lazy, Suspense, type ReactNode } from 'react';
 import { chamberProfile, jawProfile, machineGeom, profilePolylines } from '../engine/chamber';
+import { evaluate } from '../engine/engine';
 import type { Operating } from '../engine/types';
+import type { Text } from '../lib/contract.types';
+import { CalloutStage, type CalloutSpec, type Subject } from './callouts';
+import { CircuitView } from './circuit';
+import { useHours } from './linked';
 import { Fill, Labels, LabelText, Stack, TOKEN } from './draw';
 import { GroupFrame, Pending, provenanceOf, useNum, useT, useView, type Sub } from './shared';
 
@@ -56,10 +61,10 @@ function GeometryTable({ g }: { g: GeometryRow }) {
   );
 }
 
+type Num = (v: number | null | undefined, o?: { digits?: number; decimals?: number }) => string;
+
 /** The cone and gyratory slice: the fixed concave, the gyrating mantle, the closed-side setting at the discharge and the open-side outline. */
-function RevolutionSlice({ op, width, height }: { op: Operating; width: number; height: number }) {
-  const lang = useShellLang();
-  const num = useNum();
+function revolutionSlice(op: Operating, width: number, height: number, lang: 'en' | 'es', num: Num): { node: ReactNode; subjects: Subject[] } {
   const prof = chamberProfile(op.machine, op.cssMm, op.throwMm);
   const { concave, mantle } = profilePolylines(prof, 40);
   const P = prof.P;
@@ -95,7 +100,13 @@ function RevolutionSlice({ op, width, height }: { op: Operating; width: number; 
     L.place(names.concave, cx + sx(prof.rConcave(P.zTop * 0.85)) - 6, sy(P.zTop * 0.85), 'end', { fill: TOKEN.subtle }),
     L.place(names.lip, padX, sy(0) - 5, 'start', { fill: TOKEN.faint }),
   ];
-  return (
+  const zMid = P.zTop * 0.5;
+  const subjects: Subject[] = [
+    { id: 'css', x: cx + (sx(rm) + sx(rc)) / 2, y: yGap },
+    { id: 'nip', x: cx - (sx(prof.rConcave(zMid)) + sx(Math.max(0, prof.rMantleClosed(zMid)))) / 2, y: sy(zMid) },
+    { id: 'throw', x: cx - (sx(rm) + sx(rc)) / 2, y: yGap },
+  ];
+  const node = (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={lang === 'es' ? 'Corte de la cámara de chancado' : 'Cross-section of the crushing chamber'} data-chart="chamber-slice">
       <path d={bowl} fill={TOKEN.subtleSoft} stroke={TOKEN.subtle} strokeWidth={2.5} />
       {hasMantle && <path d={body} fill={TOKEN.goodSoft} stroke={TOKEN.good} strokeWidth={2.5} />}
@@ -106,12 +117,11 @@ function RevolutionSlice({ op, width, height }: { op: Operating; width: number; 
       <LabelText items={labels} />
     </svg>
   );
+  return { node, subjects };
 }
 
 /** The jaw slice: a fixed plate and a swing plate that close on a V, drawn closed (solid) and open (dashed). */
-function JawSlice({ op, width, height }: { op: Operating; width: number; height: number }) {
-  const lang = useShellLang();
-  const num = useNum();
+function jawSlice(op: Operating, width: number, height: number, lang: 'en' | 'es', num: Num): { node: ReactNode; subjects: Subject[] } {
   const j = jawProfile(op.machine, op.cssMm, op.throwMm);
   const zTop = j.P.zTop;
   const padX = 12;
@@ -151,7 +161,12 @@ function JawSlice({ op, width, height }: { op: Operating; width: number; height:
     L.place(names.fixed, sx(j.xFixed(zTop * 0.5)) + 10, sy(zTop * 0.5), 'start', { fill: TOKEN.subtle }),
     L.place(names.swing, sx(j.xSwing(zTop * 0.5, 0)) - 10, sy(zTop * 0.5), 'end', { fill: TOKEN.good }),
   ];
-  return (
+  const subjects: Subject[] = [
+    { id: 'css', x: (sx(j.xSwing(0, 0)) + sx(j.xFixed(0))) / 2, y: yDischarge },
+    { id: 'nip', x: (sx(j.xSwing(zTop * 0.5, 0)) + sx(j.xFixed(zTop * 0.5))) / 2, y: sy(zTop * 0.5) },
+    { id: 'throw', x: sx(j.xSwing(zTop, 0)), y: yTop },
+  ];
+  const node = (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={lang === 'es' ? 'Mecanismo de la chancadora de mandíbula' : 'Jaw crusher mechanism'} data-chart="chamber-slice">
       <path d={wedge} fill={TOKEN.goodSoft} stroke="none" />
       <polyline points={fixed.join(' ')} fill="none" stroke={TOKEN.subtle} strokeWidth={6} strokeLinecap="round" />
@@ -162,6 +177,49 @@ function JawSlice({ op, width, height }: { op: Operating; width: number; height:
       <line x1={sx(j.xSwing(0, 1))} y1={yDischarge + 4} x2={sx(j.xFixed(0))} y2={yDischarge + 4} stroke={TOKEN.faint} strokeWidth={2} strokeDasharray="3 2" />
       <LabelText items={labels} />
     </svg>
+  );
+  return { node, subjects };
+}
+
+/** The operating point the drawing stands for: the hours cursor of the campaign opens the setting by the reader's drift rate. */
+export function opAtHours(op: Operating, hours: number | null, drift: number | null): { op: Operating; hours: number | null } {
+  if (hours === null || !(hours > 0) || drift === null || !(drift > 0)) return { op, hours: null };
+  return { op: { ...op, cssMm: op.cssMm + drift * hours }, hours };
+}
+
+/** The three callouts of the section: the closed-side setting, the nip angle against its grip limit, and the throw at the speed. */
+export function sectionCallouts(op: Operating, nip: number, limit: number, hours: number | null, caseId: string, num: Num): CalloutSpec[] {
+  const source: Text =
+    hours !== null
+      ? { en: `Live engine, ${caseId}, after ${num(hours, { digits: 3 })} h at your drift rate`, es: `Motor en vivo, ${caseId}, tras ${num(hours, { digits: 3 })} h a su velocidad` }
+      : { en: `Live engine at the rail's values, ${caseId}`, es: `Motor en vivo con los valores del panel, ${caseId}` };
+  return [
+    { id: 'css', eyebrow: { en: 'CLOSED-SIDE SETTING', es: 'ABERTURA DE DESCARGA' }, value: num(op.cssMm, { digits: 3 }), unit: { en: 'mm', es: 'mm' }, state: hours !== null ? 'warning' : 'normal', source, trend: hours !== null ? 'up' : undefined },
+    {
+      id: 'nip',
+      eyebrow: { en: 'NIP ANGLE', es: 'ÁNGULO DE NIP' },
+      value: num(nip, { decimals: 1 }),
+      unit: { en: `deg, grip limit ${num(limit, { decimals: 2 })} deg`, es: `grados, límite de agarre ${num(limit, { decimals: 2 })} grados` },
+      state: nip <= limit ? 'normal' : 'alarm',
+      source: { en: 'Engine nip angle; limit 2 arctan 0.35', es: 'Ángulo de nip del motor; límite 2 arctan 0,35' },
+    },
+    { id: 'throw', eyebrow: { en: `THROW AT ${num(op.speedRpm, { digits: 3 })} RPM`, es: `CARRERA A ${num(op.speedRpm, { digits: 3 })} RPM` }, value: num(op.throwMm, { digits: 3 }), unit: { en: 'mm', es: 'mm' }, state: 'normal', source },
+  ];
+}
+
+/** The section with its callouts: the drawing a story step and the App's chamber view share. */
+export function SectionDrawing({ op, hours, caseId }: { op: Operating; hours: number | null; caseId: string }) {
+  const lang = useShellLang();
+  const num = useNum();
+  const r = evaluate(op);
+  const callouts = sectionCallouts(op, r.nipAngleDeg, r.nipLimitDeg, hours, caseId, num);
+  const isRevolution = machineGeom(op.machine).isRevolution;
+  return (
+    <CalloutStage
+      label={{ en: 'Chamber cross-section', es: 'Corte de la cámara' }}
+      callouts={callouts}
+      draw={({ width, height }) => (isRevolution ? revolutionSlice(op, width, height, lang, num) : jawSlice(op, width, height, lang, num))}
+    />
   );
 }
 
@@ -203,20 +261,19 @@ function NipWedge({ nip, limit, width, height }: { nip: number; limit: number; w
 }
 
 function SliceView() {
-  const { sel } = useView();
+  const { sel, drift } = useView();
+  const { hours } = useHours();
   const stateKey = useWorkbenchState()?.stateKey;
   if (!sel) return <Pending />;
-  const r = sel.result;
-  const g: GeometryRow = { css: sel.op.cssMm, throwMm: sel.op.throwMm, oss: r.ossMm, nip: r.nipAngleDeg, limit: r.nipLimitDeg };
-  const isRevolution = machineGeom(sel.op.machine).isRevolution;
+  const at = opAtHours(sel.op, hours, drift);
+  const r = at.hours === null ? sel.result : evaluate(at.op);
+  const g: GeometryRow = { css: at.op.cssMm, throwMm: at.op.throwMm, oss: r.ossMm, nip: r.nipAngleDeg, limit: r.nipLimitDeg };
   return (
     <PlotCard fill title={{ en: 'Chamber cross-section', es: 'Corte de la cámara' }} lane="live" provenance="synthetic" dataKey={stateKey} note={STRUCTURE_NOTE}>
       <Stack>
         <GeometryTable g={g} />
         <Fill>
-          <Stage label={{ en: 'Chamber cross-section', es: 'Corte de la cámara' }}>
-            {({ width, height }) => (isRevolution ? <RevolutionSlice op={sel.op} width={width} height={height} /> : <JawSlice op={sel.op} width={width} height={height} />)}
-          </Stage>
+          <SectionDrawing op={at.op} hours={at.hours} caseId={sel.data.manifest.case_id} />
         </Fill>
       </Stack>
     </PlotCard>
@@ -255,22 +312,44 @@ function NipView() {
 // stays under 500 KB and a reader who never opens it never downloads it.
 const ChamberView = lazy(() => import('./chamber3d').then((m) => ({ default: m.ChamberView })));
 
-/** The 3D chamber (unit U2b-2): a kinematic view of the selected case's chamber, driven by the live engine's values. */
+/** The 3D chamber (unit U2b-2): a kinematic view of the selected case's chamber, driven by the live engine's values; the hours cursor of
+ * the campaign opens its setting by the reader's drift rate. */
 function Chamber3DView() {
-  const { sel } = useView();
+  const { sel, drift } = useView();
+  const { hours } = useHours();
   if (!sel) return <Pending />;
+  const at = opAtHours(sel.op, hours, drift);
+  const r = at.hours === null ? sel.result : evaluate(at.op);
   return (
     <Suspense fallback={<Pending />}>
-      <ChamberView op={sel.op} p80Mm={sel.result.p80} f80Mm={sel.result.f80} provenance={provenanceOf(sel)} />
+      <ChamberView
+        op={at.op}
+        p80Mm={r.p80}
+        f80Mm={r.f80}
+        provenance={provenanceOf(sel)}
+        note={at.hours === null ? undefined : { en: `Drawn after ${at.hours.toFixed(1)} h at your drift rate.`, es: `Dibujada tras ${at.hours.toFixed(1).replace('.', ',')} h a su velocidad.` }}
+      />
     </Suspense>
   );
 }
 
-export function ChamberGroup() {
+/** Catalog row V2, the key component: the 3D chamber cutaway beside the 2D section that carries its callouts. */
+function ComponentView() {
+  return (
+    <ViewsRow shares={[3, 2]}>
+      <Chamber3DView />
+      <SliceView />
+    </ViewsRow>
+  );
+}
+
+/** The System group: the circuit (V1) first, then the chamber (V2) and the nip angle. */
+export function SystemGroup() {
+  const { pickCase } = useView();
   const tabs: Sub[] = [
-    { id: '3d', label: { en: '3D chamber', es: 'Cámara 3D' }, content: <Chamber3DView /> },
-    { id: 'slice', label: { en: 'Section', es: 'Corte' }, content: <SliceView /> },
+    { id: 'circuit', label: { en: 'Circuit', es: 'Circuito' }, content: <CircuitView onPickCase={pickCase} /> },
+    { id: 'chamber', label: { en: 'Chamber', es: 'Cámara' }, content: <ComponentView /> },
     { id: 'nip', label: { en: 'Nip angle', es: 'Ángulo de nip' }, content: <NipView /> },
   ];
-  return <GroupFrame group="chamber" ariaLabel={{ en: 'Chamber views', es: 'Vistas de la cámara' }} tabs={tabs} />;
+  return <GroupFrame group="system" ariaLabel={{ en: 'System views', es: 'Vistas del sistema' }} tabs={tabs} />;
 }

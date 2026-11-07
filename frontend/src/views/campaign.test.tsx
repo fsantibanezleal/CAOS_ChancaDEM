@@ -87,3 +87,52 @@ describe('no wear rate is asserted', () => {
     expect(src).not.toMatch(/useState\(\s*0?\.\d+\s*\)/);
   });
 });
+
+// SH-010 and catalog row V4: P80 against the hours at the reader's drift rate, never a drift rate of the product's own.
+import { driftCurve, DRIFT_TEXT, hoursCallouts, p80PerMm } from './campaign';
+
+describe('SH-010: the campaign view asserts no wear rate', () => {
+  const target = defaultTarget(p80);
+  it('P80 per millimetre of setting is the engine’s central difference', () => {
+    const h = Math.max(0.25, 0.01 * BASE.cssMm);
+    const want = (evaluate({ ...BASE, cssMm: BASE.cssMm + h }).p80 - evaluate({ ...BASE, cssMm: BASE.cssMm - h }).p80) / (2 * h);
+    expect(p80PerMm(BASE)).toBeCloseTo(want, 12);
+    expect(p80PerMm(BASE)!).toBeGreaterThan(0);
+  });
+  it('with no drift rate the curve has no hours: the axis is the opening of the setting', () => {
+    const c = driftCurve(BASE, target, 90, null);
+    expect(c.hours).toBeNull();
+    expect(c.crossingH).toBeNull();
+    expect(c.crossingMm).not.toBeNull();
+    expect(c.openingMm[0]).toBe(0);
+    expect(c.p80[0]).toBeCloseTo(p80, 9);
+  });
+  it('with the reader’s drift rate the hours are the opening over it, and the target is crossed at the engine’s setting', () => {
+    const c = driftCurve(BASE, target, 90, 0.2);
+    const m = campaignModel(BASE, target, 90);
+    expect(m.kind).toBe('curve');
+    if (m.kind !== 'curve') return;
+    expect(c.crossingMm).toBeCloseTo(m.deltaCssMm, 9);
+    expect(c.crossingH).toBeCloseTo(m.deltaCssMm / 0.2, 9);
+    c.hours!.forEach((hrs, i) => expect(hrs).toBeCloseTo(c.openingMm[i] / 0.2, 9));
+  });
+  it('adversarial: the callouts never state hours without the reader’s drift rate, and the drift control says it is the reader’s', () => {
+    const fmt = (v: number) => v.toFixed(3);
+    const unset = hoursCallouts('S01', target, driftCurve(BASE, target, 90, null), p80PerMm(BASE), null, fmt);
+    expect(unset.some((c) => /\bh\b/.test(c.unit.en))).toBe(false);
+    expect(unset.find((c) => c.id === 'now')!.unit.en).toBe('mm of P80 per mm of setting');
+    const set = hoursCallouts('S01', target, driftCurve(BASE, target, 90, 0.2), p80PerMm(BASE), null, fmt);
+    expect(set.find((c) => c.id === 'cross')!.unit.en).toBe('h at your drift rate');
+    expect(DRIFT_TEXT.control.en).toMatch(/asserts no wear rate and sets none/);
+    expect(DRIFT_TEXT.control.es).toMatch(/no afirma ni fija ninguna tasa de desgaste/);
+  });
+  it('adversarial: no default drift rate exists anywhere the view reads it from', () => {
+    const shared = readFileSync(fileURLToPath(new URL('./shared.tsx', import.meta.url)), 'utf8');
+    const wb = readFileSync(fileURLToPath(new URL('../workbench/Workbench.tsx', import.meta.url)), 'utf8');
+    const story = readFileSync(fileURLToPath(new URL('../pages/Story.tsx', import.meta.url)), 'utf8');
+    expect(shared).toMatch(/\n\s+drift: null,/);
+    expect(wb).toContain('useState<number | null>(null)');
+    expect(story).toContain('useState<number | null>(null)');
+    for (const src of [shared, wb, story]) expect(src).not.toMatch(/drift\w*\s*[:=]\s*\d/i);
+  });
+});

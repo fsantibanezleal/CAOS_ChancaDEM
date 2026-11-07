@@ -1,16 +1,20 @@
-// The App route (ADR-0016 s9, ADR-0071): one CaseWorkbench. The rail holds the case picker, the three variants of the closed-side
-// setting, the six knobs of the live engine and its live values; the instrument holds the question groups. The replay lane is the
-// committed trace of the case; the live lane is the TypeScript engine re-run with the rail's values. The groups are Chamber,
-// Product, Performance (with the comparison of the variants), Learned and Validation, then the Context write-up: six tabs, the
-// most the shell takes (ADR-0071 rule 5). Focus mode (ADR-0070) is on for every case: the Focus button opens the open group in the
-// full viewport with the case, the group and the sub-view kept, and the rail as the parameter column.
+// The App route (ADR-0016 s9, ADR-0071, ADR-0082): one CaseWorkbench. The rail holds the case picker, the three variants of the
+// closed-side setting, the six knobs of the live engine and its live values; the instrument holds the question groups, each opening on
+// one stage, the view its catalog row places first (docs/design/SDD.md, Visualization catalog). The replay lane is the committed trace of
+// the case; the live lane is the TypeScript engine re-run with the rail's values. The groups are System (the circuit V1, then the
+// chamber V2), Product (the gradation V3, then the population balance V5), Performance (the campaign V4 first), Learned and Validation
+// (the comparison V6 first), then the Context write-up: six tabs, the most the shell takes (ADR-0071 rule 5). The selection the views
+// share (a size class, a stage, a stream, a method, the pass count) is the shell's linked-view store, the hours cursor a second one
+// (views/linked.tsx). Focus mode (ADR-0070) is on for every case: the Focus button opens the open group in the full viewport with the
+// case, the group and the sub-view kept, and the rail as the parameter column.
 import { CaseWorkbench, Knob, Readout, useShellLang, useWorkbenchState, type CaseDef, type RailSection } from '@fasl-work/caos-app-shell';
 import { useEffect, useMemo, useState } from 'react';
 import { loadCase, loadHp500Loo, loadIndex, useArtifact, type CaseData } from '../api/artifacts';
 import type { CaseIndex, Hp500Loo, Text } from '../lib/contract.types';
 import { caseAbsent } from '../readiness/readiness';
 import { useReadiness } from '../readiness/useReadiness';
-import { ChamberGroup } from '../views/chamber';
+import { SystemGroup } from '../views/chamber';
+import { MACHINE_NAME } from '../views/circuit';
 import { ContextView } from '../views/context';
 import { LearnedGroup } from '../views/learned';
 import { PerformanceGroup } from '../views/performance';
@@ -19,14 +23,6 @@ import { ViewContext, provenanceOf, type ViewCtx } from '../views/shared';
 import { ValidationGroup } from '../views/validation';
 import { bakedOf, BANDED_MACHINE, knobBounds, KNOBS, railMoved, railOf, selectionOf, VARIANTS, type RailValues, type Selection } from './model';
 import './workbench.css';
-
-const MACHINE_NAME: Record<string, Text> = {
-  'cone-sec': { en: 'Secondary cone', es: 'Cono secundario' },
-  'cone-tert': { en: 'Tertiary cone', es: 'Cono terciario' },
-  'cone-short-head': { en: 'Short-head cone', es: 'Cono de cabeza corta' },
-  gyratory: { en: 'Gyratory', es: 'Giratoria' },
-  jaw: { en: 'Jaw', es: 'Mandíbula' },
-};
 
 function LiveValues({ sel }: { sel: Selection | null }) {
   const stateKey = useWorkbenchState()?.stateKey;
@@ -45,7 +41,7 @@ function LiveValues({ sel }: { sel: Selection | null }) {
         { label: { en: 'Power', es: 'Potencia' }, value: r ? r.powerKw : null, unit: 'kW', format: { digits: 4 } },
         { label: { en: 'Specific energy', es: 'Energía específica' }, value: r ? r.specificEnergyKwhT : null, unit: 'kWh/t', format: { decimals: 2 } },
         // the two inputs of the case that are not knobs: a case is one machine, and the ore's Bond index is the case's
-        { label: { en: 'Machine', es: 'Máquina' }, text: sel ? MACHINE_NAME[sel.data.manifest.params.machine] : { en: 'not available', es: 'no disponible' }, hint: { en: 'A case is one machine; the machine is not a knob.', es: 'Un caso es una máquina; la máquina no es una perilla.' } },
+        { label: { en: 'Machine', es: 'Máquina' }, text: sel ? MACHINE_NAME[sel.op.machine] : { en: 'not available', es: 'no disponible' }, hint: { en: 'A case is one machine; the machine is not a knob.', es: 'Un caso es una máquina; la máquina no es una perilla.' } },
         { label: { en: 'Bond work index', es: 'Índice de Bond' }, value: sel ? sel.data.manifest.params.ore_wi : null, unit: 'kWh/t', format: { digits: 4 }, hint: { en: 'Energy to grind the ore from a large size to 80 percent passing 100 micrometres.', es: 'Energía para moler el mineral desde un tamaño grande hasta 80 por ciento pasante de 100 micrómetros.' } },
       ]}
     />
@@ -88,6 +84,7 @@ export function Workbench() {
   const [variant, setVariant] = useState<string>(VARIANTS[0].id);
   const [rail, setRail] = useState<{ caseId: string; vals: RailValues } | null>(null);
   const [target, setTarget] = useState(12);
+  const [drift, setDrift] = useState<number | null>(null);
 
   // A new case starts from its own parameters (the rail shows when they were moved, and resets them), and its target P80 from its own P80.
   const data = loaded.state === 'ready' && loaded.data.manifest.case_id === selected ? loaded.data : null;
@@ -130,6 +127,12 @@ export function Workbench() {
     setTarget,
     canApplyCss: !!sel && !locked,
     applyCss: (mm) => rail && sel && setRail({ caseId: rail.caseId, vals: { ...rail.vals, cssMm: mm / sel.variant.cssFactor } }),
+    drift,
+    setDrift,
+    pickCase: (id) => {
+      setCaseId(id);
+      setVariant(VARIANTS[0].id);
+    },
   };
 
   const bounds = data ? knobBounds(data.manifest.params) : null;
@@ -191,7 +194,7 @@ export function Workbench() {
           modifiedFromId: moved ? selected : null,
           onResetToCanonical: () => data && setRail({ caseId: data.manifest.case_id, vals: railOf(data.manifest.params) }),
         }}
-        controls={vals ? { ...vals, target } : {}}
+        controls={vals ? { ...vals, target, drift } : {}}
         variants={{
           variants: VARIANTS.map((v) => ({ id: v.id, label: v.label, note: manifest ? v.note(manifest) : undefined, lane: 'live' as const })),
           activeId: variant,
@@ -199,9 +202,11 @@ export function Workbench() {
           title: { en: 'Closed-side setting', es: 'Abertura de descarga' },
         }}
         rail={sections}
+        railWidth={200}
+        tabDensity="compact"
         focus
         groups={[
-          { id: 'chamber', label: { en: 'Chamber', es: 'Cámara' }, lane: 'live', provenance: 'synthetic', content: <ChamberGroup /> },
+          { id: 'system', label: { en: 'System', es: 'Sistema' }, lane: 'live', provenance: prov, content: <SystemGroup /> },
           { id: 'product', label: { en: 'Product', es: 'Producto' }, lane: 'live', provenance: prov, content: <ProductGroup /> },
           { id: 'performance', label: { en: 'Performance', es: 'Desempeño' }, lane: 'live', provenance: prov, content: <PerformanceGroup /> },
           { id: 'learned', label: { en: 'Learned', es: 'Aprendido' }, lane: 'live', provenance: prov, content: <LearnedGroup /> },
