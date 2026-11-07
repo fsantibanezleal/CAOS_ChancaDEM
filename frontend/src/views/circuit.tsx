@@ -151,6 +151,9 @@ export function flowCycleSeconds(tph: number | null): number | null {
   return FLOW_PERIOD_PX / (FLOW_PX_PER_S_PER_TPH * tph);
 }
 
+/** A duration in seconds as CSS reads it: four decimals, never an exponent or a locale's comma. */
+export const cssSeconds = (s: number): string => String(Math.round(s * 1e4) / 1e4);
+
 /** Whether the reader prefers reduced motion, kept in step with the system setting. */
 export function useReducedMotion(): boolean {
   const [reduced, setReduced] = useState(() => prefersReducedMotion());
@@ -235,7 +238,7 @@ function StreamPath({ id, d, label, cycle, reduced }: { id: string; d: string; l
       data-linked-selected={item['data-linked-selected']}
       aria-pressed={item['aria-pressed']}
       data-flow={moving ? 'moving' : 'static'}
-      data-flow-cycle={moving ? cycle!.toFixed(4) : ''}
+      data-flow-cycle={moving ? cssSeconds(cycle!) : ''}
       onClick={item.onClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -254,7 +257,7 @@ function StreamPath({ id, d, label, cycle, reduced }: { id: string; d: string; l
         strokeWidth={2}
         strokeDasharray="12 12"
         className={moving ? 'cdem-stream-flow' : undefined}
-        style={moving ? { animationDuration: `${cycle!.toFixed(4)}s` } : undefined}
+        style={moving ? { animationDuration: `${cssSeconds(cycle!)}s` } : undefined}
         opacity={0.85}
         aria-hidden="true"
       />
@@ -273,6 +276,8 @@ export interface CircuitProps {
 
 /** The three callouts of the circuit: the feed throughput, the product P80 and the power draw, each with its document as its source. */
 export function circuitCallouts(values: CircuitValues, num: (v: number, o: { digits?: number; decimals?: number }) => string): CalloutSpec[] {
+  // a callout card holds one short line of source: the document, without the clause the stream table spells out
+  const short = (t: { en: string; es: string }) => ({ en: t.en.split(',')[0], es: t.es.split(',')[0] });
   const fmt = (v: StreamValue, o: { digits?: number; decimals?: number }) => (v.value === null ? null : num(v.value, o));
   const [feed, product, power]: CalloutSpec[] = [
     {
@@ -281,7 +286,7 @@ export function circuitCallouts(values: CircuitValues, num: (v: number, o: { dig
       value: fmt(values.feedTph, { digits: 4 }),
       unit: { en: 't/h', es: 't/h' },
       state: 'normal',
-      source: values.feedTph.source,
+      source: short(values.feedTph.source),
       missing: values.feedTph.missing,
     },
     {
@@ -290,7 +295,7 @@ export function circuitCallouts(values: CircuitValues, num: (v: number, o: { dig
       value: fmt(values.p80, { digits: 3 }),
       unit: { en: 'mm', es: 'mm' },
       state: 'selected',
-      source: values.p80.source,
+      source: short(values.p80.source),
       missing: values.p80.missing,
     },
     {
@@ -299,7 +304,7 @@ export function circuitCallouts(values: CircuitValues, num: (v: number, o: { dig
       value: fmt(values.power, { digits: 3 }),
       unit: { en: 'kW', es: 'kW' },
       state: 'normal',
-      source: values.power.source,
+      source: short(values.power.source),
       missing: values.power.missing,
     },
   ];
@@ -523,7 +528,7 @@ export function CircuitView({ onPickCase }: { onPickCase: (caseId: string) => vo
       }}
     >
       <div className="cdem-stack" data-caos-flow="">
-        <div className="cdem-fill">
+        <div className="cdem-fill cdem-fill-tall">
           <CircuitDrawing
             values={values}
             stageMachines={stageMachines}

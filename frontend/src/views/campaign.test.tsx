@@ -2,6 +2,7 @@
 // no wear rate is asserted (the drift rate is the x axis, never a default).
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
+import { formatNumber } from '@fasl-work/caos-app-shell';
 import { describe, expect, it } from 'vitest';
 import { evaluate } from '../engine/engine';
 import type { Operating } from '../engine/types';
@@ -117,7 +118,7 @@ describe('SH-010: the campaign view asserts no wear rate', () => {
     c.hours!.forEach((hrs, i) => expect(hrs).toBeCloseTo(c.openingMm[i] / 0.2, 9));
   });
   it('adversarial: the callouts never state hours without the reader’s drift rate, and the drift control says it is the reader’s', () => {
-    const fmt = (v: number) => v.toFixed(3);
+    const fmt = (v: number) => formatNumber(v, 'en', { digits: 3 });
     const unset = hoursCallouts('S01', target, driftCurve(BASE, target, 90, null), p80PerMm(BASE), null, fmt);
     expect(unset.some((c) => /\bh\b/.test(c.unit.en))).toBe(false);
     expect(unset.find((c) => c.id === 'now')!.unit.en).toBe('mm of P80 per mm of setting');

@@ -32,7 +32,7 @@ open industrial data.
 - The App's groups are System (the circuit, then the chamber: the 3D cutaway beside the section with its callouts), Product (the size
   distribution with its callouts and the classification curve, then the population balance), Performance (the campaign first),
   Learned and Validation (the methods compared first), with the Context tab: six tabs, each group opening on one stage; the rail is
-  200 px and the tab rows compact so the stage keeps 60 percent of the screen.
+  184 px and the tab rows compact so the stage keeps 60 percent of the screen.
 - Every reader-facing name of a method is its name, in both languages (the calibrated backbone, the bounded residual, the free-form
   fit, the setting-only line), never its ladder id; the documents' keys are unchanged.
 - The Implementation and Methodology pages describe the App's views and the story; the App's architecture figure names the System

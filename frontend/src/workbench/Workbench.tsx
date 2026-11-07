@@ -202,7 +202,7 @@ export function Workbench() {
           title: { en: 'Closed-side setting', es: 'Abertura de descarga' },
         }}
         rail={sections}
-        railWidth={200}
+        railWidth={184}
         tabDensity="compact"
         focus
         groups={[

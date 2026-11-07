@@ -1,7 +1,7 @@
 // Catalog row V6, comparison and decision (SH-009): the held-out MAPE of every method of hp500-loo and hp500-crusherbayes for throughput
 // and for power, the ten per-survey errors whose mean is that MAPE, and the method with the lowest held-out MAPE marked as recommended,
 // never a control; with CrusherBayes absent the other methods are drawn and the view says CrusherBayes is not available.
-import { LinkedViewProvider } from '@fasl-work/caos-app-shell';
+import { formatNumber, LinkedViewProvider } from '@fasl-work/caos-app-shell';
 import { readFileSync } from 'node:fs';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -53,7 +53,7 @@ describe('SH-009: every method on shared axes, read from the documents', () => {
       const want = documentsLowest(target);
       expect(best.id).toBe(want.id);
       expect(best.mape).toBe(want.mape);
-      const reason = recommendReason(best, compareRows(loo, cb, target), target, (v) => v.toFixed(2));
+      const reason = recommendReason(best, compareRows(loo, cb, target), target, (v) => formatNumber(v, 'en', { decimals: 2 }));
       expect(reason.en).toContain(best.name.en);
       expect(reason.en).toContain('lowest held-out error');
       expect(reason.es).toContain(best.name.es);

@@ -221,3 +221,11 @@
   margin-inline: auto;
   padding: 1rem;
 }
+
+/* Below the two-column layout a stack takes the height its parts need: a view with a callout band keeps room for its drawing. */
+@media (max-width: 899px) {
+  .cdem-callout-fill,
+  .cdem-fill-tall {
+    min-height: 26rem;
+  }
+}

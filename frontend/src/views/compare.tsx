@@ -323,9 +323,11 @@ export function CompareBody({
       </div>
     </PlotCard>
   );
+  // in the story's docked panel the card takes the height its parts need and the panel scrolls; in the App it fills its column
+  const docked = part === 'panel';
   const panel = (
     <PlotCard
-      fill
+      fill={!docked}
       title={{ en: 'The selected method on each survey', es: 'El método seleccionado en cada muestreo' }}
       lane="replay"
       provenance="real"
@@ -366,10 +368,10 @@ export function CompareBody({
             </tbody>
           </table>
         </div>
-        <div className="cdem-fill">
+        <div className={docked ? undefined : 'cdem-fill'}>
           <UPlotChart
             title={{ en: `Measured and held-out prediction per survey (${unit})`, es: `Medido y predicción reservada por muestreo (${unit})` }}
-            height="fill"
+            height={docked ? 260 : 'fill'}
             x={{ values: surveys, label: { en: 'Survey', es: 'Muestreo' }, ticks: surveys.map((k) => ({ value: k, label: { en: String(k), es: String(k) } as BiText })), range: [0.5, n + 0.5] }}
             y={{ label: target === 'tph' ? { en: 'Throughput', es: 'Capacidad' } : { en: 'Power', es: 'Potencia' }, unit }}
             series={bandSeries}

@@ -3,7 +3,7 @@
 // is illustrative of the machine class (cone and gyratory as a surface of revolution, the jaw as a planar two-plate mechanism),
 // not the plant's own drawing, and the card says so; the numbers (the settings, the nip angle, the grip limit) are the engine's.
 // The 3D chamber is added to this group by the main session (unit U2b-2 writes views/chamber3d/).
-import { PlotCard, Stage, ViewsRow, useShellLang, useWorkbenchState } from '@fasl-work/caos-app-shell';
+import { formatNumber, PlotCard, Stage, ViewsRow, useShellLang, useWorkbenchState } from '@fasl-work/caos-app-shell';
 import { lazy, Suspense, type ReactNode } from 'react';
 import { chamberProfile, jawProfile, machineGeom, profilePolylines } from '../engine/chamber';
 import { evaluate } from '../engine/engine';
@@ -272,9 +272,9 @@ function SliceView() {
     <PlotCard fill title={{ en: 'Chamber cross-section', es: 'Corte de la cámara' }} lane="live" provenance="synthetic" dataKey={stateKey} note={STRUCTURE_NOTE}>
       <Stack>
         <GeometryTable g={g} />
-        <Fill>
+        <div className="cdem-fill cdem-fill-tall">
           <SectionDrawing op={at.op} hours={at.hours} caseId={sel.data.manifest.case_id} />
-        </Fill>
+        </div>
       </Stack>
     </PlotCard>
   );
@@ -327,7 +327,7 @@ function Chamber3DView() {
         p80Mm={r.p80}
         f80Mm={r.f80}
         provenance={provenanceOf(sel)}
-        note={at.hours === null ? undefined : { en: `Drawn after ${at.hours.toFixed(1)} h at your drift rate.`, es: `Dibujada tras ${at.hours.toFixed(1).replace('.', ',')} h a su velocidad.` }}
+        note={at.hours === null ? undefined : { en: `Drawn after ${formatNumber(at.hours, 'en', { digits: 3 })} h at your drift rate.`, es: `Dibujada tras ${formatNumber(at.hours, 'es', { digits: 3 })} h a su velocidad.` }}
       />
     </Suspense>
   );

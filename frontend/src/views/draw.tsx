@@ -98,7 +98,7 @@ export function LabelText({ items }: { items: Placed[] }) {
   return (
     <>
       {items.map((p) => (
-        <text key={`${p.text}-${p.x}-${p.y}`} x={p.x} y={p.y} textAnchor={p.anchor} fill={p.fill} fontSize={FONT_PX} fontWeight={p.weight} style={{ fontFamily: 'var(--font-sans)' }}>
+        <text key={`${p.text}-${p.x}-${p.y}`} x={p.x} y={p.y} textAnchor={p.anchor} fill={p.fill} fontSize={FONT_PX} fontWeight={p.weight} style={{ fontFamily: 'var(--font-sans)', pointerEvents: 'none' }}>
           {p.text}
         </text>
       ))}

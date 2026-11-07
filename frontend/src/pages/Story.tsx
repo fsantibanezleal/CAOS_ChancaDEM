@@ -291,7 +291,7 @@ export function Story() {
     </p>
   );
   const comparePanel = looData ? (
-    <div className="cdem-story-chart">
+    <div>
       <CompareBody loo={looData} cb={cbData} cbReason={reasonOf(cb)} target={compareTarget} setTarget={setCompareTarget} caseId={shownCase} onPickCase={withCase} part="panel" />
     </div>
   ) : (

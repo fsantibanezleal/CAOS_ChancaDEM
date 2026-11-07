@@ -1,13 +1,13 @@
 // Catalog row V1, the circuit (SH-002, SH-003): every stage named by its machine, the active stage's streams labelled from the case's
 // manifest and committed trace, a stage that loads only a case of its own machine, and the flow moving at a speed proportional to the
 // throughput, standing still under reduced motion without one animation frame asked for.
-import { LinkedViewProvider, useLangStore } from '@fasl-work/caos-app-shell';
+import { formatNumber, LinkedViewProvider, useLangStore } from '@fasl-work/caos-app-shell';
 import { readFileSync } from 'node:fs';
 import { createElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CaseIndex, CaseManifest, Trace } from '../lib/contract.types';
-import { caseForStage, circuitValues, drawCircuit, flowCycleSeconds, FLOW_PERIOD_PX, MACHINE_NAME, STAGE_MACHINES, StreamTable, useReducedMotion, type StagedCase } from './circuit';
+import { cssSeconds, caseForStage, circuitValues, drawCircuit, flowCycleSeconds, FLOW_PERIOD_PX, MACHINE_NAME, STAGE_MACHINES, StreamTable, useReducedMotion, type StagedCase } from './circuit';
 
 const derived = new URL('../../../data/derived/', import.meta.url);
 const read = <T,>(rel: string): T => JSON.parse(readFileSync(new URL(rel, derived), 'utf8')) as T;
@@ -18,7 +18,7 @@ const real = read<CaseManifest>('manifests/HP500-01.json');
 const realTrace = read<Trace>('HP500-01/trace.json');
 const synth = read<CaseManifest>('manifests/S01.json');
 const synthTrace = read<Trace>('S01/trace.json');
-const num = (v: number, o: { digits?: number; decimals?: number } = {}) => (o.decimals !== undefined ? v.toFixed(o.decimals) : String(Number(v.toPrecision(o.digits ?? 4))));
+const num = (v: number, o: { digits?: number; decimals?: number } = {}) => formatNumber(v, 'en', o);
 const wrap = (node: ReactNode) => renderToStaticMarkup(createElement(LinkedViewProvider, null, node));
 
 afterEach(() => {
@@ -128,17 +128,18 @@ describe('SH-003: the flow moves at a speed proportional to the throughput, and 
   it('the active streams carry the moving dash at the case’s cycle; the others are static', () => {
     const values = circuitValues(real, realTrace, null);
     const svg = wrap(drawCircuit({ values, stageMachines: {}, onPickStage: null, label: { en: 'Circuit', es: 'Circuito' }, width: 1000, height: 400, lang: 'en', num, reduced: false }).node);
-    const cycle = flowCycleSeconds(real.measured!.feed_tph)!.toFixed(4);
+    const cycle = cssSeconds(flowCycleSeconds(real.measured!.feed_tph)!);
     expect(svg.match(/data-flow="moving"/g)?.length).toBe(2);
     expect(svg).toContain(`animation-duration:${cycle}s`);
     expect(svg).toContain('cdem-stream-flow');
   });
   it('adversarial: under a planted reduced-motion preference the flow stops and no animation frame is requested', () => {
-    const raf = vi.fn();
-    vi.stubGlobal('requestAnimationFrame', raf);
+    // the flow is a CSS animation: the view's module asks the browser for no frame at all, moving or still
+    const source = readFileSync(new URL('./circuit.tsx', import.meta.url), 'utf8');
+    expect(source).not.toMatch(/request\w*Frame|setInterval|usePausedViz/);
     const reduce = () => ({ matches: true, addEventListener: () => undefined, removeEventListener: () => undefined });
     vi.stubGlobal('matchMedia', reduce);
-    vi.stubGlobal('window', { matchMedia: reduce, requestAnimationFrame: raf });
+    vi.stubGlobal('window', { matchMedia: reduce });
     function Probe() {
       return createElement('i', { 'data-reduced': String(useReducedMotion()) });
     }
@@ -148,7 +149,6 @@ describe('SH-003: the flow moves at a speed proportional to the throughput, and 
     expect(svg).not.toContain('data-flow="moving"');
     expect(svg).not.toContain('cdem-stream-flow');
     expect(svg).toContain('marker-end="url(#cdem-arrow)"');
-    expect(raf).not.toHaveBeenCalled();
   });
   it('the stylesheet stops the flow under prefers-reduced-motion as well', () => {
     const css = readFileSync(new URL('../workbench/workbench.css', import.meta.url), 'utf8');

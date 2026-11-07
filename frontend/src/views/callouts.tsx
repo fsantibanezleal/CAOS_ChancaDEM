@@ -93,7 +93,7 @@ export function CalloutStage({
             <div className="cdem-callout-drawing" style={{ top: band, height: Math.max(0, height - band) }}>
               {node}
             </div>
-            <SceneCallouts items={items} placement="header" className="cdem-callout-layer" />
+            <SceneCallouts items={items} placement="header" />
           </div>
         );
       }}
@@ -158,7 +158,7 @@ export function ChartCallouts({ callouts, points, frame, children }: { callouts:
       <div className="cdem-callout-drawing" style={{ top: band }}>
         {children}
       </div>
-      <SceneCallouts items={items} placement="header" className="cdem-callout-layer" />
+      <SceneCallouts items={items} placement="header" />
     </div>
   );
 }

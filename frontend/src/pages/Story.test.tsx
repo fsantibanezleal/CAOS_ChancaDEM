@@ -2,6 +2,7 @@
 // or the live engine it is read from, the missing state when a document is absent, the exit to the App on the step's case and group, and
 // three callouts with a unit and a source on every stage. The browser behaviour the shell owns (the stepper, the keys, the pause on
 // input) is driven in a browser by scripts/check_story_mode.mjs, src/pages/story.browser.mjs and the gate's G21.
+import { formatNumber } from '@fasl-work/caos-app-shell';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { evaluate } from '../engine/engine';
@@ -132,7 +133,7 @@ describe('SH-006: deep links and the exit to the App', () => {
 
 describe('SH-007: three anchored callouts with a value, a unit and a source on every stage', () => {
   const num = (v: number | null | undefined, o: { digits?: number; decimals?: number } = {}) =>
-    v === null || v === undefined ? '' : o.decimals !== undefined ? v.toFixed(o.decimals) : String(Number(v.toPrecision(o.digits ?? 4)));
+    v === null || v === undefined ? '' : formatNumber(v, 'en', o);
   const series = neumannPasses(whitenMatrices(op));
   const rows = compareRows(loo, cb, 'kW');
   const best = recommend(rows)!;
