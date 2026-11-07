@@ -88,5 +88,14 @@
         "BS-2"
       ]
     }
-  ]
+  ],
+  "showcase": {
+    "story_routes": [
+      "/story/measure",
+      "/story/inside",
+      "/story/solve",
+      "/story/compare",
+      "/story/operate"
+    ]
+  }
 }
