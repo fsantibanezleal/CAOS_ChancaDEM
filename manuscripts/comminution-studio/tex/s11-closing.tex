@@ -2,7 +2,7 @@
 
 \emph{Repository and release.} The source code, the data, the committed artifacts and the sources of this report are in the public repository
 \url{https://github.com/fsantibanezleal/CAOS_ChancaDEM} (MIT licence for the code and the product's own data; CC BY 4.0 for the survey table and
-everything derived from it). Every number of the report is read from the artifacts of release 0.12.001, or computed from them by the report's scripts; the studio runs at
+everything derived from it). Every number of the report is read from the artifacts of release \docrelease, or computed from them by the report's scripts; the studio runs at
 \url{https://chancadem.fasl-work.com}.
 
 \emph{Commands.} From the repository root, with the pipeline environment of \texttt{requirements-precompute.txt}:
@@ -21,13 +21,14 @@ notebook environment); two of them call the engine code (the chamber functions a
 \item \texttt{latexmk -pdf main.tex}, run in \texttt{manuscripts/\allowbreak{}comminution-studio/\allowbreak{}tex}, builds the report.
 \end{itemize}
 
-\emph{Versions.} Python $3.13$ on the workstation ($3.12$ in continuous integration), numpy $2.4.6$, emcee $3.1.6$, torch $2.12.1$ on the processor, onnx
-$1.22.0$, onnxruntime $1.27.0$ and onnxruntime-web $1.27.0$, matplotlib $3.11.2$, Node $24$. The committed artifacts record the engine release 0.12.001
-and the seeds $42$ (surveys), $12345$ and $67890$ (learned models).
+\emph{Versions.} Python $\resPython$ in the pipeline and notebook environments of the workstation (Python $3.12$ in continuous integration), numpy $2.4.6$,
+emcee $3.1.6$, torch $2.12.1$ on the processor, onnx $1.22.0$, onnxruntime $1.27.0$ and onnxruntime-web $1.27.0$, matplotlib $3.11.2$, Node $24$. The
+committed artifacts record the release of the engine that baked them in their \texttt{engine\_version} field, which the readiness document compares with
+the product version to mark a document stale, and the seeds $42$ (surveys), $12345$ and $67890$ (learned models).
 
 \emph{Archived artifacts.} Table~\ref{tab:hashes} gives the SHA-256 digests of the artifacts the report reads; the full digests are in
 \texttt{manuscripts/\allowbreak{}comminution-studio/\allowbreak{}data/\allowbreak{}sha256.txt}, and the CrusherBayes document records the digest of its own inputs
-(\texttt{483d24c5\ldots b0ce605a}). A full bake of release 0.12.001 into a sandbox output root reproduces every committed trace and the three
+(\texttt{483d24c5\ldots b0ce605a}). A full bake of release \docrelease{} into a sandbox output root reproduces every committed trace and the three
 HP500 documents byte for byte; its manifests differ from the committed ones only in the field that records which model answered each slot, and
 its index only in the list of model files, because a sandbox root holds no released model bundle and the slots answer with their baselines.
 
@@ -49,14 +50,15 @@ on the product's own data and modules.
 On ten industrial surveys of one cone crusher, a calibrated Whiten, Evertsson and Bond engine predicts the throughput of a survey it has not seen with a
 mean absolute percentage error of $12.09\%$ ($95\%$ interval $\uqQBblo$ to $\uqQBbhi$), against $11.55\%$ in sample and $18.29\%$ for the constant
 mean, with a nested $80\%$ band that covers eight surveys of ten; the published throughput model of Rocha et al., run with its own parameters,
-scores $\uqQRocha\%$, not distinguishable from it. It does not predict the power: its Bond draw is flat across the surveys, and its held-out power error of $25.94\%$ is worse than the constant
-mean. A line on the closed-side setting alone has the lowest power error ($12.78\%$, interval $\uqPLinelo$ to $\uqPLinehi$, chosen on the same
-surveys); Morrell's size-specific energy with a fitted work index is worse ($38.08\%$), and with a no-load term whose fitted index is negative in
-every fold ($15.21\%$) it is, like CrusherBayes ($14.31\%$) and the free-form fit, not distinguishable from the line on ten surveys. CrusherBayes gives
-held-out intervals of the stated coverage that are $44\%$ narrower than the backbone band on power, about as wide as the band of the line there,
-and $7\%$ narrower on throughput, and its posterior shows that the
-ten surveys identify the capacity base, the noise and the dependence of the discrepancy on the setting, and cannot identify the classification and breakage
-scalars. A leaky evaluation would have ranked the free-form fit first on both targets and the bounded residual second on throughput; held out the
-bounded residual is behind the backbone on throughput. The next steps are measurements, not models: the
+scores $\uqQRocha\%$, not distinguishable from it. It does not predict the power: its Bond draw is flat across the surveys, and its held-out power
+error of $25.94\%$ is no better than the constant mean (difference $\uqPpBbMean$ points, interval $\uqPpBbMeanlo$ to $\uqPpBbMeanhi$). A line on the
+closed-side setting alone has the lowest point estimate of the power error ($12.78\%$, interval $\uqPLinelo$ to $\uqPLinehi$, chosen on the same
+surveys); Morrell's size-specific energy with a fitted work index is worse than the line ($38.08\%$), and with a no-load term whose fitted index is
+negative in every fold ($15.21\%$) it is, like CrusherBayes ($14.31\%$) and the free-form fit, not distinguishable from the line on ten surveys.
+CrusherBayes gives held-out intervals that cover eight and nine of the ten surveys and are $44\%$ narrower than the backbone band on power, about as
+wide as the band of the line there, and $7\%$ narrower on throughput. Its posterior contracts the noise and the dependence of the discrepancy on the
+setting and on $f_{80}$; it contracts the capacity base only through the prior scale of the discrepancy, which can absorb any change of that base,
+and it leaves the classification and breakage scalars uncontracted. A leaky evaluation would have ordered the free-form fit first on both targets and
+the bounded residual second on throughput; held out, the bounded residual is not distinguishable from the backbone. The next steps are measurements, not models: the
 product size distribution of each survey, which the population balance needs to be calibrated; the crushing work index and the no-load power of the machine,
 which would turn Morrell's method into a prediction; and more surveys, which would resolve differences of a few points that ten cannot.

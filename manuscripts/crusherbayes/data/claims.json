@@ -234,16 +234,6 @@
   "artifact": "data/derived/hp500/crusherbayes.json",
   "key": "derived: 100 (1 - loo.tph.scores.mean_width / comparators.tph.M0.mean_width)"
  },
- "gainBlinKw": {
-  "value": "-1.53",
-  "artifact": "data/derived/hp500/crusherbayes.json",
-  "key": "kill_criterion.power_gain_over_blin_pts"
- },
- "gainBackTph": {
-  "value": "0.09",
-  "artifact": "data/derived/hp500/crusherbayes.json",
-  "key": "kill_criterion.tph_gain_over_m0_pts"
- },
  "marginPts": {
   "value": "3.0",
   "artifact": "data/derived/hp500/crusherbayes.json",
@@ -1444,6 +1434,16 @@
   "value": "8",
   "artifact": "data/derived/hp500/crusherbayes.json",
   "key": "surveys where CrusherBayes has the lower APE (kW, pub)"
+ },
+ "gainBlinKw": {
+  "value": "-1.54",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "derived: mean APE(B_lin) - mean APE(CrusherBayes), kW, unrounded"
+ },
+ "gainBackTph": {
+  "value": "0.09",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "derived: mean APE(M0) - mean APE(CrusherBayes), tph, unrounded"
  },
  "nBoot": {
   "value": "20000",
@@ -2915,6 +2915,11 @@
   "artifact": "data/derived/hp500/crusherbayes.json",
   "key": "walkers * post_burn_steps / tau_max of the fit to all ten surveys (derived)"
  },
+ "essMin": {
+  "value": "2256",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "min over seeds 42, 43, 44 of walkers * post_burn_steps / tau_max of the fit to all ten surveys"
+ },
  "pmKOne": {
   "value": "1.011",
   "artifact": "manuscripts/crusherbayes/data/theory.json",
@@ -2940,10 +2945,15 @@
   "artifact": "data/derived/hp500/crusherbayes.json",
   "key": "max over seeds of (posterior_mean - prior mean) / prior_sd, k1_scale"
  },
+ "shiftKOneMain": {
+  "value": "0.37",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "(posterior_mean - prior mean) / prior_sd of k1_scale, seed 42 (the reported fit)"
+ },
  "mcseKOne": {
   "value": "0.003",
   "artifact": "data/derived/hp500/crusherbayes.json",
-  "key": "contraction[name=k1_scale].posterior_sd / sqrt(essAll) (derived)"
+  "key": "contraction[name=k1_scale].posterior_sd / sqrt(essMin) (derived)"
  },
  "seedMeanSpreadKOne": {
   "value": "0.007",
@@ -2975,10 +2985,15 @@
   "artifact": "data/derived/hp500/crusherbayes.json",
   "key": "max over seeds of (posterior_mean - prior mean) / prior_sd, k2_scale"
  },
+ "shiftKTwoMain": {
+  "value": "0.26",
+  "artifact": "data/derived/hp500/crusherbayes.json",
+  "key": "(posterior_mean - prior mean) / prior_sd of k2_scale, seed 42 (the reported fit)"
+ },
  "mcseKTwo": {
   "value": "0.003",
   "artifact": "data/derived/hp500/crusherbayes.json",
-  "key": "contraction[name=k2_scale].posterior_sd / sqrt(essAll) (derived)"
+  "key": "contraction[name=k2_scale].posterior_sd / sqrt(essMin) (derived)"
  },
  "seedMeanSpreadKTwo": {
   "value": "0.002",

@@ -218,8 +218,9 @@ def tab_leaky() -> None:
 UQ_ROWS = [("constant_mean", "Constant mean"), ("label_shuffle", "Label-shuffle control"), ("M0", "Calibrated backbone"),
            ("M1", "Backbone with bounded residual"), ("M2", "Free-form fit on CSS and $f_{80}$"), ("B_lin", "Setting-only line"),
            ("Morrell", "Morrell, through the origin"), ("Morrell_noload", "Morrell with a no-load term"),
-           ("CrusherBayes", "CrusherBayes (predictive mean)"), ("Rocha_published", r"Rocha et al.\ throughput model, $\lambda=0.84$"),
-           ("Rocha_refit", r"Rocha et al.\ throughput model, $\lambda$ refit per fold")]
+           ("CrusherBayes", "CrusherBayes (predictive mean)"),
+           ("Rocha_published", r"Rocha et al.\ throughput model, $\lambda_{\mathrm R}=0.84$"),
+           ("Rocha_refit", r"Rocha et al.\ throughput model, $\lambda_{\mathrm R}$ refit per fold")]
 UQ_MACRO = {"constant_mean": "Mean", "label_shuffle": "Shuf", "M0": "Bb", "M1": "Res", "M2": "Free", "B_lin": "Line",
             "Morrell": "Mor", "Morrell_noload": "Mornl", "CrusherBayes": "Cb", "Rocha_published": "Rocha",
             "Rocha_refit": "Rocharef"}
@@ -285,6 +286,59 @@ def tab_uncertainty() -> None:
     write("numbers-uq", "\n".join(macros))
 
 
+def tab_pairs() -> None:
+    """The paired difference of every two predictors on each target (figures/heldout_uq.py ``pairwise``), drawn on the
+    resamples of tab-uncertainty: one lower-triangular matrix per target, each cell the 95 % interval of the row's MAPE minus
+    the column's, in bold where it excludes zero; with a macro per ordered pair (\\uq<Q|P>p<row><column>, lo, hi)."""
+    import heldout_uq as uq
+
+    pairs = uq.pairwise(uq.heldout_errors())
+    macros = []
+
+    def get(t: str, a: str, b: str) -> dict:
+        if (a, b) in pairs[t]:
+            return pairs[t][(a, b)]
+        r = pairs[t][(b, a)]
+        return {"d": -r["d"], "lo": -r["hi"], "hi": -r["lo"]}
+
+    blocks = []
+    for t, tl, title in (("tph", "Q", "Throughput"), ("kW", "P", "Power")):
+        keys = [k for k, _ in UQ_ROWS if any(k in p for p in pairs[t])]
+        names = dict(UQ_ROWS)
+        for a in keys:
+            for b in keys:
+                if a != b:
+                    r = get(t, a, b)
+                    m = "uq" + tl + "p" + UQ_MACRO[a] + UQ_MACRO[b]
+                    macros += [f"\\newcommand{{\\{m}}}{{{r['d']:+.2f}}}", f"\\newcommand{{\\{m}lo}}{{{r['lo']:+.1f}}}",
+                               f"\\newcommand{{\\{m}hi}}{{{r['hi']:+.1f}}}"]
+        n = len(keys)
+        lines = [r"\multicolumn{1}{@{}l}{\textit{" + title + ": row minus column}}" + "".join(
+            f" & {j + 1}" for j in range(n - 1)) + r" \\", r"\midrule"]
+        for i in range(n):
+            row = [f"{i + 1}~{names[keys[i]]}"]
+            for j in range(n - 1):
+                if j >= i:
+                    row.append("")
+                    continue
+                r = get(t, keys[i], keys[j])
+                cell = f"[${r['lo']:+.1f}$, ${r['hi']:+.1f}$]"
+                if r["lo"] > 0 or r["hi"] < 0:
+                    cell = f"[$\\mathbf{{{r['lo']:+.1f}}}$, $\\mathbf{{{r['hi']:+.1f}}}$]"
+                row.append(cell)
+            lines.append(" & ".join(row) + r" \\")
+        blocks.append((n, lines))
+    ncol = max(n for n, _ in blocks) - 1
+    body = [r"\begin{tabular}{@{}l " + "c" * ncol + "@{}}", r"\toprule"]
+    for k, (_, lines) in enumerate(blocks):
+        if k:
+            body.append(r"\midrule")
+        body += lines
+    body += [r"\bottomrule", r"\end{tabular}"]
+    write("tab-pairs", "\n".join(body))
+    write("numbers-pairs", "\n".join(macros))
+
+
 RESOURCE_ROWS = [("bake", r"Bake (\texttt{run.py all}: 27 cases, the three HP500 documents, index, readiness)", "workstation"),
                  ("hp500", r"HP500 step alone (\texttt{run.py hp500}: backbone, CrusherCal, the CrusherBayes sampler)", "workstation"),
                  ("models", r"Training (\texttt{run.py models}: sweeps, two networks, export, evaluation)", "workstation, CPU"),
@@ -311,7 +365,9 @@ def tab_resources() -> None:
         s = st[label]
         sizes = s.get("sizes", {})
         disk = next(iter(sizes.values()))["bytes"] if sizes else None
-        rows.append([name + (f" ({tex(s['note'])})" if s.get("note") else ""), f"{s['peak_mb']:.0f} MB",
+        notes = ([tex(s["note"])] if s.get("note") else []) + (
+            [f"exit status {s['exit']}: the run had failing tests and is a time measurement only"] if s.get("exit") else [])
+        rows.append([name + (f" ({'; '.join(notes)})" if notes else ""), f"{s['peak_mb']:.0f} MB",
                      _bytes(disk) if disk is not None else "none", _secs(s["seconds"]), where])
     write("tab-resources", tabular("@{}p{0.47\\textwidth} r r r l@{}", ["Stage", "Peak memory", "Disk", "Time", "Where it runs"],
                                    rows))
@@ -376,6 +432,14 @@ def tab_band() -> None:
     head = ["Survey", "Residual", "$\\sigma_{-i}$", "Half-width", "Inside", "Residual", "$\\sigma_{-i}$", "Half-width",
             "Inside"]
     write("tab-band", tabular("@{}r rrrl rrrl@{}", head, rows, groups))
+    # the range of the nested half-width of the throughput band, in t/h and in percent of the mean measured throughput
+    q = loo["tph"]
+    half = [1.2816 * s for s in q["strict"]["uq"]["nested_sigma"]]
+    mean_q = sum(q["measured"]) / len(q["measured"])
+    write("numbers-band", "\n".join([
+        f"\\newcommand{{\\bandQlo}}{{{min(half):.1f}}}", f"\\newcommand{{\\bandQhi}}{{{max(half):.1f}}}",
+        f"\\newcommand{{\\bandQrelLo}}{{{100 * min(half) / mean_q:.1f}}}",
+        f"\\newcommand{{\\bandQrelHi}}{{{100 * max(half) / mean_q:.1f}}}"]))
 
 
 def tab_morrell() -> None:
@@ -512,7 +576,12 @@ def tab_contracts() -> None:
         rows.append([r"\texttt{" + tex(r["id"]) + "}", tex(r["version"]), r"\texttt{" + tex(owner) + "}",
                      r"\texttt{" + tex(schema) + "}", tex(r["status"])])
     head = ["Contract", "Version", "Producer (owner)", "Schema file", "Status"]
-    write("tab-contracts", tabular("@{}l l p{0.32\\textwidth} p{0.27\\textwidth} l@{}", head, rows))
+    write("tab-contracts", tabular("@{}l l p{0.29\\textwidth} p{0.30\\textwidth} l@{}", head, rows))
+    # the version of every contract as the catalog states it, so the text never types one: \cver{<id>}
+    macros = [r"\expandafter\def\csname cv@" + r["id"] + r"\endcsname{" + r["version"] + "}" for r in catalog_rows()]
+    macros.append(r"\newcommand{\cver}[1]{\ifcsname cv@#1\endcsname\csname cv@#1\endcsname\else"
+                  r"\errmessage{no contract #1 in the catalog}\fi}")
+    write("numbers-contracts", "\n".join(macros))
 
 
 def _type_of(v: dict, defs: dict) -> str:
@@ -568,7 +637,7 @@ def breakable(text: str) -> str:
     return re.sub(chr(0) + "(.*?)" + chr(1), split, text)
 
 
-def schema_longtable(cid: str, schema_path: Path) -> None:
+def schema_longtable(cid: str, version: str, schema_path: Path) -> None:
     s = _json(schema_path)
     defs = s.get("$defs", {})
     req = set(s.get("required", []))
@@ -600,10 +669,17 @@ def schema_longtable(cid: str, schema_path: Path) -> None:
                     walk(it["properties"], name + "[].", set(it.get("required", [])), depth + 1)
 
     walk(s.get("properties", {}), "", req, 0)
+    caption = (r"Fields of the \texttt{" + tex(cid) + "} contract, version $" + tex(version) + "$"
+               + r", generated from its schema file \texttt{" + tex(schema_path.name) + "}: the dotted path of each field, "
+               "its type, its range or allowed values as the schema states them, whether it is required at its level, "
+               "and its meaning.")
+    head = r"Field & Type & Range or values & Req. & Meaning \\"
     lines = [r"\begingroup\scriptsize",
              r"\begin{longtable}{@{}p{0.21\textwidth} p{0.10\textwidth} p{0.19\textwidth} p{0.05\textwidth} p{0.33\textwidth}@{}}",
-             r"\toprule", r"Field & Type & Range or values & Req. & Meaning \\", r"\midrule", r"\endhead",
-             r"\bottomrule", r"\endfoot"]
+             r"\caption{" + caption + r"}\label{tab:schema-" + cid + r"}\\",
+             r"\toprule", head, r"\midrule", r"\endfirsthead",
+             r"\multicolumn{5}{@{}l}{\footnotesize Table~\thetable{} (continued)}\\", r"\toprule", head, r"\midrule",
+             r"\endhead", r"\bottomrule", r"\endfoot"]
     # a schema field named verdict is quoted verbatim: the voice check is told so on that line
     lines += [" & ".join(r) + r" \\" + (" % voice-ok: schema field name" if "verdict" in r[0] else "") for r in rows]
     lines += [r"\end{longtable}", r"\endgroup"]
@@ -614,7 +690,7 @@ def schemas() -> None:
     for r in catalog_rows():
         path = ROOT / r["schema file"]
         if path.name.endswith(".schema.json"):
-            schema_longtable(r["id"], path)
+            schema_longtable(r["id"], r["version"], path)
     api = _json(ROOT / "docs" / "contracts" / "api.openapi.json")
     rows = []
     for p, ops in api["paths"].items():
@@ -624,9 +700,15 @@ def schemas() -> None:
                 summ = summ[:117].rsplit(" ", 1)[0] + " ..."
             rows.append([r"\texttt{" + tex(verb.upper() + " " + p) + "}", tex(", ".join(op.get("responses", {}).keys())),
                          tex(summ) if summ else DASH])
+    version = next(r["version"] for r in catalog_rows() if r["id"] == "api")
+    caption = (r"Routes of the \texttt{api} contract, version $" + tex(version) + r"$, generated from the OpenAPI document "
+               r"\texttt{api.openapi.json}: each route with its method, the response codes it declares and its summary.")
+    head = r"Route & Responses & Meaning \\"
     lines = [r"\begingroup\scriptsize",
-             r"\begin{longtable}{@{}p{0.32\textwidth} p{0.12\textwidth} p{0.48\textwidth}@{}}", r"\toprule",
-             r"Route & Responses & Meaning \\", r"\midrule", r"\endhead", r"\bottomrule", r"\endfoot"]
+             r"\begin{longtable}{@{}p{0.32\textwidth} p{0.12\textwidth} p{0.48\textwidth}@{}}",
+             r"\caption{" + caption + r"}\label{tab:schema-api}\\", r"\toprule", head, r"\midrule", r"\endfirsthead",
+             r"\multicolumn{3}{@{}l}{\footnotesize Table~\thetable{} (continued)}\\", r"\toprule", head, r"\midrule",
+             r"\endhead", r"\bottomrule", r"\endfoot"]
     lines += [" & ".join(r) + r" \\" for r in rows]
     lines += [r"\end{longtable}", r"\endgroup"]
     write("schema-api", "\n".join(lines))
@@ -699,6 +781,7 @@ if __name__ == "__main__":
     tab_lpd()
     tab_leaky()
     tab_uncertainty()
+    tab_pairs()
     numbers_fits()
     tab_resources()
     tab_band()

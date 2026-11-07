@@ -77,19 +77,20 @@ are:
 \item A complete account of a crusher engine (feed, breakage, classification, the Whiten solve, capacity, power, regimes
 and an envelope check) with its equations, constants and numerical scheme, implemented twice and held equal to a largest
 relative difference of $\refworst$ over $\nrefpoints$ reference points.
-\item A strict leave-one-survey-out evaluation of nine predictors on the ten HP500 surveys, the same folds for every
-predictor, with a constant-mean baseline, a label-shuffle control, the optimism of a leaky evaluation measured beside the
+\item A strict leave-one-survey-out evaluation on the ten HP500 surveys of the nine predictors of Table~\ref{tab:bench} and of
+the published throughput model of Rocha et al.\ in two variants, the same folds for every predictor, with a constant-mean baseline, a label-shuffle control, the optimism of a leaky evaluation measured beside the
 strict one, and a nested $80\%$ predictive band whose coverage is computed out of sample, and a bootstrap over the surveys that gives every
 held-out error and every difference between two predictors its interval.
-\item The finding that a line on the closed-side setting alone has the lowest held-out power error on these data
-($12.78\%$, $95\%$ interval $\uqPLinelo$ to $\uqPLinehi$), not distinguishable on ten surveys from the free-form fit,
+\item The finding that a line on the closed-side setting alone has the lowest point estimate of the held-out power error on
+these data ($12.78\%$, $95\%$ interval $\uqPLinelo$ to $\uqPLinehi$), not distinguishable on ten surveys from the free-form fit,
 CrusherBayes and Morrell's energy with a no-load term, that the Bond draw of the calibrated engine carries little of the
-measured power variation, and that the published throughput model of Rocha et al., run on the same surveys, predicts the
-feed rate as well as the calibrated engine.
+measured power variation, and that the published throughput model of Rocha et al., run on the same surveys, is not
+distinguishable from the calibrated engine on the feed rate.
 \item CrusherBayes, a Bayesian calibration of the engine's eight fitted scalars with a structural discrepancy per target
-and a differential-evolution sampler, whose held-out intervals are calibrated and narrower than the residual band, and
-whose posterior shows which scalars ten surveys identify; the method is reported in full in its own
-manuscript~\cite{crusherbayes2026} and summarised here.
+and a differential-evolution sampler, whose held-out $80\%$ intervals cover eight and nine of the ten surveys (the power
+coverage at the upper edge of the acceptable range) and are narrower than the residual band, and whose posterior shows which
+scalars ten surveys contract and that the capacity base is contracted only through the prior scale of the discrepancy; the
+method is reported in full in its own manuscript~\cite{crusherbayes2026} and summarised here.
 \item An inventory of thirteen data contracts with their schemas, producers, consumers and missing-data behaviour, which
 lets a reader replace any component and keep the rest.
 \end{enumerate}

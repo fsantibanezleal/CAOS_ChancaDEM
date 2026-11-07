@@ -99,8 +99,6 @@ w_red_tph = 100 * (1 - cb["loo"]["tph"]["scores"]["mean_width"] / cmp_["tph"]["M
 put("widthRedKw", w_red_kw, "cb", "derived: 100 (1 - loo.kW.scores.mean_width / comparators.kW.M0.mean_width)", 1)
 put("widthRedTph", w_red_tph, "cb", "derived: 100 (1 - loo.tph.scores.mean_width / comparators.tph.M0.mean_width)", 1)
 # dropping rule
-put("gainBlinKw", kc["power_gain_over_blin_pts"], "cb", "kill_criterion.power_gain_over_blin_pts", 2)
-put("gainBackTph", kc["tph_gain_over_m0_pts"], "cb", "kill_criterion.tph_gain_over_m0_pts", 2)
 put("marginPts", kc["margin_mape_pts"], "cb", "kill_criterion.margin_mape_pts", 1)
 put("covLo", kc["coverage_band"][0], "cb", "kill_criterion.coverage_band[0]", 1)
 put("covHi", kc["coverage_band"][1], "cb", "kill_criterion.coverage_band[1]", 1)
@@ -269,19 +267,6 @@ for r in surveys:
 sv += [r"\bottomrule", r"\end{tabular}"]
 write("tab-surveys.tex", "\n".join(sv) + "\n")
 
-# dropping-rule table
-kr = [r"\begin{tabular}{@{}lrr@{}}", r"\toprule", r"Term & Throughput & Power \\", r"\midrule",
-      rf"MAPE of CrusherBayes (\%) & {fx(kc['tph_mape_pct'])} & {fx(kc['power_mape_pct'])} \\",
-      rf"MAPE of the reference (\%) & {fx(kc['tph_mape_m0_pct'])} & {fx(kc['power_mape_blin_pct'])} \\",
-      rf"Gain over the reference (points) & {fx(kc['tph_gain_over_m0_pts'])} & {fx(kc['power_gain_over_blin_pts'])} \\",
-      rf"Gain of at least {fx(kc['margin_mape_pts'], 0)} points & {'yes' if kc['a_tph_beats_m0_by_margin'] else 'no'} & {'yes' if kc['a_power_beats_blin_by_margin'] else 'no'} \\",
-      rf"Coverage & {fx(kc['coverage']['tph'], 1)} & {fx(kc['coverage']['kW'], 1)} \\",
-      rf"Coverage outside {fx(kc['coverage_band'][0], 1)} to {fx(kc['coverage_band'][1], 1)} & {'yes' if kc['coverage_outside_band']['tph'] else 'no'} & {'yes' if kc['coverage_outside_band']['kW'] else 'no'} \\",
-      rf"Mean width (t/h, kW) & {fx(kc['mean_width']['tph'], 1)} & {fx(kc['mean_width']['kW'], 1)} \\",
-      rf"Mean width of the residual band & {fx(kc['mean_width_crushercal']['tph'], 1)} & {fx(kc['mean_width_crushercal']['kW'], 1)} \\",
-      rf"Band wider than the residual band & {'yes' if kc['band_wider_than_crushercal']['tph'] else 'no'} & {'yes' if kc['band_wider_than_crushercal']['kW'] else 'no'} \\",
-      r"\bottomrule", r"\end{tabular}"]
-write("tab-dropping-rule.tex", "\n".join(kr) + "\n")
 
 # ---------------------------------------------------------------- the comparison with the published methods, with intervals
 # Every method is scored on the same ten surveys from the committed held-out predictions (strict leave-one-survey-out: every
@@ -402,6 +387,24 @@ for t in ("tph", "kW"):
         put(f"{base}Lo", PAIRED[t][key]["ci"][0], "cb", f"2.5 percent paired-bootstrap quantile ({t}, {key})", 2)
         put(f"{base}Hi", PAIRED[t][key]["ci"][1], "cb", f"97.5 percent paired-bootstrap quantile ({t}, {key})", 2)
         put(f"{base}Wins", PAIRED[t][key]["wins"], "cb", f"surveys where CrusherBayes has the lower APE ({t}, {key})")
+# dropping-rule table; the gains are computed from the unrounded errors of the predictions, as the paired differences are,
+# so the table, the text and Table paired print one number (the rule document subtracts the two rounded MAPEs)
+gain_blin_kw = -PAIRED["kW"]["blin"]["diff"]
+gain_back_tph = -PAIRED["tph"]["back"]["diff"]
+put("gainBlinKw", gain_blin_kw, "cb", "derived: mean APE(B_lin) - mean APE(CrusherBayes), kW, unrounded", 2)
+put("gainBackTph", gain_back_tph, "cb", "derived: mean APE(M0) - mean APE(CrusherBayes), tph, unrounded", 2)
+kr = [r"\begin{tabular}{@{}lrr@{}}", r"\toprule", r"Term & Throughput & Power \\", r"\midrule",
+      rf"MAPE of CrusherBayes (\%) & {fx(kc['tph_mape_pct'])} & {fx(kc['power_mape_pct'])} \\",
+      rf"MAPE of the reference (\%) & {fx(kc['tph_mape_m0_pct'])} & {fx(kc['power_mape_blin_pct'])} \\",
+      rf"Gain over the reference (points) & {fx(gain_back_tph)} & {fx(gain_blin_kw)} \\",
+      rf"Gain of at least {fx(kc['margin_mape_pts'], 0)} points & {'yes' if kc['a_tph_beats_m0_by_margin'] else 'no'} & {'yes' if kc['a_power_beats_blin_by_margin'] else 'no'} \\",
+      rf"Coverage & {fx(kc['coverage']['tph'], 1)} & {fx(kc['coverage']['kW'], 1)} \\",
+      rf"Coverage outside {fx(kc['coverage_band'][0], 1)} to {fx(kc['coverage_band'][1], 1)} & {'yes' if kc['coverage_outside_band']['tph'] else 'no'} & {'yes' if kc['coverage_outside_band']['kW'] else 'no'} \\",
+      rf"Mean width (t/h, kW) & {fx(kc['mean_width']['tph'], 1)} & {fx(kc['mean_width']['kW'], 1)} \\",
+      rf"Mean width of the residual band & {fx(kc['mean_width_crushercal']['tph'], 1)} & {fx(kc['mean_width_crushercal']['kW'], 1)} \\",
+      rf"Band wider than the residual band & {'yes' if kc['band_wider_than_crushercal']['tph'] else 'no'} & {'yes' if kc['band_wider_than_crushercal']['kW'] else 'no'} \\",
+      r"\bottomrule", r"\end{tabular}"]
+write("tab-dropping-rule.tex", "\n".join(kr) + "\n")
 put("nBoot", BOOT, "cb", "bootstrap resamples (make_figs.py constant)")
 put("bootSeed", BOOT_SEED, "cb", "bootstrap seed (make_figs.py constant)")
 for key, nm in (("zeta", "refitZeta"), ("pn", "refitPn")):
@@ -590,6 +593,13 @@ put("seedRatioSpreadRest", max(v for k, v in ratio_spread.items() if k != worst_
 tau_all = next(f["tau_max"] for f in folds if f["fold"] == "all")
 ess_all = meth["walkers"] * folds[0]["post_burn_steps"] / tau_all
 put("essAll", ess_all, "cb", "walkers * post_burn_steps / tau_max of the fit to all ten surveys (derived)", 0)
+# the smallest effective sample size of the fit to all ten surveys over the three seeds, which bounds the Monte Carlo error
+ess_seeds = []
+for n, _ in SEEDS:
+    f_all = next(f for f in ABL[n]["convergence"]["folds"] if f["fold"] == "all")
+    ess_seeds.append(ABL[n]["method"]["walkers"] * f_all["post_burn_steps"] / f_all["tau_max"])
+ess_min = min(ess_seeds)
+put("essMin", ess_min, "cb", "min over seeds 42, 43, 44 of walkers * post_burn_steps / tau_max of the fit to all ten surveys", 0)
 for key, nm in (("k1_scale", "KOne"), ("k2_scale", "KTwo")):
     pm = TH["prior_mean_natural"][key]
     means = [seed_rows[n][key]["posterior_mean"] for n, _ in SEEDS]
@@ -599,8 +609,9 @@ for key, nm in (("k1_scale", "KOne"), ("k2_scale", "KTwo")):
     put(f"seedMean{nm}Max", max(means), "cb", f"max over seeds of contraction[name={key}].posterior_mean", 3)
     put(f"shift{nm}Min", min(shifts), "cb", f"min over seeds of (posterior_mean - prior mean) / prior_sd, {key}", 2)
     put(f"shift{nm}Max", max(shifts), "cb", f"max over seeds of (posterior_mean - prior mean) / prior_sd, {key}", 2)
-    put(f"mcse{nm}", byname[key]["posterior_sd"] / math.sqrt(ess_all), "cb",
-        f"contraction[name={key}].posterior_sd / sqrt(essAll) (derived)", 3)
+    put(f"shift{nm}Main", shifts[0], "cb", f"(posterior_mean - prior mean) / prior_sd of {key}, seed 42 (the reported fit)", 2)
+    put(f"mcse{nm}", byname[key]["posterior_sd"] / math.sqrt(ess_min), "cb",
+        f"contraction[name={key}].posterior_sd / sqrt(essMin) (derived)", 3)
     put(f"seedMeanSpread{nm}", max(means) - min(means), "cb", f"max - min over seeds of the posterior mean of {key}", 3)
 for key, nm in (("k1_scale", "KOne"), ("k2_scale", "KTwo"), ("k3", "KThree"), ("t10_shift_pct", "TShift")):
     put(f"pm{nm}Ratio", byname[key]["contraction"], "cb", f"contraction[name={key}].contraction", 3)
@@ -775,7 +786,7 @@ fig, axs = plt.subplots(1, 2, figsize=(7.2, 3.2))
 mape_panel(axs[0], "kW", "(a) power")
 mape_panel(axs[1], "tph", "(b) throughput")
 fig.tight_layout()
-fig.savefig(OUT / "figures" / "fig-comparison.pdf")
+fig.savefig(OUT / "figures" / "fig-comparison.pdf", bbox_inches="tight")   # the x label of panel (b) is kept whole
 plt.close(fig)
 
 
