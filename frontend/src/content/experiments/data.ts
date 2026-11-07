@@ -220,10 +220,10 @@ export type ModelKey = (typeof MODEL_KEYS)[number];
 
 export const MODEL_LABEL: Record<ModelKey, Text> = {
   M0_backbone: { en: 'M0, calibrated backbone', es: 'M0, esqueleto calibrado' },
-  M1_residual: { en: 'M1, backbone plus bounded residual', es: 'M1, esqueleto más residuo acotado' },
-  M2_freeform: { en: 'M2, free-form fit', es: 'M2, ajuste libre' },
+  M1_residual: { en: 'Backbone plus bounded residual', es: 'Esqueleto más residuo acotado' },
+  M2_freeform: { en: 'Free-form fit', es: 'Ajuste libre' },
   constant_mean: { en: 'Constant mean', es: 'Media constante' },
-  M1_label_shuffle: { en: 'M1 with shuffled labels', es: 'M1 con etiquetas barajadas' },
+  M1_label_shuffle: { en: 'Bounded residual with shuffled labels', es: 'Residuo acotado con etiquetas barajadas' },
 };
 
 /** Whether each held-out survey falls inside the 80 percent band of the backbone, and how many do (the in-sample empirical coverage, by count: the half-width comes from the same residuals; the document's nested_coverage is the out-of-sample one). */
