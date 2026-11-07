@@ -14,7 +14,7 @@ are not scored.
 
 \subsection{Metrics}\label{sec:protocol-metrics}
 
-For a target with measured values $y_i$ and held-out predictions $\hat y_i$, $i=1,\dots,n$, the point scores are
+For a target with measured values $y_i$ and held-out predictions $\hat y_i$, $i=1,\dots,N_s$, the point scores are
 \begin{equation}
 \mathrm{MAPE} = \frac{100}{N_s}\sum_{i=1}^{N_s}\left|\frac{\hat y_i - y_i}{y_i}\right|,\qquad
 \mathrm{RMSE} = \sqrt{\frac{1}{N_s}\sum_{i=1}^{N_s}\left(\hat y_i - y_i\right)^2},\qquad
@@ -48,7 +48,8 @@ percentage error of predictor $k$ at survey $i$ and $I^{(b)}$ the $b$-th of $B=\
 and the $95\%$ interval of a MAPE, or of the difference of two predictors, is the $2.5$th to the $97.5$th percentile of its $B$ values. The
 same resampled surveys serve every predictor, so a difference is paired: a survey that is hard for both predictors moves both errors
 together. A ranking of two predictors is stated only when the interval of their difference excludes zero; otherwise the two are reported as
-not distinguishable on these surveys. The predictions are those of the committed documents (the strict CrusherCal predictions and the
+not distinguishable on these surveys. The rule applies to every two predictors, not only to a predictor and the line or the backbone, so the
+interval of every pair is computed on the same resamples (Table~\ref{tab:pairs}). The predictions are those of the committed documents (the strict CrusherCal predictions and the
 CrusherBayes predictive means), and the computation is the report's script \texttt{figures/\allowbreak{}heldout\_uq.py}, which recomputes every
 committed MAPE from them before it resamples.
 
@@ -83,7 +84,7 @@ and the leaky folds); CrusherBayes spawns one seed per
 posterior from a seed sequence started at $42$, uses that seed plus one for the predictive draws of the posterior, and its document is byte-identical whatever the number of worker
 processes. The learned models use the training seed $12345$ and the held-out seed $67890$, with torch single-threaded. The
 particle-replacement check of Section~\ref{sec:validation} uses five seeds per parcel count. Each posterior is one chain of twenty walkers;
-its repetition is the eleven posteriors of the folds, whose convergence diagnostics are reported. The bootstrap of the held-out errors uses the seed $\uqSeed$. The measured run times of release 0.12.001, on a
+its repetition is the eleven posteriors of the folds, whose convergence diagnostics are reported. The bootstrap of the held-out errors uses the seed $\uqSeed$. The measured run times, recorded on $\resDate$ on a
 Windows 11 workstation with Python $\resPython$ and Node $24$, are in Table~\ref{tab:resources}: about $\resBakeMin$~minutes for the whole bake,
 of which about $\resHpMin$ are the HP500 step with the CrusherBayes sampler ($140{,}000$ log-probability evaluations per posterior, eleven
 posteriors), $\resModelsS$~s to train and evaluate both learned models on the processor, and a median of $\resEngineMed$~ms per engine

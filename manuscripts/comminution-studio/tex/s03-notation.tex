@@ -15,7 +15,9 @@ to finer classes, and the breakage matrix of Section~\ref{sec:m-breakage} has th
 passing at each edge (a vector that starts at one and decreases). The size at a passing fraction ($P_{80}$, $P_{50}$,
 $P_{20}$, $F_{80}$) is read by linear interpolation in the logarithm of the size between the two edges that bracket the
 fraction. Capital $F_{80}$ is the feed $80\%$ passing size as the engine reads it on its grid; lower-case $f_{80}$ is the
-measured value of a survey. They differ when the feed is coarser than the $256$~mm top of the grid.
+measured value of a survey. They differ when part of the Rosin-Rammler feed rebuilt from $f_{80}$ lies above the $256$~mm top
+of the grid, because that mass is carried in the top class; on the coarsest survey ($f_{80}=\gridGapMeas$~mm) the difference is
+$\gridGap$~mm (Section~\ref{sec:m-hp500}).
 
 \emph{Units.} Sizes are in millimetres in the engine and in micrometres inside the two energy laws (Bond and Morrell), as
 those laws are printed; throughput is in tonnes per hour; power in kilowatts; specific energy in kWh per tonne; speed in
@@ -63,6 +65,12 @@ $W_i$, $W$ & Bond work index and Bond specific energy & kWh/t \\
 $P_d$, $P_c$, $P$ & Bond net draw, current-based calibrated power, power & kW \\
 $\zeta$, $P_n$ & slope and no-load term of the current-based power form & --, kW \\
 $M_{ic}$, $W_c$, $S_c$ & Morrell crushing work index, crusher specific energy, hardness correction & kWh/t, kWh/t, -- \\
+$K_s$, $K_{\mathrm c}$ & Morrell hardness constant and circuit factor ($K_2$ in the guideline) & -- \\
+$Q_{max}$, $\lambda_{\mathrm R}$ & maximum throughput of the model of Rocha et al.\ and its fitted factor & t/h, -- \\
+$\rho_a$, $\omega$, $\delta_{\mathrm R}$ & bulk density, moisture and moisture factor of that model & kg/m$^3$, \%, -- \\
+$\eta_{\mathrm R}$, $\epsilon_{\mathrm R}$, $\nu_{\mathrm R}$ & its exponents of the work index, the feed size and the setting & -- \\
+$\nu$ & nips per unit feed of the Whiten solve & -- \\
+$\lambda$, $\mathrm D$ & ridge penalty of the bounded residual and its penalty pattern & --, -- \\
 $x_1$, $x_2$ & feed and product $80\%$ passing sizes in the Morrell equation & $\mu$m \\
 $\alpha$, $\mu_f$ & nip angle and friction coefficient of the grip limit & deg, -- \\
 $\mathcal D$, $N_s$ & set of surveys and their number ($10$) & -- \\

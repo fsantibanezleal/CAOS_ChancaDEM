@@ -14,7 +14,7 @@ its unit's range stops the bake. The model step (\texttt{run.py models}) is sepa
 Latin-hypercube sweeps, labels them with the engine, trains the surrogate and the autoencoder, exports them to ONNX, quantises the
 surrogate to int8, evaluates both through onnxruntime on the held-out draw, and refreshes the index and readiness. The bake never
 trains; it reads the released model bundles as they stand. Every random draw comes from one seeded generator factory, so a run is
-a pure function of its inputs and seeds: a full re-bake of release 0.12.001 into a sandbox output root reproduces every committed trace
+a pure function of its inputs and seeds: a full re-bake of release \docrelease{} into a sandbox output root reproduces every committed trace
 and the three HP500 documents, CrusherBayes included, byte for byte (Section~\ref{sec:repro}).
 
 \begin{figure}[!t]
@@ -66,7 +66,7 @@ contract tests and is not deployed.
 
 \subsection{Resources}\label{sec:arch-resources}
 
-Table~\ref{tab:resources} gives what each stage of release 0.12.001 needs on the development workstation (Windows 11, Python
+Table~\ref{tab:resources} gives what each stage of the pipeline needs on the development workstation (Windows 11, Python
 $\resPython$ in the pipeline environment, Node $24$, a processor with $\resThreads$ threads), measured on $\resDate$ with a
 process-tree monitor that polls the peak memory of the command and of every process it starts every $20$~ms. The three pipeline
 stages that write artifacts (the bake, the HP500 step and the training) were run into a sandbox output root, so the committed artifacts were not rewritten; the disk column of a
@@ -78,8 +78,9 @@ threads. Every other stage takes seconds to minutes. The built site is $\resSite
 
 \begin{table}[!t]
 \centering
-\caption{Measured resources of each stage of release 0.12.001 on the development workstation: peak memory of the process tree, disk
-written and wall time. Generated from \texttt{data/\allowbreak{}resources.json} of the report, which records each measurement.}
+\caption{Measured resources of each stage of the pipeline and the web on the development workstation, measured on $\resDate$: peak
+memory of the process tree, disk written and wall time. Generated from \texttt{data/\allowbreak{}resources.json} of the report, which records
+each measurement with its exit status.}
 \label{tab:resources}
 \footnotesize
 \input{tables/tab-resources}

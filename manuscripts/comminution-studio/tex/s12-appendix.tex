@@ -42,7 +42,7 @@ HP500 support (setting, feed $F_{80}$) & $38$ to $55$~mm, $47$ to $140$~mm & \te
 Lane budgets (run time, trace size) & $1500$~ms, $256$~KiB & \texttt{core/\allowbreak{}gate.py} \\
 Units slack & one full range on each side & \texttt{core/\allowbreak{}unit\_gate.py} \\
 Residual clip; ridge penalty; band factor; seed & $0.20$; $1.0$; $1.2816$; $42$ & \texttt{hp500/\allowbreak{}loo.py} \\
-Morrell $K_s$; $K_2$ (closed, open circuit) & $55$; $1.0$, $1.19$ & \texttt{model/\allowbreak{}crusher/\allowbreak{}morrell.py} \\
+Morrell $K_s$; $K_{\mathrm c}$ (closed, open circuit) & $55$; $1.0$, $1.19$ & \texttt{model/\allowbreak{}crusher/\allowbreak{}morrell.py} \\
 Discrepancy prior sd $\tau_Q$, $\tau_P$ & $140$~t/h, $36$~kW & \texttt{hp500/\allowbreak{}crusherbayes.py} \\
 Noise prior medians; log sd; log bounds & $60$~t/h, $15$~kW; $1$; $[\ln1, \ln1000]$ & \texttt{hp500/\allowbreak{}crusherbayes.py} \\
 Walkers; steps; burn-in; thinning; draws & $20$; $7000$; $1000$; $10$; $20$ & \texttt{hp500/\allowbreak{}crusherbayes.py} \\
@@ -85,7 +85,10 @@ schema states them, whether it is required at its level, and its description, sh
 shared definition carries the type of that definition. Rules that a schema cannot state, such as a count that must equal the length of a list or a path that
 must exist, are checked by the producer and consumer tests of each contract and are described in Section~\ref{sec:data}; the units of each field are in its
 description or in the subsection of that section. The catalog row of every contract, with its producer, its consumers, its swap test and its missing-data
-behaviour, is the authority when this appendix and the catalog differ.
+behaviour, is the authority when this appendix and the catalog differ. Field names are the identifiers of the schema files, quoted verbatim
+because the code reads them; the adoption rule of CrusherBayes (Section~\ref{sec:m-crusherbayes}) is stored under the field
+\texttt{kill\_criterion}, whose outcome field takes the values \emph{kept} and \emph{dropped as a predictor}. Tables~\ref{tab:schema-params-record}
+to~\ref{tab:schema-api} follow the order of the catalog, one per contract.
 
 \subsubsection*{params-record}
 \input{tables/schema-params-record}
