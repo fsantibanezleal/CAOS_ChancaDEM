@@ -55,6 +55,10 @@ export function WhitenSolve() {
           'Funciona para una cámara alimentada hasta el atoro con el ajuste bajo el F80 del alimento: la solución conserva la masa hasta el redondeo y un ajuste más cerrado da un producto más fino. Se degrada en el régimen de paso directo, donde el ajuste está en el F80 o sobre él y casi nada es agarrado, y el punto es inválido cuando el ajuste alcanza el tamaño máximo de 256 mm. El indicador es solo un filtro: no es el número de condición de la matriz, y el supuesto de una sola zona de fractura con una función de clasificación es el modelo, no una medición de una cámara real.',
         )}
       </Callout>
+      <P
+        en="The population-balance view of the App draws the same solve as its Neumann series. Because B is strictly lower triangular, B C has a zero diagonal and is nilpotent, so the inverse is the finite sum of the powers of B C: after n passes the product is p_n = (I - C) times the sum of (B C)^k f for k below n, and after as many passes as size classes it equals the closed form exactly. The view computes the series from the live engine's own B, C and f for the selected case, draws p_n on the axes of the size distribution against the closed form, with the residual against the pass count and the mass nipped and sent back at the pass, and the test holds the last pass equal to the LU solve to 1e-9."
+        es="La vista del balance poblacional de la App dibuja la misma solución como su serie de Neumann. Como B es estrictamente triangular inferior, B C tiene diagonal nula y es nilpotente, así que la inversa es la suma finita de las potencias de B C: tras n pasadas el producto es p_n = (I - C) por la suma de (B C)^k f para k menor que n, y tras tantas pasadas como clases de tamaño iguala exactamente la forma cerrada. La vista calcula la serie con B, C y f del propio motor en vivo para el caso seleccionado, dibuja p_n sobre los ejes de la distribución de tamaños contra la forma cerrada, con el residuo contra el número de pasadas y la masa atrapada y devuelta en la pasada, y la prueba mantiene la última pasada igual a la solución LU hasta 1e-9."
+      />
     </DocSection>
   );
 }

@@ -90,8 +90,8 @@
   <rect class="bx" x="582" y="84" width="80" height="26" rx="6"/>
   <rect class="bx" x="668" y="84" width="90" height="26" rx="6"/>
   <rect class="bx" x="764" y="84" width="102" height="26" rx="6"/>
-  <text class="it l-en" x="344" y="101" text-anchor="middle">Chamber</text>
-  <text class="it l-es" x="344" y="101" text-anchor="middle">Cámara</text>
+  <text class="it l-en" x="344" y="101" text-anchor="middle">System</text>
+  <text class="it l-es" x="344" y="101" text-anchor="middle">Sistema</text>
   <text class="acc l-en" x="430" y="101" text-anchor="middle">Product</text>
   <text class="acc l-es" x="430" y="101" text-anchor="middle">Producto</text>
   <text class="it l-en" x="526" y="101" text-anchor="middle">Performance</text>
@@ -137,6 +137,6 @@
 
   <text class="sub l-en" x="304" y="398">Focus opens the open group in the full viewport; the case, the group and the sub-view stay.</text>
   <text class="sub l-es" x="304" y="398">Foco abre el grupo abierto a pantalla completa; el caso, el grupo y la subvista se mantienen.</text>
-  <text class="sub l-en" x="304" y="418">Context is the write-up of the case: the question, the variables and how to read the views.</text>
-  <text class="sub l-es" x="304" y="418">Contexto es la descripción del caso: la pregunta, las variables y cómo leer las vistas.</text>
+  <text class="sub l-en" x="304" y="418">Context is the write-up of the case; the story (/story/&lt;step&gt;) walks five steps on the same state.</text>
+  <text class="sub l-es" x="304" y="418">Contexto describe el caso; el recorrido (/story/&lt;paso&gt;) sigue cinco pasos sobre el mismo estado.</text>
 </svg>

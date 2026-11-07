@@ -4,6 +4,45 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [Unreleased]
+
+### Added
+
+- The showcase of ADR-0082 (requirements SH-001 to SH-010). The circuit view: the three-stage crushing circuit as a flowsheet, each
+  stage named by its machine, the selected case's streams labelled with throughput, F80, P80, power and setting from its manifest and
+  committed trace, the flow moving at a speed proportional to the throughput and still under reduced motion; selecting another stage
+  loads its first case. The population-balance view: the Whiten solve as its Neumann series, computed from the live engine's B, C and
+  f, drawn pass by pass on the size-distribution axes against the closed form (equal to 1e-9 after as many passes as size classes),
+  with the residual and the mass sent back per class. The campaign view: P80 against operating hours at the reader's drift rate,
+  the target crossed, the 45 h reference line and the now line; no drift rate is set or asserted by the product. The comparison
+  view: the held-out MAPE of every method of the HP500 validation and of CrusherBayes for throughput and power, the ten per-survey
+  errors beside each method, the predictive bands, and the method with the lowest held-out error marked as recommended with its
+  reason.
+- The guided story at `/story/measure`, `/story/inside`, `/story/solve`, `/story/compare` and `/story/operate`, on the shell's story
+  frame: each headline a number read from the committed documents or computed by the live engine from them, the missing state with
+  its reason when a document is absent, three anchored callouts with value, unit and source on every stage, deep links, the keys,
+  play and pause, and an exit to the App on the step's case and group.
+- Linked selection on the shell's linked-view store: a size class, a stream, a stage, a method, the pass count and the hours cursor
+  shown by every view of the catalog row that reads them, both ways.
+- `src/pages/story.browser.mjs`, run by `npm run check:story` after the base's story check: the product's own browser checks of the
+  story (callouts, exits, the pause on a key press, the two-way selection, the survey scrubber, reduced motion).
+
+### Changed
+
+- The App's groups are System (the circuit, then the chamber: the 3D cutaway beside the section with its callouts), Product (the size
+  distribution with its callouts and the classification curve, then the population balance), Performance (the campaign first),
+  Learned and Validation (the methods compared first), with the Context tab: six tabs, each group opening on one stage; the rail is
+  200 px and the tab rows compact so the stage keeps 60 percent of the screen.
+- Every reader-facing name of a method is its name, in both languages (the calibrated backbone, the bounded residual, the free-form
+  fit, the setting-only line), never its ladder id; the documents' keys are unchanged.
+- The Implementation and Methodology pages describe the App's views and the story; the App's architecture figure names the System
+  group and the story.
+
+### Fixed
+
+- The shell pin test reads 0.23.1, the version the branch pins; the gate-script test checks the declared story routes of this product
+  (its base copy named the template example's four routes) and carries the two story-route tests of template 0.15.001.
+
 ## [0.12.001] · 2026-11-02
 
 ### Fixed
