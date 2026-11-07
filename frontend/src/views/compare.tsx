@@ -123,20 +123,21 @@ export function recommendReason(best: MethodRow, rows: readonly MethodRow[], tar
 /** The three callouts of the comparison: the recommended method, the selected one and the constant mean, the bar to beat. */
 export function compareCallouts(rows: readonly MethodRow[], best: MethodRow | null, chosen: MethodRow, fmt: (v: number, o: { digits?: number }) => string): CalloutSpec[] {
   const control = rows.find((r) => r.id === 'constant_mean') ?? null;
-  const unit = { en: '% held-out MAPE', es: '% MAPE reservado' };
+  const unit = { en: '% MAPE', es: '% MAPE' };
+  const named = (r: MethodRow) => ({ en: `${r.name.en}, held out`, es: `${r.name.es}, reservado` });
   return [
     best
       ? {
           id: 'best',
-          eyebrow: { en: `RECOMMENDED: ${METHOD_SHORT[best.id].en.toUpperCase()}`, es: `RECOMENDADO: ${METHOD_SHORT[best.id].es.toUpperCase()}` },
+          eyebrow: { en: 'BEST', es: 'MEJOR' },
           value: fmt(best.mape, { digits: 3 }),
           unit,
           state: 'normal',
-          source: best.source,
+          source: named(best),
         }
       : {
           id: 'best',
-          eyebrow: { en: 'RECOMMENDED', es: 'RECOMENDADO' },
+          eyebrow: { en: 'BEST', es: 'MEJOR' },
           value: null,
           unit,
           state: 'inactive',
@@ -145,17 +146,17 @@ export function compareCallouts(rows: readonly MethodRow[], best: MethodRow | nu
         },
     {
       id: 'chosen',
-      eyebrow: { en: `SELECTED: ${METHOD_SHORT[chosen.id].en.toUpperCase()}`, es: `SELECCIONADO: ${METHOD_SHORT[chosen.id].es.toUpperCase()}` },
+      eyebrow: { en: 'SELECTED', es: 'ELEGIDO' },
       value: fmt(chosen.mape, { digits: 3 }),
       unit,
       state: 'selected',
-      source: chosen.source,
+      source: named(chosen),
     },
     control
-      ? { id: 'control', eyebrow: { en: 'THE BAR TO BEAT: MEAN', es: 'LA VARA: MEDIA' }, value: fmt(control.mape, { digits: 3 }), unit, state: 'warning', source: control.source }
+      ? { id: 'control', eyebrow: { en: 'MEAN', es: 'MEDIA' }, value: fmt(control.mape, { digits: 3 }), unit, state: 'warning', source: named(control) }
       : {
           id: 'control',
-          eyebrow: { en: 'THE BAR TO BEAT: MEAN', es: 'LA VARA: MEDIA' },
+          eyebrow: { en: 'MEAN', es: 'MEDIA' },
           value: null,
           unit,
           state: 'inactive',

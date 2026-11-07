@@ -119,7 +119,7 @@ describe('SH-008: both directions', () => {
     const html = over({ selectedId: 'method:M2_freeform' }, <CompareBody loo={loo} cb={cb} cbReason={null} target="kW" setTarget={() => undefined} caseId="HP500-03" onPickCase={() => undefined} />);
     expect(shows(html, 'method:M2_freeform', 'panel')).toBe(true);
     expect(shows(html, 'survey:3', 'panel')).toBe(true);
-    expect(html).toContain('SELECTED: FREE-FORM');
+    expect(html).toContain('Free-form fit, held out');
   });
   it('the hours cursor of the campaign (V4) opens the setting in the chamber (V2) and moves the product (V3); without a drift rate it moves nothing', () => {
     expect(opAtHours(sel.op, 20, null).hours).toBeNull();

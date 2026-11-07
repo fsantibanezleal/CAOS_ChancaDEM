@@ -121,9 +121,10 @@ describe('SH-010: the campaign view asserts no wear rate', () => {
     const fmt = (v: number) => formatNumber(v, 'en', { digits: 3 });
     const unset = hoursCallouts('S01', target, driftCurve(BASE, target, 90, null), p80PerMm(BASE), null, fmt);
     expect(unset.some((c) => /\bh\b/.test(c.unit.en))).toBe(false);
-    expect(unset.find((c) => c.id === 'now')!.unit.en).toBe('mm of P80 per mm of setting');
+    expect(unset.find((c) => c.id === 'now')!.unit.en).toBe('mm/mm');
     const set = hoursCallouts('S01', target, driftCurve(BASE, target, 90, 0.2), p80PerMm(BASE), null, fmt);
-    expect(set.find((c) => c.id === 'cross')!.unit.en).toBe('h at your drift rate');
+    expect(set.find((c) => c.id === 'cross')!.unit.en).toBe('h');
+    expect(set.find((c) => c.id === 'cross')!.source.en).toContain('at your drift rate');
     expect(DRIFT_TEXT.control.en).toMatch(/asserts no wear rate and sets none/);
     expect(DRIFT_TEXT.control.es).toMatch(/no afirma ni fija ninguna tasa de desgaste/);
   });

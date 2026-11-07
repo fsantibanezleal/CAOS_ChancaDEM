@@ -50,7 +50,7 @@ export function gradationCallouts(sel: Selection, cls: number | null, fmt: (v: n
         id: 'class',
         eyebrow: cls !== null ? { en: `PASSING ${fmt(edge, { digits: 3 })} MM`, es: `PASANTE ${fmt(edge, { digits: 3 })} MM` } : { en: 'PASSING 1 MM', es: 'PASANTE 1 MM' },
         value: Number.isFinite(passing) ? fmt(passing * 100, { digits: 3 }) : null,
-        unit: { en: '% of the product', es: '% del producto' },
+        unit: { en: '%', es: '%' },
         state: cls !== null ? 'selected' : 'normal',
         source,
       },

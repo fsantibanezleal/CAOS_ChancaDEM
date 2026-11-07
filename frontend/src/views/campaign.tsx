@@ -279,17 +279,17 @@ export function hoursCallouts(
   return [
     { id: 'target', eyebrow: { en: 'TARGET P80', es: 'P80 OBJETIVO' }, value: fmt(target, { digits: 3 }), unit: { en: 'mm', es: 'mm' }, state: 'warning', source: reader },
     useHours
-      ? { id: 'cross', eyebrow: { en: 'TARGET CROSSED AT', es: 'OBJETIVO CRUZADO EN' }, value: curve.crossingH === null ? null : fmt(curve.crossingH, { digits: 3 }), unit: { en: 'h at your drift rate', es: 'h a su velocidad' }, state: 'alarm', source, missing: notReached }
-      : { id: 'cross', eyebrow: { en: 'OPENING ALLOWED', es: 'APERTURA PERMITIDA' }, value: curve.crossingMm === null ? null : fmt(curve.crossingMm, { digits: 3 }), unit: { en: 'mm of setting', es: 'mm de abertura' }, state: 'alarm', source, missing: notReached },
+      ? { id: 'cross', eyebrow: { en: 'CROSSED AT', es: 'CRUZADO EN' }, value: curve.crossingH === null ? null : fmt(curve.crossingH, { digits: 3 }), unit: { en: 'h', es: 'h' }, state: 'alarm', source: { en: `${source.en}, at your drift rate`, es: `${source.es}, a su velocidad` }, missing: notReached }
+      : { id: 'cross', eyebrow: { en: 'OPENING ALLOWED', es: 'APERTURA PERMITIDA' }, value: curve.crossingMm === null ? null : fmt(curve.crossingMm, { digits: 3 }), unit: { en: 'mm', es: 'mm' }, state: 'alarm', source, missing: notReached },
     atCursorP80 !== null
       ? { id: 'now', eyebrow: { en: 'P80 AT THE NOW LINE', es: 'P80 EN LA LÍNEA DE AHORA' }, value: fmt(atCursorP80, { digits: 3 }), unit: { en: 'mm', es: 'mm' }, state: 'selected', source }
       : {
           id: 'now',
-          eyebrow: { en: 'P80 PER MM OF DRIFT', es: 'P80 POR MM DE DESPLAZAMIENTO' },
+          eyebrow: { en: 'P80 PER MM', es: 'P80 POR MM' },
           value: slope === null ? null : fmt(slope, { digits: 3 }),
-          unit: { en: 'mm of P80 per mm of setting', es: 'mm de P80 por mm de abertura' },
+          unit: { en: 'mm/mm', es: 'mm/mm' },
           state: 'selected',
-          source: { en: `dP80/dCSS of the live engine, ${caseId}`, es: `dP80/dCSS del motor en vivo, ${caseId}` },
+          source: { en: `dP80/dCSS, live engine, ${caseId}`, es: `dP80/dCSS, motor en vivo, ${caseId}` },
           missing: { en: 'the point is not valid for the engine', es: 'el punto no es válido para el motor' },
         },
   ];

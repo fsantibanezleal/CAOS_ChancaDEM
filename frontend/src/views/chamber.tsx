@@ -194,16 +194,16 @@ export function sectionCallouts(op: Operating, nip: number, limit: number, hours
       ? { en: `Live engine, ${caseId}, after ${num(hours, { digits: 3 })} h at your drift rate`, es: `Motor en vivo, ${caseId}, tras ${num(hours, { digits: 3 })} h a su velocidad` }
       : { en: `Live engine at the rail's values, ${caseId}`, es: `Motor en vivo con los valores del panel, ${caseId}` };
   return [
-    { id: 'css', eyebrow: { en: 'CLOSED-SIDE SETTING', es: 'ABERTURA DE DESCARGA' }, value: num(op.cssMm, { digits: 3 }), unit: { en: 'mm', es: 'mm' }, state: hours !== null ? 'warning' : 'normal', source, trend: hours !== null ? 'up' : undefined },
+    { id: 'css', eyebrow: { en: 'CSS', es: 'ABERTURA' }, value: num(op.cssMm, { digits: 3 }), unit: { en: 'mm', es: 'mm' }, state: hours !== null ? 'warning' : 'normal', source, trend: hours !== null ? 'up' : undefined },
     {
       id: 'nip',
-      eyebrow: { en: 'NIP ANGLE', es: 'ÁNGULO DE NIP' },
+      eyebrow: { en: 'NIP ANGLE', es: 'NIP' },
       value: num(nip, { decimals: 1 }),
-      unit: { en: `deg, grip limit ${num(limit, { decimals: 2 })} deg`, es: `grados, límite de agarre ${num(limit, { decimals: 2 })} grados` },
+      unit: { en: '°', es: '°' },
       state: nip <= limit ? 'normal' : 'alarm',
-      source: { en: 'Engine nip angle; limit 2 arctan 0.35', es: 'Ángulo de nip del motor; límite 2 arctan 0,35' },
+      source: { en: `Grip limit ${num(limit, { decimals: 2 })}° = 2 arctan 0.35`, es: `Límite de agarre ${num(limit, { decimals: 2 })}° = 2 arctan 0,35` },
     },
-    { id: 'throw', eyebrow: { en: `THROW AT ${num(op.speedRpm, { digits: 3 })} RPM`, es: `CARRERA A ${num(op.speedRpm, { digits: 3 })} RPM` }, value: num(op.throwMm, { digits: 3 }), unit: { en: 'mm', es: 'mm' }, state: 'normal', source },
+    { id: 'throw', eyebrow: { en: `THROW, ${num(op.speedRpm, { digits: 3 })} RPM`, es: `CARRERA, ${num(op.speedRpm, { digits: 3 })} RPM` }, value: num(op.throwMm, { digits: 3 }), unit: { en: 'mm', es: 'mm' }, state: 'normal', source },
   ];
 }
 
