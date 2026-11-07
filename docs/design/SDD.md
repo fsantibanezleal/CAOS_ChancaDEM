@@ -59,6 +59,13 @@ of 2026-06-20 to 2026-07-11, the problem-context dossier of 2026-10-26). The dec
 | A learned surrogate of a phenomenological comminution model is the state of the art for fast what-ifs; it emulates the model, not the plant | A deep network surrogate of a comminution circuit's phenomenological models | Koh et al. 2021, https://doi.org/10.1016/j.mineng.2021.107026 |
 | The executive view's sector figures: concentrators took 55.7 percent of Chilean copper-mining electricity in 2024, and electricity per tonne of fine copper rose 46.2 percent from 2010 while the ore grade fell from 0.75 to 0.62 percent | Cochilco's energy-consumption report for 2024 | Cochilco 2025, https://www.cochilco.cl/web/download/991/2025/15151/consumo-de-energia-en-la-mineria-del-cobre-actualizacion-ano-2024.pdf |
 | Requirements are written in EARS form, each with its gate | The five EARS patterns | Mavin et al. 2009, https://doi.org/10.1109/RE.2009.9 |
+| The held-out errors are reported as the mean absolute percentage error, with its known asymmetry stated | The definitions and the failure modes of the scale-free accuracy measures | Hyndman and Koehler 2006, https://doi.org/10.1016/j.ijforecast.2006.03.001 |
+| CrusherCal's bounded residual is a ridge fit | Ridge regression as biased estimation for correlated predictors | Hoerl and Kennard 1970, https://doi.org/10.1080/00401706.1970.10488634 |
+| The label-shuffle control is read as a permutation test: how many randomly drawn permutations fit at least as well as the real labels | For randomly drawn permutations the exact p-value is (1 + b) / (1 + B), never zero, with b the permutations at least as extreme among B | Phipson and Smyth 2010, https://doi.org/10.2202/1544-6115.1585 |
+| The in-sample error understates the held-out error; the gap is the optimism CrusherCal exposes | The bias of the apparent error rate of a prediction rule | Efron 1986, https://doi.org/10.1080/01621459.1986.10478291 |
+| The surrogate's training points are a Latin-hypercube sweep of the engine | Latin hypercube sampling against random and stratified sampling for computer-code inputs | McKay, Beckman and Conover 1979, https://doi.org/10.1080/00401706.1979.10489755 |
+| The extrapolation score is a denoising autoencoder | Robust features learned by reconstructing corrupted inputs | Vincent et al. 2008, https://doi.org/10.1145/1390156.1390294 |
+| The networks use the GELU activation | The Gaussian error linear unit | Hendrycks and Gimpel 2016, https://arxiv.org/abs/1606.08415 |
 
 UNVERIFIED: the global shares of world electricity attributed to comminution (figures of 1.8, 3 or 4 percent circulate)
 could not be traced to a study opened during the problem-context research and are not used anywhere in the product; two
