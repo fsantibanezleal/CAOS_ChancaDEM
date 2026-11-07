@@ -131,7 +131,7 @@ describe('SH-001: the catalog in the App, one stage per group', () => {
     expect(placementProblems([...GROUP_ORDER], { ...rendered, system: ['chamber', 'circuit'] })).toEqual(['V1: the group system opens on chamber, not on circuit']);
   });
   it('Focus mode is kept for every group, and the rail and tab row are the compact ones the stage floor needs', () => {
-    expect(workbench).toMatch(/\n\s+focus\n/);
+    expect(workbench).toMatch(/\n\s+focus\r?\n/);
     expect(workbench).toContain('tabDensity="compact"');
     expect(workbench).toMatch(/railWidth=\{\d+\}/);
   });

@@ -36,13 +36,13 @@ function LiveValues({ sel }: { sel: Selection | null }) {
       dataKey={stateKey}
       items={[
         { label: 'P80', value: r ? r.p80 : null, unit: 'mm', format: { digits: 4 }, hint: { en: 'The size 80 percent of the product passes.', es: 'El tamaño bajo el cual pasa el 80 por ciento del producto.' } },
-        { label: { en: 'Reduction ratio', es: 'Razón de reducción' }, value: r ? r.reductionRatio : null, unitless: true, format: { decimals: 2 }, hint: { en: 'Feed F80 over product P80.', es: 'F80 de la alimentación sobre P80 del producto.' } },
+        { label: { en: 'Reduction ratio', es: 'Reducción' }, value: r ? r.reductionRatio : null, unitless: true, format: { decimals: 2 }, hint: { en: 'Feed F80 over product P80.', es: 'F80 de la alimentación sobre P80 del producto.' } },
         { label: { en: 'Throughput', es: 'Capacidad' }, value: r ? r.throughputTph : null, unit: 't/h', format: { digits: 4 } },
         { label: { en: 'Power', es: 'Potencia' }, value: r ? r.powerKw : null, unit: 'kW', format: { digits: 4 } },
-        { label: { en: 'Specific energy', es: 'Energía específica' }, value: r ? r.specificEnergyKwhT : null, unit: 'kWh/t', format: { decimals: 2 } },
+        { label: { en: 'Specific energy', es: 'Energía' }, value: r ? r.specificEnergyKwhT : null, unit: 'kWh/t', format: { decimals: 2 } },
         // the two inputs of the case that are not knobs: a case is one machine, and the ore's Bond index is the case's
         { label: { en: 'Machine', es: 'Máquina' }, text: sel ? MACHINE_NAME[sel.op.machine] : { en: 'not available', es: 'no disponible' }, hint: { en: 'A case is one machine; the machine is not a knob.', es: 'Un caso es una máquina; la máquina no es una perilla.' } },
-        { label: { en: 'Bond work index', es: 'Índice de Bond' }, value: sel ? sel.data.manifest.params.ore_wi : null, unit: 'kWh/t', format: { digits: 4 }, hint: { en: 'Energy to grind the ore from a large size to 80 percent passing 100 micrometres.', es: 'Energía para moler el mineral desde un tamaño grande hasta 80 por ciento pasante de 100 micrómetros.' } },
+        { label: { en: 'Bond work index', es: 'Bond Wi' }, value: sel ? sel.data.manifest.params.ore_wi : null, unit: 'kWh/t', format: { digits: 4 }, hint: { en: 'Energy to grind the ore from a large size to 80 percent passing 100 micrometres.', es: 'Energía para moler el mineral desde un tamaño grande hasta 80 por ciento pasante de 100 micrómetros.' } },
       ]}
     />
   );
