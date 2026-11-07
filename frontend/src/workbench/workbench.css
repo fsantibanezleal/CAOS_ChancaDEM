@@ -229,3 +229,17 @@
     min-height: 26rem;
   }
 }
+
+/* The story's docked panel content: bounded to the layout's height, so its natural height never shrinks the stepper above it. */
+.cdem-story-dock {
+  max-height: calc(100dvh - 15rem);
+  min-height: 0;
+  overflow-y: auto;
+}
+
+@media (max-width: 760px) {
+  .cdem-story-dock {
+    max-height: none;
+    overflow: visible;
+  }
+}

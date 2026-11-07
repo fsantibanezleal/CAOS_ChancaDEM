@@ -304,10 +304,10 @@ export function CompareBody({
     >
       <div className="cdem-stack" data-caos-flow="" data-target={target} data-recommended={best?.id ?? ''}>
         <div className="cdem-controls" role="group" aria-label={t('Target of the forecast', 'Objetivo del pronóstico')}>
-          <button type="button" aria-pressed={target === 'tph'} onClick={() => setTarget('tph')}>
+          <button type="button" className="btn" aria-pressed={target === 'tph'} onClick={() => setTarget('tph')}>
             {t('Throughput (t/h)', 'Capacidad (t/h)')}
           </button>
-          <button type="button" aria-pressed={target === 'kW'} onClick={() => setTarget('kW')}>
+          <button type="button" className="btn" aria-pressed={target === 'kW'} onClick={() => setTarget('kW')}>
             {t('Power (kW)', 'Potencia (kW)')}
           </button>
         </div>

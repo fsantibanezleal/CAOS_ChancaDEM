@@ -85,7 +85,7 @@ function StageLink({ stage, label }: { stage: StageId; label: string }) {
   );
 }
 
-function Evidence({ title, children, source }: { title: string; children: ReactNode; source: string }) {
+function Evidence({ title, children, source }: { title: string; children: ReactNode; source: ReactNode }) {
   return (
     <section className="cdem-story-evidence">
       <h2>{title}</h2>
@@ -202,7 +202,13 @@ export function Story() {
   const measurePanel = (
     <Evidence
       title={t('What the plant measured', 'Lo que midió la planta')}
-      source={t('Source: case manifest (Rocha et al. 2024, CC BY 4.0) and the committed trace.', 'Fuente: manifiesto del caso (Rocha et al. 2024, CC BY 4.0) y la traza comprometida.')}
+      source={
+        <>
+          {t('Source: case manifest (Rocha et al. 2024, ', 'Fuente: manifiesto del caso (Rocha et al. 2024, ')}
+          <span translate="no">CC BY 4.0</span>
+          {t(') and the committed trace.', ') y la traza comprometida.')}
+        </>
+      }
     >
       <SurveyScrubber n={nSurveys} current={survey} onPick={(k) => withCase(caseOfSurvey(k))} />
       <StreamTable values={values} />
@@ -342,7 +348,8 @@ export function Story() {
     href: stepHref(s.id, shownCase),
     accent: s.accent,
     stage: content[s.id].stage,
-    panel: content[s.id].panel,
+    // the docked panel keeps the height the layout gives it and scrolls inside, so a long panel never squeezes the stepper
+    panel: <div className="cdem-story-dock">{content[s.id].panel}</div>,
   }));
   return (
     <ViewContext.Provider value={ctx}>

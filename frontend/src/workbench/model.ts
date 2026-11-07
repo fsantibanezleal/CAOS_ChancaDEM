@@ -78,7 +78,7 @@ export const KNOBS: readonly KnobSpec[] = [
   {
     key: 'feedM',
     id: 'm',
-    label: { en: 'Feed uniformity m', es: 'Uniformidad de la alimentación' },
+    label: { en: 'Feed uniformity m', es: 'Uniformidad m' },
     hint: { en: 'The Rosin-Rammler exponent of the feed: the higher it is, the narrower the size distribution.', es: 'El exponente de Rosin-Rammler de la alimentación: cuanto mayor, más estrecha la distribución de tamaños.' },
     min: 0.6,
     max: 2.2,

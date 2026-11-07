@@ -61,6 +61,7 @@ export function PassControls({ n }: { n: number }) {
   return (
     <div className="cdem-controls">
       <button
+        className="btn"
         type="button"
         aria-pressed={playing}
         onClick={() => {
