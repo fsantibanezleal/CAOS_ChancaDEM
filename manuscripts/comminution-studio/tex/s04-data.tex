@@ -99,7 +99,7 @@ schema file and status in the committed build. Their fields are listed in Append
 
 \subsection{params-record: one operating point}\label{sec:data-params}
 
-The \texttt{params-record} contract (version $1.0.0$, schema \texttt{params-record.schema.json}) is the ingestion contract of
+The \texttt{params-record} contract (version \cver{params-record}, fields in Table~\ref{tab:schema-params-record}, schema \texttt{params-record.schema.json}) is the ingestion contract of
 the circuit cases: one row of \texttt{params.csv} as \texttt{pipeline/\allowbreak{}io/\allowbreak{}contract.py} accepts it. Its nine required fields
 are the case identifier (string, pattern of one capital letter followed by one to fifteen capitals, digits or hyphens), the
 machine class (one of five values), the closed-side setting \texttt{css\_mm} (number, above $0$ and at most $600$~mm), the
@@ -115,7 +115,7 @@ cases.
 
 \subsection{hp500-survey: one measured survey}\label{sec:data-survey}
 
-The \texttt{hp500-survey} contract (version $1.0.0$) is the ingestion contract of the real data: one row of
+The \texttt{hp500-survey} contract (version \cver{hp500-survey}, fields in Table~\ref{tab:schema-hp500-survey}) is the ingestion contract of the real data: one row of
 \texttt{hp500-surveys.csv} as \texttt{pipeline/\allowbreak{}hp500/\allowbreak{}surveys.py} accepts it. Its five required fields are the survey number
 (integer, $1$ to $10$, consecutive without a gap), the measured feed $f_{80}$ (number, above $0$ and at most $400$~mm), the
 measured closed-side setting (above $0$ and at most $200$~mm), the measured solid feed rate \texttt{feed\_tph} (above $0$ and at
@@ -130,7 +130,7 @@ dropped with its reason, its case is not baked and readiness lists the survey nu
 
 \subsection{case-index: the inventory of a bake}\label{sec:data-index}
 
-The \texttt{case-index} contract (version $1.0.0$, \texttt{data/\allowbreak{}derived/\allowbreak{}manifests/\allowbreak{}index.json}, schema
+The \texttt{case-index} contract (version \cver{case-index}, fields in Table~\ref{tab:schema-case-index}, \texttt{data/\allowbreak{}derived/\allowbreak{}manifests/\allowbreak{}index.json}, schema
 \texttt{chancadem.index/\allowbreak{}v1}) is the flat inventory the web reads first. It carries the product version that baked it
 (\texttt{engine\_version}, pattern \texttt{X.XX.XXX}), the number of cases (integer, at least one; $27$ in the committed build),
 the default case (\texttt{S01}), one entry per case with its identifier, its title and category in English and Spanish, whether
@@ -145,7 +145,7 @@ versions and the views show it.
 
 \subsection{case-manifest: one baked case}\label{sec:data-manifest}
 
-The \texttt{case-manifest} contract (version $1.1.0$, one file \texttt{data/\allowbreak{}derived/\allowbreak{}manifests/\allowbreak{}<case>.json} per case, schema
+The \texttt{case-manifest} contract (version \cver{case-manifest}, fields in Table~\ref{tab:schema-case-manifest}, one file \texttt{data/\allowbreak{}derived/\allowbreak{}manifests/\allowbreak{}<case>.json} per case, schema
 \texttt{chancadem.manifest/\allowbreak{}v1}) is the authoritative record of one case and a pure function of its parameters and seed: it
 holds no wall-clock time, so a re-bake does not change it. Its twenty required fields include the case identifier, the
 bilingual title, category and expected band in words, the circuit stage (primary, secondary, tertiary or control), the kind of
@@ -162,10 +162,11 @@ available and the other cases work, and the interface answers $404$ for it; stal
 
 \subsection{trace: the replay artifact}\label{sec:data-trace}
 
-The \texttt{trace} contract (version $1.0.0$, \texttt{data/\allowbreak{}derived/\allowbreak{}<case>/\allowbreak{}trace.json}, schema \texttt{chancadem.trace/\allowbreak{}v1}) holds
+The \texttt{trace} contract (version \cver{trace}, fields in Table~\ref{tab:schema-trace}, \texttt{data/\allowbreak{}derived/\allowbreak{}<case>/\allowbreak{}trace.json}, schema \texttt{chancadem.trace/\allowbreak{}v1}) holds
 what the engine computed at the operating point of a case: the $29$ sieve edges and $28$ mid-sizes in millimetres, the feed
 and product cumulative passing at each edge and mass per class (fractions in $[0,1]$), the classification $C(d)$ at each
-mid-size, the $t_{10}$ of the appearance function as a fraction in $[0, 0.44]$ ($0.364$ for S01), a summary of scalars ($F_{80}$, $P_{80}$, $P_{50}$
+mid-size, the $t_{10}$ of the appearance function as a fraction in $[0, 0.44]$ ($0.364$ for S01; the schema keeps the upper bound
+of $100$ of its first version, so its table shows a wider range than the engine writes), a summary of scalars ($F_{80}$, $P_{80}$, $P_{50}$
 and $P_{20}$ in mm, the reduction ratio, the passing at $1$, $4$, $8$, $16$ and $32$~mm, the throughput in t/h, the power in kW,
 the specific energy in kWh/t, the open-side setting, the nip angle and its limit in degrees, the regime, the validity and
 envelope flags, the mass closure and the conditioning proxy, which may be the string \texttt{Infinity} for a singular solve),
@@ -174,11 +175,13 @@ $P_{80}$, throughput and power). The largest trace of the committed build is $4{
 \texttt{pipeline/\allowbreak{}core/\allowbreak{}trace.py} and read by the web's replay curves and by the parity test of the TypeScript engine, which
 re-runs each case and compares with the trace to the six significant digits it is written with. Missing-data behaviour: an
 artifact a manifest names but that is absent is listed by readiness as \emph{partial}; the replay views of that case say that
-the data are not available, while the live lane still runs from the manifest's parameters, and the interface answers $404$.
+the data are not available, while the live lane still runs from the manifest's parameters, and the interface answers $404$. The
+version moved from $1.0.0$ to its current one as a patch, when the description of \texttt{appearance\_t10} was corrected to state the
+fraction the engine writes; no field, type or bound changed.
 
 \subsection{hp500-backbone: the calibrated engine at each survey}\label{sec:data-backbone}
 
-The \texttt{hp500-backbone} contract (version $1.0.0$, \texttt{data/\allowbreak{}derived/\allowbreak{}hp500/\allowbreak{}backbone.json}, schema
+The \texttt{hp500-backbone} contract (version \cver{hp500-backbone}, fields in Table~\ref{tab:schema-hp500-backbone}, \texttt{data/\allowbreak{}derived/\allowbreak{}hp500/\allowbreak{}backbone.json}, schema
 \texttt{chancadem.hp500.backbone/\allowbreak{}v1}) records the calibrated engine evaluated at each of the ten surveys. Its fields are the
 source (paper, DOI, licence and tables), the engine version, a note, the number of surveys and, per survey, its identifier
 (pattern \texttt{HP500-NN}), its number, the measured block (setting, $f_{80}$, feed rate and power, in mm, mm, t/h and kW) and
@@ -192,10 +195,10 @@ web say that the validation is not available with the reason, and the ten real c
 
 \subsection{hp500-loo: CrusherCal}\label{sec:data-loo}
 
-The \texttt{hp500-loo} contract (version $1.2.0$, \texttt{data/\allowbreak{}derived/\allowbreak{}hp500/\allowbreak{}loo.json}, schema \texttt{chancadem.hp500.loo/\allowbreak{}v1})
+The \texttt{hp500-loo} contract (version \cver{hp500-loo}, fields in Table~\ref{tab:schema-hp500-loo}, \texttt{data/\allowbreak{}derived/\allowbreak{}hp500/\allowbreak{}loo.json}, schema \texttt{chancadem.hp500.loo/\allowbreak{}v1})
 is the leave-one-survey-out evaluation of Section~\ref{sec:m-crushercal}. It holds the source, the engine version, the number of
 surveys, the seed ($42$), the configuration (the residual clip fraction $0.20$, the ridge penalty $1.0$, the two features, the
-two primary targets and the secondary one, and the Morrell settings $K_s=55$, $K_2=1.0$, closed circuit), and per target
+two primary targets and the secondary one, and the Morrell settings $K_s=55$, $K_{\mathrm c}=1.0$, closed circuit), and per target
 (throughput, power and the self-consistency target $P_{80}$) the measured values and two blocks, strict and leaky, each with the
 MAPE in percent, RMSE in the target unit, $R^2$ and largest deviation in percent of every predictor, the held-out predictions per
 survey, and, on the strict block, the band: $\sigma$ of the held-out residuals, the half-width, the nominal and in-sample
@@ -209,7 +212,7 @@ not available.
 
 \subsection{hp500-crusherbayes: the posterior and its held-out scores}\label{sec:data-cb}
 
-The \texttt{hp500-crusherbayes} contract (version $1.0.0$, \texttt{data/\allowbreak{}derived/\allowbreak{}hp500/\allowbreak{}crusherbayes.json}, schema
+The \texttt{hp500-crusherbayes} contract (version \cver{hp500-crusherbayes}, fields in Table~\ref{tab:schema-hp500-crusherbayes}, \texttt{data/\allowbreak{}derived/\allowbreak{}hp500/\allowbreak{}crusherbayes.json}, schema
 \texttt{chancadem.hp500.crusherbayes/\allowbreak{}v1}) is the output of the offline sampler of Section~\ref{sec:m-crusherbayes}. It holds the
 source, the engine version, the number of surveys, the seed, a SHA-256 over the survey table, the sampler size, the seed and the
 priors (so a reader can tell which inputs produced it), the method (sampler name and version, moves, $20$ walkers, $7000$
@@ -225,7 +228,7 @@ older bake; every other document is unaffected.
 
 \subsection{surrogate-model: the emulator slot}\label{sec:data-surrogate}
 
-The \texttt{surrogate-model} contract (version $1.0.0$, \texttt{data/\allowbreak{}derived/\allowbreak{}models/\allowbreak{}surrogate.json} beside the graphs
+The \texttt{surrogate-model} contract (version \cver{surrogate-model}, fields in Table~\ref{tab:schema-surrogate-model}, \texttt{data/\allowbreak{}derived/\allowbreak{}models/\allowbreak{}surrogate.json} beside the graphs
 \texttt{surrogate.onnx}, $32{,}449$~bytes, and \texttt{surrogate.int8.onnx}, $15{,}880$~bytes) carries everything the meaning of
 the graph depends on: the order of the five machine classes of the one-hot block, the order of the six continuous inputs (setting,
 throw, speed, feed $x_{63}$, feed exponent and $A\times b$) with their means and standard deviations, the order of the ten outputs
@@ -240,7 +243,7 @@ view answers with the engine itself, labelled, and the Benchmark labels the metr
 
 \subsection{anomaly-model: the extrapolation-score slot}\label{sec:data-anomaly}
 
-The \texttt{anomaly-model} contract (version $1.0.0$, \texttt{data/\allowbreak{}derived/\allowbreak{}models/\allowbreak{}psd-ae.json} beside
+The \texttt{anomaly-model} contract (version \cver{anomaly-model}, fields in Table~\ref{tab:schema-anomaly-model}, \texttt{data/\allowbreak{}derived/\allowbreak{}models/\allowbreak{}psd-ae.json} beside
 \texttt{psd-ae.onnx}, $5{,}859$~bytes) describes the denoising autoencoder: the order of its fourteen features (the logarithms
 of $P_{80}$, $P_{50}$ and $P_{20}$, the passing at five sizes, throughput, power, reduction ratio, the logarithm of $F_{80}$,
 specific energy and the feed exponent), their means and standard deviations, the alarm threshold (the $99$th percentile of the
@@ -254,7 +257,7 @@ the anomaly view answers with the envelope check, labelled as the baseline.
 
 \subsection{model-metrics: the held-out evaluation of the two slots}\label{sec:data-metrics}
 
-The \texttt{model-metrics} contract (version $1.0.0$, \texttt{data/\allowbreak{}derived/\allowbreak{}model-metrics.json}, schema
+The \texttt{model-metrics} contract (version \cver{model-metrics}, fields in Table~\ref{tab:schema-model-metrics}, \texttt{data/\allowbreak{}derived/\allowbreak{}model-metrics.json}, schema
 \texttt{chancadem.model-metrics/\allowbreak{}v1}) holds the held-out evaluation of Sections~\ref{sec:m-surrogate} and~\ref{sec:m-ae}. For the
 surrogate: the training and test sizes ($6430$ and $2196$), the seed of the test draw ($67890$), per output the $R^2$ and the MAPE
 of the float32 graph and the MAPE of the int8 graph, whether $P_{80}$ is monotone in the setting on the fifteen test curves, the
@@ -268,7 +271,7 @@ available, never a number from an older bake; an older \texttt{engine\_version} 
 
 \subsection{readiness: what is real in a build}\label{sec:data-readiness}
 
-The \texttt{readiness} contract (version $1.0.0$, \texttt{data/\allowbreak{}derived/\allowbreak{}readiness.json}, schema \texttt{chancadem.readiness/\allowbreak{}v1})
+The \texttt{readiness} contract (version \cver{readiness}, fields in Table~\ref{tab:schema-readiness}, \texttt{data/\allowbreak{}derived/\allowbreak{}readiness.json}, schema \texttt{chancadem.readiness/\allowbreak{}v1})
 answers, for one build, which contracts are served by their real producer and in which state. It carries the product version, the
 SHA-256 of the catalog it was computed from (with line endings normalised), and one row per contract other than itself with the
 identifier, version, catalog status, provenance (real, baseline, a provider kind, or null), state (one of the six of
@@ -282,7 +285,7 @@ loaded at run time the views keep working and each says that readiness is unknow
 
 \subsection{api: the dormant interface}\label{sec:data-api}
 
-The \texttt{api} contract (version $1.0.1$, \texttt{docs/\allowbreak{}contracts/\allowbreak{}api.openapi.json}, OpenAPI 3.1) describes the read-only
+The \texttt{api} contract (version \cver{api}, fields in Table~\ref{tab:schema-api}, \texttt{docs/\allowbreak{}contracts/\allowbreak{}api.openapi.json}, OpenAPI 3.1) describes the read-only
 interface of \texttt{app/\allowbreak{}}, dormant until a deployment needs a server. It has six routes, all \texttt{GET}: two health routes,
 the case list, the manifest of a case, an artifact by relative path and the readiness document (Appendix~\ref{app:schemas}). It
 serves the committed documents unchanged, and its components reference the same schema files as the catalog, so the TypeScript

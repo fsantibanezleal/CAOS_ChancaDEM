@@ -286,7 +286,8 @@ def fig_power_parity() -> None:
     ax.set_xticklabels([f"{int(k)}\n{p['css']:.0f} mm" for k, p in zip(n, ps)], fontsize=6.6)
     ax.set_xlabel("survey and its closed-side setting")
     ax.set_ylabel("power (kW)")
-    ax.legend(fontsize=6.4, ncol=2, frameon=True, facecolor="white", edgecolor=GRID, loc="upper left")
+    # the legend above the axes, so it covers none of the bars
+    ax.legend(fontsize=6.4, ncol=4, frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.0))
     _clean(ax)
     _save(fig, "fig-power-parity.pdf")
 
@@ -316,8 +317,10 @@ def fig_loo() -> None:
         ax.set_xlabel(f"measured {lab}")
         ax.set_ylabel(f"held-out prediction, {lab}")
         ax.set_title(title, fontsize=8.6)
-        ax.legend(fontsize=6.2, frameon=True, facecolor="white", edgecolor=GRID, loc="upper left")
         _clean(ax)
+    # one legend below both panels, so no marker or interval of a survey is hidden behind it
+    handles, labels = axes[1].get_legend_handles_labels()
+    fig.legend(handles, labels, fontsize=6.4, frameon=False, loc="upper center", bbox_to_anchor=(0.5, 0.02), ncol=5)
     _save(fig, "fig-loo.pdf")
 
 
@@ -387,13 +390,13 @@ def fig_contraction() -> None:
     order = np.argsort(vals)
     fig, ax = plt.subplots(figsize=(6.6, 3.9))
     y = np.arange(len(rows))
-    cols = [BLUE if vals[i] < 0.5 else RED if vals[i] > 0.85 else ORANGE for i in order]
-    hatches = ["" if vals[i] < 0.5 else "//" if vals[i] > 0.85 else ".." for i in order]
+    cols = [BLUE if vals[i] < 0.5 else RED if vals[i] > 0.9 else ORANGE for i in order]
+    hatches = ["" if vals[i] < 0.5 else "//" if vals[i] > 0.9 else ".." for i in order]
     bars = ax.barh(y, vals[order], color=cols, edgecolor=INK, linewidth=0.4, zorder=3)
     for b, h in zip(bars, hatches):
         b.set_hatch(h)
     ax.axvline(0.5, color=INK, lw=0.8, ls="--")
-    ax.axvline(1.0, color=INK, lw=0.8, ls=":")
+    ax.axvline(0.9, color=INK, lw=0.8, ls=":")   # the thresholds of the CrusherBayes manuscript: 0.5 and 0.9
     ax.set_yticks(y)
     ax.set_yticklabels([names[i] for i in order], fontsize=7.2)
     ax.set_xlabel("posterior standard deviation over prior standard deviation")

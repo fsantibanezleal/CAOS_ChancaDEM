@@ -154,6 +154,30 @@ def bootstrap(errs: dict) -> dict:
     return out
 
 
+def pairwise(errs: dict) -> dict:
+    """Per target, the paired difference of the MAPE of every two predictors (first minus second, in the order of
+    ``errs``) with its percentile interval. The resampled survey indices are drawn exactly as in ``bootstrap`` (the same
+    seed, the same targets in the same order), so every interval here is computed on the resamples of Table uncertainty."""
+    rng = np.random.default_rng(BOOT_SEED)
+    lo_q, hi_q = 100 * (1 - LEVEL) / 2, 100 * (1 + LEVEL) / 2
+    out = {}
+    for t, e in errs.items():
+        n = e["measured"].size
+        idx = rng.integers(0, n, size=(B, n))
+        a = {k: ape(e["measured"], p) for k, p in e["pred"].items()}
+        boot = {k: v[idx].mean(axis=1) for k, v in a.items()}
+        point = {k: e["mape"].get(k, round(float(v.mean()), 2)) for k, v in a.items()}
+        keys = list(a)
+        res = {}
+        for i, k in enumerate(keys):
+            for l in keys[i + 1:]:
+                d = boot[k] - boot[l]
+                res[(k, l)] = {"d": point[k] - point[l], "lo": float(np.percentile(d, lo_q)),
+                               "hi": float(np.percentile(d, hi_q))}
+        out[t] = res
+    return out
+
+
 if __name__ == "__main__":
     errs = heldout_errors()
     for t, rows in bootstrap(errs).items():

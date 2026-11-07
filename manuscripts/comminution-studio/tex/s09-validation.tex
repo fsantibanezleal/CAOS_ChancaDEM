@@ -86,12 +86,14 @@ a cross-field rule must be refused, and a guard of the test suite fails any test
 The calibrated lane is reconciled with the published calibration in three ways. The classification, $t_{10}$ and power constants of the engine
 were checked against Table 5 of the paper, and the survey table against its Table A1, row for row. The engine with these constants and the
 capacity base of $647$~t/h reproduces the measured feed rates of the ten surveys with an in-sample MAPE of $11.55\%$; refit per fold, the capacity
-base ranges from $\qtFoldLo$ to $\qtFoldHi$~t/h ($\qtAll$~t/h on all ten surveys), above the published number because the engine uses it in
-another capacity form (Section~\ref{sec:m-hp500}). The posterior mean of $646.3$~t/h of CrusherBayes is no evidence for the published value: it
+base ranges from $\qtFoldLo$ to $\qtFoldHi$~t/h ($\qtAll$~t/h on all ten surveys), above the published number because the measured feed rates
+lie above the backbone computed with $647$~t/h on average, so the scalar that minimises the squared error rises; that the engine uses the number in
+another capacity form (Section~\ref{sec:m-hp500}) explains why it is not the vendor's capacity, not why the refit lies above it. The posterior mean of $646.3$~t/h of CrusherBayes is no evidence for the published value: it
 sits at its prior centre while the discrepancy constant absorbs the level of the throughput (Section~\ref{sec:results-cb}). The published power
 constants do not reconcile with the Bond draw ($47.58\%$ in sample), because in the paper they multiply the paper's size-specific net power and
 not a Bond draw (Section~\ref{sec:m-bond}). Last, the separate throughput model of the paper is run on the ten surveys with its published
-parameters (Equation~\eqref{eq:rocha}) and scores $\uqQRocha\%$, inside the range of the engine-based predictors (Table~\ref{tab:uncertainty}); the
+parameters (Equation~\eqref{eq:rocha}) and scores $\uqQRocha\%$, below the engine-based predictors ($12.00$ to $13.67\%$ in Table~\ref{tab:bench}) and not distinguishable from
+any of them (Table~\ref{tab:pairs}); the
 paper reports the fit of that model to the surveys as a figure and as a mean of the squared relative deviations, not as a percentage error, so the
 product's number is the comparison. A re-transcription of the published survey table that disagreed with the committed file would remove the real
 lane from a build until the table is corrected.
