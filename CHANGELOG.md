@@ -4,7 +4,7 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
-## [Unreleased]
+## [0.13.000] · 2026-11-08
 
 ### Added
 
