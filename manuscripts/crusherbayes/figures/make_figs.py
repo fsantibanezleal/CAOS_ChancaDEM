@@ -85,7 +85,7 @@ for t, tk in (("tph", "Tph"), ("kW", "Kw")):
     s = sc[t]["scores"]
     for k, nm in (("mape_pct", "Mape"), ("rmse", "Rmse"), ("lpd_mean", "Lpd"), ("coverage_80", "Cov"), ("mean_width", "Width")):
         put(f"cb{tk}{nm}", s[k], "cb", f"loo.{t}.scores.{k}", 2 if k != "coverage_80" else 1)
-    for c, ck in (("B_lin", "Blin"), ("M0", "Back"), ("M2", "Free")):
+    for c, ck in {"B_lin": "Blin", "M0": "Back", "M2": "Free"}.items():
         for k, nm in (("mape_pct", "Mape"), ("rmse", "Rmse"), ("lpd_mean", "Lpd"), ("coverage_80", "Cov"), ("mean_width", "Width")):
             put(f"{ck}{tk}{nm}", cmp_[t][c][k], "cb", f"comparators.{t}.{c}.{k}", 2 if k != "coverage_80" else 1)
 put("constTphMape", loo["loo"]["tph"]["strict"]["constant_mean"]["mape_pct"], "loo", "loo.tph.strict.constant_mean.mape_pct", 2)
@@ -191,8 +191,8 @@ acc = [r"\begin{tabular}{@{}llrrrrr@{}}", r"\toprule",
 for t, unit in (("tph", "t/h"), ("kW", "kW")):
     acc.append(rf"\multicolumn{{7}}{{@{{}}l}}{{\textit{{{'Throughput' if t == 'tph' else 'Power'} ({unit})}}}} \\")
     s = sc[t]["scores"]
-    lines = [("CrusherBayes", s)] + [(n, cmp_[t][k]) for n, k in
-                                     (("Setting-only line", "B_lin"), ("Refit engine with residual band", "M0"), ("Free-form linear fit", "M2"))]
+    lines = [("CrusherBayes", s)] + [(n, cmp_[t][k]) for k, n in
+                                     {"B_lin": "Setting-only line", "M0": "Refit engine with residual band", "M2": "Free-form linear fit"}.items()]
     for n, v in lines:
         acc.append(rf"& {n} & {fx(v['mape_pct'])} & {fx(v['rmse'])} & {fx(v['lpd_mean'], 3)} & {fx(v['coverage_80'], 1)} & {fx(v['mean_width'], 1)} \\")
     acc.append(r"\midrule" if t == "tph" else r"\bottomrule")
@@ -337,7 +337,9 @@ def wilson(k: int, n: int, z: float = 1.959964) -> tuple[float, float]:
     return centre - half, centre + half
 
 
-BANDED = {"cb": None, "blin": "B_lin", "back": "M0", "free": "M2"}
+# the methods the held-out document scores with an 80 percent band: the short key of this script, then the key of the
+# comparator in crusherbayes.json (None for CrusherBayes itself, read from its own scores)
+BANDED = {"cb": None} | {short: comp for comp, short in {"B_lin": "blin", "M0": "back", "M2": "free"}.items()}
 # where the held-out document stores a method's MAPE, the text and tables print that value; the recomputation from the
 # predictions (stored to two decimals) must agree with it to 0.02 points, and only the bootstrap intervals come from it
 DOC_MAPE = {"kW": {"blin": "B_lin", "mnl": "Morrell_noload", "resid": "M1_residual", "mor": "Morrell", "const": "constant_mean"},

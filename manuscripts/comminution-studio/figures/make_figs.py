@@ -296,11 +296,12 @@ def fig_loo() -> None:
     loo = _json(HP / "loo.json")["loo"]
     cb = _json(HP / "crusherbayes.json")["loo"]
     fig, axes = plt.subplots(1, 2, figsize=(7.0, 3.2))
-    spec = [("tph", "throughput (t/h)", ["M0", "B_lin", "M2"], "(a) throughput"),
-            ("kW", "power (kW)", ["M0", "B_lin", "M2", "Morrell_noload"], "(b) power")]
+    # keys of the held-out documents, in the order the legend shows them; the power panel adds the last one
     style = {"M0": (GREY, "o", "calibrated backbone"), "B_lin": (ORANGE, "s", "setting-only line"),
              "M2": (GREEN, "^", "free-form fit"), "Morrell_noload": (PURPLE, "v", "Morrell with no-load term")}
-    for ax, (key, lab, methods, title) in zip(axes, spec):
+    spec = [("tph", "throughput (t/h)", False, "(a) throughput"), ("kW", "power (kW)", True, "(b) power")]
+    for ax, (key, lab, with_noload, title) in zip(axes, spec):
+        methods = [m for m in style if with_noload or m != "Morrell_noload"]
         meas = np.array(loo[key]["measured"])
         lo, hi = np.array(cb[key]["lo80"]), np.array(cb[key]["hi80"])
         mean = np.array(cb[key]["pred_mean"])

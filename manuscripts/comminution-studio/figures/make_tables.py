@@ -156,17 +156,21 @@ def tab_power_parity() -> None:
                                                        "Max. dev. (\\%)"], rows))
 
 
-BENCH = [("constant_mean", None, "Constant mean"), ("M1_label_shuffle", None, "Label-shuffle control"),
-         ("M0_backbone", "M0", "Calibrated backbone"), ("M1_residual", None, "Backbone with bounded residual"),
-         ("M2_freeform", "M2", "Free-form fit on CSS and $f_{80}$"), ("B_lin", "B_lin", "Setting-only line"),
-         ("Morrell", None, "Morrell, through the origin"), ("Morrell_noload", None, "Morrell with a no-load term")]
+BENCH = [("constant_mean", "Constant mean"), ("M1_label_shuffle", "Label-shuffle control"),
+         ("M0_backbone", "Calibrated backbone"), ("M1_residual", "Backbone with bounded residual"),
+         ("M2_freeform", "Free-form fit on CSS and $f_{80}$"), ("B_lin", "Setting-only line"),
+         ("Morrell", "Morrell, through the origin"), ("Morrell_noload", "Morrell with a no-load term")]
+# the three BENCH rows that crusherbayes.json also scores: its comparator key (the key) and the loo.json row (the value)
+BENCH_COMPARATOR_ROW = {"M0": "M0_backbone", "M2": "M2_freeform", "B_lin": "B_lin"}
+BENCH_ROW_COMPARATOR = {row: comp for comp, row in BENCH_COMPARATOR_ROW.items()}
 
 
 def tab_bench() -> None:
     loo = _json(HP / "loo.json")["loo"]
     cb = _json(HP / "crusherbayes.json")
     rows = []
-    for key, comp, name in BENCH:
+    for key, name in BENCH:
+        comp = BENCH_ROW_COMPARATOR.get(key)
         row = [name]
         for t in ("tph", "kW"):
             s = loo[t]["strict"].get(key)
@@ -191,7 +195,7 @@ def tab_bench() -> None:
 def tab_lpd() -> None:
     cb = _json(HP / "crusherbayes.json")
     rows = []
-    for comp, name in (("B_lin", "Setting-only line"), ("M0", "Calibrated backbone"), ("M2", "Free-form fit")):
+    for comp, name in {"B_lin": "Setting-only line", "M0": "Calibrated backbone", "M2": "Free-form fit"}.items():
         rows.append([name] + [num(cb["comparators"][t][comp]["lpd_mean"], 3) for t in ("tph", "kW")])
     rows.append(["CrusherBayes"] + [num(cb["loo"][t]["scores"]["lpd_mean"], 3) for t in ("tph", "kW")])
     write("tab-lpd", tabular("@{}l rr@{}", ["Method", "Throughput", "Power"], rows))
@@ -200,7 +204,7 @@ def tab_lpd() -> None:
 def tab_leaky() -> None:
     loo = _json(HP / "loo.json")["loo"]
     rows = []
-    for key, _comp, name in BENCH:
+    for key, name in BENCH:
         row = [name]
         for t in ("tph", "kW"):
             s, lk = loo[t]["strict"].get(key), loo[t]["leaky"].get(key)
@@ -215,12 +219,12 @@ def tab_leaky() -> None:
     write("tab-leaky", tabular("@{}l rrr rrr@{}", head, rows, groups))
 
 
-UQ_ROWS = [("constant_mean", "Constant mean"), ("label_shuffle", "Label-shuffle control"), ("M0", "Calibrated backbone"),
-           ("M1", "Backbone with bounded residual"), ("M2", "Free-form fit on CSS and $f_{80}$"), ("B_lin", "Setting-only line"),
-           ("Morrell", "Morrell, through the origin"), ("Morrell_noload", "Morrell with a no-load term"),
-           ("CrusherBayes", "CrusherBayes (predictive mean)"),
-           ("Rocha_published", r"Rocha et al.\ throughput model, $\lambda_{\mathrm R}=0.84$"),
-           ("Rocha_refit", r"Rocha et al.\ throughput model, $\lambda_{\mathrm R}$ refit per fold")]
+UQ_ROWS = {"constant_mean": "Constant mean", "label_shuffle": "Label-shuffle control", "M0": "Calibrated backbone",
+           "M1": "Backbone with bounded residual", "M2": "Free-form fit on CSS and $f_{80}$", "B_lin": "Setting-only line",
+           "Morrell": "Morrell, through the origin", "Morrell_noload": "Morrell with a no-load term",
+           "CrusherBayes": "CrusherBayes (predictive mean)",
+           "Rocha_published": r"Rocha et al.\ throughput model, $\lambda_{\mathrm R}=0.84$",
+           "Rocha_refit": r"Rocha et al.\ throughput model, $\lambda_{\mathrm R}$ refit per fold"}
 UQ_MACRO = {"constant_mean": "Mean", "label_shuffle": "Shuf", "M0": "Bb", "M1": "Res", "M2": "Free", "B_lin": "Line",
             "Morrell": "Mor", "Morrell_noload": "Mornl", "CrusherBayes": "Cb", "Rocha_published": "Rocha",
             "Rocha_refit": "Rocharef"}
@@ -241,7 +245,7 @@ def tab_uncertainty() -> None:
     errs = uq.heldout_errors()
     res = uq.bootstrap(errs)
     rows = []
-    for key, name in UQ_ROWS:
+    for key, name in UQ_ROWS.items():
         row = [name]
         q = res["tph"].get(key)
         row += ([_ci(q["mape"], q["lo"], q["hi"]),
@@ -303,8 +307,8 @@ def tab_pairs() -> None:
 
     blocks = []
     for t, tl, title in (("tph", "Q", "Throughput"), ("kW", "P", "Power")):
-        keys = [k for k, _ in UQ_ROWS if any(k in p for p in pairs[t])]
-        names = dict(UQ_ROWS)
+        keys = [k for k in UQ_ROWS if any(k in p for p in pairs[t])]
+        names = UQ_ROWS
         for a in keys:
             for b in keys:
                 if a != b:
