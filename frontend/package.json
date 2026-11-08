@@ -17,7 +17,7 @@
     "gate": "node scripts/check_story_mode.mjs && node scripts/gate.mjs"
   },
   "dependencies": {
-    "@fasl-work/caos-app-shell": "0.23.2",
+    "@fasl-work/caos-app-shell": "0.24.0",
     "katex": "0.19.1",
     "lucide-react": "^1.52.0",
     "onnxruntime-web": "1.27.0",

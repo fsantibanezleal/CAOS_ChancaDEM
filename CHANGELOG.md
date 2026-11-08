@@ -59,7 +59,7 @@ open industrial data.
 
 ### Fixed
 
-- The shell pin test reads 0.23.2, the version the product pins.
+- The shell pin test reads 0.24.0, the version the product pins.
 - The 0.13.000 visualization review's findings on numbers and words. The Operate headline stated the local slope over the first
   0.5 mm (0.267 mm per mm) as the drift response; it now states the drift drawn on the stage ("P80 reaches the 35.8 mm target after
   22 mm of setting drift" on survey 1), and the P80-per-mm callout is the secant of the drawn curve (0.148). The Methodology names the
@@ -88,6 +88,11 @@ open industrial data.
   theme (SH-019). The population balance and the comparison open on one chart, their secondary charts a second view; the comparison
   numbers its methods below 640 px and its method buttons wrap; the chamber's table header is whole; a story panel that scrolls shows
   a "more below" cue; the Spanish Compare headline keeps "reservado" (SH-020, SH-011).
+- `@fasl-work/caos-app-shell` pinned exactly at 0.24.0 (from 0.23.2): every callout shows its state as a word, the header band is laid
+  out on the cards' measured heights in the order of their anchors' x. The views reserve the band the shell measures
+  (`onLayout({ bandHeight })`) instead of the nominal card sizes, so no two callout cards overlap and no two leaders cross at 390
+  and 1280 px in either language (M1, M3; SH-021). The story's staged entry keeps its state in a provider of its own, so a step of
+  the entry re-renders only what reads it.
 - `src/views/showcase.browser.mjs`, run by `npm run check:story`: the drawings measured in a browser (each chart leader within 4 px of
   the drawn ink at 390 and 1280 px with and without reduced motion, the frame sequence of every step change, cut eyebrows and values,
   touching method labels, one chart per view, the table header, the panel's scroll cue, the 3D parts selected both ways).

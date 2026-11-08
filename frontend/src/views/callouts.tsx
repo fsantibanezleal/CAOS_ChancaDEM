@@ -12,7 +12,7 @@
 //   (B3 of the 0.13.000 review, measured in the browser by src/views/showcase.browser.mjs within 4 px).
 // Every value carries its unit and its source; a callout whose value is missing says "not available" with the reason as its source.
 import { SceneCallouts, Stage, useShellLang, type BiText, type CalloutState, type SceneCalloutDef } from '@fasl-work/caos-app-shell';
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
 type Both = { en: string; es: string };
 
@@ -48,9 +48,10 @@ export function toCallout(spec: CalloutSpec, anchor: { x: number; y: number }, l
 }
 
 /**
- * The height of the shell's header band for `count` cards in a host `width` wide: the shell lays the cards out in columns (two below
- * 520 px, as many as fit otherwise), 184 by 68 px (164 by 54 px below 640 px), 8 px from the edges and 8 px apart (6 px compact).
- * The drawing starts below it.
+ * The nominal height of the shell's header band for `count` cards in a host `width` wide (184 by 68 px cards, 164 by 54 px below
+ * 640 px, 8 px from the edges and apart, 6 px compact): only the first frame's reserve. From shell 0.24.0 the layer measures its
+ * cards and reports the band it really takes (`onLayout({ bandHeight })`, also `--caos-callout-band`), and the drawing starts below
+ * that (M1 of the 0.13.000 review: cards that grew when their text wrapped covered the next row and the drawing).
  */
 export function calloutBand(count: number, width: number): number {
   if (count <= 0) return 0;
@@ -61,6 +62,42 @@ export function calloutBand(count: number, width: number): number {
   const columns = width < 520 ? 2 : Math.max(1, Math.min(count, Math.floor((width - 16 + gap) / (w + gap))));
   const rows = Math.ceil(count / columns);
   return 8 + rows * h + (rows - 1) * gap + 8;
+}
+
+/** The gap between the lowest card and the drawing [px]. */
+export const BAND_GAP = 8;
+
+/** The band a host reserves: the shell's measured band plus the gap once it has reported one, the nominal band before. */
+export function reservedBand(measured: number | null, count: number, width: number): number {
+  return measured !== null && measured > 0 ? Math.ceil(measured + BAND_GAP) : calloutBand(count, width);
+}
+
+interface HeldBand {
+  key: string;
+  band: number;
+  prev: number | null;
+  frozen: boolean;
+}
+
+/** The next held band after a report `v` (exported for its test): it follows the reports, and when one swings back to the band before
+ * the last (an A, B, A cycle) it takes the larger of the two and keeps it, growing only, for these cards at this width. */
+export function nextBand(h: HeldBand | null, key: string, v: number): HeldBand {
+  if (!h || h.key !== key) return { key, band: v, prev: null, frozen: false };
+  if (Math.abs(v - h.band) < 0.5) return h;
+  if (h.frozen) return v > h.band ? { ...h, band: v } : h;
+  if (h.prev !== null && Math.abs(v - h.prev) < 0.5) return { key, band: Math.max(h.band, v), prev: h.band, frozen: true };
+  return { key, band: v, prev: h.band, frozen: false };
+}
+
+/**
+ * The measured band of a host's SceneCallouts, from the shell's onLayout. The band sets the plot's height, the plot the anchors, and
+ * the anchors the shell's card order (fewest crossings), so the band could swing between two orders without end (React's update
+ * limit, seen on a zoomed chart at 390 px): a swing back is held at the larger band (nextBand).
+ */
+export function useMeasuredBand(key: string): [number | null, (info: { bandHeight: number }) => void] {
+  const [held, setHeld] = useState<HeldBand | null>(null);
+  const onLayout = useCallback((info: { bandHeight: number }) => setHeld((h) => nextBand(h, key, info.bandHeight)), [key]);
+  return [held && held.key === key ? held.band : null, onLayout];
 }
 
 export interface Subject {
@@ -83,10 +120,13 @@ export function CalloutStage({
   className?: string;
 }) {
   const lang = useShellLang();
+  // a drawing of the product's own holds the tallest band of its cards (its anchors move with the band only through the drawing's own
+  // layout, which a width change redraws)
+  const [measured, onLayout] = useMeasuredBand(callouts.map((c) => c.id).join(','));
   return (
     <Stage label={label} className={className}>
       {({ width, height }) => {
-        const band = calloutBand(callouts.length, width);
+        const band = reservedBand(measured, callouts.length, width);
         const { node, subjects } = draw({ width, height: Math.max(0, height - band), top: band });
         const items = callouts.map((c) => {
           const s = subjects.find((p) => p.id === c.id);
@@ -97,7 +137,7 @@ export function CalloutStage({
             <div className="cdem-callout-drawing" style={{ top: band, height: Math.max(0, height - band) }}>
               {node}
             </div>
-            <SceneCallouts items={items} placement="header" />
+            <SceneCallouts items={items} placement="header" onLayout={onLayout} />
           </div>
         );
       }}
@@ -158,6 +198,7 @@ export interface ChartGeom {
 }
 
 const near = (a: number, b: number) => Math.abs(a - b) < 0.25;
+const MEASURES_PER_TASK = 6;
 const sameBox = (a: PlotBox | null, b: PlotBox | null) => a === b || (!!a && !!b && near(a.left, b.left) && near(a.top, b.top) && near(a.width, b.width) && near(a.height, b.height));
 const sameGeom = (a: ChartGeom, b: ChartGeom) =>
   near(a.layer.width, b.layer.width) && near(a.layer.height, b.layer.height) && sameBox(a.plot, b.plot) && (a.viewX === b.viewX || (!!a.viewX && !!b.viewX && a.viewX[0] === b.viewX[0] && a.viewX[1] === b.viewX[1]));
@@ -182,9 +223,18 @@ export function ChartCallouts({ callouts, points, frame, children }: { callouts:
   const host = useRef<HTMLDivElement | null>(null);
   const [geom, setGeom] = useState<ChartGeom>({ layer: { width: 0, height: 0 }, plot: null, viewX: null });
   const remeasure = useRef<() => void>(() => undefined);
+  // a measurement can move what it measures (the band follows the cards, the cards the anchors): at most a few measurements are taken in
+  // one task, so a chain of layout effects ends before React's update limit and the next task measures the settled layout
+  const burst = useRef(0);
   remeasure.current = () => {
     const node = host.current;
     if (!node) return;
+    if (burst.current === 0) setTimeout(() => (burst.current = 0), 0);
+    burst.current += 1;
+    if (burst.current > MEASURES_PER_TASK) {
+      if (burst.current === MEASURES_PER_TASK + 1) setTimeout(() => remeasure.current(), 16);
+      return;
+    }
     const next = measureChart(node);
     setGeom((g) => (sameGeom(g, next) ? g : next));
   };
@@ -220,7 +270,8 @@ export function ChartCallouts({ callouts, points, frame, children }: { callouts:
       mo?.disconnect();
     };
   }, []);
-  const band = calloutBand(callouts.length, geom.layer.width || 900);
+  const [measured, onLayout] = useMeasuredBand(`${callouts.map((c) => c.id).join(',')}:${Math.round(geom.layer.width)}`);
+  const band = reservedBand(measured, callouts.length, geom.layer.width || 900);
   const scale: ChartFrame = { ...frame, x: geom.viewX ?? frame.x };
   const items = callouts.map((c) => {
     const p = points.find((q) => q.id === c.id);
@@ -232,7 +283,7 @@ export function ChartCallouts({ callouts, points, frame, children }: { callouts:
       <div className="cdem-callout-drawing" style={{ top: band }}>
         {children}
       </div>
-      <SceneCallouts items={items} placement="header" />
+      <SceneCallouts items={items} placement="header" onLayout={onLayout} />
     </div>
   );
 }

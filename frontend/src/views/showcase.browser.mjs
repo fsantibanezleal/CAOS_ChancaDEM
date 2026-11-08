@@ -9,7 +9,8 @@
 //   axis      no two method labels of the comparison touch, and no method button is cut, at 390 and 1280;
 //   primary   the population balance and the comparison open on one chart;
 //   parts     the 3D chamber names its four parts, and a part selected in 3D is selected in the section and the reverse;
-//   header    the chamber's table header is whole at 1280; a story panel that scrolls says so.
+//   header    the chamber's table header is whole at 1280; a story panel that scrolls says so;
+//   overlap   no two callout cards intersect, and no two leaders cross, at 390 and 1280 in en and es (M1, M3; shell 0.24.0).
 //   node src/views/showcase.browser.mjs <origin>   checks a running build on its own
 import assert from 'node:assert/strict';
 
@@ -273,7 +274,28 @@ async function layoutProbe(page) {
       scrolls: d.scrollHeight > d.clientHeight + 1 && getComputedStyle(d).overflowY !== 'visible',
       cue: d.getAttribute('data-overflow') === 'true' && [...d.parentElement.querySelectorAll('[data-scroll-cue]')].some(visible),
     }));
-    return { cut, touching, buttons, charts, heads, docks };
+    // M1: no two cards of one layer intersect; M3: no two leaders of one layer cross (segments from anchor to card centre)
+    const overlaps = [];
+    const crossings = [];
+    const crossesSeg = (a, b) => {
+      const o = (p, q, r) => Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]));
+      return o(a[0], a[1], b[0]) * o(a[0], a[1], b[1]) < 0 && o(b[0], b[1], a[0]) * o(b[0], b[1], a[1]) < 0;
+    };
+    for (const layer of document.querySelectorAll('[data-caos-callout-layer]')) {
+      if (!visible(layer)) continue;
+      const cards = [...layer.querySelectorAll('[data-caos-callout]')].filter(visible).map((c) => ({ id: c.getAttribute('data-caos-callout'), r: c.getBoundingClientRect() }));
+      for (let i = 0; i < cards.length; i++)
+        for (let j = i + 1; j < cards.length; j++) {
+          const a = cards[i].r;
+          const b = cards[j].r;
+          const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+          const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+          if (w > 0.5 && h > 0.5) overlaps.push(`${cards[i].id}/${cards[j].id} ${Math.round(w)}x${Math.round(h)}`);
+        }
+      const lines = [...layer.querySelectorAll('line[data-caos-callout-leader]')].map((l) => ({ id: l.getAttribute('data-caos-callout-leader'), s: [[l.x1.baseVal.value, l.y1.baseVal.value], [l.x2.baseVal.value, l.y2.baseVal.value]] }));
+      for (let i = 0; i < lines.length; i++) for (let j = i + 1; j < lines.length; j++) if (crossesSeg(lines[i].s, lines[j].s)) crossings.push(`${lines[i].id}/${lines[j].id}`);
+    }
+    return { cut, touching, buttons, charts, heads, docks, overlaps, crossings };
   });
 }
 
@@ -296,6 +318,8 @@ async function layoutChecks(browser, base, ok) {
         const p = await layoutProbe(page);
         const at = `${name} ${size.width} ${lang}`;
         ok(p.cut.length === 0, `cut ${at}: no callout eyebrow or value is cut (${p.cut.join('; ')})`);
+        ok(p.overlaps.length === 0, `overlap ${at}: no two callout cards intersect (${p.overlaps.join('; ')})`);
+        ok(p.crossings.length === 0, `cross ${at}: no two leaders cross (${p.crossings.join('; ')})`);
         if (name === 'V6' || name === 'compare') {
           ok(p.touching.length === 0, `axis ${at}: no two method labels touch (${p.touching.join('; ')})`);
           ok(p.buttons.length === 0, `axis ${at}: no method button is cut (${p.buttons.join('; ')})`);

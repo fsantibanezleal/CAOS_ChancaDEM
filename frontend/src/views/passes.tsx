@@ -166,7 +166,8 @@ export function PassesChart({ sel, series, count }: { sel: Selection; series: Pa
   const points: ChartPoint[] = [
     { id: 'pass', x: edges[at(iP80)], y: after[at(iP80)] },
     { id: 'residual', x: edges[at(iP80 + 4)], y: after[at(iP80 + 4)] },
-    { id: 'sent', x: edges[at(iP80 - 3)], y: closed[at(iP80 - 3)] },
+    // on the solid product curve: the closed form is dashed, and a leader can end in one of its gaps
+    { id: 'sent', x: edges[at(iP80 - 3)], y: after[at(iP80 - 3)] },
   ];
   const callouts = passCallouts(series, count, (v, o) => num(v, o), sel.data.manifest.case_id);
   const toCls = (ascIndex: number) => edges.length - 1 - ascIndex;

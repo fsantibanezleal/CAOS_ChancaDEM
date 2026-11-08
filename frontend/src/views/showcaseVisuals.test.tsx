@@ -102,7 +102,7 @@ describe('B4: a step change is staged, and reduced motion loses nothing', () => 
     // no frame loop of its own: the browser's frame request and an interval timer are both absent (the name is assembled, so this test's
     // own text is not one)
     expect(staging).not.toMatch(new RegExp(`${'request'}AnimationFrame|setInterval`));
-    expect(story).toMatch(/useStagedEntry\(/);
+    expect(story).toMatch(/<EntryProvider /);
   });
 });
 
@@ -231,5 +231,38 @@ describe('M8, m7, M12: the comparison is readable on a phone and opens on one ch
     expect(html).toContain('Each survey');
     expect(compareCallouts(rows, best, openingChoice(rows, best, comparison, 'kW')!, comparison, null, 'kW', (v, o) => num(v, o))[2].unit.en).toBe('points');
     void createLinkedViewStore;
+  });
+});
+
+describe('G21: the story header keeps one line of subline', () => {
+  it('adversarial: a long summary keeps its first sentence in the header, a short one stays whole', async () => {
+    const { headerSummary } = await import('../pages/Story');
+    expect(headerSummary('Short.')).toBe('Short.');
+    const long = `${'A first sentence that runs long enough to matter here, '.repeat(3)}end. Then the certainty sentence that the stage already carries.`;
+    expect(headerSummary(long)).toBe(long.slice(0, long.indexOf('. ') + 1));
+  });
+});
+
+describe('M1: the band a view reserves is the one the shell measured', () => {
+  it('adversarial: before the shell reports a band the nominal one is reserved; after, the measured band plus the gap, whatever the nominal says', async () => {
+    const { calloutBand, reservedBand, BAND_GAP } = await import('./callouts');
+    expect(reservedBand(null, 3, 337)).toBe(calloutBand(3, 337));
+    expect(reservedBand(152.3, 3, 337)).toBe(Math.ceil(152.3 + BAND_GAP));
+    // three cards that wrapped to 90 px each in one row need more than the nominal 84 px
+    expect(reservedBand(98, 3, 1036)).toBeGreaterThan(calloutBand(3, 1036));
+  });
+});
+
+describe('M1: a band that swings between two card orders is held', () => {
+  it('adversarial: an A, B, A cycle of reports holds the larger band; a new width starts again', async () => {
+    const { nextBand } = await import('./callouts');
+    let h = nextBand(null, 'k', 100);
+    h = nextBand(h, 'k', 130);
+    expect(h.band).toBe(130);
+    h = nextBand(h, 'k', 100);
+    expect(h.band).toBe(130);
+    expect(h.frozen).toBe(true);
+    expect(nextBand(h, 'k', 100).band).toBe(130);
+    expect(nextBand(h, 'k2', 90).band).toBe(90);
   });
 });

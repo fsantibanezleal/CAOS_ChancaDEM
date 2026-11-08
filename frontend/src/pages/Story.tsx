@@ -24,7 +24,7 @@ import { CompareBody, surveyOfCase, caseOfSurvey, type CompareTarget } from '../
 import { linkedId } from '../views/linked';
 import { MACHINE_FLOOR, openingPass, PassControls, PassesChart, passesWord, passSeriesOf, usePassCount } from '../views/passes';
 import { ViewContext, type ViewCtx } from '../views/shared';
-import { counted, EntryContext, useStagedEntry, type Entry } from '../views/staging';
+import { counted, EntryProvider, useEntry } from '../views/staging';
 import { operatingOf, railOf, selectionOf, type Selection } from '../workbench/model';
 import type { Machine } from '../engine/types';
 import { exitHref, feedStrip, isStep, operatePoint, STORY_STEPS, stepHref, storyHeadlines, type StoryStepId } from './storyModel';
@@ -168,16 +168,11 @@ export function Story() {
   }, [active, survey, scrub]);
   // the staged entry of the step; Solve's subject is its passes, scrubbed from 1 to the headline's pass. A stage that has no data to show
   // (the comparison without its document, a case still loading or absent) keeps its state, and nothing plays over it.
+  // The entry's state lives in EntryProvider, not here: a step of the entry re-renders only what reads it (the stage wrapper, the panel,
+  // the counting numbers, the growing comparison and the drawn curve), never the whole story, so the frame rate holds (G21, 30 fps).
   const stageReady = Boolean(sel) && !(active === 'compare' && loo.state !== 'ready');
-  const entry = useStagedEntry(
-    active === 'solve' ? `solve:${solveStart}` : active,
-    3,
-    stageReady,
-    active === 'solve' ? (t: number) => scrub(Math.max(1, Math.round(1 + t * (solveStart - 1)))) : undefined,
-  );
-
-  // a number of the panel counts up to its value as the panel builds; its final text is the value's own
-  const cnt = (v: number, o: { digits?: number; decimals?: number }) => num(counted(v, entry.panel), o);
+  const entryKey = active === 'solve' ? `solve:${solveStart}` : active;
+  const entrySubject = active === 'solve' ? (t: number) => scrub(Math.max(1, Math.round(1 + t * (solveStart - 1)))) : undefined;
   const shownCase = data?.manifest.case_id ?? caseId ?? '';
   const withCase = (id: string) => {
     const next = new URLSearchParams(query);
@@ -308,19 +303,19 @@ export function Story() {
       )}
     >
       <p>
-        {t('Closed-side setting', 'Abertura de descarga')} <strong>{cnt(op.cssMm, { digits: 3 })} mm</strong>, {t('open-side setting', 'abertura del lado abierto')}{' '}
-        <strong>{cnt(r.ossMm, { digits: 3 })} mm</strong>.
+        {t('Closed-side setting', 'Abertura de descarga')} <strong><Cnt v={op.cssMm} o={{ digits: 3 }} /> mm</strong>, {t('open-side setting', 'abertura del lado abierto')}{' '}
+        <strong><Cnt v={r.ossMm} o={{ digits: 3 }} /> mm</strong>.
       </p>
       <p>
-        {t('Nip angle', 'Ángulo de nip')} <strong>{cnt(r.nipAngleDeg, { decimals: 1 })}°</strong> {t('against the grip limit', 'contra el límite de agarre')}{' '}
-        <strong>{cnt(r.nipLimitDeg, { decimals: 2 })}°</strong>:{' '}
+        {t('Nip angle', 'Ángulo de nip')} <strong><Cnt v={r.nipAngleDeg} o={{ decimals: 1 }} />°</strong> {t('against the grip limit', 'contra el límite de agarre')}{' '}
+        <strong><Cnt v={r.nipLimitDeg} o={{ decimals: 2 }} />°</strong>:{' '}
         {r.nipAngleDeg <= r.nipLimitDeg
           ? t('the particle is gripped and crushed.', 'la partícula se agarra y se tritura.')
           : t('the particle is squeezed upward.', 'la partícula es escupida hacia arriba.')}
       </p>
       <p>
-        {t('Product P80', 'P80 del producto')} <strong>{cnt(r.p80, { digits: 3 })} mm</strong> {t('from the model’s feed F80 of', 'desde el F80 de alimentación del modelo,')}{' '}
-        <strong>{cnt(r.f80, { digits: 3 })} mm</strong>
+        {t('Product P80', 'P80 del producto')} <strong><Cnt v={r.p80} o={{ digits: 3 }} /> mm</strong> {t('from the model’s feed F80 of', 'desde el F80 de alimentación del modelo,')}{' '}
+        <strong><Cnt v={r.f80} o={{ digits: 3 }} /> mm</strong>
         {measuredF80 !== null
           ? t(`, reconstructed from the measured ${num(measuredF80, { digits: 3 })} mm.`, `, reconstruido desde los ${num(measuredF80, { digits: 3 })} mm medidos.`)
           : '.'}
@@ -409,10 +404,10 @@ export function Story() {
       <p data-drift-secant={drawn?.secant ?? ''}>
         {drawn && drawn.secant !== null && drawn.crossingMm !== null ? (
           <>
-            {t('Over the drawn range, P80 rises from', 'En el rango dibujado, el P80 sube de')} <strong>{cnt(r.p80, { digits: 3 })} mm</strong>{' '}
-            {t('to the', 'al objetivo de')} <strong>{cnt(drawn.targetMm, { digits: 3 })} mm</strong> {t('target in', 'en')}{' '}
-            <strong>{cnt(drawn.crossingMm, { digits: 3 })} mm</strong> {t('of drift:', 'de desplazamiento:')}{' '}
-            <strong>{cnt(drawn.secant, { digits: 3 })} mm</strong> {t('of P80 per mm of setting.', 'de P80 por mm de abertura.')}
+            {t('Over the drawn range, P80 rises from', 'En el rango dibujado, el P80 sube de')} <strong><Cnt v={r.p80} o={{ digits: 3 }} /> mm</strong>{' '}
+            {t('to the', 'al objetivo de')} <strong><Cnt v={drawn.targetMm} o={{ digits: 3 }} /> mm</strong> {t('target in', 'en')}{' '}
+            <strong><Cnt v={drawn.crossingMm} o={{ digits: 3 }} /> mm</strong> {t('of drift:', 'de desplazamiento:')}{' '}
+            <strong><Cnt v={drawn.secant} o={{ digits: 3 }} /> mm</strong> {t('of P80 per mm of setting.', 'de P80 por mm de abertura.')}
           </>
         ) : (
           t('The target is not reached on the drawn range.', 'El objetivo no se alcanza en el rango dibujado.')
@@ -447,16 +442,18 @@ export function Story() {
     number: s.number,
     verb: s.verb,
     headline: { en: heads[s.id].headline, es: heads[s.id].headline },
-    summary: { en: heads[s.id].summary, es: heads[s.id].summary },
+    // the header holds one line of subline: a longer summary keeps its first sentence there, and its rest is on the stage (Compare's
+    // certainty sentence is the comparison card's note), so the stage and the panel keep their share of the viewport (G21, 80 percent)
+    summary: { en: heads[s.id].missing ? heads[s.id].summary : headerSummary(heads[s.id].summary), es: heads[s.id].missing ? heads[s.id].summary : headerSummary(heads[s.id].summary) },
     href: stepHref(s.id, shownCase),
     accent: s.accent,
-    stage: s.id === active ? <StagedStage entry={entry}>{content[s.id].stage}</StagedStage> : content[s.id].stage,
+    stage: s.id === active ? <StagedStage>{content[s.id].stage}</StagedStage> : content[s.id].stage,
     // the docked panel keeps the height the layout gives it and scrolls inside, so a long panel never squeezes the stepper
-    panel: <Dock entry={s.id === active ? entry : null}>{content[s.id].panel}</Dock>,
+    panel: <Dock active={s.id === active}>{content[s.id].panel}</Dock>,
   }));
   return (
     <ViewContext.Provider value={ctx}>
-      <EntryContext.Provider value={entry}>
+      <EntryProvider entryKey={entryKey} callouts={3} animate={stageReady} subject={entrySubject}>
       <StoryFrame
         className="cdem-story"
         steps={steps}
@@ -473,7 +470,7 @@ export function Story() {
           exit: { en: 'Explore in the App', es: 'Explorar en la App' },
         }}
       />
-      </EntryContext.Provider>
+      </EntryProvider>
     </ViewContext.Provider>
   );
 }
@@ -502,23 +499,28 @@ function SolveReadout({ sel, start }: { sel: Selection; start: number }) {
 
 /** The step's stage with its entry: the drawing moves in with the subject's progress, the subject is highlighted, and the callouts are
  * shown one at a time in reading order (their cards and leaders in the order the shell lays them out, left to right). */
-function StagedStage({ entry, children }: { entry: Entry; children: ReactNode }) {
+function StagedStage({ children }: { children: ReactNode }) {
+  const entry = useEntry();
   return (
     <div
       className="cdem-staged"
       data-entry={entry.running ? 'on' : 'off'}
+      // while the entry runs the stage is not settled: the shell's gate waits for it, as for any loading state
+      data-state={entry.running ? 'loading' : undefined}
       data-highlight={entry.highlight ? 'on' : 'off'}
       data-callouts-shown={entry.shown === null ? undefined : entry.shown}
-      style={{ ['--cdem-reveal' as string]: entry.reveal }}
+      data-reveal={entry.running && entry.reveal === 0 ? 'start' : 'done'}
     >
       {children}
     </div>
   );
 }
 
-/** The docked panel: it builds top-down with the entry's panel progress, and says so when its content scrolls (m8: a fade at the foot
- * and a "more" cue that scrolls it, gone once the reader is at the end). */
-function Dock({ entry, children }: { entry: Entry | null; children: ReactNode }) {
+/** The docked panel: it builds top-down with the entry's panel progress, and says so when its content scrolls (m8: a "more below" cue
+ * under it that scrolls it, gone once the reader is at the end). */
+function Dock({ active, children }: { active: boolean; children: ReactNode }) {
+  const current = useEntry();
+  const entry = active ? current : null;
   const lang = useShellLang();
   const ref = useRef<HTMLDivElement | null>(null);
   const [more, setMore] = useState(false);
@@ -536,10 +538,11 @@ function Dock({ entry, children }: { entry: Entry | null; children: ReactNode })
       ro?.disconnect();
     };
   }, []);
-  const building = entry !== null && entry.running;
+  // the panel waits while the subject and the callouts enter, and builds in when its numbers start to count
+  const waiting = entry !== null && entry.running && entry.shown !== null;
   return (
     <div className="cdem-dock-frame" data-more={more ? 'true' : 'false'}>
-      <div ref={ref} className="cdem-story-dock" data-overflow={more ? 'true' : 'false'} data-build={building ? 'on' : 'off'} style={{ ['--cdem-panel' as string]: entry?.panel ?? 1 }}>
+      <div ref={ref} className="cdem-story-dock" data-overflow={more ? 'true' : 'false'} data-build={waiting ? 'wait' : 'done'}>
         {children}
       </div>
       {more && (
@@ -554,4 +557,18 @@ function Dock({ entry, children }: { entry: Entry | null; children: ReactNode })
       )}
     </div>
   );
+}
+
+/** The subline of the story's header: the summary, or its first sentence when the whole would take more than two lines at 1280 px. */
+export function headerSummary(summary: string, max = 170): string {
+  if (summary.length <= max) return summary;
+  const end = summary.search(/\.\s/);
+  return end > 0 ? summary.slice(0, end + 1) : summary;
+}
+
+/** A number of the panel: it counts up to its value as the panel builds, and its final text is the value's own. */
+function Cnt({ v, o }: { v: number; o: { digits?: number; decimals?: number } }) {
+  const lang = useShellLang();
+  const { panel } = useEntry();
+  return <>{formatNumber(counted(v, panel), lang, o)}</>;
 }

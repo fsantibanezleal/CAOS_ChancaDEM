@@ -236,9 +236,7 @@ function revolutionSlice(op: Operating, width: number, height: number, lang: 'en
   const sel = (part: ChamberPart) => link.selected === part;
   const node = (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={lang === 'es' ? 'Corte de la cámara de chancado' : 'Cross-section of the crushing chamber'} data-chart="chamber-slice">
-      <path d={bowl} fill={TOKEN.subtleSoft} stroke={sel('concave') ? TOKEN.accent : TOKEN.subtle} strokeWidth={sel('concave') ? 4 : 2.5} {...partProps('concave', link)}>
-        <title>{names.concave}</title>
-      </path>
+      <path d={bowl} fill={TOKEN.subtleSoft} stroke={sel('concave') ? TOKEN.accent : TOKEN.subtle} strokeWidth={sel('concave') ? 4 : 2.5} />
       {hasMantle && (
         <path d={body} fill={TOKEN.goodSoft} stroke={sel('mantle') ? TOKEN.accent : TOKEN.good} strokeWidth={sel('mantle') ? 4 : 2.5} {...partProps('mantle', link)}>
           <title>{names.mantle}</title>
@@ -247,6 +245,12 @@ function revolutionSlice(op: Operating, width: number, height: number, lang: 'en
       <line x1={cx - sx(rc) - 8} y1={sy(0)} x2={cx + sx(rc) + 8} y2={sy(0)} stroke={TOKEN.subtle} strokeWidth={1} strokeDasharray="5 4" />
       {hasMantle && <path d={shifted} fill="none" stroke={TOKEN.good} strokeWidth={1.2} strokeDasharray="4 3" opacity={0.7} />}
       <WedgeMarks w={w} />
+      {/* the concave is selected on its wall, beside its label: the bowl lies under the mantle, so the bowl itself is no target */}
+      <g {...partProps('concave', link)}>
+        <title>{names.concave}</title>
+        <circle cx={cx + sx(prof.rConcave(P.zTop * 0.72))} cy={sy(P.zTop * 0.72)} r={9} fill="transparent" />
+        <circle cx={cx + sx(prof.rConcave(P.zTop * 0.72))} cy={sy(P.zTop * 0.72)} r={4} fill={sel('concave') ? TOKEN.accent : TOKEN.subtle} />
+      </g>
       <g {...partProps('gap', link)}>
         <title>{lang === 'es' ? 'abertura de descarga' : 'closed-side setting'}</title>
         <line x1={cx + sx(rm)} y1={yGap} x2={cx + sx(rc)} y2={yGap} stroke="transparent" strokeWidth={12} />
@@ -327,14 +331,18 @@ function jawSlice(op: Operating, width: number, height: number, lang: 'en' | 'es
   const node = (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={lang === 'es' ? 'Mecanismo de la chancadora de mandíbula' : 'Jaw crusher mechanism'} data-chart="chamber-slice">
       <path d={wedge} fill={TOKEN.goodSoft} stroke="none" />
-      <polyline points={fixed.join(' ')} fill="none" stroke={sel('concave') ? TOKEN.accent : TOKEN.subtle} strokeWidth={6} strokeLinecap="round" {...partProps('concave', link)}>
-        <title>{names.fixed}</title>
-      </polyline>
+      <polyline points={fixed.join(' ')} fill="none" stroke={sel('concave') ? TOKEN.accent : TOKEN.subtle} strokeWidth={6} strokeLinecap="round" />
       <polyline points={open.join(' ')} fill="none" stroke={TOKEN.good} strokeWidth={2} strokeDasharray="5 4" opacity={0.7} />
       <polyline points={closed.join(' ')} fill="none" stroke={sel('mantle') ? TOKEN.accent : TOKEN.good} strokeWidth={6} strokeLinecap="round" {...partProps('mantle', link)}>
         <title>{names.swing}</title>
       </polyline>
       <WedgeMarks w={w} />
+      {/* the fixed plate is selected on a handle on it, clear of the wedge and the labels that cross the plate */}
+      <g {...partProps('concave', link)}>
+        <title>{names.fixed}</title>
+        <circle cx={sx(j.xFixed(zTop * 0.8))} cy={sy(zTop * 0.8)} r={9} fill="transparent" />
+        <circle cx={sx(j.xFixed(zTop * 0.8))} cy={sy(zTop * 0.8)} r={4} fill={sel('concave') ? TOKEN.accent : TOKEN.subtle} />
+      </g>
       <circle cx={sx(j.xSwing(zTop, 0))} cy={yTop} r={6} fill="none" stroke={TOKEN.warn} strokeWidth={2} />
       <g {...partProps('feed', link)}>
         <title>{lang === 'es' ? 'alimentación' : 'feed'}</title>

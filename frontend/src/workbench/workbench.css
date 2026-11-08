@@ -244,11 +244,11 @@
   }
 }
 
-/* The staged entry of a story step (views/staging.tsx, Story.tsx StagedStage; ADR-0082 rule 4). The drawing moves in with the subject's
-   progress (--cdem-reveal, 0 to 1), the step's subject is highlighted, then the callouts enter one at a time in the order the shell lays
-   them out (left to right, reading order). Under reduced motion the entry is final at its first frame, so none of this shows. */
+/* The staged entry of a story step (views/staging.tsx, Story.tsx StagedStage; ADR-0082 rule 4). The drawing moves in on one CSS
+   transition of opacity and transform from the entry's first state (data-reveal="start"), which the compositor runs without a style
+   pass per frame; the step's subject pulses once when it is highlighted, then the callouts enter one at a time in the order the shell
+   lays them out (their anchors' x, reading order). Under reduced motion the entry is final at its first frame, so none of this shows. */
 .cdem-staged {
-  --cdem-reveal: 1;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -261,19 +261,26 @@
   min-height: 0;
 }
 
-.cdem-staged[data-entry='on'] .cdem-callout-drawing,
-.cdem-staged[data-entry='on'] [data-feed-strip] {
-  opacity: calc(0.15 + 0.85 * var(--cdem-reveal));
-  transform: translateY(calc((1 - var(--cdem-reveal)) * 14px)) scale(calc(0.97 + 0.03 * var(--cdem-reveal)));
-  transform-origin: 50% 60%;
+.cdem-staged[data-reveal='start'] .cdem-callout-drawing,
+.cdem-staged[data-reveal='start'] [data-feed-strip] {
+  opacity: 0.15;
+  transform: translateY(14px) scale(0.97);
 }
 
-.cdem-staged [data-subject] {
-  transition: filter 260ms ease;
+.cdem-staged .cdem-callout-drawing,
+.cdem-staged [data-feed-strip] {
+  transform-origin: 50% 60%;
+  transition: opacity 600ms cubic-bezier(0.2, 0.72, 0.26, 1), transform 600ms cubic-bezier(0.2, 0.72, 0.26, 1);
 }
 
 .cdem-staged[data-entry='on'][data-highlight='on'] [data-subject] {
-  filter: drop-shadow(0 0 5px var(--color-accent)) drop-shadow(0 0 2px var(--color-accent));
+  animation: cdem-subject-pulse 520ms ease-in-out 1;
+}
+
+@keyframes cdem-subject-pulse {
+  50% {
+    opacity: 0.45;
+  }
 }
 
 .cdem-staged [data-caos-callout],
@@ -293,28 +300,30 @@
   transform: translateY(-4px);
 }
 
-/* The docked panel builds top-down with the entry (--cdem-panel, 0 to 1), and a panel that scrolls shows it (m8): a fade at its foot
-   and a "more below" cue, gone at the end. Below 760 px the dock is the scroller, inside the height the story gives its panel. */
+/* The docked panel builds in once the callouts are in (data-build="wait" until then, one transition after), while its numbers count; a
+   panel that scrolls shows it (m8): a "more below" cue under it, in the flow so it covers nothing, gone at the end. Below 760 px the
+   panel takes the height its content needs. */
 .cdem-dock-frame {
-  --cdem-panel: 1;
   position: relative;
   min-height: 0;
 }
 
-.cdem-story-dock[data-build='on'] {
-  clip-path: inset(0 0 calc((1 - var(--cdem-panel)) * 100%) 0);
+.cdem-story-dock {
+  transition: opacity 420ms ease, transform 420ms ease;
+}
+
+.cdem-story-dock[data-build='wait'] {
+  opacity: 0.2;
+  transform: translateY(8px);
 }
 
 .cdem-dock-frame[data-more='true'] .cdem-story-dock {
-  -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 3.2rem), transparent);
-  mask-image: linear-gradient(to bottom, #000 calc(100% - 3.2rem), transparent);
+  max-height: calc(100dvh - 17rem);
 }
 
 .cdem-scroll-cue {
-  position: absolute;
-  left: 50%;
-  bottom: 0.25rem;
-  transform: translateX(-50%);
+  display: block;
+  margin: 0.3rem auto 0;
   padding: 0.1rem 0.6rem;
   border: 1px solid var(--color-border);
   border-radius: 999px;
@@ -322,13 +331,6 @@
   color: var(--color-fg);
   font-size: var(--text-xs);
   cursor: pointer;
-}
-
-@media (max-width: 760px) {
-  .cdem-dock-frame .cdem-story-dock {
-    max-height: calc(30dvh - 2 * var(--space-3) - 2px);
-    overflow-y: auto;
-  }
 }
 
 /* The comparison's methods and surveys as wrapping lists of buttons (views/compare.tsx; M8): every name is whole at any width. */

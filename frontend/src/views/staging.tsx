@@ -6,7 +6,7 @@
 // the first frame is the final one and nothing is lost. A step whose stage is missing keeps its missing state: no animation plays over it.
 // Outside the story there is no provider, and every view draws its final state.
 import { flyCamera, prefersReducedMotion, runStagedTransition, type MotionStage } from '@fasl-work/caos-app-shell';
-import { createContext, useContext, useLayoutEffect, useState } from 'react';
+import { createContext, useContext, useLayoutEffect, useState, type ReactNode } from 'react';
 
 export interface Entry {
   /** The subject's progress, 0 to 1 (the share of the passes played, of the methods grown, of the curve drawn). */
@@ -76,17 +76,34 @@ export function useStagedEntry(key: string, callouts: number, animate: boolean, 
     setEntry(reduced ? FINAL : START);
     const run = async () => {
       // the subject first: its own change, eased by the shell's flight
+      // the progress is applied in tenths (a twelfth for the count): each step is one render of the story, so the frame rate holds
+      // (the gate's 30 fps floor), and the CSS eases between the steps
+      let lastReveal = -1;
       await progress(
         ENTRY_MS.subject,
         (t) => {
-          subject?.(t);
-          set({ reveal: t });
+          const q = quantize(t, 10);
+          if (q === lastReveal) return;
+          lastReveal = q;
+          subject?.(q);
+          set({ reveal: q });
         },
         reduced,
         abort.signal,
       );
       await runStagedTransition(entryStages(callouts, set), { reducedMotion: reduced, signal: abort.signal });
-      await progress(ENTRY_MS.panel, (t) => set({ panel: t }), reduced, abort.signal);
+      let lastPanel = -1;
+      await progress(
+        ENTRY_MS.panel,
+        (t) => {
+          const q = quantize(t, 12);
+          if (q === lastPanel) return;
+          lastPanel = q;
+          set({ panel: q });
+        },
+        reduced,
+        abort.signal,
+      );
       set({ running: false, panel: 1, shown: null, reveal: 1, highlight: true });
     };
     void run();
@@ -99,3 +116,12 @@ export function useStagedEntry(key: string, callouts: number, animate: boolean, 
 
 /** The value a counting number shows at panel progress `t`: the value itself once the panel is built, so the final text is exact. */
 export const counted = (value: number, t: number): number => (t >= 1 ? value : value * Math.max(0, t));
+
+/** A progress 0 to 1 rounded up to `steps` steps (1 stays 1). */
+export const quantize = (t: number, steps: number): number => Math.min(1, Math.ceil(Math.max(0, t) * steps) / steps);
+
+/** The entry of one story step as a context: its state changes re-render only the components that read it (useEntry). */
+export function EntryProvider({ entryKey, callouts, animate, subject, children }: { entryKey: string; callouts: number; animate: boolean; subject?: (t: number) => void; children: ReactNode }) {
+  const entry = useStagedEntry(entryKey, callouts, animate, subject);
+  return <EntryContext.Provider value={entry}>{children}</EntryContext.Provider>;
+}
