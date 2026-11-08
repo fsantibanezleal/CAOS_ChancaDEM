@@ -52,19 +52,23 @@ def test_the_workflow_names_the_product_and_its_real_bake():
     raw = CONFIG.read_text(encoding="utf-8")
     assert not [token for token in EXAMPLE if token in raw], "the template example's names remain in workflow.json"
     assert config["environment_namespace"] == "chancadem" and config["external_environments_required"] is True
-    assert config["generation"] == [{"script": "data-pipeline/run.py", "args": ["all", "--output", "{derived}"]}]
+    # the release generation trains the models first, so the bake records the trained slots and every stamped document of a
+    # release carries its VERSION (0.13.000: carried metrics of the previous version were refused as mixed/stale)
+    assert config["generation"] == [{"script": "data-pipeline/run.py", "args": ["models", "--output", "{derived}"]},
+                                    {"script": "data-pipeline/run.py", "args": ["all", "--output", "{derived}"]}]
     assert [row["script"] for row in config["validators"]] == ["scripts/check_artifacts.py", "scripts/check_documents.py"]
     assert config["promote"] == ["data/derived"], "the released models live in data/derived/models; models/ holds none"
     assert config["readiness_provider"] == "scripts/local/readiness_provider.py" and config["product_admission"] is True
     assert config["api"]["active"] is False
 
 
-def test_the_bake_inputs_are_the_source_tables_and_the_released_models():
-    inputs = settings()["stage_inputs"]
-    assert {"data/examples/params.csv", "data/examples/hp500-surveys.csv"} <= set(inputs)
-    released = sorted(p.relative_to(ROOT).as_posix() for p in (ROOT / "data/derived/models").iterdir() if p.is_file())
-    assert sorted(i for i in inputs if i.startswith("data/derived/models/")) == released
-    assert "data/derived/model-metrics.json" in inputs, "run.py all never trains, so the metrics of the models lane are an input"
+def test_the_bake_inputs_are_the_source_tables_and_the_models_are_trained_in_the_stage():
+    config = settings()
+    inputs = config["stage_inputs"]
+    assert set(inputs) == {"data/examples/params.csv", "data/examples/hp500-surveys.csv"}
+    carried = [i for i in inputs if i.startswith("data/derived/models/") or i == "data/derived/model-metrics.json"]
+    assert not carried, f"the release generation trains the models and writes their metrics; carrying {carried} mixes versions"
+    assert [row["args"][0] for row in config["generation"]] == ["models", "all"]
     assert all((ROOT / name).is_file() for name in inputs)
 
 

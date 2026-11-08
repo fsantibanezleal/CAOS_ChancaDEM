@@ -6,13 +6,7 @@
   "readiness_excludes": ["readiness"],
   "stage_inputs": [
     "data/examples/params.csv",
-    "data/examples/hp500-surveys.csv",
-    "data/derived/models/surrogate.json",
-    "data/derived/models/surrogate.onnx",
-    "data/derived/models/surrogate.int8.onnx",
-    "data/derived/models/psd-ae.json",
-    "data/derived/models/psd-ae.onnx",
-    "data/derived/model-metrics.json"
+    "data/examples/hp500-surveys.csv"
   ],
   "readiness_exceptions": {"api": "missing"},
   "readiness_check": "scripts/check_readiness.py",
@@ -89,6 +83,14 @@
     "--strictPort"
   ],
   "generation": [
+    {
+      "script": "data-pipeline/run.py",
+      "args": [
+        "models",
+        "--output",
+        "{derived}"
+      ]
+    },
     {
       "script": "data-pipeline/run.py",
       "args": [
