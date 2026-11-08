@@ -37,10 +37,11 @@ open industrial data.
   fit, the setting-only line), never its ladder id; the documents' keys are unchanged.
 - The Implementation and Methodology pages describe the App's views and the story; the App's architecture figure names the System
   group and the story.
-- The base: CAOS_PRODUCT_TEMPLATE 0.15.003 (from 0.14.001) and `@fasl-work/caos-app-shell` 0.23.2 (from 0.19.9), each pinned exactly.
+- The base: CAOS_PRODUCT_TEMPLATE 0.15.004 (from 0.14.001) and `@fasl-work/caos-app-shell` 0.23.2 (from 0.19.9), each pinned exactly.
   The story steps are declared in `product.json` (`showcase.story_routes`) and the base's gate, story check and route pages read
   them; the local workflow keeps its environments outside the repository; the internal-names guard fails a method's ladder id
-  anywhere a reader sees it and passes the keys of the committed documents; the base tests under `frontend/src` are taken verbatim.
+  anywhere a reader sees it and passes the keys of the committed documents; the base tests under `frontend/src` are taken verbatim; a stage is validated without the documents of a contract the
+  product declares missing or in training, and the build reads a case's manifest from `manifest_path` or `path`.
   The shell brings the story frame, the anchored callouts, the linked-view store and gates G6, G18 and G21, and keeps the story's
   step row at its height under a tall panel.
 
