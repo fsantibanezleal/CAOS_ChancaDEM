@@ -49,17 +49,20 @@ open industrial data.
   fit, the setting-only line), never its ladder id; the documents' keys are unchanged.
 - The Implementation and Methodology pages describe the App's views and the story; the App's architecture figure names the System
   group and the story.
-- The base: CAOS_PRODUCT_TEMPLATE 0.15.005 (from 0.14.001) and `@fasl-work/caos-app-shell` 0.23.2 (from 0.19.9), each pinned exactly.
+- The base: CAOS_PRODUCT_TEMPLATE 0.15.005 (from 0.14.001) and `@fasl-work/caos-app-shell` 0.25.0 (from 0.19.9), each pinned exactly.
   The story steps are declared in `product.json` (`showcase.story_routes`) and the base's gate, story check and route pages read
   them; the local workflow keeps its environments outside the repository; the internal-names guard fails a method's ladder id
   anywhere a reader sees it and passes the keys of the committed documents; the base tests under `frontend/src` are taken verbatim; a stage is validated without the documents of a contract the
-  product declares missing or in training, and the build reads a case's manifest from `manifest_path` or `path`.
+  product declares missing or in training, and the build reads a case's manifest from `manifest_path` or `path`. The shell shows
+  every callout's state as a word with a glyph, measures the story's callout geometry at every size, theme and language, lays out
+  header callouts on their measured heights in the order of their anchors (0.24.0), and keeps a chart's readout still when the page
+  scrolls under a resting pointer (0.25.0).
   The shell brings the story frame, the anchored callouts, the linked-view store and gates G6, G18 and G21, and keeps the story's
   step row at its height under a tall panel.
 
 ### Fixed
 
-- The shell pin test reads 0.24.0, the version the product pins.
+- The shell pin test reads 0.25.0, the version the product pins.
 - The 0.13.000 visualization review's findings on numbers and words. The Operate headline stated the local slope over the first
   0.5 mm (0.267 mm per mm) as the drift response; it now states the drift drawn on the stage ("P80 reaches the 35.8 mm target after
   22 mm of setting drift" on survey 1), and the P80-per-mm callout is the secant of the drawn curve (0.148). The Methodology names the
@@ -88,8 +91,7 @@ open industrial data.
   theme (SH-019). The population balance and the comparison open on one chart, their secondary charts a second view; the comparison
   numbers its methods below 640 px and its method buttons wrap; the chamber's table header is whole; a story panel that scrolls shows
   a "more below" cue; the Spanish Compare headline keeps "reservado" (SH-020, SH-011).
-- `@fasl-work/caos-app-shell` pinned exactly at 0.24.0 (from 0.23.2): every callout shows its state as a word, the header band is laid
-  out on the cards' measured heights in the order of their anchors' x. The views reserve the band the shell measures
+- The views reserve the callout band the shell measures
   (`onLayout({ bandHeight })`) instead of the nominal card sizes, so no two callout cards overlap and no two leaders cross at 390
   and 1280 px in either language (M1, M3; SH-021). The story's staged entry keeps its state in a provider of its own, so a step of
   the entry re-renders only what reads it. On a phone the story stage is 800 px tall and a story chart keeps 34rem, so the
