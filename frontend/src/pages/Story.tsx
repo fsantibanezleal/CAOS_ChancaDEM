@@ -17,13 +17,14 @@ import { loadCase, loadHp500Backbone, loadHp500Comparison, loadHp500CrusherBayes
 import type { CaseIndex, Hp500Backbone, Hp500Comparison, Hp500CrusherBayes, Hp500Loo, Text } from '../lib/contract.types';
 import { caseAbsent } from '../readiness/readiness';
 import { useReadiness } from '../readiness/useReadiness';
-import { defaultP80Target, HoursView, p80PerMm } from '../views/campaign';
+import { CAMPAIGN_TEXT, defaultP80Target, HoursView, p80PerMm } from '../views/campaign';
 import { SectionDrawing } from '../views/chamber';
 import { CircuitDrawing, StreamTable, caseForStage, circuitValues, STAGES, useStagedCases, type StageId } from '../views/circuit';
 import { CompareBody, surveyOfCase, caseOfSurvey, type CompareTarget } from '../views/compare';
 import { linkedId } from '../views/linked';
 import { MACHINE_FLOOR, openingPass, PassControls, PassesChart, passesWord, passSeriesOf, usePassCount } from '../views/passes';
 import { ViewContext, type ViewCtx } from '../views/shared';
+import { MIN_DRAWING_PX } from '../views/callouts';
 import { counted, EntryProvider, useEntry } from '../views/staging';
 import { operatingOf, railOf, selectionOf, type Selection } from '../workbench/model';
 import type { Machine } from '../engine/types';
@@ -155,6 +156,7 @@ export function Story() {
   const [drift, setDrift] = useState<number | null>(null);
   const [compareTarget, setCompareTarget] = useState<CompareTarget>('kW');
   const active: StoryStepId = isStep(step) ? step : 'measure';
+  const phoneStage = usePhoneStageHeight(active);
 
   const sel: Selection | null = useMemo(() => (data ? selectionOf(data, railOf(data.manifest.params), 'canonical') : null), [data]);
   const survey = surveyOfCase(data?.manifest.case_id);
@@ -390,7 +392,7 @@ export function Story() {
   const drawn = operatePoint(op);
   const operateStage = (
     <div className="cdem-story-stage cdem-story-chart">
-      <HoursView />
+      <HoursView part="stage" />
     </div>
   );
   const operatePanel = (
@@ -421,10 +423,12 @@ export function Story() {
           ': el P80 del motor es por tramos en la abertura, así que la pendiente en una abertura no es la respuesta a un desplazamiento (Metodología, la vista de campaña).',
         )}
       </p>
+      <HoursView part="controls" />
+      <p>{CAMPAIGN_TEXT.measure[lang]}</p>
       <p>
         {t(
-          'Enter your drift rate in the chart’s controls to read operating hours: the product asserts no wear rate.',
-          'Ingrese su velocidad de desplazamiento en los controles del gráfico para leer horas de operación: el producto no afirma ninguna tasa de desgaste.',
+          'Enter your drift rate above to read operating hours: the product asserts no wear rate.',
+          'Ingrese su velocidad de desplazamiento arriba para leer horas de operación: el producto no afirma ninguna tasa de desgaste.',
         )}
       </p>
     </Evidence>
@@ -447,7 +451,7 @@ export function Story() {
     summary: { en: heads[s.id].missing ? heads[s.id].summary : headerSummary(heads[s.id].summary), es: heads[s.id].missing ? heads[s.id].summary : headerSummary(heads[s.id].summary) },
     href: stepHref(s.id, shownCase),
     accent: s.accent,
-    stage: s.id === active ? <StagedStage>{content[s.id].stage}</StagedStage> : content[s.id].stage,
+    stage: s.id === active ? <StagedStage step={s.id}>{content[s.id].stage}</StagedStage> : content[s.id].stage,
     // the docked panel keeps the height the layout gives it and scrolls inside, so a long panel never squeezes the stepper
     panel: <Dock active={s.id === active}>{content[s.id].panel}</Dock>,
   }));
@@ -458,8 +462,9 @@ export function Story() {
         className="cdem-story"
         steps={steps}
         activeId={active}
-        // the phone stage holds the callout band of shell 0.24.0's taller cards (their state word) above a chart that keeps its plot
-        mobileStageMinHeight={800}
+        // the phone stage is the viewport less the header above it (N7 of the 0.13.000 re-check), so its foot is on the screen; the chart
+        // inside takes the free height (StagedStage fits it)
+        mobileStageMinHeight={phoneStage}
         onStepChange={(next) => navigate(stepHref(next as StoryStepId, shownCase))}
         onExit={() => navigate(exitHref(active, shownCase, { targetMm: ctx.target }))}
         labels={{
@@ -500,11 +505,15 @@ function SolveReadout({ sel, start }: { sel: Selection; start: number }) {
 
 /** The step's stage with its entry: the drawing moves in with the subject's progress, the subject is highlighted, and the callouts are
  * shown one at a time in reading order (their cards and leaders in the order the shell lays them out, left to right). */
-function StagedStage({ children }: { children: ReactNode }) {
+function StagedStage({ step, children }: { step: StoryStepId; children: ReactNode }) {
   const entry = useEntry();
+  const ref = useRef<HTMLDivElement | null>(null);
+  usePhoneFit(ref);
   return (
     <div
+      ref={ref}
       className="cdem-staged"
+      data-staged-step={step}
       data-entry={entry.running ? 'on' : 'off'}
       // while the entry runs the stage is not settled: the shell's gate waits for it, as for any loading state
       data-state={entry.running ? 'loading' : undefined}
@@ -515,6 +524,100 @@ function StagedStage({ children }: { children: ReactNode }) {
       {children}
     </div>
   );
+}
+
+/** The phone width below which the story stacks its stage over its panel (the shell's story layout, 900 px; the product's phone rules
+ * apply below 760 px). */
+const PHONE_PX = 760;
+
+/** The phone stage's height: the viewport less the header above the stage (the site header, the story's headline and its stepper),
+ * whole CSS pixels within the shell's 300 to 900 (N7). Measured after each step change (a headline of another length) and on resize. */
+export function phoneStageHeight(viewportHeight: number, stageTop: number): number {
+  const h = Math.round(viewportHeight - stageTop);
+  return Math.max(300, Math.min(900, Number.isFinite(h) ? h : 800));
+}
+
+function usePhoneStageHeight(step: string): number {
+  const [h, setH] = useState(800);
+  useEffect(() => {
+    const measure = () => {
+      const stage = document.querySelector('[data-story] .caos-story-stage');
+      if (!stage) return;
+      const next = phoneStageHeight(window.innerHeight, stage.getBoundingClientRect().top + window.scrollY);
+      setH((prev) => (prev === next ? prev : next));
+    };
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [step]);
+  // and after every render: the stage appears once the case has loaded, and a new headline moves it
+  useEffect(() => {
+    const stage = document.querySelector('[data-story] .caos-story-stage');
+    if (!stage) return;
+    const next = phoneStageHeight(window.innerHeight, stage.getBoundingClientRect().top + window.scrollY);
+    if (next !== h) setH(next);
+  });
+  return h;
+}
+
+/** The least height of a story chart's callout host on a phone: the band and the drawing's minimum, never less than 20rem. */
+const PHONE_HOST_FLOOR = 320;
+
+/**
+ * On a phone the card's body takes the height of its content (the shell's flowing body below 900 px), so the chart's host would keep
+ * its fixed minimum and leave the stage's free height empty under the note (N7), or overflow the stage and squeeze the card's header
+ * onto its controls (N2: the lane pills over the P80 target). The fit sets the host's least height to what the stage has left once the
+ * header, the controls and the note are laid out: the plot takes the free height, and the card never exceeds the stage.
+ */
+function usePhoneFit(ref: { current: HTMLDivElement | null }) {
+  useEffect(() => {
+    const root = ref.current;
+    if (!root || typeof ResizeObserver === 'undefined') return;
+    let frame = 0;
+    const fit = () => {
+      frame = 0;
+      const host = root.querySelector<HTMLElement>('.cdem-callout-fill');
+      const stage = root.closest<HTMLElement>('.caos-story-stage');
+      const card = host?.closest<HTMLElement>('figure');
+      if (!host || !stage || !card) return;
+      if (window.innerWidth >= PHONE_PX) {
+        if (host.style.minHeight) host.style.minHeight = '';
+        return;
+      }
+      const band = Number(host.getAttribute('data-callout-band')) || 0;
+      const floor = Math.max(PHONE_HOST_FLOOR, band + MIN_DRAWING_PX);
+      // the stage's height to fit is the phone stage the story asked for (the viewport less the header), never the stage's current
+      // height, which the host itself can grow
+      const story = stage.closest<HTMLElement>('[data-story]');
+      const wanted = parseFloat(story ? getComputedStyle(story).getPropertyValue('--caos-story-stage-minimum') : '') || stage.clientHeight;
+      // the card's own height is stretched by the stage: its chrome is what its parts take (the header, the body's controls, the note,
+      // its padding and border) less the host
+      const cs = getComputedStyle(card);
+      let parts = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) + parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+      for (const child of Array.from(card.children) as HTMLElement[]) {
+        const c = getComputedStyle(child);
+        parts += child.offsetHeight + parseFloat(c.marginTop) + parseFloat(c.marginBottom);
+      }
+      const chrome = parts - host.offsetHeight;
+      const next = Math.max(floor, Math.floor(wanted - 2 - chrome - 2));
+      if (Math.abs(next - host.offsetHeight) >= 2) host.style.minHeight = `${next}px`;
+    };
+    // one fit per burst of observations, in the next task (never an animation loop: the web baseline allows none outside the shell's)
+    const later = () => {
+      if (!frame) frame = window.setTimeout(fit, 0);
+    };
+    const ro = new ResizeObserver(later);
+    ro.observe(root);
+    const stage = root.closest('.caos-story-stage');
+    if (stage) ro.observe(stage);
+    const mo = new MutationObserver(later);
+    mo.observe(root, { subtree: true, attributes: true, attributeFilter: ['data-callout-band'], childList: true });
+    later();
+    return () => {
+      if (frame) window.clearTimeout(frame);
+      ro.disconnect();
+      mo.disconnect();
+    };
+  }, [ref]);
 }
 
 /** The docked panel: it builds top-down with the entry's panel progress, and says so when its content scrolls (m8: a "more below" cue

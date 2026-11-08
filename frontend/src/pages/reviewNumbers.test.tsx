@@ -92,7 +92,8 @@ describe('B2: the Compare headline names the metric as a mean', () => {
     const best = recommend(compareRows(loo, cb, 'kW'))!;
     const h = storyHeadlines(full, 'en').compare.headline;
     const es = storyHeadlines(full, 'es').compare.headline;
-    expect(h).toBe(`${best.name.en}: lowest held-out power error, ${en(best.mape, { digits: 4 })}% on average`);
+    // one decimal, as every MAPE of the comparison (N9 of the 0.13.000 re-check changed the format, not the value)
+    expect(h).toBe(`${best.name.en}: lowest held-out power error, ${en(best.mape, { decimals: 1 })}% on average`);
     expect(es).toContain('en promedio');
     expect(es).toContain(best.name.es);
     // Spec item 9 of F3b: the Spanish headline keeps "held out" (reservado) within the 12-word rule
@@ -101,7 +102,7 @@ describe('B2: the Compare headline names the metric as a mean', () => {
     expect(es.startsWith(`${best.name.es}: menor error reservado, `) && es.endsWith('% en promedio')).toBe(true);
     expect(h).not.toMatch(/\bwithin\b/);
     expect(es).not.toMatch(/\bcon \d/);
-    expect(numbersIn(h)).toEqual([best.mape]);
+    expect(numbersIn(h)).toEqual([Math.round(best.mape * 10) / 10]);
   });
 });
 
@@ -255,12 +256,15 @@ describe('the minors: m1, m6, m9, m11', () => {
   it('m6: no Spanish label reads "opening of the opening"', () => {
     for (const rel of ['../views/campaign.tsx', '../content/methodology/machine.tsx']) expect(src(rel)).not.toMatch(/apertura de la abertura/i);
   });
-  it('adversarial: m9: the second quantity beside the residual is the mass sent back at the pass, a different number', () => {
-    const calls = passCallouts(series, 1, en, 'HP500-01');
+  it('adversarial: m9: the second quantity beside the residual is the mass sent back over the passes so far, a different number', () => {
+    // N9 of the 0.13.000 re-check: the mass sent back at the pass alone is 0 at the opening pass, so the callout is the mass sent back
+    // over passes 1 to k in all; it differs from the residual and from the mass still in the chamber from the second pass on
+    const calls = passCallouts(series, 2, en, 'HP500-01');
     expect(calls.map((c) => c.id)).toEqual(['pass', 'residual', 'sent']);
-    const sent = series.sentBack[1].reduce((s, x) => s + x, 0);
+    const sent = series.sentBack[0].reduce((s, x) => s + x, 0) + series.sentBack[1].reduce((s, x) => s + x, 0);
     expect(calls[2].value).toBe(en(sent * 100, { digits: 3 }));
-    expect(calls[2].value).not.toBe(en(series.inChamber[1] * 100, { digits: 3 }));
+    expect(calls[2].value).not.toBe(en(series.inChamber[2] * 100, { digits: 3 }));
+    expect(calls[2].value).not.toBe(en(series.residual[2] * 100, { digits: 3 }));
   });
   it('adversarial: m11: a round-off residual is shown below machine precision, never as a value', () => {
     const k = series.residual.findIndex((r) => r < MACHINE_FLOOR);

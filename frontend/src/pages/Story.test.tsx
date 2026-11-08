@@ -71,7 +71,8 @@ describe('SH-005: five steps, each with a numbered headline read from the releas
       cb.loo.kW.scores.mape_pct,
     ];
     expect(best.mape).toBe(Math.min(...all));
-    expect(numbersIn(h.compare.headline)).toEqual([best.mape]);
+    // the headline gives the MAPE with one decimal, as every MAPE of the comparison (N9)
+    expect(numbersIn(h.compare.headline)).toEqual([Math.round(best.mape * 10) / 10]);
     expect(h.compare.headline).toContain(best.name.en);
   });
   it('SH-010: operate states the target and the millimetres of setting drift that reach it, from the engine, never hours', () => {

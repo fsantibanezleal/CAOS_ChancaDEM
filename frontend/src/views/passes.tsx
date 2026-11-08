@@ -102,12 +102,15 @@ export function PassControls({ n, start = n }: { n: number; start?: number }) {
 }
 
 /** The three callouts of the method view at pass `n`: the pass, the residual (below machine precision said so, never round-off as a
- * value) and the mass nipped and sent back at that pass, a quantity distinct from the residual. */
+ * value) and the mass nipped and sent back over the passes so far, a quantity distinct from the residual. */
 export function passCallouts(series: PassSeries, n: number, fmt: (v: number, o: { digits?: number; decimals?: number; percent?: boolean }) => string, caseId: string): CalloutSpec[] {
   const k = Math.max(0, Math.min(series.n, n));
   const r = series.residual[k];
   const floor = r < MACHINE_FLOOR;
-  const sent = (series.sentBack[Math.min(series.sentBack.length - 1, k)] ?? []).reduce((s, x) => s + x, 0);
+  // the mass nipped and sent back over passes 1 to k in all (sentBack[j] is the mass nipped at the (j + 1)-th presentation): at the
+  // opening pass the mass sent back at that pass alone is 0 (N9 of the 0.13.000 re-check), and at the pass before it is the residual
+  // itself (m9), so the third callout is the recirculated mass so far, a share of the feed that can pass 100 percent
+  const sent = series.sentBack.slice(0, k).reduce((s, v) => s + v.reduce((a, x) => a + x, 0), 0);
   const source: BiText = { en: `Live engine B, C and f of ${caseId}`, es: `B, C y f del motor en vivo de ${caseId}` };
   return [
     {
@@ -138,7 +141,7 @@ export function passCallouts(series: PassSeries, n: number, fmt: (v: number, o: 
       value: fmt(sent * 100, { digits: 3 }),
       unit: { en: '% feed', es: '% alim.' },
       state: 'normal',
-      source: { en: `Mass nipped and sent back at pass ${k}, C times the mass in the chamber, ${caseId}`, es: `Masa atrapada y devuelta en la pasada ${k}, C por la masa en la cámara, ${caseId}` },
+      source: { en: `Mass nipped and sent back over passes 1 to ${k} in all, C times the mass in the chamber, ${caseId}`, es: `Masa atrapada y devuelta en total en las pasadas 1 a ${k}, C por la masa en la cámara, ${caseId}` },
     },
   ];
 }

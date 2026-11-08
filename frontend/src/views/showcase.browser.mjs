@@ -1,14 +1,20 @@
 // The drawing checks of the showcase in a browser, on this build (ADR-0082 rules 2, 4, 5, 8 and 9; the 0.13.000 review's B3, B4, M2, M4,
 // M8, M9, M12, m3, m7, m8 and m10), run by src/pages/story.browser.mjs (`npm run check:story`) after the story's own checks. Each check
 // measures the rendered page, never the product's own record of what it meant to draw:
-//   anchors   every chart callout's leader ends within 4 px of drawn ink of its chart (the uPlot canvas, read pixel by pixel and
-//             composited over the card), and the nip angle's leader on the drawn nip wedge, at 390 and 1280, with and without reduced motion;
-//   frames    a step change is staged: right after Next the callouts are not all final, and they all are by the end; with reduced motion
-//             every callout is final at once;
+//   anchors   every chart callout's leader ends within 4 px of the point it names on the scales uPlot rendered (read from where uPlot
+//             drew each axis's tick labels, never from any drawn pixel: a gridline under a 16 px miss passed the ink measure of F3b, N4),
+//             a planted 16 px miss is caught (its self-test), and the nip angle's leader on the drawn nip wedge, at 390 and 1280, with
+//             and without reduced motion, and at 390 again after a resize to the document's height (a full-page capture, N5);
+//   frames    a step change is staged: right after Next the callouts are not all final, and they all are by the end, and no frame draws
+//             a card of the new step before its entry (N8); with reduced motion every callout is final at once;
 //   cut       no callout eyebrow or value is cut (scrollWidth over clientWidth) at 390 and 1280, in en and es;
 //   axis      no two method labels of the comparison touch, and no method button is cut, at 390 and 1280;
 //   primary   the population balance and the comparison open on one chart;
-//   parts     the 3D chamber names its four parts, and a part selected in 3D is selected in the section and the reverse;
+//   parts     the 3D chamber names its four parts, and a part selected in 3D is selected in the section with its callout, and the
+//             reverse, at 1280 and 390 (M9);
+//   blank     20 fresh loads at 390 of App V4 and the story's Compare, in en and es, each with a full-page capture: no load without
+//             its chart's canvas (N5);
+//   pills     no lane pill of a card covers the card's controls (N2); the story's Compare stage states how sure its ranking is (N3);
 //   header    the chamber's table header is whole at 1280; a story panel that scrolls says so;
 //   overlap   no two callout cards intersect, and no two leaders cross, at 390 and 1280 in en and es (M1, M3; shell 0.24.0).
 //   node src/views/showcase.browser.mjs <origin>   checks a running build on its own
@@ -31,6 +37,21 @@ const STORY = (step) => `/story/${step}?case=HP500-01`;
 
 async function context(browser, { size, lang = 'en', theme = 'dark', reduced = true }) {
   const ctx = await browser.newContext({ viewport: size, reducedMotion: reduced ? 'reduce' : 'no-preference', colorScheme: theme });
+  // the text uPlot draws on each canvas, with its position in canvas pixels: the axes' tick labels stand at valToPos of their values,
+  // so they give the scales uPlot rendered (the anchor measure, pointDistance); reset when the canvas is cleared for a new draw
+  await ctx.addInitScript(() => {
+    const fill = CanvasRenderingContext2D.prototype.fillText;
+    CanvasRenderingContext2D.prototype.fillText = function (text, x, y) {
+      const m = this.getTransform();
+      (this.canvas.__caosTexts ??= []).push({ t: String(text), x: m.a * x + m.c * y + m.e, y: m.b * x + m.d * y + m.f, align: this.textAlign, base: this.textBaseline, turned: m.b !== 0 });
+      return fill.apply(this, arguments);
+    };
+    const clear = CanvasRenderingContext2D.prototype.clearRect;
+    CanvasRenderingContext2D.prototype.clearRect = function (x, y, w, h) {
+      if (x <= 0 && y <= 0 && w >= this.canvas.width && h >= this.canvas.height) this.canvas.__caosTexts = [];
+      return clear.apply(this, arguments);
+    };
+  });
   await ctx.addInitScript(
     ([l, t]) => {
       try {
@@ -64,53 +85,73 @@ async function leaderEnds(page) {
       for (const line of svg.querySelectorAll('line[data-caos-callout-leader]')) {
         const x = r.left + (line.x1.baseVal.value * r.width) / Math.max(1, vb.width);
         const y = r.top + (line.y1.baseVal.value * r.height) / Math.max(1, vb.height);
-        out.push({ id: line.getAttribute('data-caos-callout-leader'), x, y, chart: Boolean(layer.parentElement?.querySelector('.uplot canvas')) });
+        const host = layer.closest('[data-anchor-points]');
+        out.push({ id: line.getAttribute('data-caos-callout-leader'), x, y, chart: Boolean(layer.parentElement?.querySelector('.uplot canvas')), host: host ? [...document.querySelectorAll('[data-anchor-points]')].indexOf(host) : -1 });
       }
     }
     return out;
   });
 }
 
-/** The distance in CSS px from (x, y) to the nearest drawn pixel of the chart under it (the reviewer's measure, on the canvas itself). */
-async function inkDistance(page, x, y, radius = 14) {
-  return page.evaluate(
-    ([x, y, radius]) => {
-      const canvas = [...document.querySelectorAll('.uplot canvas')].find((c) => {
-        const r = c.getBoundingClientRect();
-        return x >= r.left - radius && x <= r.right + radius && y >= r.top - radius && y <= r.bottom + radius && r.width > 0;
-      });
-      if (!canvas) return null;
-      const r = canvas.getBoundingClientRect();
-      const k = canvas.width / r.width;
-      const card = canvas.closest('.caos-plot, .caos-story-stage') ?? document.body;
-      const bg = getComputedStyle(card).backgroundColor.match(/[\d.]+/g).map(Number);
-      const bgLum = (bg[0] + bg[1] + bg[2]) / 3;
-      const cx = (x - r.left) * k;
-      const cy = (y - r.top) * k;
-      const R = Math.ceil(radius * k);
-      const x0 = Math.max(0, Math.floor(cx - R));
-      const y0 = Math.max(0, Math.floor(cy - R));
-      const w = Math.min(canvas.width, Math.ceil(cx + R)) - x0;
-      const h = Math.min(canvas.height, Math.ceil(cy + R)) - y0;
-      if (w <= 0 || h <= 0) return null;
-      const data = canvas.getContext('2d').getImageData(x0, y0, w, h).data;
-      let best = Infinity;
-      for (let j = 0; j < h; j++)
-        for (let i = 0; i < w; i++) {
-          const o = (j * w + i) * 4;
-          const a = data[o + 3] / 255;
-          if (a === 0) continue;
-          const c = [0, 1, 2].map((q) => a * data[o + q] + (1 - a) * bg[q]);
-          const chroma = Math.max(...c) - Math.min(...c);
-          const lum = (c[0] + c[1] + c[2]) / 3;
-          if (chroma < 60 && Math.abs(lum - bgLum) < 70) continue;
-          const d = Math.hypot(x0 + i + 0.5 - cx, y0 + j + 0.5 - cy) / k;
-          if (d < best) best = d;
-        }
-      return Number.isFinite(best) ? best : null;
-    },
-    [x, y, radius],
-  );
+/**
+ * The distance in CSS px from a leader's end to the point its callout names (the Definitions of the re-check: the marker's computed
+ * centre, uPlot's valToPos of the point on the rendered scales, never a drawn pixel). The point is the host's data-anchor-points entry
+ * of the callout, in data units; the scales are the ones uPlot rendered, read from where uPlot drew each axis's tick labels (each at
+ * valToPos of its value, fitted linear or logarithmic within 1.5 px), the x axis of named ticks from data-view-x on the plot area.
+ * Null when the point or a scale cannot be read, which the check counts as a miss.
+ */
+async function pointDistance(page, e) {
+  return page.evaluate((e) => {
+    const host = document.querySelectorAll('[data-anchor-points]')[e.host];
+    if (!host) return null;
+    const point = JSON.parse(host.getAttribute('data-anchor-points') || '[]').find((p) => p.id === e.id);
+    const canvas = host.querySelector('.uplot canvas');
+    const over = host.querySelector('.u-over')?.getBoundingClientRect();
+    if (!point || !canvas || !over) return null;
+    const r = canvas.getBoundingClientRect();
+    const k = canvas.width / r.width;
+    const parse = (t) => {
+      const s = t.replace(/−/g, '-').replace(/,/g, '').replace(/\s+/g, '').trim();
+      const pct = s.endsWith('%');
+      const v = Number(pct ? s.slice(0, -1) : s);
+      return s && Number.isFinite(v) ? (pct ? v / 100 : v) : null;
+    };
+    const fit = (pairs) => {
+      const vs = new Set(pairs.map((p) => p.v));
+      if (vs.size < 2) return null;
+      let best = null;
+      // a logarithmic axis only when every label is positive (a linear axis from 0 is never refitted on its positive labels alone)
+      for (const log of pairs.every((p) => p.v > 0) ? [false, true] : [false]) {
+        const use = pairs.map((p) => ({ u: log ? Math.log10(p.v) : p.v, px: p.px }));
+        const n = use.length;
+        const mu = use.reduce((a, p) => a + p.u, 0) / n;
+        const mp = use.reduce((a, p) => a + p.px, 0) / n;
+        const b = use.reduce((a, p) => a + (p.u - mu) * (p.px - mp), 0) / (use.reduce((a, p) => a + (p.u - mu) ** 2, 0) || 1);
+        const a0 = mp - b * mu;
+        const res = Math.max(...use.map((p) => Math.abs(a0 + b * p.u - p.px)));
+        if (!best || res < best.res) best = { a: a0, b, log, res };
+      }
+      return best && best.res <= 1.5 * k ? (v) => best.a + best.b * (best.log ? Math.log10(Math.max(v, 1e-12)) : v) : null;
+    };
+    const texts = canvas.__caosTexts ?? [];
+    const ys = texts.filter((q) => !q.turned && q.align === 'right' && q.base === 'middle').map((q) => ({ v: parse(q.t), px: q.y })).filter((p) => p.v !== null);
+    const xs = texts.filter((q) => !q.turned && q.align === 'center' && q.base === 'top').map((q) => ({ v: parse(q.t), px: q.x })).filter((p) => p.v !== null);
+    const fy = fit(ys);
+    if (!fy) return null;
+    const py = r.top + fy(point.y) / k;
+    const fx = fit(xs);
+    let px;
+    if (fx) px = r.left + fx(point.x) / k;
+    else {
+      const view = (host.querySelector('[data-view-x]')?.getAttribute('data-view-x') ?? '').split(',').map(Number);
+      if (view.length !== 2 || !view.every(Number.isFinite)) return null;
+      const log = Boolean(host.querySelector('[data-log-x]'));
+      const l = (v) => Math.log10(Math.max(v, 1e-12));
+      const t = log ? (l(point.x) - l(view[0])) / (l(view[1]) - l(view[0])) : (point.x - view[0]) / (view[1] - view[0]);
+      px = over.left + t * over.width;
+    }
+    return Math.hypot(e.x - px, e.y - py);
+  }, e);
 }
 
 /** The distance in CSS px from (x, y) to the drawn nip wedge (sampled with elementsFromPoint on rings of growing radius). */
@@ -126,7 +167,39 @@ async function wedgeDistance(page, x, y) {
   }, [x, y]);
 }
 
+/** The leaders' ends of the visible layers moved `px` CSS pixels down (the reviewer's 16 px case, B3 and N4): a planted miss the anchor
+ * measure must see. */
+async function shiftLeaders(page, px) {
+  await page.evaluate((px) => {
+    for (const layer of document.querySelectorAll('[data-caos-callout-layer]')) {
+      const r = layer.getBoundingClientRect();
+      const svg = layer.querySelector('svg.caos-callout-leaders');
+      if (!svg || r.height === 0) continue;
+      const k = svg.viewBox.baseVal.height / r.height;
+      for (const line of svg.querySelectorAll('line[data-caos-callout-leader]')) line.setAttribute('y1', String(line.y1.baseVal.value + px * k));
+    }
+  }, px);
+}
+
+/** The anchor measure's own test: on the story's Compare step at 390 px, every leader moved 16 px under its dot is measured as a miss. */
+async function anchorSelfTest(browser, base, ok, measure) {
+  for (const size of SIZES) {
+    const ctx = await context(browser, { size, reduced: true });
+    const page = await ctx.newPage();
+    for (const [name, url] of [['compare', STORY('compare')], ['V6', APP.V6], ['operate', STORY('operate')]]) {
+      await openTarget(page, base, url);
+      await shiftLeaders(page, 16);
+      for (const e of (await leaderEnds(page)).filter((l) => l.chart)) {
+        const d = await measure(page, e);
+        ok(d === null || d > MAX_ANCHOR_PX, `anchors self-test ${name}:${e.id} ${size.width}: a leader planted 16 px under its point is measured as a miss (${d === null ? 'no point' : `${d.toFixed(1)} px`})`);
+      }
+    }
+    await ctx.close();
+  }
+}
+
 async function anchorChecks(browser, base, ok) {
+  await anchorSelfTest(browser, base, ok, pointDistance);
   const charts = [
     ['V3', APP.V3],
     ['V5', APP.V5],
@@ -155,10 +228,10 @@ async function anchorChecks(browser, base, ok) {
         const ends = (await leaderEnds(page)).filter((e) => e.chart);
         ok(ends.length >= 3, `anchors ${name} ${size.width} ${reduced ? 'reduced' : 'motion'}: ${ends.length} chart leaders`);
         for (const e of ends) {
-          const d = await inkDistance(page, e.x, e.y);
+          const d = await pointDistance(page, e);
           worst = Math.max(worst, d ?? Infinity);
           if (process.env.SHOWCASE_DEBUG === '1') console.log(name, e.id, size.width, reduced, Math.round(e.x), Math.round(e.y), d);
-          ok(d !== null && d <= MAX_ANCHOR_PX, `anchors ${name}:${e.id} at ${size.width} ${reduced ? 'reduced' : 'motion'}: the leader ends ${d === null ? 'on no drawn pixel' : `${d.toFixed(1)} px`} from its chart's ink (at most ${MAX_ANCHOR_PX})`);
+          ok(d !== null && d <= MAX_ANCHOR_PX, `anchors ${name}:${e.id} at ${size.width} ${reduced ? 'reduced' : 'motion'}: the leader ends ${d === null ? 'where no rendered scale places its point' : `${d.toFixed(1)} px`} from the point it names on the rendered scales (at most ${MAX_ANCHOR_PX})`);
         }
       }
       for (const [name, url] of nip) {
@@ -173,7 +246,60 @@ async function anchorChecks(browser, base, ok) {
       }
       await ctx.close();
     }
+  // N4 and N5: at 390 px a resize of the viewport to the document's height (what a full-page capture does) and back leaves every anchor
+  // on its point once the page settles
+  if (charts.some(([n]) => n === 'compare' || n === 'V4' || n === 'operate')) {
+    const ctx = await context(browser, { size: SIZES[1], reduced: true });
+    const page = await ctx.newPage();
+    for (const [name, url] of charts.filter(([n]) => n === 'compare' || n === 'V4' || n === 'operate')) {
+      await openTarget(page, base, url);
+      await page.setViewportSize({ width: SIZES[1].width, height: await page.evaluate(() => document.documentElement.scrollHeight) });
+      await page.waitForTimeout(1200);
+      await page.setViewportSize(SIZES[1]);
+      await page.waitForTimeout(1200);
+      for (const e of (await leaderEnds(page)).filter((l) => l.chart)) {
+        const d = await pointDistance(page, e);
+        worst = Math.max(worst, d ?? Infinity);
+        ok(d !== null && d <= MAX_ANCHOR_PX, `anchors ${name}:${e.id} at 390 after a resize to the document height: ${d === null ? 'no point on the rendered scales' : `${d.toFixed(1)} px`} from its point (at most ${MAX_ANCHOR_PX})`);
+      }
+    }
+    await ctx.close();
+  }
   return worst;
+}
+
+/** N5: the callout charts at 390 px over fresh loads, each followed by a full-page capture (the viewport resized to the document's
+ * height and back): every load keeps its chart's canvas, drawn, under a band that leaves it room. */
+export const BLANK_LOADS = 20;
+async function blankChecks(browser, base, ok) {
+  const targets = [
+    ['V4', APP.V4],
+    ['compare', STORY('compare')],
+  ];
+  const counts = {};
+  for (const lang of ['en', 'es'])
+    for (const [name, url] of targets) {
+      let blank = 0;
+      for (let i = 0; i < BLANK_LOADS; i++) {
+        const ctx = await context(browser, { size: SIZES[1], lang, reduced: false });
+        const page = await ctx.newPage();
+        await openTarget(page, base, url);
+        await page.screenshot({ fullPage: true });
+        await page.waitForTimeout(1500);
+        const state = await page.evaluate(() => {
+          const host = [...document.querySelectorAll('.cdem-callout-fill')].find((h) => h.getBoundingClientRect().width > 0);
+          const canvas = host?.querySelector('.uplot canvas');
+          const drawn = host?.querySelector('[data-drawn]')?.getAttribute('data-drawn');
+          return { canvas: Boolean(canvas && canvas.getBoundingClientRect().height > 0), drawn, band: Number(host?.getAttribute('data-callout-band')), height: Math.round(host?.getBoundingClientRect().height ?? 0) };
+        });
+        const good = state.canvas && state.drawn === '1' && state.band < state.height;
+        if (!good) blank += 1;
+        ok(good, `blank ${name} 390 ${lang} load ${i + 1}: the chart keeps its canvas after a resize to the document height (${JSON.stringify(state)})`);
+        await ctx.close();
+      }
+      counts[`${name} ${lang}`] = `${BLANK_LOADS - blank} of ${BLANK_LOADS} drawn`;
+    }
+  return counts;
 }
 
 /** One step change sampled in the page: Next pressed, then the new step's callouts read at the given times. */
@@ -203,6 +329,30 @@ async function stepFrames(page, times) {
   }, times);
 }
 
+/** Every animation frame from Next to `ms`: the new step's staged stage (Story.tsx data-staged-step), its entry state and its cards'
+ * drawn opacity (N8). */
+async function everyFrame(page, ms) {
+  return page.evaluate(async (ms) => {
+    const next = [...document.querySelectorAll('.caos-story-controls button')].find((b) => /^(Next|Siguiente)$/.test(b.textContent.trim()));
+    const t0 = performance.now();
+    next.click();
+    const out = [];
+    while (performance.now() - t0 < ms) {
+      await new Promise((r) => requestAnimationFrame(() => r()));
+      const staged = document.querySelector('.cdem-staged[data-staged-step]');
+      const calls = staged
+        ? [...staged.querySelectorAll('[data-caos-callout]')].map((c) => {
+            let op = 1;
+            for (let el = c; el && el !== document.body; el = el.parentElement) op *= Number(getComputedStyle(el).opacity);
+            return Math.round(op * 100) / 100;
+          })
+        : [];
+      out.push({ t: Math.round(performance.now() - t0), step: staged?.getAttribute('data-staged-step') ?? null, shown: staged?.getAttribute('data-callouts-shown') ?? null, calls });
+    }
+    return out;
+  }, ms);
+}
+
 async function frameChecks(browser, base, ok) {
   const steps = ['measure', 'inside', 'solve', 'compare', 'operate'];
   const report = [];
@@ -219,6 +369,14 @@ async function frameChecks(browser, base, ok) {
       if (reduced) ok(first && first.calls.every((o) => o >= 0.99), `frames ${steps[i]} reduced: the first frame of the new step shows every callout final at once (${JSON.stringify(first)})`);
       else ok(!first || !(first.t <= 200 && first.calls.every((o) => o >= 0.99)), `frames ${steps[i]} motion: the first frame after Next is not already the final state of every callout (${JSON.stringify(frames.slice(0, 3))})`);
       if (!reduced) {
+        // N8: from Next until the first callout enters, no frame draws a card of the new step (no flash of the final state)
+        await openTarget(page, base, STORY(steps[i - 1]));
+        const each = await everyFrame(page, 1100);
+        const mine = each.filter((f) => f.step === steps[i]);
+        const enteredAt = mine.findIndex((f) => f.shown !== null && f.shown !== '0');
+        const before = enteredAt < 0 ? mine : mine.slice(0, enteredAt);
+        const flash = before.filter((f) => f.calls.some((o) => o > 0.05));
+        ok(mine.length > 0 && flash.length === 0, `frames ${steps[i]} motion: no frame shows a card of the new step before its entry (${flash.length} of ${before.length} frames did: ${JSON.stringify(flash.slice(0, 2))})`);
         const at400 = frames[2];
         ok(at400.calls.some((o) => o < 0.99) || frames[1].calls.some((o) => o < 0.99), `frames ${steps[i]} motion: the callouts enter one by one (150 ms ${JSON.stringify(frames[1].calls)}, 400 ms ${JSON.stringify(at400.calls)})`);
       }
@@ -295,7 +453,31 @@ async function layoutProbe(page) {
       const lines = [...layer.querySelectorAll('line[data-caos-callout-leader]')].map((l) => ({ id: l.getAttribute('data-caos-callout-leader'), s: [[l.x1.baseVal.value, l.y1.baseVal.value], [l.x2.baseVal.value, l.y2.baseVal.value]] }));
       for (let i = 0; i < lines.length; i++) for (let j = i + 1; j < lines.length; j++) if (crossesSeg(lines[i].s, lines[j].s)) crossings.push(`${lines[i].id}/${lines[j].id}`);
     }
-    return { cut, touching, buttons, charts, heads, docks, overlaps, crossings };
+    // N2: no lane or provenance pill of a card intersects a control of the same card (the P80 target's label and input)
+    const pills = [];
+    for (const card of document.querySelectorAll('figure.caos-plot')) {
+      if (!visible(card)) continue;
+      const controls = [...card.querySelectorAll('.caos-plot-body label, .caos-plot-body input, .caos-plot-body button')]
+        .filter(visible)
+        .map((el) => ({ t: (el.textContent || el.getAttribute('aria-label') || el.tagName).trim().slice(0, 24), r: el.getBoundingClientRect() }));
+      for (const b of card.querySelectorAll('.caos-plot-head .badge')) {
+        if (!visible(b)) continue;
+        const a = b.getBoundingClientRect();
+        for (const c of controls) {
+          const w = Math.min(a.right, c.r.right) - Math.max(a.left, c.r.left);
+          const h = Math.min(a.bottom, c.r.bottom) - Math.max(a.top, c.r.top);
+          if (w > 0.5 && h > 0.5) pills.push(`${b.textContent} over ${c.t}`);
+        }
+      }
+    }
+    // N3: the story's Compare stage states how sure its ranking is, inside the stage and on the screen at the opening state
+    const stageNote = document.querySelector('[data-story] .caos-story-stage figure.caos-plot .caos-plot-note');
+    const nr = stageNote?.getBoundingClientRect();
+    const sr = stageNote?.closest('.caos-story-stage')?.getBoundingClientRect();
+    const certainty = stageNote
+      ? { text: stageNote.textContent, inStage: Boolean(nr && sr && nr.top >= sr.top - 0.5 && nr.bottom <= sr.bottom + 0.5), onScreen: Boolean(nr && nr.top >= 0 && nr.bottom <= innerHeight + 0.5) }
+      : null;
+    return { cut, touching, buttons, charts, heads, docks, overlaps, crossings, pills, certainty };
   });
 }
 
@@ -327,39 +509,61 @@ async function layoutChecks(browser, base, ok) {
         if (name === 'V5' || name === 'V6') ok(p.charts === 1, `primary ${at}: the view opens on one chart (${p.charts} charts drawn)`);
         if (name === 'V2' && size.width === 1280) ok(p.heads.length === 0, `header ${at}: the chamber table's header is whole (${p.heads.join('; ')})`);
         for (const d of p.docks) ok(!d.scrolls || d.cue, `scroll ${at}: a story panel that scrolls shows that it does`);
+        ok(p.pills.length === 0, `pills ${at}: no lane pill of a card covers its controls (${p.pills.join('; ')})`);
+        if (name === 'compare') {
+          const sure = lang === 'es' ? /(muestreos no deciden la clasificación|se sostiene en estos)/ : /(surveys do not settle the ranking|ranking holds on these)/;
+          ok(Boolean(p.certainty && sure.test(p.certainty.text) && p.certainty.inStage && p.certainty.onScreen), `certainty ${at}: the Compare stage states how sure its ranking is, inside the stage and on the screen (${JSON.stringify(p.certainty)})`);
+        }
       }
       await ctx.close();
     }
 }
 
 async function partChecks(browser, base, ok) {
-  const ctx = await context(browser, { size: SIZES[0] });
+  for (const size of SIZES) await partChecksAt(browser, base, ok, size);
+}
+
+/** M9: a part selected in 3D selects it in the section with its callout, and a part selected in the section highlights it in 3D. */
+async function partChecksAt(browser, base, ok, size) {
+  const W = size.width;
+  const ctx = await context(browser, { size });
   const page = await ctx.newPage();
   await openTarget(page, base, APP.V2);
   await page.locator('[data-part-label]').first().waitFor({ timeout: 20000 });
   const parts = await page.locator('[data-part-label]').evaluateAll((els) => els.map((e) => e.getAttribute('data-part-label')));
-  ok(['mantle', 'concave', 'gap', 'feed'].every((p) => parts.includes(p)), `parts: the 3D chamber names mantle, concave, gap and feed (${parts.join(', ')})`);
+  ok(['mantle', 'concave', 'gap', 'feed'].every((p) => parts.includes(p)), `parts ${W}: the 3D chamber names mantle, concave, gap and feed (${parts.join(', ')})`);
+  // the section's callout of a part (gap: the setting, mantle: the throw, concave: the nip angle) is selected with it (SDD row V2)
+  const CALLOUT = { gap: 'css', mantle: 'throw', concave: 'nip' };
+  const calloutState = (id) => page.locator(`[data-caos-callout="${id}"]`).first().getAttribute('data-callout-state');
   for (const part of ['mantle', 'concave', 'gap', 'feed']) {
     await page.locator(`[data-part-label="${part}"]`).first().click();
-    await page.waitForTimeout(150);
+    await page.waitForTimeout(200);
     const inSection = await page.locator(`[data-chart="chamber-slice"] [data-linked-id="part:${part}"]`).first().getAttribute('data-linked-selected');
-    ok(inSection === 'true', `parts: ${part} selected in 3D is selected in the section (${inSection})`);
+    ok(inSection === 'true', `parts ${W}: ${part} selected in 3D is selected in the section (${inSection})`);
+    if (CALLOUT[part]) {
+      const state = await calloutState(CALLOUT[part]);
+      ok(state === 'selected', `parts ${W}: ${part} selected in 3D selects its section callout ${CALLOUT[part]} (${state})`);
+    }
   }
-  for (const part of ['concave', 'gap']) {
+  for (const part of ['mantle', 'concave', 'gap']) {
     await page.locator(`[data-chart="chamber-slice"] [data-linked-id="part:${part}"]`).first().dispatchEvent('click');
-    await page.waitForTimeout(150);
+    await page.waitForTimeout(200);
     const in3d = await page.locator(`[data-part-label="${part}"]`).first().getAttribute('data-linked-selected');
-    ok(in3d === 'true', `parts: ${part} selected in the section is selected in 3D (${in3d})`);
+    ok(in3d === 'true', `parts ${W}: ${part} selected in the section is highlighted in 3D (${in3d})`);
+    const state = await calloutState(CALLOUT[part]);
+    ok(state === 'selected', `parts ${W}: ${part} selected in the section selects its callout ${CALLOUT[part]} (${state})`);
   }
   // a click on the canvas itself picks the part under the pointer (the scene's raycast)
   const at = await page.locator('[data-part-label="mantle"]').first().getAttribute('data-part-at');
   const [px, py] = (at ?? '').split(',').map(Number);
+  await page.locator('.chamber3d-canvas canvas').first().scrollIntoViewIfNeeded();
+  await page.waitForTimeout(200);
   const canvas = await page.locator('.chamber3d-canvas canvas').first().boundingBox();
   await page.locator(`[data-chart="chamber-slice"] [data-linked-id="part:gap"]`).first().dispatchEvent('click');
   await page.mouse.click(canvas.x + px, canvas.y + py);
   await page.waitForTimeout(150);
   const picked = await page.locator(`[data-chart="chamber-slice"] [data-linked-id="part:mantle"]`).first().getAttribute('data-linked-selected');
-  ok(picked === 'true', `parts: a click on the mantle in the canvas selects the mantle (${picked})`);
+  ok(picked === 'true', `parts ${W}: a click on the mantle in the canvas selects the mantle (${picked})`);
   await ctx.close();
 }
 
@@ -381,6 +585,7 @@ export async function showcaseChecks({ browser, base, ok, only = null }) {
   if (run('frames')) out.frames = await guard('frames', () => frameChecks(browser, base, ok));
   if (run('layout')) await guard('layout', () => layoutChecks(browser, base, ok));
   if (run('parts')) await guard('parts', () => partChecks(browser, base, ok));
+  if (run('blank')) out.blank = await guard('blank', () => blankChecks(browser, base, ok));
   return out;
 }
 
@@ -403,6 +608,7 @@ if (import.meta.url === `file:///${process.argv[1]?.replace(/\\/g, '/').replace(
     const out = await showcaseChecks({ browser, base, ok, only });
     if (process.env.SHOWCASE_FRAMES === '1') console.log(JSON.stringify(out.frames));
     for (const f of failures) console.log(`FAIL ${f}`);
+    if (out.blank) console.log(`showcase.browser: fresh loads with a full-page capture at 390: ${JSON.stringify(out.blank)}`);
     console.log(`showcase.browser: ${checks} checks, ${failures.length} failed; worst anchor ${out.worstAnchorPx?.toFixed?.(1) ?? 'n/a'} px`);
     if (failures.length) process.exitCode = 1;
   } finally {

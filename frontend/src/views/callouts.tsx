@@ -67,9 +67,21 @@ export function calloutBand(count: number, width: number): number {
 /** The gap between the lowest card and the drawing [px]. */
 export const BAND_GAP = 8;
 
-/** The band a host reserves: the shell's measured band plus the gap once it has reported one, the nominal band before. */
-export function reservedBand(measured: number | null, count: number, width: number): number {
-  return measured !== null && measured > 0 ? Math.ceil(measured + BAND_GAP) : calloutBand(count, width);
+/** The least height the drawing under the band keeps [px]: a chart keeps its plot, its axes and its key, so it is never unmounted. */
+export const MIN_DRAWING_PX = 160;
+
+/** The largest band a host `hostHeight` tall can reserve (N5 of the 0.13.000 re-check): its height less the drawing's minimum; an
+ * unmeasured host (0) does not bound it. */
+export function bandLimit(hostHeight: number): number {
+  return hostHeight > 0 ? Math.max(0, hostHeight - MIN_DRAWING_PX) : Number.POSITIVE_INFINITY;
+}
+
+/** The band a host reserves: the shell's measured band plus the gap once it has reported one, the nominal band before, never more than
+ * the host's height less the drawing's minimum (a band reported while the layer had collapsed, a full-page capture or a viewport
+ * resize, can never take the chart's room). */
+export function reservedBand(measured: number | null, count: number, width: number, hostHeight = 0): number {
+  const band = measured !== null && measured > 0 ? Math.ceil(measured + BAND_GAP) : calloutBand(count, width);
+  return Math.min(band, bandLimit(hostHeight));
 }
 
 interface HeldBand {
@@ -84,12 +96,17 @@ const same = (a: number, b: number) => Math.abs(a - b) < 0.5;
 
 /** The next held band after a report `v` (exported for its test): it follows the reports; when one swings back to the band before the
  * last (an A, B, A cycle) it holds the larger of the two while the reports stay on those two, and follows again on any other report
- * (a new width, new cards), so a transient band is never kept. */
-export function nextBand(h: HeldBand | null, key: string, v: number): HeldBand {
+ * (a new width, new cards), so a transient band is never kept. A larger band past `limit` (bandLimit: it would leave the drawing no
+ * room, a band reported while the layer had collapsed) is never the one held: the swing holds the smaller (N5). */
+export function nextBand(h: HeldBand | null, key: string, v: number, limit = Number.POSITIVE_INFINITY): HeldBand {
   if (!h || h.key !== key) return { key, band: v, prev: null, swing: null };
   if (h.swing && (same(v, h.swing[0]) || same(v, h.swing[1]))) return h;
   if (same(v, h.band)) return h;
-  if (!h.swing && h.prev !== null && same(v, h.prev)) return { key, band: Math.max(h.band, v), prev: h.band, swing: [Math.min(h.band, v), Math.max(h.band, v)] };
+  if (!h.swing && h.prev !== null && same(v, h.prev)) {
+    const lo = Math.min(h.band, v);
+    const hi = Math.max(h.band, v);
+    return { key, band: hi + BAND_GAP <= limit ? hi : lo, prev: h.band, swing: [lo, hi] };
+  }
   return { key, band: v, prev: h.band, swing: null };
 }
 
@@ -98,9 +115,10 @@ export function nextBand(h: HeldBand | null, key: string, v: number): HeldBand {
  * the anchors the shell's card order (fewest crossings), so the band could swing between two orders without end (React's update
  * limit, seen on a zoomed chart at 390 px): a swing back is held at the larger band (nextBand).
  */
-export function useMeasuredBand(key: string): [number | null, (info: { bandHeight: number }) => void] {
+export function useMeasuredBand(key: string, hostHeight = 0): [number | null, (info: { bandHeight: number }) => void] {
   const [held, setHeld] = useState<HeldBand | null>(null);
-  const onLayout = useCallback((info: { bandHeight: number }) => setHeld((h) => nextBand(h, key, info.bandHeight)), [key]);
+  const limit = bandLimit(hostHeight);
+  const onLayout = useCallback((info: { bandHeight: number }) => setHeld((h) => nextBand(h, key, info.bandHeight, limit)), [key, limit]);
   return [held && held.key === key ? held.band : null, onLayout];
 }
 
@@ -130,7 +148,8 @@ export function CalloutStage({
   return (
     <Stage label={label} className={className}>
       {({ width, height }) => {
-        const band = reservedBand(measured, callouts.length, width);
+        // bounded to the stage's height less the drawing's minimum (N5)
+        const band = reservedBand(measured, callouts.length, width, height);
         const { node, subjects } = draw({ width, height: Math.max(0, height - band), top: band });
         const items = callouts.map((c) => {
           const s = subjects.find((p) => p.id === c.id);
@@ -222,7 +241,21 @@ export function measureChart(host: HTMLElement): ChartGeom {
 }
 
 /** A shell chart with its callouts: the band at the top, the chart below it, the anchors on the chart as uPlot rendered it. */
-export function ChartCallouts({ callouts, points, frame, children }: { callouts: CalloutSpec[]; points: ChartPoint[]; frame: ChartFrame; children: ReactNode }) {
+export function ChartCallouts({
+  callouts,
+  points,
+  frame,
+  overlay,
+  children,
+}: {
+  callouts: CalloutSpec[];
+  points: ChartPoint[];
+  frame: ChartFrame;
+  /** A drawing of the product's own over the chart (the comparison's interval bracket, N6), placed by `at`: a data point to the layer's
+   * pixels on the scales uPlot rendered, the same geometry as the anchors; drawn once the plot area is measured. */
+  overlay?: (at: (p: { x: number; y: number }) => { x: number; y: number }) => ReactNode;
+  children: ReactNode;
+}) {
   const lang = useShellLang();
   const host = useRef<HTMLDivElement | null>(null);
   const [geom, setGeom] = useState<ChartGeom>({ layer: { width: 0, height: 0 }, plot: null, viewX: null });
@@ -274,19 +307,37 @@ export function ChartCallouts({ callouts, points, frame, children }: { callouts:
       mo?.disconnect();
     };
   }, []);
-  const [measured, onLayout] = useMeasuredBand(`${callouts.map((c) => c.id).join(',')}:${Math.round(geom.layer.width)}`);
-  const band = reservedBand(measured, callouts.length, geom.layer.width || 900);
+  const [measured, onLayout] = useMeasuredBand(`${callouts.map((c) => c.id).join(',')}:${Math.round(geom.layer.width)}`, geom.layer.height);
+  const band = reservedBand(measured, callouts.length, geom.layer.width || 900, geom.layer.height);
   const scale: ChartFrame = { ...frame, x: geom.viewX ?? frame.x };
   const items = callouts.map((c) => {
     const p = points.find((q) => q.id === c.id);
     // before the chart is drawn there is no plot area to anchor to: the callout waits at the middle of the drawing
     return toCallout(c, p && geom.plot ? layerAnchor(p, scale, geom.plot, geom.layer) : { x: 0.5, y: 0.7 }, lang);
   });
+  const plot = geom.plot;
+  const at = (p: { x: number; y: number }) => {
+    const a = plot ? layerAnchor({ id: '', ...p }, scale, plot, geom.layer) : { x: 0, y: 0 };
+    return { x: a.x * geom.layer.width, y: a.y * geom.layer.height };
+  };
   return (
-    <div ref={host} className="cdem-callout-host cdem-callout-fill" data-callout-band={band} data-anchored={geom.plot ? 'true' : 'false'}>
+    <div
+      ref={host}
+      className="cdem-callout-host cdem-callout-fill"
+      data-callout-band={band}
+      data-anchored={geom.plot ? 'true' : 'false'}
+      // the data point each callout names, for the browser's anchor check: it places the point on the scales uPlot rendered (its tick
+      // labels and data-view-x) and measures the leader's end against it (src/views/showcase.browser.mjs, N4 and B3)
+      data-anchor-points={JSON.stringify(points.map((p) => ({ id: p.id, x: p.x, y: p.y })))}
+    >
       <div className="cdem-callout-drawing" style={{ top: band }}>
         {children}
       </div>
+      {overlay && plot && (
+        <svg className="cdem-callout-overlay" width={geom.layer.width} height={geom.layer.height} aria-hidden="true" data-callout-overlay="">
+          {overlay(at)}
+        </svg>
+      )}
       <SceneCallouts items={items} placement="header" onLayout={onLayout} />
     </div>
   );

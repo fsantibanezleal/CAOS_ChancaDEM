@@ -8,7 +8,7 @@ import type { Operating } from '../engine/types';
 import type { Hp500Backbone, Hp500Comparison, Hp500CrusherBayes, Hp500Loo, Text } from '../lib/contract.types';
 import type { CalloutSpec } from '../views/callouts';
 import { defaultP80Target, driftCurve, driftSecant } from '../views/campaign';
-import { certaintyText, compareRows, recommend } from '../views/compare';
+import { certaintyText, compareRows, MAPE_DECIMALS, recommend } from '../views/compare';
 import { passesToSolve, passesWord } from '../views/passes';
 
 export type StoryStepId = 'measure' | 'inside' | 'solve' | 'compare' | 'operate';
@@ -161,7 +161,8 @@ export function storyHeadlines(input: StoryInputs, lang: 'en' | 'es'): Record<St
         : ` CrusherBayes is not available: ${bare((input.cbReason ?? { en: 'its document is not available in this build', es: '' }).en)}.`;
     const sure = certaintyText(input.comparison ?? null, input.comparisonReason ?? null, 'kW', (v, o) => n(v, o ?? { digits: 3 }));
     compare = {
-      headline: es ? `${best.name.es}: menor error reservado, ${n(best.mape, { digits: 4 })}% en promedio` : `${best.name.en}: lowest held-out power error, ${n(best.mape, { digits: 4 })}% on average`,
+      // one decimal, as every MAPE of the comparison (N9)
+      headline: es ? `${best.name.es}: menor error reservado, ${n(best.mape, { decimals: MAPE_DECIMALS })}% en promedio` : `${best.name.en}: lowest held-out power error, ${n(best.mape, { decimals: MAPE_DECIMALS })}% on average`,
       summary:
         (es
           ? `El menor error porcentual absoluto medio de ${methods} métodos, cada muestreo fuera de su propio ajuste. `

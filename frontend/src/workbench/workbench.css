@@ -230,12 +230,27 @@
   }
 }
 
-/* A story chart on a phone holds the taller callout band of shell 0.24.0 (cards with their state word, two rows) and the chart's key
-   under its plot: the plot keeps at least about 150 px. */
+/* A story chart on a phone: the stage is the viewport less the header (N7), and Story.tsx fits the callout host to the stage's free
+   height (at least 20rem, the band and the drawing's minimum), so the card never exceeds the stage and its header is never squeezed
+   onto its controls (N2). The card keeps its content's height: a stage too short for it clips its foot, never overlaps its header. */
 @media (max-width: 760px) {
   .cdem-story-chart .cdem-callout-fill {
-    min-height: 34rem;
+    min-height: 20rem;
   }
+  .cdem-story-stage.cdem-story-chart > * {
+    min-height: auto;
+    flex-shrink: 0;
+  }
+}
+
+/* A drawing of the product's own over a chart (callouts.tsx overlay: the comparison's interval bracket, N6), in the callout layer's
+   pixels, under the cards and their leaders. */
+.cdem-callout-overlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
 }
 
 /* The story's docked panel content: bounded to the layout's height, so its natural height never shrinks the stepper above it. */

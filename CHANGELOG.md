@@ -97,6 +97,23 @@ open industrial data.
 - `src/views/showcase.browser.mjs`, run by `npm run check:story`: the drawings measured in a browser (each chart leader within 4 px of
   the drawn ink at 390 and 1280 px with and without reduced motion, the frame sequence of every step change, cut eyebrows and values,
   touching method labels, one chart per view, the table header, the panel's scroll cue, the 3D parts selected both ways).
+- The findings of the 0.13.000 visualization re-check (N1 to N9, the rest of B3 and M7, M9's browser check). The drift margin's
+  state follows its meaning: alarm only at or past the target, warning under a quarter of the setting's remaining training range,
+  normal otherwise (HP500 survey 1, 22 mm of 36 mm: normal; S01, 3.21 mm of 58 mm: warning; SH-010). The story's Compare stage opens
+  its note with the certainty sentence of the App's takeaway (the interval includes zero, so ten surveys do not settle the ranking),
+  and the paired gap's 95 percent interval is a bracket in a colour of its own beside the selected method's dot with its end values
+  (SH-009). A callout band never takes more than its host's height less 160 px, and a swing through a band reported while the layer
+  had collapsed (a full-page capture, a viewport resize) holds the band that leaves the chart its room, so a chart at 390 px is never
+  left without its canvas. The phone story stage is the viewport less the header above it, its chart's host fitted to the free
+  height, and the Operate controls and the Compare target switch moved to the docked panel, so no lane pill covers the target and
+  the plot keeps its height. The staged entry is hidden from the render that mounts the step: no frame shows the final card before
+  the entry. SENT BACK is the mass sent back over the passes so far (45.4 percent of the feed at HP500 survey 1's opening pass, never
+  a vacuous 0), every MAPE has one decimal (the Compare headline 12.8%, SELECTED 14.0), and the chamber table gives the grip limit
+  with two decimals (38.58). The browser checks measure each chart leader against the point it names on the scales uPlot rendered
+  (its axes' tick labels), never against any drawn pixel, and catch a planted 16 px miss; they add 20 fresh loads per language of
+  App V4 and the story's Compare at 390 px each with a full-page capture, the pills over a card's controls, the certainty clause on
+  the stage, every frame of a step change before its entry, and the 3D parts and their callouts selected both ways at 1280 and
+  390 px.
 
 ## [0.12.001] · 2026-11-02
 

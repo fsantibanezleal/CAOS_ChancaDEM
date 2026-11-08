@@ -230,6 +230,22 @@ export interface DriftCurve {
   /** The opening at which P80 reaches the target [mm] (0 when already exceeded), or null when it is never reached. */
   crossingMm: number | null;
   crossingH: number | null;
+  /** The drawn range R: the training range of the setting above the current setting, to its ceiling [mm]. */
+  rangeMm: number;
+}
+
+/** The share of the drawn range under which a positive margin is a warning (N1 of the 0.13.000 re-check; SDD row V4, SH-010). */
+export const MARGIN_WARNING_SHARE = 0.25;
+
+/**
+ * The state of the margin m to the target over the drawn range R (N1): alarm when m <= 0 (the product is at or past its target at
+ * the current setting), warning when 0 < m < MARGIN_WARNING_SHARE x R (the target is reached within a quarter of the range the setting
+ * can still open), normal otherwise; null when the margin cannot be computed (no crossing in range), whose callout gives its reason.
+ */
+export function marginState(marginMm: number | null, rangeMm: number | null): 'alarm' | 'warning' | 'normal' | null {
+  if (marginMm === null || !Number.isFinite(marginMm)) return null;
+  if (marginMm <= 0) return 'alarm';
+  return rangeMm !== null && rangeMm > 0 && marginMm < MARGIN_WARNING_SHARE * rangeMm ? 'warning' : 'normal';
 }
 
 const OPENING_SAMPLES = 41;
@@ -252,6 +268,7 @@ export function driftCurve(op: Operating, p80TargetMm: number, cssMaxMm: number,
     p80,
     crossingMm,
     crossingH: rate !== null && crossingMm !== null ? hoursToTarget(crossingMm, rate) : null,
+    rangeMm: room,
   };
 }
 
@@ -293,16 +310,18 @@ export function hoursCallouts(
   const reader: Text = { en: 'Your target and your drift rate', es: 'Su objetivo y su velocidad de desplazamiento' };
   const notReached: Text = { en: 'the target is not reached below the ceiling of the setting', es: 'el objetivo no se alcanza bajo el techo de la abertura' };
   const useHours = curve.hours !== null;
+  // the crossing's state is the margin's, by its meaning (N1): never an alarm while the product is inside its target
+  const marginOf = marginState(curve.crossingMm, curve.rangeMm) ?? 'inactive';
   return [
     { id: 'target', eyebrow: { en: 'TARGET P80', es: 'P80 OBJETIVO' }, value: fmt(target, { digits: 3 }), unit: { en: 'mm', es: 'mm' }, state: 'warning', source: reader },
     useHours
-      ? { id: 'cross', eyebrow: { en: 'CROSSED AT', es: 'CRUZADO EN' }, value: curve.crossingH === null ? null : fmt(curve.crossingH, { digits: 3 }), unit: { en: 'h', es: 'h' }, state: 'alarm', source: { en: `${source.en}, at your drift rate`, es: `${source.es}, a su velocidad` }, missing: notReached }
+      ? { id: 'cross', eyebrow: { en: 'CROSSED AT', es: 'CRUZADO EN' }, value: curve.crossingH === null ? null : fmt(curve.crossingH, { digits: 3 }), unit: { en: 'h', es: 'h' }, state: marginOf, source: { en: `${source.en}, at your drift rate`, es: `${source.es}, a su velocidad` }, missing: notReached }
       : {
           id: 'cross',
           eyebrow: { en: 'MARGIN', es: 'MARGEN' },
           value: curve.crossingMm === null ? null : fmt(curve.crossingMm, { digits: 3 }),
           unit: { en: 'mm', es: 'mm' },
-          state: 'alarm',
+          state: marginOf,
           source: { en: `Drift allowed to the target; ${source.en}`, es: `Desplazamiento hasta el objetivo; ${source.es}` },
           missing: notReached,
         },
@@ -328,7 +347,11 @@ export function drawnTo(values: (number | null)[], xs: readonly number[], crossX
   return values.map((v, i) => (i === 0 || xs[i] <= upTo ? v : null));
 }
 
-export function HoursView() {
+/** The App's V4 and the story's Operate step. The App draws the card with its controls; the story splits it (N7: the phone stage holds
+ * the chart): `part="stage"` is the card without its controls and with the note the chart needs (the axis while no drift rate is set),
+ * and `part="controls"` is the controls alone, in the docked panel with the paragraph on measuring the drift. */
+export function HoursView({ part }: { part?: 'stage' | 'controls' } = {}) {
+  const storyNote = part === 'stage';
   const { sel, target: sharedTarget, setTarget, drift, setDrift } = useView();
   const stateKey = useWorkbenchState()?.stateKey;
   const lang = useShellLang();
@@ -361,6 +384,40 @@ export function HoursView() {
   if (crossX !== null && crossX <= xMax) marks.push({ x: crossX, label: { en: 'target crossed', es: 'objetivo cruzado' } });
   if (useHoursAxis && REFERENCE_RESET_H <= xMax) marks.push({ x: REFERENCE_RESET_H, label: REFERENCE_LABEL });
   if (cursorX !== null) marks.push({ x: cursorX, label: { en: 'now', es: 'ahora' } });
+  const controls = (
+      <div className="cdem-controls">
+        <label title={CAMPAIGN_TEXT.control[lang]}>
+          {lang === 'es' ? 'P80 objetivo (mm) ' : 'P80 target (mm) '}
+          <input type="number" min={0.1} step={0.1} value={Math.round(target * 10) / 10} onChange={(e) => Number(e.target.value) > 0 && setTarget(Number(e.target.value))} style={{ width: '5.5rem' }} />
+        </label>
+        <label title={DRIFT_TEXT.control[lang]}>
+          {lang === 'es' ? 'Su velocidad (mm/h) ' : 'Your drift rate (mm/h) '}
+          <input
+            type="number"
+            min={0}
+            step={0.01}
+            value={drift ?? ''}
+            placeholder={lang === 'es' ? 'sin fijar' : 'not set'}
+            onChange={(e) => setDrift(e.target.value === '' || !(Number(e.target.value) > 0) ? null : Number(e.target.value))}
+            style={{ width: '5.5rem' }}
+            data-drift-input=""
+          />
+        </label>
+        <input
+          type="range"
+          min={0}
+          max={Math.max(1, Math.ceil(xMax))}
+          step={Math.max(0.1, Math.ceil(xMax) / 200)}
+          value={cursorX ?? 0}
+          disabled={!useHoursAxis}
+          aria-label={lang === 'es' ? 'Horas de operación (línea de ahora)' : 'Operating hours (the now line)'}
+          onChange={(e) => setHours(Number(e.target.value))}
+          data-hours-cursor=""
+        />
+        <span className="cdem-cursor-chip">{cursorX !== null ? `${num(cursorX, { digits: 3 })} h` : lang === 'es' ? 'horas: fije su velocidad' : 'hours: set your drift rate'}</span>
+      </div>
+  );
+  if (part === 'controls') return controls;
   return (
     <PlotCard
       fill
@@ -368,40 +425,16 @@ export function HoursView() {
       lane="live"
       provenance={provenanceOf(sel)}
       dataKey={stateKey}
-      note={{ en: `${CAMPAIGN_TEXT.measure.en}${useHoursAxis ? '' : ` ${DRIFT_TEXT.unset.en}`}`, es: `${CAMPAIGN_TEXT.measure.es}${useHoursAxis ? '' : ` ${DRIFT_TEXT.unset.es}`}` }}
+      note={
+        storyNote
+          ? useHoursAxis
+            ? undefined
+            : DRIFT_TEXT.unset
+          : { en: `${CAMPAIGN_TEXT.measure.en}${useHoursAxis ? '' : ` ${DRIFT_TEXT.unset.en}`}`, es: `${CAMPAIGN_TEXT.measure.es}${useHoursAxis ? '' : ` ${DRIFT_TEXT.unset.es}`}` }
+      }
     >
       <div className="cdem-stack" data-caos-flow="" data-drift={drift ?? ''} data-hours={cursorX ?? ''}>
-        <div className="cdem-controls">
-          <label title={CAMPAIGN_TEXT.control[lang]}>
-            {lang === 'es' ? 'P80 objetivo (mm) ' : 'P80 target (mm) '}
-            <input type="number" min={0.1} step={0.1} value={Math.round(target * 10) / 10} onChange={(e) => Number(e.target.value) > 0 && setTarget(Number(e.target.value))} style={{ width: '5.5rem' }} />
-          </label>
-          <label title={DRIFT_TEXT.control[lang]}>
-            {lang === 'es' ? 'Su velocidad (mm/h) ' : 'Your drift rate (mm/h) '}
-            <input
-              type="number"
-              min={0}
-              step={0.01}
-              value={drift ?? ''}
-              placeholder={lang === 'es' ? 'sin fijar' : 'not set'}
-              onChange={(e) => setDrift(e.target.value === '' || !(Number(e.target.value) > 0) ? null : Number(e.target.value))}
-              style={{ width: '5.5rem' }}
-              data-drift-input=""
-            />
-          </label>
-          <input
-            type="range"
-            min={0}
-            max={Math.max(1, Math.ceil(xMax))}
-            step={Math.max(0.1, Math.ceil(xMax) / 200)}
-            value={cursorX ?? 0}
-            disabled={!useHoursAxis}
-            aria-label={lang === 'es' ? 'Horas de operación (línea de ahora)' : 'Operating hours (the now line)'}
-            onChange={(e) => setHours(Number(e.target.value))}
-            data-hours-cursor=""
-          />
-          <span className="cdem-cursor-chip">{cursorX !== null ? `${num(cursorX, { digits: 3 })} h` : lang === 'es' ? 'horas: fije su velocidad' : 'hours: set your drift rate'}</span>
-        </div>
+        {part !== 'stage' && controls}
         <ChartCallouts callouts={callouts} points={points} frame={{ x: [0, xMax], y: [yLo, yHi] }}>
           <UPlotChart
             title={{ en: 'P80 against operating hours', es: 'P80 contra horas de operación' }}

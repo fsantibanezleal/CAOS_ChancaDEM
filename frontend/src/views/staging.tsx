@@ -61,7 +61,16 @@ export function entryStages(callouts: number, set: (e: Partial<Entry>) => void, 
  * drives it, otherwise the reveal of the views.
  */
 export function useStagedEntry(key: string, callouts: number, animate: boolean, subject?: (t: number) => void): Entry {
-  const [entry, setEntry] = useState<Entry>(FINAL);
+  // the entry's first state is set in the render that mounts the step, never in an effect after it (N8 of the 0.13.000 re-check): a
+  // layout effect of the stage (the chart's measurement) resolves the cards' style before the effect ran, so a card first drawn final
+  // faded out on its transition and back in, a flash of the final state before the staged entry
+  const [entry, setEntry] = useState<Entry>(() => openingEntry(animate, prefersReducedMotion()));
+  const [opened, setOpened] = useState(`${key}|${animate}|${callouts}`);
+  const now = `${key}|${animate}|${callouts}`;
+  if (opened !== now) {
+    setOpened(now);
+    setEntry(openingEntry(animate, prefersReducedMotion()));
+  }
   useLayoutEffect(() => {
     const reduced = prefersReducedMotion();
     if (!animate) {
@@ -73,7 +82,6 @@ export function useStagedEntry(key: string, callouts: number, animate: boolean, 
     const set = (e: Partial<Entry>) => {
       if (!abort.signal.aborted) setEntry((prev) => ({ ...prev, ...e }));
     };
-    setEntry(reduced ? FINAL : START);
     const run = async () => {
       // the subject first: its own change, eased by the shell's flight
       // the progress is applied in tenths (a twelfth for the count): each step is one render of the story, so the frame rate holds
@@ -112,6 +120,12 @@ export function useStagedEntry(key: string, callouts: number, animate: boolean, 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, animate, callouts]);
   return entry;
+}
+
+/** The entry a step renders first: hidden (START) when it animates with motion allowed, the final state under reduced motion or for a
+ * stage without data, so no frame shows the final card before the entry. */
+export function openingEntry(animate: boolean, reducedMotion: boolean): Entry {
+  return animate && !reducedMotion ? START : FINAL;
 }
 
 /** The value a counting number shows at panel progress `t`: the value itself once the panel is built, so the final text is exact. */

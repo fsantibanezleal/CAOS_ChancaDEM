@@ -23,7 +23,7 @@ const STRUCTURE_NOTE = {
   es: 'La estructura es ilustrativa de la clase de máquina, no el plano de la planta; las aberturas, el ángulo de nip y el límite de agarre son números del motor.',
 } as const;
 
-interface GeometryRow {
+export interface GeometryRow {
   css: number;
   throwMm: number;
   oss: number;
@@ -34,7 +34,7 @@ interface GeometryRow {
 /** The numbers under the slice and the nip diagram: one row, the same in both, so a reader finds a number in one place. The headers
  * are the symbols the drawing writes (CSS, OSS), each with its full name as a tooltip, and the reading is the table's caption, so the
  * header is whole in the chamber's narrow card at 1280 px (m3). */
-function GeometryTable({ g }: { g: GeometryRow }) {
+export function GeometryTable({ g }: { g: GeometryRow }) {
   const t = useT();
   const num = useNum();
   const gripped = g.nip <= g.limit;
@@ -66,7 +66,8 @@ function GeometryTable({ g }: { g: GeometryRow }) {
             <td>{num(g.throwMm, { digits: 4 })}</td>
             <td>{num(g.oss, { digits: 4 })}</td>
             <td>{num(g.nip, { decimals: 1 })}</td>
-            <td>{num(g.limit, { decimals: 1 })}</td>
+            {/* two decimals, as the nip callout and the Look inside headline give the grip limit (N9) */}
+            <td>{num(g.limit, { decimals: 2 })}</td>
           </tr>
         </tbody>
       </table>

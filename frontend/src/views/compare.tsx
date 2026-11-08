@@ -47,6 +47,12 @@ export const METHOD_NAME: Record<string, Text> = {
   M1_label_shuffle: { en: 'Label shuffle (control)', es: 'Etiquetas barajadas (control)' },
 };
 
+/** Every MAPE the comparison shows has one decimal (N9 of the 0.13.000 re-check: 14 % beside 12.8 % read as two precisions). */
+export const MAPE_DECIMALS = 1;
+
+/** The colour of the paired gap's interval bracket and its mean (N6): its own token, never a series' or the selected survey's. */
+export const GAP_COLOR = '--color-magenta';
+
 /** The width of the comparison below which its axis numbers the methods instead of naming them [px]. */
 export const NARROW_PX = 640;
 
@@ -139,9 +145,6 @@ export function pairedOf(comparison: Hp500Comparison | null, target: CompareTarg
   return comparison.targets[target].paired.find((p) => p.method === method) ?? null;
 }
 
-/** The marks that draw the interval of the paired gap on the MAPE axis. */
-const GAP_MARKS = 21;
-
 /** The method the view opens selected: the runner-up of the comparison (so the stage shows two methods and the gap between them), else
  * the second-lowest MAPE of the rows, else the recommended one. */
 export function openingChoice(rows: readonly MethodRow[], best: MethodRow | null, comparison: Hp500Comparison | null, target: CompareTarget): MethodRow | null {
@@ -193,7 +196,7 @@ export function compareCallouts(
       ? {
           id: 'best',
           eyebrow: { en: 'BEST', es: 'MEJOR' },
-          value: fmt(best.mape, { digits: 3 }),
+          value: fmt(best.mape, { decimals: MAPE_DECIMALS }),
           unit,
           state: 'normal',
           source: named(best),
@@ -210,7 +213,7 @@ export function compareCallouts(
     {
       id: 'chosen',
       eyebrow: { en: 'SELECTED', es: 'ELEGIDO' },
-      value: fmt(chosen.mape, { digits: 3 }),
+      value: fmt(chosen.mape, { decimals: MAPE_DECIMALS }),
       unit,
       state: 'selected',
       source: named(chosen),
@@ -250,6 +253,31 @@ function gapCallout(
       es: `95% ${d(lo)} a ${d(hi)}; ${(METHOD_SHORT[other.id] ?? other.name).es} menos ${(METHOD_SHORT[best.id] ?? best.name).es}, gana ${p.wins} de ${comparison.n}`,
     },
   };
+}
+
+/** The 95 percent interval of the paired gap as a bracket beside the selected method's dot, in a colour of its own, with its end values
+ * (N6 of the 0.13.000 re-check: a 12 to 25 px mark in the selected survey's colour, on its dot, was hard to read). It stands on the
+ * MAPE axis from the recommended MAPE plus the low end to it plus the high end; `at` places a data point on the rendered scales. */
+export function GapBracket({ at, x, base, ci, fmt }: { at: (p: { x: number; y: number }) => { x: number; y: number }; x: number; base: number; ci: [number, number] | readonly number[]; fmt: (v: number) => string }) {
+  const lo = at({ x: x - 0.12, y: base + ci[0] });
+  const hi = at({ x: x - 0.12, y: base + ci[1] });
+  const cap = 5;
+  const signed = (v: number) => `${v > 0 ? '+' : ''}${fmt(v)}`;
+  const label = { fontSize: 11, fill: 'var(--color-fg)', stroke: 'var(--color-surface)', strokeWidth: 3, paintOrder: 'stroke' as const, textAnchor: 'end' as const };
+  return (
+    <g data-gap-bracket="" data-gap-lo={ci[0]} data-gap-hi={ci[1]} stroke={`var(${GAP_COLOR})`} strokeWidth={2} fill="none">
+      <line x1={lo.x} y1={lo.y} x2={hi.x} y2={hi.y} />
+      <line x1={lo.x} y1={lo.y} x2={lo.x + cap} y2={lo.y} />
+      <line x1={hi.x} y1={hi.y} x2={hi.x + cap} y2={hi.y} />
+      {/* the ends' values above and below the bracket, so the two never meet however short the bracket is drawn */}
+      <text x={hi.x + cap} y={hi.y - 4} {...label}>
+        {signed(ci[1])}
+      </text>
+      <text x={lo.x + cap} y={lo.y + 13} {...label}>
+        {signed(ci[0])}
+      </text>
+    </g>
+  );
 }
 
 /** The survey number of a real case id (HP500-03 is survey 3), or null. */
@@ -369,33 +397,32 @@ export function CompareBody({
   // recommended MAPE plus the 95 percent interval of the mean paired difference: an interval mark with its numbers in its label
   const gapRow = chosen.id !== best?.id ? chosen : comparison ? (rows.find((r) => r.id === comparison.targets[target].runner_up) ?? null) : null;
   const gap = best && gapRow ? pairedOf(comparison, target, gapRow.id) : null;
-  if (best && gapRow && gap && grown === rows.length) {
-    const gx = rows.indexOf(gapRow) + 1 - 0.14;
+  const gx = best && gapRow ? rows.indexOf(gapRow) + 1 - 0.14 : 0;
+  const bracketShown = Boolean(best && gapRow && gap && grown === rows.length);
+  if (best && gapRow && gap && bracketShown) {
+    // the mean of the paired gap, on the MAPE axis beside the selected method's dot; its 95 percent interval is the bracket drawn over
+    // the chart (gapBracket) in the same colour of its own (N6)
     const d = (v: number) => num(v, { decimals: 2 });
     series.push({
-      id: 'gap',
-      label: {
-        en: `${gapRow.name.en} minus ${best.name.en}: ${d(gap.mean_diff_pts)} points (95% ${d(gap.ci95[0])} to ${d(gap.ci95[1])})`,
-        es: `${gapRow.name.es} menos ${best.name.es}: ${d(gap.mean_diff_pts)} puntos (95% ${d(gap.ci95[0])} a ${d(gap.ci95[1])})`,
-      },
-      // a points series on its own x (the chart's per-series x is for points): 21 marks from the low to the high end of the interval
-      values: Array.from({ length: GAP_MARKS }, (_, i) => best.mape + gap.ci95[0] + ((gap.ci95[1] - gap.ci95[0]) * i) / (GAP_MARKS - 1)),
-      x: Array.from({ length: GAP_MARKS }, () => gx),
+      id: 'gapmean',
+      // one line of the key: the bracket on the chart carries the interval's end values, the GAP callout and the takeaway name the methods
+      label: { en: `Mean paired gap, ${d(gap.mean_diff_pts)} points, and its 95% bracket`, es: `Brecha pareada media, ${d(gap.mean_diff_pts)} puntos, y su corchete 95%` },
+      values: [best.mape + gap.mean_diff_pts],
+      x: [gx],
       mode: 'points',
-      size: 4,
-      color: '--color-warn',
+      size: 11,
+      color: GAP_COLOR,
     });
-    series.push({ id: 'gapmean', label: { en: 'Mean paired gap', es: 'Brecha pareada media' }, values: [best.mape + gap.mean_diff_pts], x: [gx], mode: 'points', size: 11, color: '--color-warn' });
   }
   const yMax = Math.max(...rows.map((r) => r.mape), ...rows.flatMap((r) => r.errors ?? []), ...(best && gap ? [best.mape + gap.ci95[1]] : [])) * 1.08;
   const callouts = compareCallouts(rows, best, chosen, comparison, comparisonReason, target, (v, o) => num(v, o));
   const points: ChartPoint[] = [
     { id: 'best', x: best ? rows.indexOf(best) + 1 : 1, y: best?.mape ?? 0 },
     { id: 'chosen', x: rows.indexOf(chosen) + 1, y: chosen.mape },
-    { id: 'gap', x: best && gapRow && gap ? rows.indexOf(gapRow) + 1 - 0.14 : rows.indexOf(chosen) + 1, y: best && gap ? best.mape + gap.mean_diff_pts : chosen.mape },
+    { id: 'gap', x: best && gapRow && gap ? gx : rows.indexOf(chosen) + 1, y: best && gap ? best.mape + gap.mean_diff_pts : chosen.mape },
   ];
   const sure = certaintyText(comparison, comparisonReason, target, (v, o) => num(v, o ?? { digits: 3 }));
-  const base = best ? recommendReason(best, rows, target, (v) => num(v, { digits: 3 })) : { en: 'No method is scored for this target.', es: 'Ningún método tiene puntaje para este objetivo.' };
+  const base = best ? recommendReason(best, rows, target, (v) => num(v, { decimals: MAPE_DECIMALS })) : { en: 'No method is scored for this target.', es: 'Ningún método tiene puntaje para este objetivo.' };
   const reason: Text = best ? { en: `${base.en} ${sure.en}`, es: `${base.es} ${sure.es}` } : base;
   const cbNote: Text | null = cb
     ? null
@@ -425,12 +452,20 @@ export function CompareBody({
     en: `${reason.en} The large dot is a method's mean absolute percent error with every survey held out of its own fit; the small dots are its ten errors.${narrow ? ' The axis numbers the methods; the list above the chart names them, and hovering a method reads its name.' : ''}${cbNote ? ` ${cbNote.en}` : ''}`,
     es: `${reason.es} El punto grande es el error porcentual absoluto medio de un método con cada muestreo fuera de su propio ajuste; los puntos chicos son sus diez errores.${narrow ? ' El eje numera los métodos; la lista sobre el gráfico los nombra, y al pasar sobre un método se lee su nombre.' : ''}${cbNote ? ` ${cbNote.es}` : ''}`,
   };
-  // the story's stage keeps the chart's room: its note says how to read the dots, and the reason and the certainty open the docked panel
+  // the story's stage states how sure its ranking is (N3, M7): its note opens with the certainty sentence the App's takeaway uses, so the
+  // stage's framing is never stronger than its evidence; how to read the dots and why the method is recommended open the docked panel
   const readDots: Text = {
-    en: `The large dot is a method's mean absolute percent error with every survey held out of its own fit; the small dots are its ten errors.${narrow ? ' The axis numbers the methods; the panel names them.' : ''}`,
-    es: `El punto grande es el error porcentual absoluto medio de un método con cada muestreo fuera de su propio ajuste; los puntos chicos son sus diez errores.${narrow ? ' El eje numera los métodos; el panel los nombra.' : ''}`,
+    en: "The large dot is a method's mean absolute percent error with every survey held out of its own fit; the small dots are its ten errors.",
+    es: 'El punto grande es el error porcentual absoluto medio de un método con cada muestreo fuera de su propio ajuste; los puntos chicos son sus diez errores.',
   };
-  const panelNote = (b: Text): Text => ({ en: `${reason.en}${cbNote ? ` ${cbNote.en}` : ''} ${b.en}`.trim(), es: `${reason.es}${cbNote ? ` ${cbNote.es}` : ''} ${b.es}`.trim() });
+  const stageNote: Text = {
+    en: `${sure.en}${narrow ? ' The axis numbers the methods; the panel names them.' : ''}`,
+    es: `${sure.es}${narrow ? ' El eje numera los métodos; el panel los nombra.' : ''}`,
+  };
+  const panelNote = (b: Text): Text => ({
+    en: `${base.en} ${readDots.en}${cbNote ? ` ${cbNote.en}` : ''} ${b.en}`.trim(),
+    es: `${base.es} ${readDots.es}${cbNote ? ` ${cbNote.es}` : ''} ${b.es}`.trim(),
+  });
   const targetButtons = (
     <div className="cdem-controls" role="group" aria-label={t('Target of the forecast', 'Objetivo del pronóstico')}>
       <button type="button" className="btn" aria-pressed={target === 'tph'} onClick={() => setTarget('tph')}>
@@ -442,14 +477,19 @@ export function CompareBody({
     </div>
   );
   const dotPlot = (
-    <ChartCallouts callouts={callouts} points={points} frame={{ x: [0.5, rows.length + 0.5], y: [0, yMax] }}>
+    <ChartCallouts
+      callouts={callouts}
+      points={points}
+      frame={{ x: [0.5, rows.length + 0.5], y: [0, yMax] }}
+      overlay={best && gap && bracketShown ? (at) => <GapBracket at={at} x={gx} base={best.mape} ci={gap.ci95} fmt={(v) => num(v, { decimals: 2 })} /> : undefined}
+    >
       <UPlotChart
         title={{ en: 'Held-out mean absolute percent error by method', es: 'Error porcentual absoluto medio reservado por método' }}
         height="fill"
         x={{ values: xs, label: { en: 'Method', es: 'Método' }, ticks, range: [0.5, rows.length + 0.5] }}
         y={{ label: { en: 'Held-out absolute error', es: 'Error absoluto reservado' }, unit: '%', range: [0, yMax] }}
         series={series}
-        readout={(i) => `${i + 1}. ${rows[i].name[lang]}: ${num(rows[i].mape, { digits: 3 })} %`}
+        readout={(i) => `${i + 1}. ${rows[i].name[lang]}: ${num(rows[i].mape, { decimals: MAPE_DECIMALS })} %`}
       />
     </ChartCallouts>
   );
@@ -486,9 +526,9 @@ export function CompareBody({
   const stageAttrs = { 'data-target': target, 'data-recommended': best?.id ?? '', 'data-selected-method': chosen.id, 'data-gap': gap ? String(gap.mean_diff_pts) : '', 'data-narrow': narrow ? 'true' : 'false' };
   if (part === 'stage')
     return (
-      <PlotCard fill title={{ en: 'Held-out error of every method, ten surveys', es: 'Error reservado de cada método, diez muestreos' }} lane="replay" provenance="real" dataKey={stateKey} note={readDots}>
+      <PlotCard fill title={{ en: 'Held-out error of every method, ten surveys', es: 'Error reservado de cada método, diez muestreos' }} lane="replay" provenance="real" dataKey={stateKey} note={stageNote}>
+        {/* the target switch is the docked panel's (with the pickers), so the stage gives the dot plot its height (N7) */}
         <div ref={measure} className="cdem-stack" data-caos-flow="" {...stageAttrs}>
-          {targetButtons}
           {dotPlot}
         </div>
       </PlotCard>
@@ -497,6 +537,7 @@ export function CompareBody({
     return (
       <PlotCard title={{ en: 'The selected method on each survey', es: 'El método seleccionado en cada muestreo' }} lane="replay" provenance="real" dataKey={stateKey} note={panelNote(bandNote(chosen, best, (v) => num(v, { digits: 3 })))}>
         <div className="cdem-stack" data-caos-flow="">
+          {targetButtons}
           {pickers}
           {perSurvey}
         </div>
