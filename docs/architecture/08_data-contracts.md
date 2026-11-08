@@ -92,8 +92,10 @@ every contract test runs against it and against the bake with the same assertion
   schema its row names) and `scripts/check_skeleton.py` (lists rows still served by a provider: allowed while a product is
   built, never at a release).
 - `frontend/scripts/copy-data.mjs` copies exactly the declared files into the site, the readiness document included, and
-  fails on a missing one unless readiness lists it in a `partial` row; the web fetches them with the version in the address
-  and refuses an answer that is not JSON.
+  fails on a missing one unless readiness lists it in a `partial` row, then calls the product's optional
+  `copy-data.product.mjs` hook next to it for the further files its index does not declare (it reports what it copied, what
+  it leaves out as absent and its problems; a path outside the overlay stops the build; ChancaDEM has no hook); the web
+  fetches them with the version in the address and refuses an answer that is not JSON.
 
 ### Pinned codegenerator compatibility
 
