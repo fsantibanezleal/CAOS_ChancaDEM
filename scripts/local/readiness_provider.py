@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 """ChancaDEM's readiness provider (scripts/local/workflow.json ``readiness_provider``; docs/guides/09_research-admission.md).
 
-``validate(root)`` judges the tree at ``root`` by the product's own rules and never writes. Two conditions:
+``validate(root)`` judges the tree at ``root`` by the product's own rules and never writes. What is judged comes from
+``root``: its catalog (``docs/contracts/catalog.md``), its ``VERSION``, its two source tables (``data/examples/params.csv``
+and ``data/examples/hp500-surveys.csv``) and its baked documents (``data/derived``), the same inputs the default path of
+``scripts/check_readiness.py`` judges, so a checkout, a copy and a generation stage (which holds the catalog, VERSION and
+the authored inputs) are judged alike. The rules come from this checkout: only the ``data-pipeline`` package beside this
+script is imported, never code under ``root``. Two conditions:
 
 1. the readiness document ``root/data/derived/readiness.json`` is, byte for byte, the one ``pipeline.core.readiness``
-   computes from this checkout's catalog, VERSION and source tables over that tree (the same comparison the default path
-   of ``scripts/check_readiness.py`` made before the provider existed);
-2. the case index lists each case the two source tables bake exactly once and nothing else: the circuit cases of the
+   computes from ``root``'s catalog, VERSION and source tables over that tree; a catalog the rules refuse (a status other
+   than ``real`` or ``active``) is a refusal naming the row and the statuses allowed;
+2. the case index lists each case ``root``'s two source tables bake exactly once and nothing else: the circuit cases of the
    registry whose params row is accepted (all of them without a params table) and one case per accepted HP500 survey.
    The readiness rules do not check this inventory, so a fresh readiness document cannot hide a case dropped from a bake.
 
@@ -46,24 +51,27 @@ def differences(fresh: dict, committed: dict) -> list[str]:
     return out
 
 
-def baked_case_ids() -> list[str]:
-    """The cases ``run.py all`` bakes from this checkout's two source tables (pipeline.pipeline.load_inputs, without the
+PARAMS_REL = Path("data") / "examples" / "params.csv"
+SURVEYS_REL = Path("data") / "examples" / "hp500-surveys.csv"
+
+
+def baked_case_ids(root: Path) -> list[str]:
+    """The cases ``run.py all`` bakes from ``root``'s two source tables (pipeline.pipeline.load_inputs, without the
     engine: the ids only)."""
     sys.path.insert(0, str(REPO / "data-pipeline"))
     from pipeline import registry
     from pipeline.cases import hp500_cases
     from pipeline.hp500 import surveys as survey_contract
-    from pipeline.io.contract import PARAMS_CSV
     from pipeline.stages import preprocess
 
+    params_csv, surveys_csv = root / PARAMS_REL, root / SURVEYS_REL
     circuit = registry.circuit_cases()
-    if PARAMS_CSV.is_file():
-        accepted = {row.case_id for row in preprocess.run(PARAMS_CSV).accepted}
+    if params_csv.is_file():
+        accepted = {row.case_id for row in preprocess.run(params_csv).accepted}
         ids = [case.id for case in circuit if case.id in accepted]
     else:
         ids = [case.id for case in circuit]
-    surveys = (survey_contract.read_surveys(survey_contract.SURVEYS_CSV).accepted
-               if survey_contract.SURVEYS_CSV.is_file() else [])
+    surveys = survey_contract.read_surveys(surveys_csv).accepted if surveys_csv.is_file() else []
     return ids + [case.id for case in hp500_cases.build(surveys)]
 
 
@@ -74,8 +82,13 @@ def problems(root: Path) -> list[str]:
     derived = root / "data" / "derived"
     path = derived / "readiness.json"
     out: list[str] = []
-    # computed first, as the default check did: a catalog the rules refuse is named before anything else
-    fresh = readiness.compute(repo_root=REPO, derived_root=derived, models_dir=derived / "models")
+    # computed first, as the default check does: a catalog the rules refuse is named before anything else
+    try:
+        fresh = readiness.compute(repo_root=root, derived_root=derived, models_dir=derived / "models",
+                                  params_csv=root / PARAMS_REL, surveys_csv=root / SURVEYS_REL)
+    except ValueError as exc:   # a catalog the rules do not accept: nothing can be published from it
+        raise ValueError(f"readiness: invalid catalog\n  {exc}\n  allowed statuses: 'real' (the real producer) or "
+                         f"'active' (served by its provider)") from None
     if not path.is_file():
         out.append(f"{path} is absent")
     else:
@@ -96,7 +109,7 @@ def problems(root: Path) -> list[str]:
         out.append(f"{index_path} is absent")
     else:
         listed = [row.get("case_id") for row in json.loads(index_path.read_text(encoding="utf-8")).get("cases", [])]
-        baked = baked_case_ids()
+        baked = baked_case_ids(root)
         if len(listed) != len(set(listed)):
             out.append("case index: a case is listed more than once")
         if set(listed) != set(baked):
