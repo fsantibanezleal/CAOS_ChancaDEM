@@ -60,6 +60,13 @@ export const ROWS: { id: string; version: string; schema: string; governs: [stri
     missing: ['Missing: the Benchmark says not available yet with the reason, never a number from an older bake.', 'Ausente: el Benchmark dice aún no disponible con la razón, nunca un número de un precálculo anterior.'],
   },
   {
+    id: 'hp500-comparison',
+    version: '1.0.0',
+    schema: 'chancadem.hp500.comparison/v1',
+    governs: ['The paired comparison of the held-out methods: per target, the recommended method, the runner-up and every method’s paired gap to the recommended one with its 95 percent bootstrap interval and its wins.', 'La comparación pareada de los métodos reservados: por objetivo, el método recomendado, el segundo y la brecha pareada de cada método al recomendado con su intervalo bootstrap del 95 por ciento y sus victorias.'],
+    missing: ['Missing: the gap callout of the comparison and the story’s certainty sentence say not available yet with the reason; the rest of the comparison reads hp500-loo.', 'Ausente: la anotación de brecha de la comparación y la frase de certeza del recorrido dicen aún no disponible con la razón; el resto de la comparación lee hp500-loo.'],
+  },
+  {
     id: 'surrogate-model',
     version: '1.0.0',
     schema: 'chancadem.surrogate/v1',

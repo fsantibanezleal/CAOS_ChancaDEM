@@ -26,6 +26,18 @@ open industrial data.
   shown by every view of the catalog row that reads them, both ways.
 - `src/pages/story.browser.mjs`, run by `npm run check:story` after the base's story check: the product's own browser checks of the
   story (callouts, exits, the pause on a key press, the two-way selection, the survey scrubber, reduced motion).
+- Contract `hp500-comparison` 1.0.0 (`data/derived/hp500/comparison.json`, written by `data-pipeline/pipeline/hp500/comparison.py`,
+  `python data-pipeline/run.py comparison` or within `hp500` and `all`): per target, the recommended method, the runner-up and the paired
+  difference of every method against the recommended one over the ten surveys, with its 95 percent bootstrap interval (the CrusherBayes
+  manuscript's resampling: its power row against the setting-only line equals the manuscript's 1.54 points, -1.11 to 4.10), its wins
+  and p_better; readiness says missing when it is absent and stale when its engine version differs; schema, fixture, catalog row,
+  producer tests and the web's descriptor test (CT-043, CT-044).
+- The comparison view and the Compare step open on the runner-up, draw its paired gap to the recommended method as an interval mark,
+  make that gap the third callout and say in the takeaway how sure the ranking is with ten surveys (on power, the setting-only line
+  is 1.26 points below the free-form fit, interval -1.91 to 5.27, lower on 5 of 10 surveys: ten surveys do not settle the ranking)
+  (SH-009, SH-011).
+- The Measure step draws the ten surveys' feed rates on its stage, linked to the survey scrubber, so 813 to 1,639 t/h is readable at
+  its opening state (SH-013).
 
 ### Changed
 
@@ -48,6 +60,20 @@ open industrial data.
 ### Fixed
 
 - The shell pin test reads 0.23.2, the version the product pins.
+- The 0.13.000 visualization review's findings on numbers and words. The Operate headline stated the local slope over the first
+  0.5 mm (0.267 mm per mm) as the drift response; it now states the drift drawn on the stage ("P80 reaches the 35.8 mm target after
+  22 mm of setting drift" on survey 1), and the P80-per-mm callout is the secant of the drawn curve (0.148). The Methodology names the
+  cause of the bend: the escape size K1 of the calibrated classification crosses the 38.05 mm mid-size of a class at a setting of
+  54.77 mm. The Compare headline stated a mean error as a bound; it now says "on average" ("en promedio") (SH-010, SH-011).
+- The exits keep the step's state: Look inside opens the chamber, Solve the population balance and Operate the campaign with the
+  story's target; the App and the story open the target by one rule, the case's P80 plus 10 percent, where the App rounded the
+  P80 (SH-006, SH-010).
+- The measured and the model F80 are told apart: a real survey's F80 is labelled measured in the Measure step, the case tables and the
+  rail, and the engine's F80 in the size distribution and the Look inside panel is labelled the model's, reconstructed from the
+  measured feed (SH-012).
+- Solve and the population-balance view open at the pass the Solve headline names (6 on survey 1) instead of pass 1 and pass 28;
+  one pass is singular; the second quantity beside the residual is the mass sent back at the pass; a round-off residual reads below
+  machine precision; the Spanish drift axis reads "Desplazamiento de la abertura" (SH-013, SH-014).
 
 ## [0.12.001] · 2026-11-02
 

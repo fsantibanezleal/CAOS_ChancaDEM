@@ -13,7 +13,7 @@ import type { Text } from '../lib/contract.types';
 import { liveT10, type Selection } from '../workbench/model';
 import { ChartCallouts, type CalloutSpec, type ChartPoint } from './callouts';
 import { linkedId, selectedClass, useHours, useLinkedSelection } from './linked';
-import { PassesView, passCurves, passSeriesOf, usePassCount } from './passes';
+import { openingPass, PassesView, passCurves, passesWord, passSeriesOf, usePassCount } from './passes';
 import { Fill, Stack } from './draw';
 import { bare, GroupFrame, Pending, provenanceOf, useNum, useT, useView, type Sub } from './shared';
 import { asc, FEED_COLOR, finAll, LIVE_COLOR, logSpace, REPLAY_COLOR, REPLAY_DASH } from './series';
@@ -36,15 +36,24 @@ export function productAtHours(op: Operating, hours: number | null, driftMmPerH:
   return { hours, cssMm, result: evaluate({ ...op, cssMm }) };
 }
 
+/** What the engine's feed F80 is: the model's, reconstructed from the measured feed on a real survey (whose measured F80 differs: the
+ * engine's 28-class feed truncates the Rosin-Rammler law the survey's F80 sets), and the model's on a synthetic case. */
+export function modelF80Source(caseId: string, measuredF80: number | null, fmt: (v: number, o: { digits?: number }) => string): Text {
+  return measuredF80 !== null
+    ? { en: `Model feed F80, live engine, reconstructed from the measured ${fmt(measuredF80, { digits: 3 })} mm, ${caseId}`, es: `F80 del modelo, motor en vivo, reconstruido desde los ${fmt(measuredF80, { digits: 3 })} mm medidos, ${caseId}` }
+    : { en: `Model feed F80, live engine at the rail's values, ${caseId}`, es: `F80 del modelo, motor en vivo con los valores del panel, ${caseId}` };
+}
+
 /** The three callouts of the gradation: F80 on the feed, P80 on the product, and the passing at the selected size (or at 1 mm). */
 export function gradationCallouts(sel: Selection, cls: number | null, fmt: (v: number, o: { digits?: number; decimals?: number }) => string): { callouts: CalloutSpec[]; points: ChartPoint[] } {
   const r = sel.result;
   const source: Text = { en: `Live engine at the rail's values, ${sel.data.manifest.case_id}`, es: `Motor en vivo con los valores del panel, ${sel.data.manifest.case_id}` };
+  const measuredF80 = sel.data.manifest.measured?.f80_mm ?? null;
   const edge = cls !== null ? r.product.edgesMm[cls] : 1;
   const passing = cls !== null ? r.product.passing[cls] : r.pctPassing[1];
   return {
     callouts: [
-      { id: 'f80', eyebrow: { en: 'FEED F80', es: 'F80 DE LA ALIMENTACIÓN' }, value: Number.isFinite(r.f80) ? fmt(r.f80, { digits: 3 }) : null, unit: { en: 'mm', es: 'mm' }, state: 'normal', source },
+      { id: 'f80', eyebrow: { en: 'MODEL FEED F80', es: 'F80 DEL MODELO' }, value: Number.isFinite(r.f80) ? fmt(r.f80, { digits: 3 }) : null, unit: { en: 'mm', es: 'mm' }, state: 'normal', source: modelF80Source(sel.data.manifest.case_id, measuredF80, fmt) },
       { id: 'p80', eyebrow: { en: 'PRODUCT P80', es: 'P80 DEL PRODUCTO' }, value: Number.isFinite(r.p80) ? fmt(r.p80, { digits: 3 }) : null, unit: { en: 'mm', es: 'mm' }, state: 'selected', source },
       {
         id: 'class',
@@ -72,7 +81,7 @@ export function GradationView() {
   const { hours } = useHours();
   const series = useMemo(() => (sel ? passSeriesOf(sel.op) : null), [sel]);
   const n = series?.n ?? 28;
-  const count = usePassCount(n);
+  const count = usePassCount(n, series ? openingPass(series) : n);
   if (!sel || !series) return <Pending />;
   const r = sel.result;
   const trace = sel.data.trace;
@@ -87,12 +96,13 @@ export function GradationView() {
   lines.push({ id: 'classification', label: { en: 'Classification C (chance of breakage)', es: 'Clasificación C (probabilidad de fractura)' }, values: finAll(asc(r.feed.edgesMm.map((d) => classify(d, params)))), color: '--color-fg-faint', dash: [2, 3], width: 1.4 });
   if (count < n) {
     const { after } = passCurves(series, count);
-    lines.push({ id: 'after', label: { en: `Product after ${count} passes`, es: `Producto tras ${count} pasadas` }, values: finAll(asc(after)), color: '--color-good', width: 2.2 });
+    lines.push({ id: 'after', label: { en: `Product after ${count} ${passesWord(count, 'en')}`, es: `Producto tras ${count} ${passesWord(count, 'es')}` }, values: finAll(asc(after)), color: '--color-good', width: 2.2 });
   }
   const atHours = productAtHours(sel.op, hours, drift);
   if (atHours) lines.push({ id: 'hours', label: { en: `Product after ${num(atHours.hours, { digits: 3 })} h of drift`, es: `Producto tras ${num(atHours.hours, { digits: 3 })} h de desplazamiento` }, values: finAll(asc(atHours.result.product.passing)), color: '--color-bad', dash: [8, 3], width: 2 });
   const { callouts, points } = gradationCallouts(sel, cls, (v, o) => num(v, o));
   const lead = [num(r.f80, { digits: 4 }), num(r.p80, { digits: 4 }), num(r.reductionRatio, { decimals: 2 })];
+  const measured = sel.data.manifest.measured ?? null;
   const replay = trace ? [num(trace.summary.f80_mm, { digits: 4 }), num(trace.summary.p80_mm, { digits: 4 }), num(trace.summary.reduction_ratio, { decimals: 2 })] : null;
   const marks: { x: number; label: BiText }[] = [
     { x: r.f80, label: { en: 'F80', es: 'F80' } },
@@ -120,21 +130,29 @@ export function GradationView() {
             <thead>
               <tr>
                 <th>{t('Lane', 'Carril')}</th>
-                <th>{t('F80 (mm)', 'F80 (mm)')}</th>
+                <th>{t('Feed F80 (mm)', 'F80 de alimentación (mm)')}</th>
                 <th>{t('P80 (mm)', 'P80 (mm)')}</th>
                 <th>{t('Reduction', 'Reducción')}</th>
               </tr>
             </thead>
             <tbody>
+              {measured && (
+                <tr data-measured-f80={measured.f80_mm}>
+                  <td>{t(`Measured, survey ${measured.survey}`, `Medido, muestreo ${measured.survey}`)}</td>
+                  <td>{num(measured.f80_mm, { digits: 4 })}</td>
+                  <td>{t('not measured', 'no medido')}</td>
+                  <td>{t('not measured', 'no medida')}</td>
+                </tr>
+              )}
               <tr>
-                <td>{t('Live', 'En vivo')}</td>
+                <td>{t('Model, live', 'Modelo, en vivo')}</td>
                 {lead.map((v, i) => (
                   <td key={i}>{v}</td>
                 ))}
               </tr>
               {replay && (
                 <tr>
-                  <td>{t('Replay', 'Replay')}</td>
+                  <td>{t('Model, replay', 'Modelo, replay')}</td>
                   {replay.map((v, i) => (
                     <td key={i}>{v}</td>
                   ))}

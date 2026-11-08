@@ -8,11 +8,11 @@ import { describe, expect, it } from 'vitest';
 import { evaluate } from '../engine/engine';
 import { neumannPasses, passesToResidual, whitenMatrices } from '../engine/passes';
 import type { Operating } from '../engine/types';
-import type { CaseManifest, Hp500Backbone, Hp500CrusherBayes, Hp500Loo, Trace } from '../lib/contract.types';
+import type { CaseManifest, Hp500Backbone, Hp500Comparison, Hp500CrusherBayes, Hp500Loo, Trace } from '../lib/contract.types';
 import { sectionCallouts } from '../views/chamber';
 import { circuitCallouts, circuitValues } from '../views/circuit';
 import { compareCallouts, compareRows, recommend } from '../views/compare';
-import { driftCurve, hoursCallouts, p80PerMm } from '../views/campaign';
+import { defaultP80Target, driftCurve, driftSecant, hoursCallouts } from '../views/campaign';
 import { passCallouts } from '../views/passes';
 import { operatingOf } from '../workbench/model';
 import { calloutProblems, exitHref, headlineProblems, operateHeadlineProblems, STORY_STEPS, storyHeadlines, stepHref, type StoryInputs } from './storyModel';
@@ -22,6 +22,7 @@ const read = <T,>(rel: string): T => JSON.parse(readFileSync(new URL(rel, derive
 const backbone = read<Hp500Backbone>('hp500/backbone.json');
 const loo = read<Hp500Loo>('hp500/loo.json');
 const cb = read<Hp500CrusherBayes>('hp500/crusherbayes.json');
+const comparison = read<Hp500Comparison>('hp500/comparison.json');
 const manifest = read<CaseManifest>('manifests/HP500-01.json');
 const trace = read<Trace>('HP500-01/trace.json');
 const op: Operating = operatingOf(manifest.params);
@@ -73,19 +74,21 @@ describe('SH-005: five steps, each with a numbered headline read from the releas
     expect(numbersIn(h.compare.headline)).toEqual([best.mape]);
     expect(h.compare.headline).toContain(best.name.en);
   });
-  it('SH-010: operate states P80 per millimetre of setting drift from the engine, never hours', () => {
-    const slope = p80PerMm(op)!;
-    expect(numbersIn(h.operate.headline)).toEqual([Number(fmtEn(slope, 3))]);
-    expect(h.operate.headline).toMatch(/per mm/);
+  it('SH-010: operate states the target and the millimetres of setting drift that reach it, from the engine, never hours', () => {
+    const target = defaultP80Target(evaluate(op).p80);
+    const cross = driftCurve(op, target, 90, null).crossingMm!;
+    expect(numbersIn(h.operate.headline)).toEqual([Number(fmtEn(target, 3)), Number(fmtEn(cross, 3))]);
+    expect(h.operate.headline).toMatch(/mm of setting drift/);
     expect(h.operate.headline).not.toMatch(/\bh\b|hour/i);
     const es = storyHeadlines(full, 'es').operate.headline;
-    expect(es).toMatch(/por mm/);
+    expect(es).toMatch(/mm de desplazamiento/);
     expect(es).not.toMatch(/\bh\b|hora/i);
   });
-  it('adversarial: an Operate headline in hours, or without P80 per millimetre, is refused', () => {
+  it('adversarial: an Operate headline in hours, or a slope per millimetre stated as the drift response, is refused', () => {
     expect(operateHeadlineProblems('P80 leaves its target after 45 h')).not.toEqual([]);
     expect(operateHeadlineProblems('El P80 sale del objetivo tras 45 horas')).not.toEqual([]);
-    expect(operateHeadlineProblems('P80 rises 0.62 mm per mm of setting drift')).toEqual([]);
+    expect(operateHeadlineProblems('P80 rises 0.62 mm per mm of setting drift')).not.toEqual([]);
+    expect(operateHeadlineProblems('P80 reaches the 35.8 mm target after 22 mm of setting drift')).toEqual([]);
     for (const lang of ['en', 'es'] as const) expect(operateHeadlineProblems(storyHeadlines(full, lang).operate.headline)).toEqual([]);
   });
   it('adversarial: a headline with no number, or of 13 words, is refused', () => {
@@ -114,12 +117,13 @@ describe('SH-005: five steps, each with a numbered headline read from the releas
 });
 
 describe('SH-006: deep links and the exit to the App', () => {
-  it('the exit lands on the App with the step’s case and group', () => {
-    expect(exitHref('measure', 'HP500-04')).toBe('/app?case=HP500-04&view=system');
-    expect(exitHref('inside', 'HP500-04')).toBe('/app?case=HP500-04&view=system');
-    expect(exitHref('solve', 'HP500-04')).toBe('/app?case=HP500-04&view=product');
-    expect(exitHref('compare', 'HP500-04')).toBe('/app?case=HP500-04&view=validation');
-    expect(exitHref('operate', 'HP500-04')).toBe('/app?case=HP500-04&view=performance');
+  it('the exit lands on the App with the step’s case, group and view', () => {
+    expect(exitHref('measure', 'HP500-04')).toBe('/app?case=HP500-04&view=system&sub=circuit');
+    expect(exitHref('inside', 'HP500-04')).toBe('/app?case=HP500-04&view=system&sub=chamber');
+    expect(exitHref('solve', 'HP500-04')).toBe('/app?case=HP500-04&view=product&sub=passes');
+    expect(exitHref('compare', 'HP500-04')).toBe('/app?case=HP500-04&view=validation&sub=compare');
+    expect(exitHref('operate', 'HP500-04')).toBe('/app?case=HP500-04&view=performance&sub=campaign');
+    expect(exitHref('operate', 'HP500-04', { targetMm: 35.8127 })).toBe('/app?case=HP500-04&view=performance&sub=campaign&target=35.8127');
   });
   it('adversarial: an exit that lands on another case is caught', () => {
     const landed = new URL(exitHref('solve', 'S01'), 'https://x').searchParams.get('case');
@@ -127,7 +131,7 @@ describe('SH-006: deep links and the exit to the App', () => {
     expect(landed).not.toBe('HP500-01');
   });
   it('a case id with characters a URL reserves is encoded, never injected', () => {
-    expect(exitHref('measure', 'A&view=x')).toBe('/app?case=A%26view%3Dx&view=system');
+    expect(exitHref('measure', 'A&view=x')).toBe('/app?case=A%26view%3Dx&view=system&sub=circuit');
   });
 });
 
@@ -142,8 +146,8 @@ describe('SH-007: three anchored callouts with a value, a unit and a source on e
     measure: circuitCallouts(circuitValues(manifest, trace, null), num),
     inside: sectionCallouts(op, r.nipAngleDeg, r.nipLimitDeg, null, 'HP500-01', num),
     solve: passCallouts(series, 3, num, 'HP500-01'),
-    compare: compareCallouts(rows, best, best, num),
-    operate: hoursCallouts('HP500-01', r.p80 * 1.1, driftCurve(op, r.p80 * 1.1, 90, null), p80PerMm(op), null, num),
+    compare: compareCallouts(rows, best, best, comparison, null, 'kW', num),
+    operate: hoursCallouts('HP500-01', defaultP80Target(r.p80), driftCurve(op, defaultP80Target(r.p80), 90, null), driftSecant(op, driftCurve(op, defaultP80Target(r.p80), 90, null).crossingMm), null, num),
   };
   it('each stage has at least three callouts, each with a value, a unit and a source in both languages', () => {
     for (const [id, list] of Object.entries(stages)) expect(calloutProblems(list), id).toEqual([]);

@@ -34,19 +34,29 @@ export function passCurves(series: PassSeries, n: number): { after: number[]; cl
   return { after: passingOf(series.product[k], series.closed), closed: passingOf(series.closed, series.closed) };
 }
 
-/** The pass the reader looks at, as the shared cursor holds it (the exact product, n classes, until the reader scrubs). */
-export function usePassCount(n: number): number {
+/** The pass the reader looks at, as the shared cursor holds it; until the reader scrubs, `fallback` (the views pass the pass the Solve
+ * headline names, the first within the tolerance, so the stage opens on its evidence), else the exact product, n passes. */
+export function usePassCount(n: number, fallback: number = n): number {
   const { cursor } = useLinkedSelection();
-  return passCount(cursor, n);
+  return passCount(cursor, n, fallback);
 }
+
+/** The pass the views open at for a series: the first whose residual is below the Solve tolerance, else the exact product. */
+export const openingPass = (series: PassSeries): number => passesToResidual(series, SOLVE_TOLERANCE) ?? series.n;
+
+/** "1 pass", "6 passes" (es "1 pasada", "6 pasadas"). */
+export const passesWord = (count: number, lang: 'en' | 'es'): string => (lang === 'es' ? (count === 1 ? 'pasada' : 'pasadas') : count === 1 ? 'pass' : 'passes');
+
+/** Below this a residual is floating-point round-off, not a value: it is shown as below machine precision. */
+export const MACHINE_FLOOR = 1e-15;
 
 const PASS_MS = 320;
 
 /** The pass scrubber and its play button: the shell's linked cursor; play walks the passes and any input stops it. */
-export function PassControls({ n }: { n: number }) {
+export function PassControls({ n, start = n }: { n: number; start?: number }) {
   const lang = useShellLang();
   const { scrub, inputProps, markerProps } = useLinkedCursor();
-  const count = usePassCount(n);
+  const count = usePassCount(n, start);
   const [playing, setPlaying] = useState(false);
   useEffect(() => {
     if (!playing) return;
@@ -91,9 +101,13 @@ export function PassControls({ n }: { n: number }) {
   );
 }
 
-/** The three callouts of the method view at pass `n`. */
+/** The three callouts of the method view at pass `n`: the pass, the residual (below machine precision said so, never round-off as a
+ * value) and the mass nipped and sent back at that pass, a quantity distinct from the residual. */
 export function passCallouts(series: PassSeries, n: number, fmt: (v: number, o: { digits?: number; decimals?: number; percent?: boolean }) => string, caseId: string): CalloutSpec[] {
   const k = Math.max(0, Math.min(series.n, n));
+  const r = series.residual[k];
+  const floor = r < MACHINE_FLOOR;
+  const sent = (series.sentBack[Math.min(series.sentBack.length - 1, k)] ?? []).reduce((s, x) => s + x, 0);
   const source: BiText = { en: `Live engine B, C and f of ${caseId}`, es: `B, C y f del motor en vivo de ${caseId}` };
   return [
     {
@@ -107,18 +121,18 @@ export function passCallouts(series: PassSeries, n: number, fmt: (v: number, o: 
     {
       id: 'residual',
       eyebrow: { en: 'RESIDUAL', es: 'RESIDUO' },
-      value: fmt(series.residual[k], { digits: 2 }),
-      unit: { en: 'of feed', es: 'de alimentación' },
-      state: series.residual[k] < SOLVE_TOLERANCE ? 'normal' : 'warning',
+      value: floor ? '< 1e-15' : fmt(r, { digits: 2 }),
+      unit: floor ? { en: 'of feed, machine precision', es: 'de alim., precisión de máquina' } : { en: 'of feed', es: 'de alimentación' },
+      state: r < SOLVE_TOLERANCE ? 'normal' : 'warning',
       source: { en: 'L1 distance of p_n to the closed form', es: 'Distancia L1 de p_n a la forma cerrada' },
     },
     {
-      id: 'chamber',
-      eyebrow: { en: 'IN THE CHAMBER', es: 'EN LA CÁMARA' },
-      value: fmt(series.inChamber[k] * 100, { digits: 3 }),
-      unit: { en: '% of feed', es: '% de alim.' },
+      id: 'sent',
+      eyebrow: { en: 'SENT BACK', es: 'DEVUELTA' },
+      value: fmt(sent * 100, { digits: 3 }),
+      unit: { en: '% of feed at this pass', es: '% de alim. en esta pasada' },
       state: 'normal',
-      source,
+      source: { en: `Mass nipped and sent back at pass ${k}, C times the mass in the chamber, ${caseId}`, es: `Masa atrapada y devuelta en la pasada ${k}, C por la masa en la cámara, ${caseId}` },
     },
   ];
 }
@@ -136,7 +150,7 @@ export function PassesChart({ sel, series, count }: { sel: Selection; series: Pa
   const lines: ChartSeries[] = [
     { id: 'feed', label: { en: 'Feed', es: 'Alimentación' }, values: finAll(asc(sel.result.feed.passing)), color: FEED_COLOR, width: 1.4 },
     { id: 'closed', label: { en: 'Closed form p', es: 'Forma cerrada p' }, values: finAll(asc(closed)), color: REPLAY_COLOR, dash: REPLAY_DASH, width: 1.8 },
-    { id: 'after', label: { en: `Product after ${count} passes`, es: `Producto tras ${count} pasadas` }, values: finAll(asc(after)), color: LIVE_COLOR, width: 2.6 },
+    { id: 'after', label: { en: `Product after ${count} ${passesWord(count, 'en')}`, es: `Producto tras ${count} ${passesWord(count, 'es')}` }, values: finAll(asc(after)), color: LIVE_COLOR, width: 2.6 },
   ];
   const iP80 = Math.max(
     0,
@@ -146,7 +160,7 @@ export function PassesChart({ sel, series, count }: { sel: Selection; series: Pa
   const points: ChartPoint[] = [
     { id: 'pass', x: edges[at(iP80)], y: after[at(iP80)] },
     { id: 'residual', x: edges[at(iP80 + 4)], y: after[at(iP80 + 4)] },
-    { id: 'chamber', x: edges[at(iP80 - 3)], y: closed[at(iP80 - 3)] },
+    { id: 'sent', x: edges[at(iP80 - 3)], y: closed[at(iP80 - 3)] },
   ];
   const callouts = passCallouts(series, count, (v, o) => num(v, o), sel.data.manifest.case_id);
   const toCls = (ascIndex: number) => edges.length - 1 - ascIndex;
@@ -176,7 +190,8 @@ export function PassesView() {
   const { selectedId } = useLinkedSelection();
   const series = useMemo(() => (sel ? passSeriesOf(sel.op) : null), [sel]);
   const n = series?.n ?? 28;
-  const count = usePassCount(n);
+  const start = series ? openingPass(series) : n;
+  const count = usePassCount(n, start);
   if (!sel || !series) return <Pending />;
   const cls = selectedClass(selectedId, n);
   const residual = series.residual.map((r) => (r > 0 ? r : null));
@@ -199,7 +214,7 @@ export function PassesView() {
         }}
       >
         <div className="cdem-stack" data-caos-flow="" data-pass-count={count} data-selected-class={cls ?? ''}>
-          <PassControls n={n} />
+          <PassControls n={n} start={start} />
           <PassesChart sel={sel} series={series} count={count} />
         </div>
       </PlotCard>
@@ -212,8 +227,8 @@ export function PassesView() {
         note={
           followed
             ? {
-                en: `Selected class at ${num(followed.size, { digits: 3 })} mm: ${num(followed.now, { digits: 3 })} of the feed has left in it after ${count} passes, of ${num(followed.final, { digits: 3 })} in the closed form.`,
-                es: `Clase seleccionada en ${num(followed.size, { digits: 3 })} mm: ${num(followed.now, { digits: 3 })} de la alimentación salió en ella tras ${count} pasadas, de ${num(followed.final, { digits: 3 })} en la forma cerrada.`,
+                en: `Selected class at ${num(followed.size, { digits: 3 })} mm: ${num(followed.now, { digits: 3 })} of the feed has left in it after ${count} ${passesWord(count, 'en')}, of ${num(followed.final, { digits: 3 })} in the closed form.`,
+                es: `Clase seleccionada en ${num(followed.size, { digits: 3 })} mm: ${num(followed.now, { digits: 3 })} de la alimentación salió en ella tras ${count} ${passesWord(count, 'es')}, de ${num(followed.final, { digits: 3 })} en la forma cerrada.`,
               }
             : { en: 'Select a size class on the gradation to follow its mass through the passes.', es: 'Seleccione una clase de tamaño en la gradación para seguir su masa a través de las pasadas.' }
         }

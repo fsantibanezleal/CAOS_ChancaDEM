@@ -32,8 +32,8 @@ export function selectedClass(selectedId: string | null, n: number): number | nu
 }
 
 /** The pass count of the population balance from the shared cursor: the number of size classes (the exact product) when unset. */
-export function passCount(cursor: number | null, n: number): number {
-  if (cursor === null || !Number.isFinite(cursor)) return n;
+export function passCount(cursor: number | null, n: number, fallback: number = n): number {
+  if (cursor === null || !Number.isFinite(cursor)) return Math.max(0, Math.min(n, Math.round(fallback)));
   return Math.max(0, Math.min(n, Math.round(cursor)));
 }
 

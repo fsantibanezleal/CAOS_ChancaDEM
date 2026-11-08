@@ -39,6 +39,11 @@
     "schema": "docs/contracts/schemas/hp500-crusherbayes.schema.json",
     "sha256": "cedc649f770045c491562927ff269cfd2054b14e532d651c2fd1b7b6d4da29e0"
   },
+  "hp500-comparison": {
+    "version": "1.0.0",
+    "schema": "docs/contracts/schemas/hp500-comparison.schema.json",
+    "sha256": "7b1fbfb959c5b2f4a6333e0fd4f22789632509ff536e22a51437bf5a0efb59c8"
+  },
   "surrogate-model": {
     "version": "1.0.0",
     "schema": "docs/contracts/schemas/surrogate-model.schema.json",

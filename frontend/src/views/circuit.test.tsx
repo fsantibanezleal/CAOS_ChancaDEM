@@ -38,7 +38,7 @@ function tableValues(html: string): Record<string, number | null> {
 function mismatches(html: string, m: CaseManifest, tr: Trace): string[] {
   const got = tableValues(html);
   const want: Record<string, number> = m.measured
-    ? { Feed: m.measured.feed_tph, 'Feed F80': m.measured.f80_mm, 'Product P80': tr.summary.p80_mm, Power: m.measured.power_kw, 'Closed-side setting': m.measured.css_mm }
+    ? { Feed: m.measured.feed_tph, 'Measured feed F80': m.measured.f80_mm, 'Product P80': tr.summary.p80_mm, Power: m.measured.power_kw, 'Closed-side setting': m.measured.css_mm }
     : { Feed: tr.summary.throughput_tph, 'Feed F80': tr.summary.f80_mm, 'Product P80': tr.summary.p80_mm, Power: tr.summary.power_kw, 'Closed-side setting': m.params.css_mm };
   return Object.entries(want)
     .filter(([k, v]) => got[k] !== v)

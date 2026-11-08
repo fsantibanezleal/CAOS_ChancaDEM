@@ -2,13 +2,14 @@
 // problem's verbs, each headline a number read from the release's documents or computed by the live engine from them, never typed, and
 // the missing state with its reason when a document is absent (SH-005). Pure: the test runs it in node against the committed documents.
 import { formatNumber } from '@fasl-work/caos-app-shell';
+import { CSS_MAX_MM } from '../engine/campaign';
 import { evaluate } from '../engine/engine';
 import type { Operating } from '../engine/types';
-import type { Hp500Backbone, Hp500CrusherBayes, Hp500Loo, Text } from '../lib/contract.types';
+import type { Hp500Backbone, Hp500Comparison, Hp500CrusherBayes, Hp500Loo, Text } from '../lib/contract.types';
 import type { CalloutSpec } from '../views/callouts';
-import { p80PerMm } from '../views/campaign';
-import { compareRows, recommend } from '../views/compare';
-import { passesToSolve } from '../views/passes';
+import { defaultP80Target, driftCurve, driftSecant } from '../views/campaign';
+import { certaintyText, compareRows, recommend } from '../views/compare';
+import { passesToSolve, passesWord } from '../views/passes';
 
 export type StoryStepId = 'measure' | 'inside' | 'solve' | 'compare' | 'operate';
 
@@ -34,10 +35,20 @@ export const isStep = (id: string | undefined): id is StoryStepId => STORY_STEPS
 /** The deep link of a step on a case. */
 export const stepHref = (step: StoryStepId, caseId: string): string => `/story/${step}?case=${encodeURIComponent(caseId)}`;
 
-/** Where the exit of a step lands: the App on the step's case, with the step's group open. */
-export function exitHref(step: StoryStepId, caseId: string): string {
+/** The App view of the group each step opens (the catalog row's placement): Look inside is the chamber, Solve the population balance. */
+export const STEP_SUB: Record<StoryStepId, string> = { measure: 'circuit', inside: 'chamber', solve: 'passes', compare: 'compare', operate: 'campaign' };
+
+/** The state a step carries into the App beside its case and view: the P80 target of Operate. */
+export interface ExitState {
+  targetMm?: number | null;
+}
+
+/** Where the exit of a step lands: the App on the step's case, with the step's group and view open and the step's target. */
+export function exitHref(step: StoryStepId, caseId: string, state: ExitState = {}): string {
   const def = STORY_STEPS.find((s) => s.id === step) ?? STORY_STEPS[0];
-  return `/app?case=${encodeURIComponent(caseId)}&view=${def.group}`;
+  const q = new URLSearchParams({ case: caseId, view: def.group, sub: STEP_SUB[def.id] });
+  if (step === 'operate' && state.targetMm != null && Number.isFinite(state.targetMm) && state.targetMm > 0) q.set('target', String(Math.round(state.targetMm * 1e6) / 1e6));
+  return `/app?${q.toString()}`;
 }
 
 /** What the story reads: the case's operating point (null while it is not available) and the three HP500 documents with their reasons. */
@@ -50,6 +61,27 @@ export interface StoryInputs {
   looReason: Text | null;
   cb: Hp500CrusherBayes | null;
   cbReason: Text | null;
+  /** The paired comparison (hp500-comparison): how sure the ranking is; null with its reason when the document is absent. */
+  comparison?: Hp500Comparison | null;
+  comparisonReason?: Text | null;
+}
+
+/** The point the Operate step draws at a case: the one target rule, the drift that reaches it and the secant over that range. */
+export function operatePoint(op: Operating): { targetMm: number; crossingMm: number | null; secant: number | null } | null {
+  const now = evaluate(op);
+  if (!now.valid || !Number.isFinite(now.p80)) return null;
+  const targetMm = defaultP80Target(now.p80);
+  const curve = driftCurve(op, targetMm, CSS_MAX_MM[op.machine], null);
+  return { targetMm, crossingMm: curve.crossingMm, secant: driftSecant(op, curve.crossingMm) };
+}
+
+/** The ten surveys' feed rates as marks on the Measure stage: each mark's share of the axis from the lowest to the highest rate. */
+export function feedStrip(backbone: Hp500Backbone | null): { survey: number; tph: number; at: number }[] {
+  if (!backbone || backbone.surveys.length === 0) return [];
+  const tph = backbone.surveys.map((s) => s.measured.feed_tph);
+  const lo = Math.min(...tph);
+  const hi = Math.max(...tph);
+  return backbone.surveys.map((s) => ({ survey: s.n, tph: s.measured.feed_tph, at: hi > lo ? (s.measured.feed_tph - lo) / (hi - lo) : 0.5 }));
 }
 
 export interface Headline {
@@ -107,7 +139,9 @@ export function storyHeadlines(input: StoryInputs, lang: 'en' | 'es'): Record<St
   const solve: Headline =
     input.op && k !== null
       ? {
-          headline: es ? `A una millonésima de la forma cerrada tras ${n(k, { decimals: 0 })} pasadas` : `Within a millionth of the closed form after ${n(k, { decimals: 0 })} passes`,
+          headline: es
+            ? `A una millonésima de la forma cerrada tras ${n(k, { decimals: 0 })} ${passesWord(k, 'es')}`
+            : `Within a millionth of the closed form after ${n(k, { decimals: 0 })} ${passesWord(k, 'en')}`,
           summary: es
             ? `p_n = (I - C) suma (B C)^k f con B, C y f del motor en vivo de ${input.caseId}; exacta tras tantas pasadas como clases de tamaño.`
             : `p_n = (I - C) sum (B C)^k f from the live engine's B, C and f of ${input.caseId}; exact after as many passes as size classes.`,
@@ -125,12 +159,15 @@ export function storyHeadlines(input: StoryInputs, lang: 'en' | 'es'): Record<St
       : es
         ? ` CrusherBayes no está disponible: ${bare((input.cbReason ?? { en: '', es: 'su documento no está disponible en esta versión' }).es)}.`
         : ` CrusherBayes is not available: ${bare((input.cbReason ?? { en: 'its document is not available in this build', es: '' }).en)}.`;
+    const sure = certaintyText(input.comparison ?? null, input.comparisonReason ?? null, 'kW', (v, o) => n(v, o ?? { digits: 3 }));
     compare = {
-      headline: es ? `${best.name.es} pronostica la potencia con ${n(best.mape, { digits: 4 })}% reservado` : `${best.name.en} forecasts power within ${n(best.mape, { digits: 4 })}% held out`,
+      headline: es ? `${best.name.es}: menor error en potencia, ${n(best.mape, { digits: 4 })}% en promedio` : `${best.name.en}: lowest held-out power error, ${n(best.mape, { digits: 4 })}% on average`,
       summary:
         (es
-          ? `El menor error porcentual absoluto medio de ${methods} métodos, cada muestreo fuera de su propio ajuste.`
-          : `The lowest mean absolute percent error of ${methods} methods, each survey held out of its own fit.`) + cbNote,
+          ? `El menor error porcentual absoluto medio de ${methods} métodos, cada muestreo fuera de su propio ajuste. `
+          : `The lowest mean absolute percent error of ${methods} methods, each survey held out of its own fit. `) +
+        sure[lang] +
+        cbNote,
       missing: false,
     };
   } else {
@@ -141,19 +178,28 @@ export function storyHeadlines(input: StoryInputs, lang: 'en' | 'es'): Record<St
     };
   }
 
-  const slope = input.op ? p80PerMm(input.op) : null;
-  const operate: Headline =
-    input.op && slope !== null
-      ? {
-          headline: es
-            ? `El P80 ${slope >= 0 ? 'sube' : 'baja'} ${n(Math.abs(slope), { digits: 3 })} mm por mm de abertura desplazada`
-            : `P80 ${slope >= 0 ? 'rises' : 'falls'} ${n(Math.abs(slope), { digits: 3 })} mm per mm of setting drift`,
-          summary: es
-            ? 'dP80/dCSS del motor en vivo; el tiempo lo pone su velocidad de desplazamiento: el producto no afirma ninguna tasa de desgaste.'
-            : "The live engine's dP80/dCSS; the time follows your drift rate: the product asserts no wear rate.",
-          missing: false,
-        }
-      : { headline: es ? 'La deriva de este caso no está disponible en esta versión' : 'This case’s drift response is not available in this build', summary: absent(null, noCase), missing: true };
+  const at = input.op ? operatePoint(input.op) : null;
+  let operate: Headline;
+  if (input.op && at && at.crossingMm !== null && at.crossingMm > 0 && at.secant !== null) {
+    const tgt = n(at.targetMm, { digits: 3 });
+    const mm = n(at.crossingMm, { digits: 3 });
+    operate = {
+      headline: es ? `P80 alcanza el objetivo de ${tgt} mm tras ${mm} mm de desplazamiento` : `P80 reaches the ${tgt} mm target after ${mm} mm of setting drift`,
+      summary: es
+        ? `Secante del motor en vivo en ese rango: ${n(at.secant, { digits: 3 })} mm de P80 por mm de abertura; el tiempo lo pone su velocidad de desplazamiento: el producto no afirma ninguna tasa de desgaste.`
+        : `The live engine's secant over that range: ${n(at.secant, { digits: 3 })} mm of P80 per mm of setting; the time follows your drift rate: the product asserts no wear rate.`,
+      missing: false,
+    };
+  } else if (input.op && at) {
+    const tgt = n(at.targetMm, { digits: 3 });
+    operate = {
+      headline: es ? `P80 no alcanza el objetivo de ${tgt} mm bajo el techo de la abertura` : `P80 never reaches the ${tgt} mm target below the setting ceiling`,
+      summary: es ? 'El motor en vivo no llega al objetivo en una abertura válida bajo el techo del rango de entrenamiento.' : 'The live engine does not reach the target at a valid setting below the ceiling of the training range.',
+      missing: false,
+    };
+  } else {
+    operate = { headline: es ? 'La deriva de este caso no está disponible en esta versión' : 'This case’s drift response is not available in this build', summary: absent(null, noCase), missing: true };
+  }
 
   return { measure, inside, solve, compare, operate };
 }
@@ -181,10 +227,12 @@ export function calloutProblems(list: readonly CalloutSpec[]): string[] {
   return out;
 }
 
-/** What makes the Operate headline wrong for SH-010: it states hours (a wear rate the product does not have) or not P80 per millimetre. */
+/** What makes the Operate headline wrong for SH-010: it states hours (a wear rate the product does not have), or it does not state the
+ * drift in millimetres of setting, or it states a local slope (P80 per millimetre) as the drift response (B1 of the 0.13.000 review). */
 export function operateHeadlineProblems(headline: string): string[] {
   const out: string[] = [];
   if (/\b(h|hours?|horas?)\b/i.test(headline)) out.push('the Operate headline states hours: the product asserts no wear rate');
-  if (!/\b(per|por) mm\b/.test(headline)) out.push('the Operate headline does not state P80 per millimetre of setting');
+  if (!/\d mm (of setting drift|de desplazamiento)\b/.test(headline)) out.push('the Operate headline does not state the drift in millimetres of setting');
+  if (/\b(per|por) mm\b/.test(headline)) out.push('the Operate headline states a slope per millimetre, not the drift response over the drawn range');
   return out;
 }

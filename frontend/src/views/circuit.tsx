@@ -131,7 +131,8 @@ export function circuitValues(manifest: CaseManifest, trace: Trace | null, trace
     machine,
     real: !!measured,
     feedTph: measured ? { id: 'feed', label: labels.feed, value: measured.feed_tph, unit: 't/h', source: fromSurvey } : fromT('feed', labels.feed, s?.throughput_tph, 't/h'),
-    f80: measured ? { id: 'feed', label: labels.f80, value: measured.f80_mm, unit: 'mm', source: fromSurvey } : fromT('feed', labels.f80, s?.f80_mm, 'mm'),
+    // a real survey's F80 is the measured one, named so; the engine's feed F80 (reconstructed from it) is the model's, on the other views
+    f80: measured ? { id: 'feed', label: { en: 'Measured feed F80', es: 'F80 medido de la alimentación' }, value: measured.f80_mm, unit: 'mm', source: fromSurvey } : fromT('feed', labels.f80, s?.f80_mm, 'mm'),
     p80: fromT('product', labels.p80, s?.p80_mm, 'mm'),
     power: measured ? { id: 'power', label: labels.power, value: measured.power_kw, unit: 'kW', source: fromSurvey } : fromT('power', labels.power, s?.power_kw, 'kW'),
     css: measured

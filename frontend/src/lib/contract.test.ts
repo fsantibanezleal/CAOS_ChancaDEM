@@ -1,8 +1,8 @@
 // T11: the committed artifacts against the web's declared contract, in both directions, types included. The same
 // assertions run on two roots: the committed bake (data/derived, when it holds the product's own bake) and the provider
 // tree (docs/contracts/fixtures/data/derived). They are the swap test and the consumer test of the catalog rows
-// case-index, case-manifest, trace, hp500-backbone, hp500-loo, surrogate-model, anomaly-model and model-metrics, and
-// the consumer side of readiness. A document the root must hold and does not is a failure naming its path, never a pass.
+// case-index, case-manifest, trace, hp500-backbone, hp500-loo, hp500-comparison, surrogate-model, anomaly-model and model-metrics,
+// and the consumer side of readiness. A document the root must hold and does not is a failure naming its path, never a pass.
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
@@ -11,6 +11,7 @@ import {
   conform,
   FLAG_CODES,
   HP500_BACKBONE,
+  HP500_COMPARISON,
   HP500_CRUSHERBAYES,
   HP500_LOO,
   INDEX,
@@ -26,6 +27,7 @@ import {
   type CaseIndex,
   type CaseManifest,
   type Hp500Backbone,
+  type Hp500Comparison,
   type Hp500CrusherBayes,
   type Hp500Loo,
   type ModelMetrics,
@@ -102,7 +104,7 @@ for (const [label, root, run, why] of roots) {
 
     it('the files the index declares exist, and name the HP500 documents and the model contracts and graphs', () => {
       for (const rel of index.files) expect(existsSync(new URL(rel, root)), rel).toBe(true);
-      for (const rel of ['hp500/backbone.json', 'hp500/loo.json', 'hp500/crusherbayes.json', 'models/surrogate.json', 'models/psd-ae.json']) expect(index.files, rel).toContain(rel);
+      for (const rel of ['hp500/backbone.json', 'hp500/loo.json', 'hp500/crusherbayes.json', 'hp500/comparison.json', 'models/surrogate.json', 'models/psd-ae.json']) expect(index.files, rel).toContain(rel);
     });
 
     for (const entry of index.cases) {
@@ -184,6 +186,26 @@ for (const [label, root, run, why] of roots) {
       // the SDD rule: dropped as a predictor only when (a) it neither beats B-lin on power nor M0 on throughput by the margin and (b) a coverage or width fails
       expect(k.verdict).toBe(k.a_holds && k.b_holds ? 'dropped as a predictor' : 'kept');
       expect(k.a_holds).toBe(!k.a_power_beats_blin_by_margin && !k.a_tph_beats_m0_by_margin);
+    });
+
+    it('the comparison document conforms, its recommended method is the one the web recommends from hp500-loo and CrusherBayes, and every paired row is against it', () => {
+      const c = read('hp500/comparison.json') as Hp500Comparison;
+      const l = read('hp500/loo.json') as Hp500Loo;
+      expect(conform(c, { object: HP500_COMPARISON })).toEqual([]);
+      expect(c.schema).toBe(SCHEMAS.comparison);
+      for (const t of ['tph', 'kW'] as const) {
+        const block = c.targets[t];
+        expect(block.measured).toEqual(l.loo[t].measured);
+        const free = block.methods.filter((m) => !m.control).sort((a, b) => a.mape_pct - b.mape_pct);
+        expect(block.recommended, t).toBe(free[0].id);
+        expect(block.runner_up, t).toBe(free[1].id);
+        for (const p of block.paired) {
+          expect(p.against).toBe(block.recommended);
+          expect(p.ci95[0]).toBeLessThanOrEqual(p.mean_diff_pts);
+          expect(p.ci95[1]).toBeGreaterThanOrEqual(p.mean_diff_pts);
+        }
+      }
+      expect(c.crusherbayes.included).toBe(c.targets.kW.methods.some((m) => m.id === 'crusherbayes'));
     });
 
     it('the model contracts conform and name graphs that exist with the bytes they declare', () => {
@@ -302,13 +324,23 @@ describe('CONTRACT 2: the checker', () => {
     (unknownVerdict.kill_criterion as Record<string, unknown>).verdict = 'maybe';
     expect(conform(unknownVerdict, { object: HP500_CRUSHERBAYES }).join(' ')).toMatch(/expected one of kept, dropped as a predictor/);
   });
+  it('adversarial: a comparison document that lacks its runner-up, or carries a paired interval of the wrong shape, is refused', () => {
+    const good = JSON.parse(readFileSync(new URL('hp500/comparison.json', PROVIDER), 'utf8')) as Hp500Comparison;
+    expect(conform(good, { object: HP500_COMPARISON })).toEqual([]);
+    const noRunner = structuredClone(good) as unknown as { targets: { kW: Record<string, unknown> } };
+    delete noRunner.targets.kW.runner_up;
+    expect(conform(noRunner, { object: HP500_COMPARISON }).join(' ')).toMatch(/runner_up: declared by the web, not written/);
+    const badCi = structuredClone(good) as unknown as { targets: { kW: { paired: Array<Record<string, unknown>> } } };
+    badCi.targets.kW.paired[0].ci95 = 'wide';
+    expect(conform(badCi, { object: HP500_COMPARISON }).join(' ')).toMatch(/ci95/);
+  });
   it('adversarial: a loo 1.2.0 block with a Morrell score of the wrong type is refused', () => {
     const l = JSON.parse(readFileSync(new URL('hp500/loo.json', PROVIDER), 'utf8')) as Hp500Loo;
     const bad = structuredClone(l);
     (bad.loo.kW.strict.Morrell as Record<string, unknown>).mape_pct = 'x';
     expect(conform(bad, { object: HP500_LOO }).join(' ')).toMatch(/Morrell\.mape_pct: expected a finite number/);
   });
-  it('the catalog table is parsed: thirteen rows, readiness among them', () => {
+  it('the catalog table is parsed: fourteen rows, readiness among them', () => {
     expect(catalogIds()).toEqual([
       'params-record',
       'hp500-survey',
@@ -318,6 +350,7 @@ describe('CONTRACT 2: the checker', () => {
       'hp500-backbone',
       'hp500-loo',
       'hp500-crusherbayes',
+      'hp500-comparison',
       'surrogate-model',
       'anomaly-model',
       'model-metrics',

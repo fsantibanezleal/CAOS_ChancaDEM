@@ -47,6 +47,7 @@ export const SCHEMAS = {
   backbone: 'chancadem.hp500.backbone/v1',
   loo: 'chancadem.hp500.loo/v1',
   crusherbayes: 'chancadem.hp500.crusherbayes/v1',
+  comparison: 'chancadem.hp500.comparison/v1',
   surrogate: 'chancadem.surrogate/v1',
   anomaly: 'chancadem.anomaly/v1',
   metrics: 'chancadem.model-metrics/v1',
@@ -58,6 +59,7 @@ export const SCHEMAS = {
   backbone: string;
   loo: string;
   crusherbayes: string;
+  comparison: string;
   surrogate: Schemas['SurrogateModel']['schema'];
   anomaly: string;
   metrics: string;
@@ -437,6 +439,30 @@ export const HP500_CRUSHERBAYES = {
   },
 } as const satisfies Record<string, Kind>;
 export type Hp500CrusherBayes = Of<{ readonly object: typeof HP500_CRUSHERBAYES }>;
+
+const CMP_INPUT = { object: { path: 'string', schema: 'string', engine_version: 'string' } } as const;
+const CMP_TARGET = {
+  object: {
+    measured: SERIES,
+    methods: { array: { object: { id: 'string', control: 'boolean', mape_pct: 'number', ape_pct: { nullable: SERIES } } } },
+    recommended: 'string',
+    runner_up: 'string',
+    paired: { array: { object: { method: 'string', against: 'string', mean_diff_pts: 'number', ci95: { tuple: ['number', 'number'] }, wins: 'integer', p_better: 'number' } } },
+  },
+} as const;
+
+/** hp500-comparison: the paired comparison of the held-out methods, per target, against the recommended one (the manuscript's bootstrap). */
+export const HP500_COMPARISON = {
+  schema: 'string',
+  source: SOURCE,
+  engine_version: 'string',
+  n: 'integer',
+  bootstrap: { object: { method: 'string', resamples: 'integer', seed: 'integer', quantiles: { tuple: ['number', 'number'] } } },
+  inputs: { object: { loo: CMP_INPUT, crusherbayes: { nullable: CMP_INPUT } } },
+  crusherbayes: { object: { included: 'boolean', note: { nullable: 'text' } } },
+  targets: PER_TARGET(CMP_TARGET),
+} as const satisfies Record<string, Kind>;
+export type Hp500Comparison = Of<{ readonly object: typeof HP500_COMPARISON }>;
 
 /** The training range of a continuous input, [low, high], and the ranges of every continuous input of every machine (training.input_ranges of both model contracts). */
 const BOUNDS = { tuple: ['number', 'number'] } as const;

@@ -11,7 +11,7 @@ import { closedFormProduct, neumannPasses, passingOf, passesToResidual, whitenMa
 import type { Operating } from '../engine/types';
 import type { CaseManifest, Trace } from '../lib/contract.types';
 import { operatingOf, railOf, selectionOf } from '../workbench/model';
-import { passCurves, PassesView, SOLVE_TOLERANCE } from './passes';
+import { openingPass, passCurves, PassesView, passSeriesOf, SOLVE_TOLERANCE } from './passes';
 import { GradationView } from './product';
 import { ViewContext, type ViewCtx } from './shared';
 
@@ -119,8 +119,10 @@ describe('SH-004: the gradation (V3) draws the product after the pass the shared
     const html = render(5);
     expect(html.match(/data-pass-count="5"/g)?.length).toBe(2);
   });
-  it('with no pass chosen, both draw the exact product (n passes)', () => {
+  it('with no pass chosen, both open at the pass the Solve headline names (the first within a millionth), not at n', () => {
+    const k = openingPass(passSeriesOf(sel.op));
+    expect(k).toBeLessThan(28);
     const html = render(null);
-    expect(html.match(/data-pass-count="28"/g)?.length).toBe(2);
+    expect(html.match(new RegExp(`data-pass-count="${k}"`, 'g'))?.length).toBe(2);
   });
 });

@@ -310,7 +310,7 @@ export const GROUP_ROWS: Record<GroupId | 'context', string[]> = {
   product: ['trace'],
   performance: ['trace', 'hp500-loo'],
   learned: ['surrogate-model', 'anomaly-model', 'model-metrics'],
-  validation: ['trace', 'hp500-loo', 'hp500-crusherbayes'],
+  validation: ['trace', 'hp500-loo', 'hp500-crusherbayes', 'hp500-comparison'],
   context: ['case-manifest'],
 };
 

@@ -4,12 +4,14 @@
 // with the lowest held-out MAPE per target marked as the recommended one with its reason (SH-009). The two controls of the protocol
 // (the constant mean and the label shuffle) are drawn as the bars to beat and are never recommended: they are checks, not forecasts.
 // Every number is read from the committed documents; the per-survey errors are recomputed from their predictions and measurements, and
-// their mean is the document's MAPE (the test holds the two equal).
+// their mean is the document's MAPE (the test holds the two equal). How sure the ranking is comes from hp500-comparison (rule 7): the
+// paired difference of each method against the recommended one over the ten surveys, with its bootstrap interval and its wins, drawn
+// as an interval mark and named in the third callout and the takeaway; never typed here, and the missing state when it is absent.
 import { PlotCard, ViewsRow, useLinkedItem, useShellLang, useWorkbenchState, type BiText } from '@fasl-work/caos-app-shell';
 import { UPlotChart, type ChartSeries } from '@fasl-work/caos-app-shell/chart';
 import { useState } from 'react';
-import { loadHp500CrusherBayes, loadHp500Loo, useArtifact } from '../api/artifacts';
-import type { CaseIndex, Hp500CrusherBayes, Hp500Loo, Text } from '../lib/contract.types';
+import { loadHp500Comparison, loadHp500CrusherBayes, loadHp500Loo, useArtifact } from '../api/artifacts';
+import type { CaseIndex, Hp500Comparison, Hp500CrusherBayes, Hp500Loo, Text } from '../lib/contract.types';
 import { ChartCallouts, type CalloutSpec, type ChartPoint } from './callouts';
 import { linkedId, selectedOf, useLinkedSelection } from './linked';
 import { bare, useNum, useT, useView } from './shared';
@@ -120,9 +122,61 @@ export function recommendReason(best: MethodRow, rows: readonly MethodRow[], tar
   };
 }
 
-/** The three callouts of the comparison: the recommended method, the selected one and the constant mean, the bar to beat. */
-export function compareCallouts(rows: readonly MethodRow[], best: MethodRow | null, chosen: MethodRow, fmt: (v: number, o: { digits?: number }) => string): CalloutSpec[] {
-  const control = rows.find((r) => r.id === 'constant_mean') ?? null;
+export type Paired = Hp500Comparison['targets']['kW']['paired'][number];
+
+/** The paired row of a method against the recommended one in the comparison document, or null (absent document, or no such row). */
+export function pairedOf(comparison: Hp500Comparison | null, target: CompareTarget, method: string | undefined): Paired | null {
+  if (!comparison || !method) return null;
+  return comparison.targets[target].paired.find((p) => p.method === method) ?? null;
+}
+
+/** The marks that draw the interval of the paired gap on the MAPE axis. */
+const GAP_MARKS = 21;
+
+/** The method the view opens selected: the runner-up of the comparison (so the stage shows two methods and the gap between them), else
+ * the second-lowest MAPE of the rows, else the recommended one. */
+export function openingChoice(rows: readonly MethodRow[], best: MethodRow | null, comparison: Hp500Comparison | null, target: CompareTarget): MethodRow | null {
+  const named = comparison ? rows.find((r) => r.id === comparison.targets[target].runner_up) : undefined;
+  if (named) return named;
+  const free = rows.filter((r) => !r.control && r !== best && Number.isFinite(r.mape)).sort((a, b) => a.mape - b.mape);
+  return free[0] ?? best;
+}
+
+const fallbackReason: Text = { en: 'hp500/comparison.json is not in this build', es: 'hp500/comparison.json no está en esta versión' };
+
+/** How sure the ranking of a target is with ten surveys, from the comparison document: the gap to the runner-up, its interval and its
+ * wins; when the document is absent, the reason (never a number). */
+export function certaintyText(comparison: Hp500Comparison | null, reason: Text | null, target: CompareTarget, fmt: (v: number, o?: { digits?: number; decimals?: number }) => string): Text {
+  if (!comparison) {
+    const why = reason ?? fallbackReason;
+    return { en: `How sure the ranking is: not available yet: ${bare(why.en)}.`, es: `Cuán segura es la clasificación: aún no disponible: ${bare(why.es)}.` };
+  }
+  const t = comparison.targets[target];
+  const p = pairedOf(comparison, target, t.runner_up);
+  const best = METHOD_NAME[t.recommended] ?? { en: t.recommended, es: t.recommended };
+  const runner = METHOD_NAME[t.runner_up] ?? { en: t.runner_up, es: t.runner_up };
+  if (!p) return { en: `The comparison has no paired row for ${runner.en}.`, es: `La comparación no tiene fila pareada para ${runner.es}.` };
+  const n = comparison.n;
+  const [lo, hi] = p.ci95;
+  const d = (v: number) => fmt(v, { decimals: 2 });
+  const settled = lo > 0;
+  return {
+    en: `Against the runner-up, ${runner.en}, ${best.en} is ${d(p.mean_diff_pts)} points lower on average (95 percent paired interval ${d(lo)} to ${d(hi)}) and lower on ${p.wins} of the ${n} surveys: ${settled ? `the interval excludes zero, so the ranking holds on these ${n} surveys` : `the interval includes zero, so ${n} surveys do not settle the ranking`}.`,
+    es: `Frente al segundo, ${runner.es}, ${best.es} es ${d(p.mean_diff_pts)} puntos menor en promedio (intervalo pareado del 95 por ciento ${d(lo)} a ${d(hi)}) y menor en ${p.wins} de los ${n} muestreos: ${settled ? `el intervalo excluye el cero, así que la clasificación se sostiene en estos ${n} muestreos` : `el intervalo incluye el cero, así que ${n} muestreos no deciden la clasificación`}.`,
+  };
+}
+
+/** The three callouts of the comparison: the recommended method, the selected one (the runner-up at the opening state) and the paired
+ * gap of the selected method (or of the runner-up, when the recommended one is selected) to the recommended one, with its interval. */
+export function compareCallouts(
+  rows: readonly MethodRow[],
+  best: MethodRow | null,
+  chosen: MethodRow,
+  comparison: Hp500Comparison | null,
+  comparisonReason: Text | null,
+  target: CompareTarget,
+  fmt: (v: number, o: { digits?: number; decimals?: number }) => string,
+): CalloutSpec[] {
   const unit = { en: '% MAPE', es: '% MAPE' };
   const named = (r: MethodRow) => ({ en: `${r.name.en}, held out`, es: `${r.name.es}, reservado` });
   return [
@@ -152,18 +206,39 @@ export function compareCallouts(rows: readonly MethodRow[], best: MethodRow | nu
       state: 'selected',
       source: named(chosen),
     },
-    control
-      ? { id: 'control', eyebrow: { en: 'MEAN', es: 'MEDIA' }, value: fmt(control.mape, { digits: 3 }), unit, state: 'warning', source: named(control) }
-      : {
-          id: 'control',
-          eyebrow: { en: 'MEAN', es: 'MEDIA' },
-          value: null,
-          unit,
-          state: 'inactive',
-          source: { en: 'hp500/loo.json', es: 'hp500/loo.json' },
-          missing: { en: 'the document carries no constant-mean control', es: 'el documento no trae el control de media constante' },
-        },
+    gapCallout(rows, best, chosen, comparison, comparisonReason, target, fmt),
   ];
+}
+
+function gapCallout(
+  rows: readonly MethodRow[],
+  best: MethodRow | null,
+  chosen: MethodRow,
+  comparison: Hp500Comparison | null,
+  comparisonReason: Text | null,
+  target: CompareTarget,
+  fmt: (v: number, o: { digits?: number; decimals?: number }) => string,
+): CalloutSpec {
+  const eyebrow = { en: 'GAP TO BEST', es: 'BRECHA AL MEJOR' };
+  const other = chosen.id !== best?.id ? chosen : comparison ? (rows.find((r) => r.id === comparison.targets[target].runner_up) ?? null) : null;
+  const p = pairedOf(comparison, target, other?.id);
+  if (!comparison || !p || !other || !best) {
+    const why = comparison ? { en: `the comparison has no paired row for ${other?.name.en ?? 'this method'}`, es: `la comparación no tiene fila pareada para ${other?.name.es ?? 'este método'}` } : (comparisonReason ?? fallbackReason);
+    return { id: 'gap', eyebrow, value: null, unit: { en: 'points', es: 'puntos' }, state: 'inactive', source: { en: 'hp500/comparison.json', es: 'hp500/comparison.json' }, missing: { en: bare(why.en), es: bare(why.es) } };
+  }
+  const [lo, hi] = p.ci95;
+  const d = (v: number) => fmt(v, { decimals: 2 });
+  return {
+    id: 'gap',
+    eyebrow,
+    value: `${p.mean_diff_pts > 0 ? '+' : ''}${d(p.mean_diff_pts)}`,
+    unit: { en: `points, 95% ${d(lo)} to ${d(hi)}`, es: `puntos, 95% ${d(lo)} a ${d(hi)}` },
+    state: lo > 0 ? 'normal' : 'warning',
+    source: {
+      en: `${other.name.en} minus ${best.name.en}, paired over ${comparison.n} surveys, wins ${p.wins} of ${comparison.n}, hp500/comparison.json`,
+      es: `${other.name.es} menos ${best.name.es}, pareado en ${comparison.n} muestreos, gana ${p.wins} de ${comparison.n}, hp500/comparison.json`,
+    },
+  };
 }
 
 /** The survey number of a real case id (HP500-03 is survey 3), or null. */
@@ -208,6 +283,8 @@ export function CompareBody({
   loo,
   cb,
   cbReason,
+  comparison = null,
+  comparisonReason = null,
   target,
   setTarget,
   caseId,
@@ -217,6 +294,9 @@ export function CompareBody({
   loo: Hp500Loo;
   cb: Hp500CrusherBayes | null;
   cbReason: Text | null;
+  /** The paired comparison (hp500-comparison); null with its reason when the document is absent. */
+  comparison?: Hp500Comparison | null;
+  comparisonReason?: Text | null;
   target: CompareTarget;
   setTarget: (t: CompareTarget) => void;
   caseId: string | undefined;
@@ -231,8 +311,7 @@ export function CompareBody({
   const rows = compareRows(loo, cb, target);
   const best = recommend(rows);
   const chosenId = selectedOf(selectedId, 'method');
-  const chosen = rows.find((r) => r.id === chosenId) ?? best ?? rows[0];
-  const control = rows.find((r) => r.id === 'constant_mean') ?? null;
+  const chosen = rows.find((r) => r.id === chosenId) ?? openingChoice(rows, best, comparison, target) ?? rows[0];
   const ticks = rows.map((r, i) => ({ value: i + 1, label: METHOD_SHORT[r.id] }));
   const xs = rows.map((_, i) => i + 1);
   const n = loo.n;
@@ -258,14 +337,38 @@ export function CompareBody({
   ];
   if (best) series.push({ id: 'best', label: { en: 'Recommended', es: 'Recomendado' }, values: [best.mape], x: [rows.indexOf(best) + 1], mode: 'points', size: 22, color: '--color-good' });
   if (selX.length) series.push({ id: 'survey', label: { en: `Survey ${survey}`, es: `Muestreo ${survey}` }, values: selY, x: selX, mode: 'points', size: 10, color: '--color-warn' });
-  const yMax = Math.max(...rows.map((r) => r.mape), ...dotsY) * 1.08;
-  const callouts = compareCallouts(rows, best, chosen, (v, o) => num(v, o));
+  // the paired gap of the runner-up (or of the selected method) to the recommended one, drawn on the MAPE axis at that method as the
+  // recommended MAPE plus the 95 percent interval of the mean paired difference: an interval mark with its numbers in its label
+  const gapRow = chosen.id !== best?.id ? chosen : comparison ? (rows.find((r) => r.id === comparison.targets[target].runner_up) ?? null) : null;
+  const gap = best && gapRow ? pairedOf(comparison, target, gapRow.id) : null;
+  if (best && gapRow && gap) {
+    const gx = rows.indexOf(gapRow) + 1 - 0.14;
+    const d = (v: number) => num(v, { decimals: 2 });
+    series.push({
+      id: 'gap',
+      label: {
+        en: `${gapRow.name.en} minus ${best.name.en}: ${d(gap.mean_diff_pts)} points (95% ${d(gap.ci95[0])} to ${d(gap.ci95[1])})`,
+        es: `${gapRow.name.es} menos ${best.name.es}: ${d(gap.mean_diff_pts)} puntos (95% ${d(gap.ci95[0])} a ${d(gap.ci95[1])})`,
+      },
+      // a points series on its own x (the chart's per-series x is for points): 21 marks from the low to the high end of the interval
+      values: Array.from({ length: GAP_MARKS }, (_, i) => best.mape + gap.ci95[0] + ((gap.ci95[1] - gap.ci95[0]) * i) / (GAP_MARKS - 1)),
+      x: Array.from({ length: GAP_MARKS }, () => gx),
+      mode: 'points',
+      size: 4,
+      color: '--color-warn',
+    });
+    series.push({ id: 'gapmean', label: { en: 'Mean paired gap', es: 'Brecha pareada media' }, values: [best.mape + gap.mean_diff_pts], x: [gx], mode: 'points', size: 11, color: '--color-warn' });
+  }
+  const yMax = Math.max(...rows.map((r) => r.mape), ...dotsY, ...(best && gap ? [best.mape + gap.ci95[1]] : [])) * 1.08;
+  const callouts = compareCallouts(rows, best, chosen, comparison, comparisonReason, target, (v, o) => num(v, o));
   const points: ChartPoint[] = [
     { id: 'best', x: best ? rows.indexOf(best) + 1 : 1, y: best?.mape ?? 0 },
     { id: 'chosen', x: rows.indexOf(chosen) + 1, y: chosen.mape },
-    { id: 'control', x: control ? rows.indexOf(control) + 1 : rows.length, y: control?.mape ?? 0 },
+    { id: 'gap', x: best && gapRow && gap ? rows.indexOf(gapRow) + 1 - 0.14 : rows.indexOf(chosen) + 1, y: best && gap ? best.mape + gap.mean_diff_pts : chosen.mape },
   ];
-  const reason = best ? recommendReason(best, rows, target, (v) => num(v, { digits: 3 })) : { en: 'No method is scored for this target.', es: 'Ningún método tiene puntaje para este objetivo.' };
+  const sure = certaintyText(comparison, comparisonReason, target, (v, o) => num(v, o ?? { digits: 3 }));
+  const base = best ? recommendReason(best, rows, target, (v) => num(v, { digits: 3 })) : { en: 'No method is scored for this target.', es: 'Ningún método tiene puntaje para este objetivo.' };
+  const reason: Text = best ? { en: `${base.en} ${sure.en}`, es: `${base.es} ${sure.es}` } : base;
   const cbNote: Text | null = cb
     ? null
     : {
@@ -302,7 +405,7 @@ export function CompareBody({
         es: `${reason.es} El punto grande es el error porcentual absoluto medio de un método con cada muestreo fuera de su propio ajuste; los puntos chicos son sus diez errores.${cbNote ? ` ${cbNote.es}` : ''}`,
       }}
     >
-      <div className="cdem-stack" data-caos-flow="" data-target={target} data-recommended={best?.id ?? ''}>
+      <div className="cdem-stack" data-caos-flow="" data-target={target} data-recommended={best?.id ?? ''} data-selected-method={chosen.id} data-gap={gap ? String(gap.mean_diff_pts) : ''}>
         <div className="cdem-controls" role="group" aria-label={t('Target of the forecast', 'Objetivo del pronóstico')}>
           <button type="button" className="btn" aria-pressed={target === 'tph'} onClick={() => setTarget('tph')}>
             {t('Throughput (t/h)', 'Capacidad (t/h)')}
@@ -333,14 +436,7 @@ export function CompareBody({
       lane="replay"
       provenance="real"
       dataKey={stateKey}
-      note={
-        chosen.band
-          ? {
-              en: `Dashed: the 80 percent predictive band (coverage ${num(chosen.band.coverage * 100, { digits: 3 })} percent of the ten surveys).`,
-              es: `Segmentada: la banda predictiva del 80 por ciento (cobertura ${num(chosen.band.coverage * 100, { digits: 3 })} por ciento de los diez muestreos).`,
-            }
-          : { en: 'This method has no predictive band in its document.', es: 'Este método no tiene banda predictiva en su documento.' }
-      }
+      note={bandNote(chosen, best, (v) => num(v, { digits: 3 }))}
     >
       <div className="cdem-stack" data-caos-flow="">
         <div className="cdem-tablewrap">
@@ -393,12 +489,29 @@ export function CompareBody({
   );
 }
 
+/** The panel's one statement about the predictive bands: the selected method's band when it has one, and, once, when the recommended
+ * method's document has none. */
+export function bandNote(chosen: MethodRow, best: MethodRow | null, fmt: (v: number) => string): Text {
+  const parts: Text[] = [];
+  if (chosen.band) {
+    parts.push({
+      en: `Dashed: the 80 percent predictive band of ${chosen.name.en} (coverage ${fmt(chosen.band.coverage * 100)} percent of the ten surveys).`,
+      es: `Segmentada: la banda predictiva del 80 por ciento de ${chosen.name.es} (cobertura ${fmt(chosen.band.coverage * 100)} por ciento de los diez muestreos).`,
+    });
+  } else if (chosen.id !== best?.id) {
+    parts.push({ en: `${chosen.name.en} has no predictive band in its document.`, es: `${chosen.name.es} no tiene banda predictiva en su documento.` });
+  }
+  if (best && !best.band) parts.push({ en: `The recommended method, ${best.name.en}, has no predictive band in its document.`, es: `El método recomendado, ${best.name.es}, no tiene banda predictiva en su documento.` });
+  return { en: parts.map((p) => p.en).join(' '), es: parts.map((p) => p.es).join(' ') };
+}
+
 /** The App's view (Validation group, first view): reads both documents through the index. */
 export function CompareView() {
   const { index, sel, pickCase } = useView();
   const [target, setTarget] = useState<CompareTarget>('kW');
   const loo = useArtifact<Hp500Loo>((signal) => (index ? loadHp500Loo(index as CaseIndex, signal) : new Promise<Hp500Loo>(() => undefined)), [index]);
   const cb = useArtifact<Hp500CrusherBayes>((signal) => (index ? loadHp500CrusherBayes(index as CaseIndex, signal) : new Promise<Hp500CrusherBayes>(() => undefined)), [index]);
+  const cmp = useArtifact<Hp500Comparison>((signal) => (index ? loadHp500Comparison(index as CaseIndex, signal) : new Promise<Hp500Comparison>(() => undefined)), [index]);
   const lang = useShellLang();
   if (loo.state === 'unavailable')
     return (
@@ -407,7 +520,7 @@ export function CompareView() {
       </p>
     );
   if (loo.state === 'error') return <p role="alert">{loo.error}</p>;
-  if (loo.state !== 'ready' || cb.state === 'loading')
+  if (loo.state !== 'ready' || cb.state === 'loading' || cmp.state === 'loading')
     return (
       <p className="caos-pending" data-state="loading">
         {lang === 'es' ? 'Cargando la validación' : 'Loading the validation'}
@@ -418,6 +531,8 @@ export function CompareView() {
       loo={loo.data}
       cb={cb.state === 'ready' ? cb.data : null}
       cbReason={cb.state === 'unavailable' ? cb.reason : cb.state === 'error' ? { en: cb.error, es: cb.error } : null}
+      comparison={cmp.state === 'ready' ? cmp.data : null}
+      comparisonReason={cmp.state === 'unavailable' ? cmp.reason : cmp.state === 'error' ? { en: cmp.error, es: cmp.error } : null}
       target={target}
       setTarget={setTarget}
       caseId={sel?.data.manifest.case_id}

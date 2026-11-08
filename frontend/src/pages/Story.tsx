@@ -5,24 +5,24 @@
 //   1 Measure (V1, the circuit on a real survey), 2 Look inside (V2, the chamber section), 3 Solve (V5 on the V3 axes),
 //   4 Compare (V6), 5 Operate (V4).
 // The headlines are storyHeadlines() (story.ts), every number read from the committed documents or the live engine. The exit lands on the
-// App with the step's case and group.
+// App with the step's case, group and view, and the Operate target (exitHref).
 import { StoryFrame, useLinkedCursor, useLinkedItem, useLinkedView, useShellLang, formatNumber, type StoryStep } from '@fasl-work/caos-app-shell';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { loadCase, loadHp500Backbone, loadHp500CrusherBayes, loadHp500Loo, loadIndex, useArtifact, type CaseData, type Loaded } from '../api/artifacts';
-import type { CaseIndex, Hp500Backbone, Hp500CrusherBayes, Hp500Loo, Text } from '../lib/contract.types';
+import { loadCase, loadHp500Backbone, loadHp500Comparison, loadHp500CrusherBayes, loadHp500Loo, loadIndex, useArtifact, type CaseData, type Loaded } from '../api/artifacts';
+import type { CaseIndex, Hp500Backbone, Hp500Comparison, Hp500CrusherBayes, Hp500Loo, Text } from '../lib/contract.types';
 import { caseAbsent } from '../readiness/readiness';
 import { useReadiness } from '../readiness/useReadiness';
-import { HoursView, p80PerMm } from '../views/campaign';
+import { defaultP80Target, HoursView, p80PerMm } from '../views/campaign';
 import { SectionDrawing } from '../views/chamber';
 import { CircuitDrawing, StreamTable, caseForStage, circuitValues, STAGES, useStagedCases, type StageId } from '../views/circuit';
 import { CompareBody, surveyOfCase, caseOfSurvey, type CompareTarget } from '../views/compare';
 import { linkedId } from '../views/linked';
-import { PassControls, PassesChart, passSeriesOf, usePassCount } from '../views/passes';
+import { MACHINE_FLOOR, openingPass, PassControls, PassesChart, passesWord, passSeriesOf, usePassCount } from '../views/passes';
 import { ViewContext, type ViewCtx } from '../views/shared';
 import { operatingOf, railOf, selectionOf, type Selection } from '../workbench/model';
 import type { Machine } from '../engine/types';
-import { exitHref, isStep, STORY_STEPS, stepHref, storyHeadlines, type StoryStepId } from './storyModel';
+import { exitHref, feedStrip, isStep, operatePoint, STORY_STEPS, stepHref, storyHeadlines, type StoryStepId } from './storyModel';
 import '../workbench/workbench.css';
 
 const ready = <T,>(l: Loaded<T>): T | null => (l.state === 'ready' ? l.data : null);
@@ -61,6 +61,36 @@ function SurveyScrubber({ n, current, onPick }: { n: number; current: number | n
         }}
       />
     </div>
+  );
+}
+
+/** The ten surveys' feed rates on the Measure stage, linked to the survey scrubber: the mark of the survey the cursor stands on is
+ * selected, a mark opens its survey, and the lowest and the highest rate are written at the ends (the headline's evidence, M10). */
+function FeedStrip({ backbone, fallback, onPick }: { backbone: Hp500Backbone; fallback: number | null; onPick: (survey: number) => void }) {
+  const lang = useShellLang();
+  const cursor = useLinkedView((st) => st.cursor);
+  const at = cursor ?? fallback;
+  const marks = feedStrip(backbone);
+  const tph = marks.map((m) => m.tph);
+  const fmt = (v: number) => formatNumber(v, lang, { digits: 4 });
+  const W = 600;
+  const pad = 70;
+  const x = (share: number) => pad + share * (W - 2 * pad);
+  return (
+    <figure className="cdem-feed-strip" data-feed-strip="" data-feed-min={Math.min(...tph)} data-feed-max={Math.max(...tph)}>
+      <svg viewBox={`0 0 ${W} 44`} width="100%" height="44" role="img" aria-label={lang === 'es' ? 'Alimentación medida de los diez muestreos (t/h)' : 'Measured feed of the ten surveys (t/h)'}>
+        <line x1={x(0)} x2={x(1)} y1={22} y2={22} stroke="var(--color-border)" strokeWidth={2} />
+        <text x={x(0) - 8} y={26} textAnchor="end" fontSize={12} fill="var(--color-fg)">{`${fmt(Math.min(...tph))} t/h`}</text>
+        <text x={x(1) + 8} y={26} textAnchor="start" fontSize={12} fill="var(--color-fg)">{`${fmt(Math.max(...tph))} t/h`}</text>
+        {marks.map((m) => (
+          <g key={m.survey} data-feed-mark={m.survey} data-feed-tph={m.tph} data-linked-selected={at === m.survey ? 'true' : 'false'} style={{ cursor: 'pointer' }} onClick={() => onPick(m.survey)}>
+            <title>{lang === 'es' ? `Muestreo ${m.survey}: ${fmt(m.tph)} t/h` : `Survey ${m.survey}: ${fmt(m.tph)} t/h`}</title>
+            <circle cx={x(m.at)} cy={22} r={at === m.survey ? 8 : 5} fill={at === m.survey ? 'var(--color-accent)' : 'var(--color-fg-subtle)'} stroke="var(--color-bg)" strokeWidth={1.5} />
+          </g>
+        ))}
+      </svg>
+      <figcaption className="caos-plot-note">{lang === 'es' ? 'Alimentación medida de los diez muestreos; el punto grande es el mostrado.' : 'Measured feed of the ten surveys; the large dot is the one shown.'}</figcaption>
+    </figure>
   );
 }
 
@@ -114,6 +144,7 @@ export function Story() {
   const backbone = useArtifact<Hp500Backbone>((signal) => (idx ? loadHp500Backbone(idx, signal) : never<Hp500Backbone>()), [idx]);
   const loo = useArtifact<Hp500Loo>((signal) => (idx ? loadHp500Loo(idx, signal) : never<Hp500Loo>()), [idx]);
   const cb = useArtifact<Hp500CrusherBayes>((signal) => (idx ? loadHp500CrusherBayes(idx, signal) : never<Hp500CrusherBayes>()), [idx]);
+  const cmp = useArtifact<Hp500Comparison>((signal) => (idx ? loadHp500Comparison(idx, signal) : never<Hp500Comparison>()), [idx]);
   const staged = useStagedCases(idx);
   const [target, setTarget] = useState(0);
   const [drift, setDrift] = useState<number | null>(null);
@@ -123,12 +154,14 @@ export function Story() {
   const sel: Selection | null = useMemo(() => (data ? selectionOf(data, railOf(data.manifest.params), 'canonical') : null), [data]);
   const survey = surveyOfCase(data?.manifest.case_id);
 
-  // each step starts its shared cursor where its view reads it: the survey shown (Measure), the exact product (Solve)
+  // each step starts its shared cursor where its view reads it: the survey shown (Measure), the pass the Solve headline names (the first
+  // within a millionth of the closed form), so the stage opens on the headline's evidence
+  const solveStart = sel ? openingPass(passSeriesOf(sel.op)) : 1;
   useEffect(() => {
     if (active === 'measure') scrub(survey ?? 1);
-    else if (active === 'solve') scrub(1);
+    else if (active === 'solve') scrub(solveStart);
     else scrub(null);
-  }, [active, survey, scrub]);
+  }, [active, survey, scrub, solveStart]);
 
   const shownCase = data?.manifest.case_id ?? caseId ?? '';
   const withCase = (id: string) => {
@@ -157,7 +190,18 @@ export function Story() {
 
   const op = operatingOf(data.manifest.params);
   const heads = storyHeadlines(
-    { caseId: shownCase, op, backbone: ready(backbone), backboneReason: reasonOf(backbone), loo: ready(loo), looReason: reasonOf(loo), cb: ready(cb), cbReason: reasonOf(cb) },
+    {
+      caseId: shownCase,
+      op,
+      backbone: ready(backbone),
+      backboneReason: reasonOf(backbone),
+      loo: ready(loo),
+      looReason: reasonOf(loo),
+      cb: ready(cb),
+      cbReason: reasonOf(cb),
+      comparison: ready(cmp),
+      comparisonReason: reasonOf(cmp),
+    },
     lang,
   );
   const ctx: ViewCtx = {
@@ -165,7 +209,7 @@ export function Story() {
     unavailable: null,
     index: idx,
     loo: null,
-    target: target > 0 ? target : sel.result.p80 * 1.1,
+    target: target > 0 ? target : defaultP80Target(sel.result.p80),
     setTarget,
     canApplyCss: false,
     applyCss: () => undefined,
@@ -195,6 +239,7 @@ export function Story() {
           if (id) withCase(id);
         }}
       />
+      {ready(backbone) && <FeedStrip backbone={ready(backbone)!} fallback={survey} onPick={(k) => withCase(caseOfSurvey(k))} />}
       <StageMarker fallback={survey} />
     </div>
   );
@@ -238,6 +283,7 @@ export function Story() {
     </div>
   );
   const r = sel.result;
+  const measuredF80 = data.manifest.measured?.f80_mm ?? null;
   const insidePanel = (
     <Evidence
       title={t('The chamber at this setting', 'La cámara con esta abertura')}
@@ -258,8 +304,11 @@ export function Story() {
           : t('the particle is squeezed upward.', 'la partícula es escupida hacia arriba.')}
       </p>
       <p>
-        {t('Product P80', 'P80 del producto')} <strong>{num(r.p80, { digits: 3 })} mm</strong> {t('from a feed F80 of', 'desde un F80 de alimentación de')}{' '}
-        <strong>{num(r.f80, { digits: 3 })} mm</strong>.
+        {t('Product P80', 'P80 del producto')} <strong>{num(r.p80, { digits: 3 })} mm</strong> {t('from the model’s feed F80 of', 'desde el F80 de alimentación del modelo,')}{' '}
+        <strong>{num(r.f80, { digits: 3 })} mm</strong>
+        {measuredF80 !== null
+          ? t(`, reconstructed from the measured ${num(measuredF80, { digits: 3 })} mm.`, `, reconstruido desde los ${num(measuredF80, { digits: 3 })} mm medidos.`)
+          : '.'}
       </p>
     </Evidence>
   );
@@ -279,8 +328,8 @@ export function Story() {
         'Fuente: la matriz de fractura B, la clasificación C y la alimentación f del motor en vivo; la forma cerrada es su solución LU.',
       )}
     >
-      <PassControls n={series.n} />
-      <SolveReadout sel={sel} />
+      <PassControls n={series.n} start={solveStart} />
+      <SolveReadout sel={sel} start={solveStart} />
     </Evidence>
   );
 
@@ -289,7 +338,18 @@ export function Story() {
   const cbData = ready(cb);
   const compareStage = looData ? (
     <div className="cdem-story-stage cdem-story-chart">
-      <CompareBody loo={looData} cb={cbData} cbReason={reasonOf(cb)} target={compareTarget} setTarget={setCompareTarget} caseId={shownCase} onPickCase={withCase} part="stage" />
+      <CompareBody
+        loo={looData}
+        cb={cbData}
+        cbReason={reasonOf(cb)}
+        comparison={ready(cmp)}
+        comparisonReason={reasonOf(cmp)}
+        target={compareTarget}
+        setTarget={setCompareTarget}
+        caseId={shownCase}
+        onPickCase={withCase}
+        part="stage"
+      />
     </div>
   ) : (
     <p className="caos-pending" data-state="unavailable">
@@ -298,7 +358,18 @@ export function Story() {
   );
   const comparePanel = looData ? (
     <div>
-      <CompareBody loo={looData} cb={cbData} cbReason={reasonOf(cb)} target={compareTarget} setTarget={setCompareTarget} caseId={shownCase} onPickCase={withCase} part="panel" />
+      <CompareBody
+        loo={looData}
+        cb={cbData}
+        cbReason={reasonOf(cb)}
+        comparison={ready(cmp)}
+        comparisonReason={reasonOf(cmp)}
+        target={compareTarget}
+        setTarget={setCompareTarget}
+        caseId={shownCase}
+        onPickCase={withCase}
+        part="panel"
+      />
     </div>
   ) : (
     <p>{heads.compare.summary}</p>
@@ -306,6 +377,7 @@ export function Story() {
 
   // Step 5, Operate: P80 as the setting drifts, at the reader's drift rate
   const slope = p80PerMm(op);
+  const drawn = operatePoint(op);
   const operateStage = (
     <div className="cdem-story-stage cdem-story-chart">
       <HoursView />
@@ -319,9 +391,25 @@ export function Story() {
         'Fuente: el P80 del motor en vivo contra la abertura; la línea de 45 h es el intervalo de reajuste de una planta (Ma, Fan y He 2016).',
       )}
     >
+      <p data-drift-secant={drawn?.secant ?? ''}>
+        {drawn && drawn.secant !== null && drawn.crossingMm !== null ? (
+          <>
+            {t('Over the drawn range, P80 rises from', 'En el rango dibujado, el P80 sube de')} <strong>{num(r.p80, { digits: 3 })} mm</strong>{' '}
+            {t('to the', 'al objetivo de')} <strong>{num(drawn.targetMm, { digits: 3 })} mm</strong> {t('target in', 'en')}{' '}
+            <strong>{num(drawn.crossingMm, { digits: 3 })} mm</strong> {t('of drift:', 'de desplazamiento:')}{' '}
+            <strong>{num(drawn.secant, { digits: 3 })} mm</strong> {t('of P80 per mm of setting.', 'de P80 por mm de abertura.')}
+          </>
+        ) : (
+          t('The target is not reached on the drawn range.', 'El objetivo no se alcanza en el rango dibujado.')
+        )}
+      </p>
       <p>
-        {t('Each millimetre the setting opens moves P80 by', 'Cada milímetro que se abre la abertura mueve el P80 en')}{' '}
-        <strong>{slope === null ? t('not available', 'no disponible') : `${num(slope, { digits: 3 })} mm`}</strong>.
+        {t('The local slope at the current setting is', 'La pendiente local en la abertura actual es')}{' '}
+        <strong>{slope === null ? t('not available', 'no disponible') : `${num(slope, { digits: 3 })} mm/mm`}</strong>
+        {t(
+          ': the engine’s P80 is piecewise in the setting, so the slope at one setting is not the response over a drift (Methodology, the campaign view).',
+          ': el P80 del motor es por tramos en la abertura, así que la pendiente en una abertura no es la respuesta a un desplazamiento (Metodología, la vista de campaña).',
+        )}
       </p>
       <p>
         {t(
@@ -359,7 +447,7 @@ export function Story() {
         activeId={active}
         mobileStageMinHeight={560}
         onStepChange={(next) => navigate(stepHref(next as StoryStepId, shownCase))}
-        onExit={() => navigate(exitHref(active, shownCase))}
+        onExit={() => navigate(exitHref(active, shownCase, { targetMm: ctx.target }))}
         labels={{
           steps: { en: 'The crushing story', es: 'El recorrido del chancado' },
           previous: { en: 'Previous', es: 'Anterior' },
@@ -375,21 +463,22 @@ export function Story() {
 
 function SolveStage({ sel }: { sel: Selection }) {
   const series = passSeriesOf(sel.op);
-  const count = usePassCount(series.n);
+  const count = usePassCount(series.n, openingPass(series));
   return <PassesChart sel={sel} series={series} count={count} />;
 }
 
-function SolveReadout({ sel }: { sel: Selection }) {
+function SolveReadout({ sel, start }: { sel: Selection; start: number }) {
   const lang = useShellLang();
   const series = passSeriesOf(sel.op);
-  const count = usePassCount(series.n);
+  const count = usePassCount(series.n, start);
   const k = Math.min(series.residual.length - 1, count);
   const f = (v: number, o: { digits?: number }) => formatNumber(v, lang, o);
+  const res = series.residual[k] < MACHINE_FLOOR ? (lang === 'es' ? 'bajo 1e-15 (precisión de máquina)' : 'below 1e-15 (machine precision)') : f(series.residual[k], { digits: 2 });
   return (
     <p data-pass-count={count}>
       {lang === 'es'
-        ? `Tras ${count} pasadas el residuo es ${f(series.residual[k], { digits: 2 })} de la masa alimentada y ${f(series.inChamber[k] * 100, { digits: 3 })} % de la alimentación sigue en la cámara.`
-        : `After ${count} passes the residual is ${f(series.residual[k], { digits: 2 })} of the feed mass and ${f(series.inChamber[k] * 100, { digits: 3 })} % of the feed is still in the chamber.`}
+        ? `Tras ${count} ${passesWord(count, 'es')} el residuo es ${res} de la masa alimentada y ${f(series.inChamber[k] * 100, { digits: 3 })} % de la alimentación sigue en la cámara.`
+        : `After ${count} ${passesWord(count, 'en')} the residual is ${res} of the feed mass and ${f(series.inChamber[k] * 100, { digits: 3 })} % of the feed is still in the chamber.`}
     </p>
   );
 }

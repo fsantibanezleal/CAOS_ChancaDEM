@@ -2,7 +2,7 @@
 // the states a view declares while its data is not there, the alert for a flagged point, and the group frame that puts the
 // readiness note above a group. Nothing here draws a chart; the views do, on the shell's chart and drawing kit.
 import { formatNumber, pick, SubTabs, useShellLang, type BiText, type FormatOptions, type Provenance } from '@fasl-work/caos-app-shell';
-import { createContext, useContext, type ReactNode } from 'react';
+import { createContext, useContext, useState, type ReactNode } from 'react';
 import type { Loaded } from '../api/artifacts';
 import { flagText } from '../engine/flags';
 import type { CaseIndex, Hp500Loo, Text } from '../lib/contract.types';
@@ -126,6 +126,24 @@ export interface Sub {
   content: ReactNode;
 }
 
+/** The URL parameter that names the open view of a group (the story's exit carries it: Look inside opens the chamber, Solve the
+ * population balance); the shell's own `view` parameter names the group. */
+export const SUB_PARAM = 'sub';
+
+/** The view of `group` the URL opens, when the URL's group is `group` and its view is one of `ids`; undefined otherwise. */
+export function subOfUrl(search: string, group: string, ids: readonly string[]): string | undefined {
+  const q = new URLSearchParams(search);
+  const sub = q.get(SUB_PARAM);
+  return q.get('view') === group && sub !== null && ids.includes(sub) ? sub : undefined;
+}
+
+function keepSub(id: string): void {
+  if (typeof window === 'undefined') return;
+  const q = new URLSearchParams(window.location.search);
+  q.set(SUB_PARAM, id);
+  window.history.replaceState(window.history.state, '', `${window.location.pathname}?${q.toString()}${window.location.hash}`);
+}
+
 /**
  * One group of the instrument: the readiness note of its rows, the alert of a flagged point and its views as sub-tabs. The sub-tabs sit
  * directly in the group panel, where the shell sizes them to fill what the note and the alert leave.
@@ -135,6 +153,8 @@ export function GroupFrame({ group, ariaLabel, tabs }: { group: GroupId; ariaLab
   const { sel } = useView();
   const real = sel?.data.manifest.real_or_synthetic === 'real';
   const banded = sel?.data.manifest.params.machine === BANDED_MACHINE;
+  // the view the URL names opens first (read once, when the group mounts), and a change of view is written back to the URL
+  const [initial] = useState(() => (typeof window === 'undefined' ? undefined : subOfUrl(window.location.search, group, tabs.map((t) => t.id))));
   // a group with one view has no row of sub-tabs to choose from
   if (tabs.length === 1) {
     return (
@@ -149,7 +169,7 @@ export function GroupFrame({ group, ariaLabel, tabs }: { group: GroupId; ariaLab
     <>
       <ReadinessNote ids={rowsFor(group, real, banded)} />
       <FlagsAlert />
-      <SubTabs ariaLabel={pick(ariaLabel, lang)} tabs={tabs.map((t) => ({ id: t.id, label: pick(t.label, lang), content: t.content }))} />
+      <SubTabs ariaLabel={pick(ariaLabel, lang)} initial={initial} onChange={keepSub} tabs={tabs.map((t) => ({ id: t.id, label: pick(t.label, lang), content: t.content }))} />
     </>
   );
 }

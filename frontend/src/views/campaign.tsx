@@ -22,11 +22,11 @@ export const REFERENCE_RESET_H = 45;
 /** The x axis: the drift rate, from the lowest to the highest value the axis shows [mm/h]. */
 export const DRIFT_RANGE: [number, number] = [0.01, 1];
 const CURVE_POINTS = 49;
-/** The target the view opens with, as a multiple of the case's own P80: a control value, not a claim. */
+/** The target the views open with, as a multiple of the case's own P80: a control value, not a claim. */
 export const DEFAULT_TARGET_FACTOR = 1.1;
 
-/** The default P80 target: the case's P80 plus 10 percent. */
-export const defaultTarget = (p80Mm: number): number => p80Mm * DEFAULT_TARGET_FACTOR;
+/** The one target rule of the App and the story (SDD catalog row V4, SH-010): the case's P80 plus 10 percent. */
+export const defaultP80Target = (p80Mm: number): number => p80Mm * DEFAULT_TARGET_FACTOR;
 
 export const REFERENCE_LABEL: Text = {
   en: 'the re-set interval of one plant (Ma et al. 2016)',
@@ -122,7 +122,7 @@ export function CampaignView() {
   if (!sel) return <Pending />;
   const op = sel.op;
   const p80 = sel.result.p80;
-  const baseTarget = defaultTarget(p80);
+  const baseTarget = defaultP80Target(p80);
   // The target is the workbench's own P80 target (its value is part of the key the views follow, so a change redraws the figure); until the
   // reader sets it here the view opens at the case's P80 plus 10 percent, and a target the workbench reset (a new case) falls back to that.
   const target = chosen && chosen.caseId === caseId && chosen.mm === sharedTarget ? chosen.mm : baseTarget;
@@ -209,7 +209,9 @@ export function CampaignView() {
 // answers without a wear rate. Once set, the axis is hours (the opening over the drift), the target P80 is the threshold, the hour it is
 // crossed is marked, the 45 h re-set of Ma et al. 2016 is a reference line and the hours cursor is the now line (V2 and V3 follow it).
 
-/** The engine's dP80/dCSS at the operating point [mm of P80 per mm of setting], by a central difference; null at an invalid point. */
+/** The engine's local dP80/dCSS at the operating point [mm of P80 per mm of setting], by a central difference; null at an invalid
+ * point. It is the slope at the current setting only: the response over a drift is driftSecant (the engine's P80 is piecewise in the
+ * setting, so the two differ; the view's Methodology paragraph says why). */
 export function p80PerMm(op: Operating): number | null {
   const h = Math.max(0.25, 0.01 * op.cssMm);
   const lo = evaluate({ ...op, cssMm: op.cssMm - h });
@@ -252,23 +254,37 @@ export function driftCurve(op: Operating, p80TargetMm: number, cssMaxMm: number,
   };
 }
 
+/**
+ * The drift response over the drawn range: P80 at the target's crossing minus P80 now, over the drift that reaches the target
+ * [mm of P80 per mm of setting], the secant of the curve the stage draws from its start to its crossing; null when the target is
+ * never reached, already exceeded, or the point is not valid.
+ */
+export function driftSecant(op: Operating, crossingMm: number | null): number | null {
+  if (crossingMm === null || !(crossingMm > 0)) return null;
+  const now = evaluate(op);
+  const at = evaluate({ ...op, cssMm: op.cssMm + crossingMm });
+  if (!now.valid || !at.valid || !Number.isFinite(now.p80) || !Number.isFinite(at.p80)) return null;
+  return (at.p80 - now.p80) / crossingMm;
+}
+
 export const DRIFT_TEXT = {
   control: {
     en: 'Your drift rate: how fast the closed-side setting opens as the liners wear, in millimetres per hour. The product asserts no wear rate and sets none: until you enter yours the curve is drawn against the opening of the setting.',
-    es: 'Su velocidad de desplazamiento: cuán rápido se abre la abertura de descarga con el desgaste de los blindajes, en milímetros por hora. El producto no afirma ni fija ninguna tasa de desgaste: hasta que ingrese la suya, la curva se dibuja contra la apertura de la abertura.',
+    es: 'Su velocidad de desplazamiento: cuán rápido se abre la abertura de descarga con el desgaste de los blindajes, en milímetros por hora. El producto no afirma ni fija ninguna tasa de desgaste: hasta que ingrese la suya, la curva se dibuja contra el desplazamiento de la abertura.',
   },
   unset: {
     en: 'No drift rate is set, so the axis is the opening of the setting in millimetres; enter your measured drift rate to read operating hours.',
-    es: 'No hay velocidad de desplazamiento fijada, así que el eje es la apertura de la abertura en milímetros; ingrese su velocidad medida para leer horas de operación.',
+    es: 'No hay velocidad de desplazamiento fijada, así que el eje es el desplazamiento de la abertura en milímetros; ingrese su velocidad medida para leer horas de operación.',
   },
 } satisfies Record<string, Text>;
 
-/** The three callouts of the campaign view: the target, where it is crossed, and the P80 at the now line (or per millimetre of drift). */
+/** The three callouts of the campaign view: the target, where it is crossed, and the P80 at the now line (or, before a drift rate is
+ * set, the drift response over the drawn range: the secant from the curve's start to the target's crossing, driftSecant). */
 export function hoursCallouts(
   caseId: string,
   target: number,
   curve: DriftCurve,
-  slope: number | null,
+  secant: number | null,
   atCursorP80: number | null,
   fmt: (v: number, o: { digits?: number }) => string,
 ): CalloutSpec[] {
@@ -286,11 +302,11 @@ export function hoursCallouts(
       : {
           id: 'now',
           eyebrow: { en: 'P80 PER MM', es: 'P80 POR MM' },
-          value: slope === null ? null : fmt(slope, { digits: 3 }),
+          value: secant === null ? null : fmt(secant, { digits: 3 }),
           unit: { en: 'mm/mm', es: 'mm/mm' },
           state: 'selected',
-          source: { en: `dP80/dCSS, live engine, ${caseId}`, es: `dP80/dCSS, motor en vivo, ${caseId}` },
-          missing: { en: 'the point is not valid for the engine', es: 'el punto no es válido para el motor' },
+          source: { en: `Secant to the target over the drawn range, live engine, ${caseId}`, es: `Secante al objetivo en el rango dibujado, motor en vivo, ${caseId}` },
+          missing: { en: 'the target is not reached on the drawn range', es: 'el objetivo no se alcanza en el rango dibujado' },
         },
   ];
 }
@@ -303,15 +319,15 @@ export function HoursView() {
   const { hours, setHours } = useHours();
   if (!sel) return <Pending />;
   const op = sel.op;
-  const target = sharedTarget > sel.result.p80 ? sharedTarget : defaultTarget(sel.result.p80);
+  const target = sharedTarget > sel.result.p80 ? sharedTarget : defaultP80Target(sel.result.p80);
   const curve = driftCurve(op, target, CSS_MAX_MM[op.machine], drift);
-  const slope = p80PerMm(op);
+  const secant = driftSecant(op, curve.crossingMm);
   const useHoursAxis = curve.hours !== null && drift !== null;
   const xs = useHoursAxis ? curve.hours! : curve.openingMm;
   const xMax = xs[xs.length - 1] || 1;
   const cursorX = useHoursAxis && hours !== null ? Math.min(xMax, Math.max(0, hours)) : null;
   const atCursor = cursorX !== null && drift !== null ? evaluate({ ...op, cssMm: op.cssMm + cursorX * drift }) : null;
-  const callouts = hoursCallouts(sel.data.manifest.case_id, target, curve, slope, atCursor && Number.isFinite(atCursor.p80) ? atCursor.p80 : null, (v, o) => num(v, o));
+  const callouts = hoursCallouts(sel.data.manifest.case_id, target, curve, secant, atCursor && Number.isFinite(atCursor.p80) ? atCursor.p80 : null, (v, o) => num(v, o));
   const crossX = useHoursAxis ? curve.crossingH : curve.crossingMm;
   const p80s = curve.p80.filter((v): v is number => v !== null);
   const yLo = Math.min(target, ...p80s) * 0.95;
@@ -370,7 +386,7 @@ export function HoursView() {
           <UPlotChart
             title={{ en: 'P80 against operating hours', es: 'P80 contra horas de operación' }}
             height="fill"
-            x={useHoursAxis ? { values: xs, label: { en: 'Operating hours', es: 'Horas de operación' }, unit: 'h' } : { values: xs, label: { en: 'Opening of the setting', es: 'Apertura de la abertura' }, unit: 'mm' }}
+            x={useHoursAxis ? { values: xs, label: { en: 'Operating hours', es: 'Horas de operación' }, unit: 'h' } : { values: xs, label: { en: 'Opening of the setting', es: 'Desplazamiento de la abertura' }, unit: 'mm' }}
             y={{ label: { en: 'Product P80', es: 'P80 del producto' }, unit: 'mm', range: [yLo, yHi] }}
             series={[{ id: 'p80', label: { en: 'P80 (live engine)', es: 'P80 (motor en vivo)' }, values: curve.p80, color: LIVE_COLOR, width: 2.4 }]}
             yMarks={[{ y: target, label: { en: 'target P80', es: 'P80 objetivo' }, tone: 'neutral' }]}

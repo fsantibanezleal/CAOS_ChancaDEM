@@ -1,7 +1,9 @@
 // ChancaDEM's own story checks in a browser, on this build (SH-005 to SH-008, SH-010), run by `npm run gate` after the base's
 // scripts/check_story_mode.mjs (which checks what every story owes, whatever its steps) and before the shell gate (G21). What only this
 // product's story can be asked: every step's headline and three callouts with a value, a unit and a source; a planted key press that
-// stops autoplay for good; the exit landing on the step's case and group; the scene and the panel selecting each other both ways; the
+// stops autoplay for good; the exit landing on the step's case, group and view, with the Operate target kept (M5 of the 0.13.000 review);
+// the Solve stage opening at the pass its headline names; the Measure stage drawing the ten surveys' feed rates; the scene and the panel
+// selecting each other both ways; the
 // survey scrubber opening that survey; reduced motion stopping the circuit's flow. Nothing here holds a number of the product: the
 // numbers are proven in src/pages/Story.test.tsx against the committed documents.
 //   node src/pages/story.browser.mjs            serves dist/ on a free loopback port
@@ -18,6 +20,7 @@ const frontend = join(here, '..', '..');
 const product = JSON.parse(readFileSync(join(frontend, '..', 'product.json'), 'utf8'));
 const steps = product.showcase.story_routes.map((r) => r.replace('/story/', ''));
 const GROUP = { measure: 'system', inside: 'system', solve: 'product', compare: 'validation', operate: 'performance' };
+const SUB = { measure: 'circuit', inside: 'chamber', solve: 'passes', compare: 'compare', operate: 'campaign' };
 assert.deepEqual(Object.keys(GROUP), steps, 'the steps declared in product.json are the five this check knows');
 const { chromium } = await import('playwright');
 
@@ -83,12 +86,32 @@ try {
     ok(facts.calls.length >= 3, `${step}: ${facts.calls.length} callouts on the stage`);
     for (const c of facts.calls) ok(c.value?.trim() && c.unit?.trim() && c.source?.trim(), `${step}: a callout without its value, unit or source (${JSON.stringify(c)})`);
     if (step === 'operate') ok(!/\bh\b|hour/i.test(facts.headline), `operate: the headline states no hours ("${facts.headline}")`);
+    if (step === 'solve') {
+      const k = Number((facts.headline.match(/(\d+) pass/) ?? [])[1]);
+      const at = await page.locator('[data-story] [data-stage-panel] [data-pass-count]').first().getAttribute('data-pass-count');
+      ok(Number(at) === k, `solve: the step opens at the pass its headline names (${k}), not at ${at}`);
+    }
+    if (step === 'measure') {
+      const marks = await page.locator('[data-story] [data-stage] [data-feed-mark]').count();
+      const strip = await page.locator('[data-story] [data-stage] [data-feed-strip]').first();
+      ok(marks === 10, `measure: the stage draws the ten surveys' feed rates (${marks} marks)`);
+      ok(facts.headline.includes(Number(await strip.getAttribute('data-feed-min')).toLocaleString('en-US')), 'measure: the lowest feed rate of the headline is drawn on the stage');
+    }
+    const storyTarget = step === 'operate' ? await page.locator('[data-story] [data-stage] [data-caos-callout="target"]').first().getAttribute('data-callout-value') : null;
     await page.locator('.caos-story-exit').click();
     await page.waitForURL((u) => u.pathname.replace(/\/+$/, '') === '/app', { timeout: 15000 });
     const landed = new URL(page.url());
     ok(landed.searchParams.get('case') === CASE, `${step}: the exit lands on the story's case (${landed.search})`);
     ok(landed.searchParams.get('view') === GROUP[step], `${step}: the exit opens the step's group ${GROUP[step]} (${landed.search})`);
     await page.locator(`[data-case-workbench] [role="tab"][data-tab="${GROUP[step]}"][aria-selected="true"]`).first().waitFor({ timeout: 15000 });
+    ok(landed.searchParams.get('sub') === SUB[step], `${step}: the exit names the step's view ${SUB[step]} (${landed.search})`);
+    await page.locator(`[data-case-workbench] .subtab.active[id$="-subtab-${SUB[step]}"]`).first().waitFor({ timeout: 15000 });
+    ok(true, `${step}: the App opens the step's view ${SUB[step]}`);
+    if (step === 'operate') {
+      await page.locator('[data-case-workbench] [data-caos-callout="target"]').first().waitFor({ timeout: 15000 });
+      const appTarget = await page.locator('[data-case-workbench] [data-caos-callout="target"]').first().getAttribute('data-callout-value');
+      ok(appTarget === storyTarget, `operate: the App keeps the story's target (${storyTarget} mm), got ${appTarget}`);
+    }
   }
 
   // SH-006: a planted key press stops autoplay, and it stays stopped past the autoplay interval
@@ -149,7 +172,7 @@ try {
 
   assert.deepEqual(errors, [], 'no uncaught page errors');
   console.log(
-    `story.browser: ${checks} checks on ${steps.length} steps (${steps.join(', ')}): headlines, callouts, exits, the pause on a key press, the two-way selection, the survey scrubber and reduced motion.`,
+    `story.browser: ${checks} checks on ${steps.length} steps (${steps.join(', ')}): headlines, callouts, exits with their view and target, the opening states, the pause on a key press, the two-way selection, the survey scrubber and reduced motion.`,
   );
 } finally {
   await browser.close();

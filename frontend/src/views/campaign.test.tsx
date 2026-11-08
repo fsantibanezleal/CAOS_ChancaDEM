@@ -6,17 +6,17 @@ import { formatNumber } from '@fasl-work/caos-app-shell';
 import { describe, expect, it } from 'vitest';
 import { evaluate } from '../engine/engine';
 import type { Operating } from '../engine/types';
-import { CAMPAIGN_TEXT, DRIFT_RANGE, REFERENCE_RESET_H, campaignChart, campaignModel, defaultTarget } from './campaign';
+import { CAMPAIGN_TEXT, DRIFT_RANGE, REFERENCE_RESET_H, campaignChart, campaignModel, defaultP80Target } from './campaign';
 
 const BASE: Operating = { machine: 'cone-sec', cssMm: 32, throwMm: 30, speedRpm: 360, feedX63Mm: 90, feedM: 1.2, oreAxb: 55, oreWi: 14 };
 const p80 = evaluate(BASE).p80;
 
 describe('the model of the figure', () => {
   it('defaults the target to the case P80 plus 10 percent', () => {
-    expect(defaultTarget(p80)).toBeCloseTo(p80 * 1.1, 12);
+    expect(defaultP80Target(p80)).toBeCloseTo(p80 * 1.1, 12);
   });
   it('opens a curve of hours against the drift, falling as the drift rises', () => {
-    const m = campaignModel(BASE, defaultTarget(p80), 90);
+    const m = campaignModel(BASE, defaultP80Target(p80), 90);
     expect(m.kind).toBe('curve');
     if (m.kind !== 'curve') return;
     expect(m.deltaCssMm).toBeGreaterThan(0);
@@ -39,7 +39,7 @@ describe('the model of the figure', () => {
 });
 
 describe('the chart', () => {
-  const m = campaignModel(BASE, defaultTarget(p80), 90);
+  const m = campaignModel(BASE, defaultP80Target(p80), 90);
   it('draws the drift rate on a log axis from 0.01 to 1 mm/h and the hours up the side', () => {
     
     const c = campaignChart(m);
@@ -90,10 +90,10 @@ describe('no wear rate is asserted', () => {
 });
 
 // SH-010 and catalog row V4: P80 against the hours at the reader's drift rate, never a drift rate of the product's own.
-import { driftCurve, DRIFT_TEXT, hoursCallouts, p80PerMm } from './campaign';
+import { driftCurve, driftSecant, DRIFT_TEXT, hoursCallouts, p80PerMm } from './campaign';
 
 describe('SH-010: the campaign view asserts no wear rate', () => {
-  const target = defaultTarget(p80);
+  const target = defaultP80Target(p80);
   it('P80 per millimetre of setting is the engine’s central difference', () => {
     const h = Math.max(0.25, 0.01 * BASE.cssMm);
     const want = (evaluate({ ...BASE, cssMm: BASE.cssMm + h }).p80 - evaluate({ ...BASE, cssMm: BASE.cssMm - h }).p80) / (2 * h);
@@ -119,10 +119,11 @@ describe('SH-010: the campaign view asserts no wear rate', () => {
   });
   it('adversarial: the callouts never state hours without the reader’s drift rate, and the drift control says it is the reader’s', () => {
     const fmt = (v: number) => formatNumber(v, 'en', { digits: 3 });
-    const unset = hoursCallouts('S01', target, driftCurve(BASE, target, 90, null), p80PerMm(BASE), null, fmt);
+    const curve = driftCurve(BASE, target, 90, null);
+    const unset = hoursCallouts('S01', target, curve, driftSecant(BASE, curve.crossingMm), null, fmt);
     expect(unset.some((c) => /\bh\b/.test(c.unit.en))).toBe(false);
     expect(unset.find((c) => c.id === 'now')!.unit.en).toBe('mm/mm');
-    const set = hoursCallouts('S01', target, driftCurve(BASE, target, 90, 0.2), p80PerMm(BASE), null, fmt);
+    const set = hoursCallouts('S01', target, driftCurve(BASE, target, 90, 0.2), driftSecant(BASE, curve.crossingMm), null, fmt);
     expect(set.find((c) => c.id === 'cross')!.unit.en).toBe('h');
     expect(set.find((c) => c.id === 'cross')!.source.en).toContain('at your drift rate');
     expect(DRIFT_TEXT.control.en).toMatch(/asserts no wear rate and sets none/);

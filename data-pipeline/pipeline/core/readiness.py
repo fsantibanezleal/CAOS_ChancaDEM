@@ -27,6 +27,7 @@ SURVEYS_REL = "data/examples/hp500-surveys.csv"
 BACKBONE_REL = "hp500/backbone.json"
 LOO_REL = "hp500/loo.json"
 CRUSHERBAYES_REL = "hp500/crusherbayes.json"
+COMPARISON_REL = "hp500/comparison.json"
 METRICS_REL = "model-metrics.json"
 STATUSES = ("real", "active")  # the catalog's status vocabulary (its Contracts section), exactly, lower case
 MODEL_SLOTS = ("surrogate-model", "anomaly-model")
@@ -148,6 +149,7 @@ class _Facts:
         self.backbone = _json(derived_root / BACKBONE_REL)
         self.loo = _json(derived_root / LOO_REL)
         self.crusherbayes = _json(derived_root / CRUSHERBAYES_REL)
+        self.comparison = _json(derived_root / COMPARISON_REL)
         self.metrics = _json(derived_root / METRICS_REL)
         self.slots = released_slots(models_dir)
 
@@ -188,11 +190,11 @@ def _rule(row: dict[str, str], f: _Facts) -> dict:
     if rid == "hp500-survey" and f.surveys_rejected_rows:
         return _entry(row, "partial", "real", _fill(T_SURVEYS_REJECTED, n=f.surveys_rejected_rows, total=f.surveys_total),
                       f.surveys_rejected)
-    hp500 = {"hp500-backbone": f.backbone, "hp500-loo": f.loo, "hp500-crusherbayes": f.crusherbayes}
+    hp500 = {"hp500-backbone": f.backbone, "hp500-loo": f.loo, "hp500-crusherbayes": f.crusherbayes, "hp500-comparison": f.comparison}
     if rid in hp500 and not isinstance(hp500[rid], dict):
         return _entry(row, "missing", None, _fill(T_NO_HP500))
     doc = {**hp500, "model-metrics": f.metrics}.get(rid)
-    if rid in ("hp500-backbone", "hp500-loo", "hp500-crusherbayes", "model-metrics") and isinstance(doc, dict) and _engine_version(doc) != f.version:
+    if rid in (*hp500, "model-metrics") and isinstance(doc, dict) and _engine_version(doc) != f.version:
         return _entry(row, "stale", "real", _fill(T_STALE, engine_version=_engine_version(doc), version=f.version))
     if rid == "surrogate-model" and not f.slots["surrogate-model"]:
         return _entry(row, "training", "baseline", _fill(T_NO_SURROGATE))

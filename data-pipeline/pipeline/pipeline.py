@@ -7,7 +7,8 @@ committed scientific evidence.
     python data-pipeline/run.py S01                  # one case
     python data-pipeline/run.py S01 --output build/smoke
     python data-pipeline/run.py readiness            # recompute data/derived/readiness.json from the catalog (no bake)
-    python data-pipeline/run.py hp500                # the three HP500 documents (backbone, CrusherCal LOO, CrusherBayes)
+    python data-pipeline/run.py hp500                # the HP500 documents (backbone, CrusherCal LOO, CrusherBayes, the comparison)
+    python data-pipeline/run.py comparison           # only the paired comparison, from the committed LOO and CrusherBayes documents
     python data-pipeline/run.py models               # train then evaluate the two model slots (heavy lane, needs torch)
     python data-pipeline/run.py fixtures             # regenerate the provider tree docs/contracts/fixtures/data
 
@@ -30,6 +31,7 @@ from .core import readiness, unit_gate
 from .core.manifest import build_index, flag_codes, index_entry
 from .core.trace import metrics_of, r6
 from .hp500 import backbone as backbone_doc
+from .hp500 import comparison as comparison_doc
 from .hp500 import crusherbayes as crusherbayes_doc
 from .hp500 import loo as loo_doc
 from .hp500 import surveys as survey_contract
@@ -52,7 +54,8 @@ SEED = 42
 MODEL_FILES = ("models/surrogate.json", "models/surrogate.onnx", "models/surrogate.int8.onnx", "models/psd-ae.json",
                "models/psd-ae.onnx")
 CRUSHERBAYES_FILE = "hp500/crusherbayes.json"
-HP500_FILES = ("hp500/backbone.json", "hp500/loo.json", CRUSHERBAYES_FILE)
+COMPARISON_FILE = "hp500/comparison.json"
+HP500_FILES = ("hp500/backbone.json", "hp500/loo.json", CRUSHERBAYES_FILE, COMPARISON_FILE)
 METRICS_FILE = "model-metrics.json"
 
 
@@ -153,10 +156,26 @@ def precompute(case_id: str, seed: int = SEED, *, output_root: str | Path | None
     return _bake(case, inputs, paths, seed, _models(paths))
 
 
+def write_comparison(paths: PipelinePaths) -> str | None:
+    """Write ``<root>/hp500/comparison.json`` from the LOO document and, when it is there, the CrusherBayes document under
+    ``<root>``; None (nothing written, a stale comparison removed) when the LOO document is absent."""
+    from .io.formats import read_json
+
+    loo_path, cb_path = paths.root / "hp500" / "loo.json", paths.root / CRUSHERBAYES_FILE
+    out = paths.root / COMPARISON_FILE
+    if not loo_path.is_file():
+        out.unlink(missing_ok=True)
+        return None
+    cb = read_json(cb_path) if cb_path.is_file() else None
+    write_json(out, comparison_doc.build(read_json(loo_path), cb, __version__))
+    return COMPARISON_FILE
+
+
 def bake_hp500(paths: PipelinePaths, surveys: list[survey_contract.Survey], seed: int = SEED, sample: bool = True) -> list[str]:
-    """Write the three HP500 documents under ``<root>/hp500`` from the accepted surveys (the backbone, CrusherCal and
-    CrusherBayes, whose sampler is the slow step of the bake); none when there is no survey. ``sample=False`` leaves
-    CrusherBayes out (the provider tree copies the released document instead)."""
+    """Write the HP500 documents under ``<root>/hp500`` from the accepted surveys (the backbone, CrusherCal, CrusherBayes,
+    whose sampler is the slow step of the bake, and the paired comparison of their held-out predictions); none when there is
+    no survey. ``sample=False`` leaves CrusherBayes out (the provider tree copies the released document instead and writes
+    the comparison again)."""
     if not surveys:
         return []
     bb = backbone_doc.build(surveys, __version__)
@@ -164,8 +183,11 @@ def bake_hp500(paths: PipelinePaths, surveys: list[survey_contract.Survey], seed
     write_json(paths.root / "hp500" / "backbone.json", bb)
     write_json(paths.root / "hp500" / "loo.json", loo)
     if not sample:
+        (paths.root / CRUSHERBAYES_FILE).unlink(missing_ok=True)
+        write_comparison(paths)
         return [f for f in HP500_FILES if f != CRUSHERBAYES_FILE]
     write_json(paths.root / "hp500" / CRUSHERBAYES_FILE.split("/")[1], crusherbayes_doc.build(bb, loo, __version__, seed=seed))
+    write_comparison(paths)
     return list(HP500_FILES)
 
 
@@ -270,6 +292,7 @@ def write_fixtures(out: str | Path | None = None) -> Path:
     released_cb = RELEASED / CRUSHERBAYES_FILE
     if surveys and released_cb.is_file():       # the sampler is not re-run for the provider tree: it copies the released document
         shutil.copyfile(released_cb, derived / CRUSHERBAYES_FILE)
+        write_comparison(paths)
     write_json(paths.manifests / "index.json", build_index(entries, "FX01", index_files(derived)))
     write_json(derived / "readiness.json", readiness.provider_document(repo_root=REPO))
     examples.mkdir(parents=True, exist_ok=True)
@@ -287,7 +310,7 @@ def write_fixtures(out: str | Path | None = None) -> Path:
 def main() -> None:
     ap = argparse.ArgumentParser(prog="pipeline.pipeline")
     ap.add_argument("command", nargs="?", default="all",
-                    help="a case id, or all, readiness, hp500, models, fixtures (default all)")
+                    help="a case id, or all, readiness, hp500, comparison, models, fixtures (default all)")
     ap.add_argument("--seed", type=int, default=SEED)
     ap.add_argument("--output", type=Path,
                     help="sandbox output root (for fixtures: the fixtures data folder); omit only for an intentional canonical run")
@@ -311,6 +334,11 @@ def main() -> None:
         refresh_files(paths)
         write_readiness(paths)
         print(f"hp500: {', '.join(written) or 'no accepted survey, nothing written'} -> {paths.root}")
+    elif args.command == "comparison":
+        written = write_comparison(paths)
+        refresh_files(paths)
+        write_readiness(paths)
+        print(f"comparison: {written or 'no hp500/loo.json, nothing written'} -> {paths.root}")
     elif args.command == "models":
         train_models(paths)
         print(f"models -> {paths.models}; metrics -> {paths.root / METRICS_FILE}")
