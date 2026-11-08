@@ -95,6 +95,10 @@ describe('B2: the Compare headline names the metric as a mean', () => {
     expect(h).toBe(`${best.name.en}: lowest held-out power error, ${en(best.mape, { digits: 4 })}% on average`);
     expect(es).toContain('en promedio');
     expect(es).toContain(best.name.es);
+    // Spec item 9 of F3b: the Spanish headline keeps "held out" (reservado) within the 12-word rule
+    expect(es).toContain('reservado');
+    expect(es.split(/\s+/).length).toBeLessThanOrEqual(12);
+    expect(es.startsWith(`${best.name.es}: menor error reservado, `) && es.endsWith('% en promedio')).toBe(true);
     expect(h).not.toMatch(/\bwithin\b/);
     expect(es).not.toMatch(/\bcon \d/);
     expect(numbersIn(h)).toEqual([best.mape]);
@@ -118,7 +122,9 @@ describe('M7: the comparison is decided on the drawn paired interval of hp500-co
     const calls = compareCallouts(rows, best, openingChoice(rows, best, comparison, 'kW')!, comparison, null, 'kW', en);
     const gap = calls[2];
     expect(gap.value).toBe(`+${en(runner.mean_diff_pts, { decimals: 2 })}`);
-    expect(gap.unit.en).toBe(`points, 95% ${en(runner.ci95[0], { decimals: 2 })} to ${en(runner.ci95[1], { decimals: 2 })}`);
+    // M2 (F3b): the unit is short, so the card shows it whole; the interval leads the source
+    expect(gap.unit.en).toBe('points');
+    expect(gap.source.en.startsWith(`95% ${en(runner.ci95[0], { decimals: 2 })} to ${en(runner.ci95[1], { decimals: 2 })}; `)).toBe(true);
     expect(gap.source.en).toContain(`wins ${runner.wins} of ${comparison.n}`);
     // selecting the recommended method keeps the runner-up's gap; selecting another method shows that method's gap
     const self = compareCallouts(rows, best, best, comparison, null, 'kW', en)[2];
@@ -200,7 +206,7 @@ describe('M6: the measured F80 and the model’s F80 are told apart', () => {
   });
   it('adversarial: the gradation (V3) labels the engine’s F80 as the model’s, reconstructed from the measured one', () => {
     const f = gradationCallouts(sel, null, en).callouts.find((c) => c.id === 'f80')!;
-    expect(f.eyebrow.en).toBe('MODEL FEED F80');
+    expect(f.eyebrow.en).toBe('MODEL F80');
     expect(f.eyebrow.es).toMatch(/MODELO/);
     expect(f.source.en).toContain(`reconstructed from the measured ${en(manifest.measured!.f80_mm, { digits: 3 })} mm`);
     expect(f.source.es).toContain('medidos');
@@ -261,8 +267,9 @@ describe('the minors: m1, m6, m9, m11', () => {
     expect(k).toBeGreaterThan(0);
     const calls = passCallouts(series, k, en, 'HP500-01');
     expect(calls[1].value).toBe('< 1e-15');
-    expect(calls[1].unit.en).toMatch(/machine precision/);
-    expect(calls[1].unit.es).toMatch(/precisión de máquina/);
+    // M2 (F3b): the unit is short so the value is whole; machine precision is said in the source
+    expect(calls[1].source.en).toMatch(/machine precision/);
+    expect(calls[1].source.es).toMatch(/precisión de máquina/);
     expect(passCallouts(series, 2, en, 'HP500-01')[1].value).toBe(en(series.residual[2], { digits: 2 }));
   });
 });

@@ -283,7 +283,7 @@ export function circuitCallouts(values: CircuitValues, num: (v: number, o: { dig
   const [feed, product, power]: CalloutSpec[] = [
     {
       id: 'feed',
-      eyebrow: { en: 'FEED', es: 'ALIMENTACIÓN' },
+      eyebrow: { en: 'FEED', es: 'ALIMENTO' },
       value: fmt(values.feedTph, { digits: 4 }),
       unit: { en: 't/h', es: 't/h' },
       state: 'normal',
@@ -292,7 +292,7 @@ export function circuitCallouts(values: CircuitValues, num: (v: number, o: { dig
     },
     {
       id: 'product',
-      eyebrow: { en: 'PRODUCT P80', es: 'P80 DEL PRODUCTO' },
+      eyebrow: { en: 'PRODUCT P80', es: 'P80 PRODUCTO' },
       value: fmt(values.p80, { digits: 3 }),
       unit: { en: 'mm', es: 'mm' },
       state: 'selected',

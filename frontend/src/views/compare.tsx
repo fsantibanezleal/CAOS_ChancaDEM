@@ -7,12 +7,13 @@
 // their mean is the document's MAPE (the test holds the two equal). How sure the ranking is comes from hp500-comparison (rule 7): the
 // paired difference of each method against the recommended one over the ten surveys, with its bootstrap interval and its wins, drawn
 // as an interval mark and named in the third callout and the takeaway; never typed here, and the missing state when it is absent.
-import { PlotCard, ViewsRow, useLinkedItem, useShellLang, useWorkbenchState, type BiText } from '@fasl-work/caos-app-shell';
+import { PlotCard, useLinkedItem, useShellLang, useWorkbenchState, type BiText } from '@fasl-work/caos-app-shell';
 import { UPlotChart, type ChartSeries } from '@fasl-work/caos-app-shell/chart';
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { loadHp500Comparison, loadHp500CrusherBayes, loadHp500Loo, useArtifact } from '../api/artifacts';
 import type { CaseIndex, Hp500Comparison, Hp500CrusherBayes, Hp500Loo, Text } from '../lib/contract.types';
 import { ChartCallouts, type CalloutSpec, type ChartPoint } from './callouts';
+import { useEntry } from './staging';
 import { linkedId, selectedOf, useLinkedSelection } from './linked';
 import { bare, useNum, useT, useView } from './shared';
 
@@ -46,14 +47,22 @@ export const METHOD_NAME: Record<string, Text> = {
   M1_label_shuffle: { en: 'Label shuffle (control)', es: 'Etiquetas barajadas (control)' },
 };
 
-/** The short names on the chart's axis. */
+/** The width of the comparison below which its axis numbers the methods instead of naming them [px]. */
+export const NARROW_PX = 640;
+
+/** The method axis's ticks: the short names, or the methods' numbers below NARROW_PX. */
+export function methodTicks(rows: readonly MethodRow[], narrow: boolean): { value: number; label: Text }[] {
+  return rows.map((r, i) => ({ value: i + 1, label: narrow ? { en: String(i + 1), es: String(i + 1) } : (METHOD_SHORT[r.id] ?? r.name) }));
+}
+
+/** The short names on the chart's axis (m7: two adjacent names never touch at 1280 px). */
 export const METHOD_SHORT: Record<string, Text> = {
   M0_backbone: { en: 'Backbone', es: 'Esqueleto' },
   M1_residual: { en: 'Residual', es: 'Residuo' },
-  M2_freeform: { en: 'Free-form', es: 'Forma libre' },
-  B_lin: { en: 'Setting-only', es: 'Solo abertura' },
+  M2_freeform: { en: 'Free-form', es: 'Libre' },
+  B_lin: { en: 'Line', es: 'Línea' },
   Morrell: { en: 'Morrell', es: 'Morrell' },
-  Morrell_noload: { en: 'Morrell no-load', es: 'Morrell vacío' },
+  Morrell_noload: { en: 'No-load', es: 'En vacío' },
   crusherbayes: { en: 'CrusherBayes', es: 'CrusherBayes' },
   constant_mean: { en: 'Mean', es: 'Media' },
   M1_label_shuffle: { en: 'Shuffle', es: 'Barajada' },
@@ -219,7 +228,8 @@ function gapCallout(
   target: CompareTarget,
   fmt: (v: number, o: { digits?: number; decimals?: number }) => string,
 ): CalloutSpec {
-  const eyebrow = { en: 'GAP TO BEST', es: 'BRECHA AL MEJOR' };
+  // short eyebrow and unit (M2): the interval leads the source, which names the two methods
+  const eyebrow = { en: 'GAP', es: 'BRECHA' };
   const other = chosen.id !== best?.id ? chosen : comparison ? (rows.find((r) => r.id === comparison.targets[target].runner_up) ?? null) : null;
   const p = pairedOf(comparison, target, other?.id);
   if (!comparison || !p || !other || !best) {
@@ -232,11 +242,12 @@ function gapCallout(
     id: 'gap',
     eyebrow,
     value: `${p.mean_diff_pts > 0 ? '+' : ''}${d(p.mean_diff_pts)}`,
-    unit: { en: `points, 95% ${d(lo)} to ${d(hi)}`, es: `puntos, 95% ${d(lo)} a ${d(hi)}` },
+    unit: { en: 'points', es: 'puntos' },
     state: lo > 0 ? 'normal' : 'warning',
     source: {
-      en: `${other.name.en} minus ${best.name.en}, paired over ${comparison.n} surveys, wins ${p.wins} of ${comparison.n}, hp500/comparison.json`,
-      es: `${other.name.es} menos ${best.name.es}, pareado en ${comparison.n} muestreos, gana ${p.wins} de ${comparison.n}, hp500/comparison.json`,
+      // short, so the card keeps its height: the methods by their axis names, the full sentence in the takeaway
+      en: `95% ${d(lo)} to ${d(hi)}; ${(METHOD_SHORT[other.id] ?? other.name).en} minus ${(METHOD_SHORT[best.id] ?? best.name).en}, wins ${p.wins} of ${comparison.n}`,
+      es: `95% ${d(lo)} a ${d(hi)}; ${(METHOD_SHORT[other.id] ?? other.name).es} menos ${(METHOD_SHORT[best.id] ?? best.name).es}, gana ${p.wins} de ${comparison.n}`,
     },
   };
 }
@@ -248,11 +259,11 @@ export const surveyOfCase = (caseId: string | undefined): number | null => {
 };
 export const caseOfSurvey = (n: number): string => `HP500-${String(n).padStart(2, '0')}`;
 
-function MethodButton({ row, best, lang }: { row: MethodRow; best: boolean; lang: 'en' | 'es' }) {
+function MethodButton({ row, n, best, lang }: { row: MethodRow; n: number; best: boolean; lang: 'en' | 'es' }) {
   const item = useLinkedItem(linkedId('method', row.id), 'panel');
   return (
     <button type="button" className="cdem-linkbtn" {...item} data-recommended={best ? 'true' : 'false'}>
-      {row.name[lang]}
+      <span className="cdem-pick-n">{n}.</span> {row.name[lang]}
       {best ? (lang === 'es' ? ' (recomendado)' : ' (recommended)') : ''}
     </button>
   );
@@ -310,9 +321,25 @@ export function CompareBody({
   const { selectedId } = useLinkedSelection();
   const rows = compareRows(loo, cb, target);
   const best = recommend(rows);
+  // the story's entry grows the methods' dots one by one (views/staging.tsx); outside the story every method is drawn
+  const { reveal } = useEntry();
+  const grown = reveal >= 1 ? rows.length : Math.max(1, Math.ceil(reveal * rows.length));
   const chosenId = selectedOf(selectedId, 'method');
   const chosen = rows.find((r) => r.id === chosenId) ?? openingChoice(rows, best, comparison, target) ?? rows[0];
-  const ticks = rows.map((r, i) => ({ value: i + 1, label: METHOD_SHORT[r.id] }));
+  // below 640 px the axis numbers the methods (the pickers and the readout name them), so no two labels touch (M8, m7)
+  const [width, setWidth] = useState(0);
+  const observer = useRef<ResizeObserver | null>(null);
+  const measure = useCallback((node: HTMLDivElement | null) => {
+    observer.current?.disconnect();
+    observer.current = null;
+    if (!node || typeof ResizeObserver === 'undefined') return;
+    observer.current = new ResizeObserver(() => setWidth(node.getBoundingClientRect().width));
+    observer.current.observe(node);
+    setWidth(node.getBoundingClientRect().width);
+  }, []);
+  const narrow = width > 0 && width < NARROW_PX;
+  const [view, setView] = useState<'methods' | 'surveys'>('methods');
+  const ticks = methodTicks(rows, narrow);
   const xs = rows.map((_, i) => i + 1);
   const n = loo.n;
   const survey = surveyOfCase(caseId);
@@ -321,6 +348,7 @@ export function CompareBody({
   const selX: number[] = [];
   const selY: number[] = [];
   rows.forEach((r, i) => {
+    if (i >= grown) return;
     r.errors?.forEach((e, k) => {
       const x = i + 1 + 0.18 + (0.22 * k) / Math.max(1, n - 1);
       dotsX.push(x);
@@ -332,16 +360,16 @@ export function CompareBody({
     });
   });
   const series: ChartSeries[] = [
-    { id: 'mape', label: { en: 'Held-out MAPE', es: 'MAPE reservado' }, values: rows.map((r) => r.mape), mode: 'points', size: 15, color: '--color-accent' },
+    { id: 'mape', label: { en: 'Held-out MAPE', es: 'MAPE reservado' }, values: rows.map((r, i) => (i < grown ? r.mape : null)), mode: 'points', size: 15, color: '--color-accent' },
     { id: 'surveys', label: { en: 'Error on each held-out survey', es: 'Error en cada muestreo reservado' }, values: dotsY, x: dotsX, mode: 'points', size: 6, color: '--color-fg-subtle' },
   ];
-  if (best) series.push({ id: 'best', label: { en: 'Recommended', es: 'Recomendado' }, values: [best.mape], x: [rows.indexOf(best) + 1], mode: 'points', size: 22, color: '--color-good' });
+  if (best && rows.indexOf(best) < grown) series.push({ id: 'best', label: { en: 'Recommended', es: 'Recomendado' }, values: [best.mape], x: [rows.indexOf(best) + 1], mode: 'points', size: 22, color: '--color-good' });
   if (selX.length) series.push({ id: 'survey', label: { en: `Survey ${survey}`, es: `Muestreo ${survey}` }, values: selY, x: selX, mode: 'points', size: 10, color: '--color-warn' });
   // the paired gap of the runner-up (or of the selected method) to the recommended one, drawn on the MAPE axis at that method as the
   // recommended MAPE plus the 95 percent interval of the mean paired difference: an interval mark with its numbers in its label
   const gapRow = chosen.id !== best?.id ? chosen : comparison ? (rows.find((r) => r.id === comparison.targets[target].runner_up) ?? null) : null;
   const gap = best && gapRow ? pairedOf(comparison, target, gapRow.id) : null;
-  if (best && gapRow && gap) {
+  if (best && gapRow && gap && grown === rows.length) {
     const gx = rows.indexOf(gapRow) + 1 - 0.14;
     const d = (v: number) => num(v, { decimals: 2 });
     series.push({
@@ -359,7 +387,7 @@ export function CompareBody({
     });
     series.push({ id: 'gapmean', label: { en: 'Mean paired gap', es: 'Brecha pareada media' }, values: [best.mape + gap.mean_diff_pts], x: [gx], mode: 'points', size: 11, color: '--color-warn' });
   }
-  const yMax = Math.max(...rows.map((r) => r.mape), ...dotsY, ...(best && gap ? [best.mape + gap.ci95[1]] : [])) * 1.08;
+  const yMax = Math.max(...rows.map((r) => r.mape), ...rows.flatMap((r) => r.errors ?? []), ...(best && gap ? [best.mape + gap.ci95[1]] : [])) * 1.08;
   const callouts = compareCallouts(rows, best, chosen, comparison, comparisonReason, target, (v, o) => num(v, o));
   const points: ChartPoint[] = [
     { id: 'best', x: best ? rows.indexOf(best) + 1 : 1, y: best?.mape ?? 0 },
@@ -393,99 +421,107 @@ export function CompareBody({
     bandSeries.push({ id: 'lo', label: { en: '80 percent band, low', es: 'Banda del 80 por ciento, baja' }, values: chosen.band.lo, color: '--color-accent', dash: [4, 3], width: 1.2 });
     bandSeries.push({ id: 'hi', label: { en: '80 percent band, high', es: 'Banda del 80 por ciento, alta' }, values: chosen.band.hi, color: '--color-accent', dash: [4, 3], width: 1.2 });
   }
-  const stage = (
+  const note: Text = {
+    en: `${reason.en} The large dot is a method's mean absolute percent error with every survey held out of its own fit; the small dots are its ten errors.${narrow ? ' The axis numbers the methods; the list above the chart names them, and hovering a method reads its name.' : ''}${cbNote ? ` ${cbNote.en}` : ''}`,
+    es: `${reason.es} El punto grande es el error porcentual absoluto medio de un método con cada muestreo fuera de su propio ajuste; los puntos chicos son sus diez errores.${narrow ? ' El eje numera los métodos; la lista sobre el gráfico los nombra, y al pasar sobre un método se lee su nombre.' : ''}${cbNote ? ` ${cbNote.es}` : ''}`,
+  };
+  const targetButtons = (
+    <div className="cdem-controls" role="group" aria-label={t('Target of the forecast', 'Objetivo del pronóstico')}>
+      <button type="button" className="btn" aria-pressed={target === 'tph'} onClick={() => setTarget('tph')}>
+        {t('Throughput (t/h)', 'Capacidad (t/h)')}
+      </button>
+      <button type="button" className="btn" aria-pressed={target === 'kW'} onClick={() => setTarget('kW')}>
+        {t('Power (kW)', 'Potencia (kW)')}
+      </button>
+    </div>
+  );
+  const dotPlot = (
+    <ChartCallouts callouts={callouts} points={points} frame={{ x: [0.5, rows.length + 0.5], y: [0, yMax] }}>
+      <UPlotChart
+        title={{ en: 'Held-out mean absolute percent error by method', es: 'Error porcentual absoluto medio reservado por método' }}
+        height="fill"
+        x={{ values: xs, label: { en: 'Method', es: 'Método' }, ticks, range: [0.5, rows.length + 0.5] }}
+        y={{ label: { en: 'Held-out absolute error', es: 'Error absoluto reservado' }, unit: '%', range: [0, yMax] }}
+        series={series}
+        readout={(i) => `${i + 1}. ${rows[i].name[lang]}: ${num(rows[i].mape, { digits: 3 })} %`}
+      />
+    </ChartCallouts>
+  );
+  // the methods and the surveys as wrapping lists of buttons, the panel side of the linked selection: every name is whole at any width
+  // (M8), numbered as the axis numbers them below 640 px
+  const pickers = (
+    <div className="cdem-pickers">
+      <div className="cdem-pick" role="group" aria-label={t('Method', 'Método')}>
+        <span className="cdem-pick-label">{t('Method', 'Método')}</span>
+        {rows.map((r, i) => (
+          <MethodButton key={r.id} row={r} n={i + 1} best={best?.id === r.id} lang={lang} />
+        ))}
+      </div>
+      <div className="cdem-pick" role="group" aria-label={t('Survey', 'Muestreo')}>
+        <span className="cdem-pick-label">{t('Survey', 'Muestreo')}</span>
+        {surveys.map((k) => (
+          <SurveyButton key={k} n={k} current={survey === k} onPick={() => onPickCase(caseOfSurvey(k))} />
+        ))}
+      </div>
+    </div>
+  );
+  const docked = part === 'panel';
+  const perSurvey = (
+    <UPlotChart
+      title={{ en: `Measured and held-out prediction per survey (${unit})`, es: `Medido y predicción reservada por muestreo (${unit})` }}
+      height={docked ? 260 : 'fill'}
+      x={{ values: surveys, label: { en: 'Survey', es: 'Muestreo' }, ticks: surveys.map((k) => ({ value: k, label: { en: String(k), es: String(k) } as BiText })), range: [0.5, n + 0.5] }}
+      y={{ label: target === 'tph' ? { en: 'Throughput', es: 'Capacidad' } : { en: 'Power', es: 'Potencia' }, unit }}
+      series={bandSeries}
+      marks={survey ? [{ x: survey, label: { en: 'selected survey', es: 'muestreo seleccionado' } }] : []}
+      onPick={(i) => onPickCase(caseOfSurvey(i + 1))}
+    />
+  );
+  const stageAttrs = { 'data-target': target, 'data-recommended': best?.id ?? '', 'data-selected-method': chosen.id, 'data-gap': gap ? String(gap.mean_diff_pts) : '', 'data-narrow': narrow ? 'true' : 'false' };
+  if (part === 'stage')
+    return (
+      <PlotCard fill title={{ en: 'Held-out error of every method, ten surveys', es: 'Error reservado de cada método, diez muestreos' }} lane="replay" provenance="real" dataKey={stateKey} note={note}>
+        <div ref={measure} className="cdem-stack" data-caos-flow="" {...stageAttrs}>
+          {targetButtons}
+          {dotPlot}
+        </div>
+      </PlotCard>
+    );
+  if (part === 'panel')
+    return (
+      <PlotCard title={{ en: 'The selected method on each survey', es: 'El método seleccionado en cada muestreo' }} lane="replay" provenance="real" dataKey={stateKey} note={bandNote(chosen, best, (v) => num(v, { digits: 3 }))}>
+        <div className="cdem-stack" data-caos-flow="">
+          {pickers}
+          {perSurvey}
+        </div>
+      </PlotCard>
+    );
+  // the App's view opens on the one primary chart (M12): the dot plot takes the card, the per-survey predictions are its second view
+  return (
     <PlotCard
       fill
-      title={{ en: 'Held-out error of every method, ten surveys', es: 'Error reservado de cada método, diez muestreos' }}
+      title={view === 'methods' ? { en: 'Held-out error of every method, ten surveys', es: 'Error reservado de cada método, diez muestreos' } : { en: 'The selected method on each survey', es: 'El método seleccionado en cada muestreo' }}
       lane="replay"
       provenance="real"
       dataKey={stateKey}
-      note={{
-        en: `${reason.en} The large dot is a method's mean absolute percent error with every survey held out of its own fit; the small dots are its ten errors.${cbNote ? ` ${cbNote.en}` : ''}`,
-        es: `${reason.es} El punto grande es el error porcentual absoluto medio de un método con cada muestreo fuera de su propio ajuste; los puntos chicos son sus diez errores.${cbNote ? ` ${cbNote.es}` : ''}`,
-      }}
+      note={view === 'methods' ? note : bandNote(chosen, best, (v) => num(v, { digits: 3 }))}
     >
-      <div className="cdem-stack" data-caos-flow="" data-target={target} data-recommended={best?.id ?? ''} data-selected-method={chosen.id} data-gap={gap ? String(gap.mean_diff_pts) : ''}>
-        <div className="cdem-controls" role="group" aria-label={t('Target of the forecast', 'Objetivo del pronóstico')}>
-          <button type="button" className="btn" aria-pressed={target === 'tph'} onClick={() => setTarget('tph')}>
-            {t('Throughput (t/h)', 'Capacidad (t/h)')}
-          </button>
-          <button type="button" className="btn" aria-pressed={target === 'kW'} onClick={() => setTarget('kW')}>
-            {t('Power (kW)', 'Potencia (kW)')}
-          </button>
+      <div ref={measure} className="cdem-stack" data-caos-flow="" {...stageAttrs} data-compare-view={view}>
+        <div className="cdem-controls">
+          {targetButtons}
+          <div className="cdem-controls" role="group" aria-label={t('What the chart shows', 'Lo que muestra el gráfico')}>
+            <button type="button" className="btn" aria-pressed={view === 'methods'} onClick={() => setView('methods')}>
+              {t('Methods compared', 'Métodos comparados')}
+            </button>
+            <button type="button" className="btn" aria-pressed={view === 'surveys'} onClick={() => setView('surveys')}>
+              {t('Each survey', 'Cada muestreo')}
+            </button>
+          </div>
         </div>
-        <ChartCallouts callouts={callouts} points={points} frame={{ x: [0.5, rows.length + 0.5], y: [0, yMax] }}>
-          <UPlotChart
-            title={{ en: 'Held-out mean absolute percent error by method', es: 'Error porcentual absoluto medio reservado por método' }}
-            height="fill"
-            x={{ values: xs, label: { en: 'Method', es: 'Método' }, ticks, range: [0.5, rows.length + 0.5] }}
-            y={{ label: { en: 'Held-out absolute error', es: 'Error absoluto reservado' }, unit: '%', range: [0, yMax] }}
-            series={series}
-            readout={(i) => `${rows[i].name[lang]}: ${num(rows[i].mape, { digits: 3 })} %`}
-          />
-        </ChartCallouts>
+        {pickers}
+        {view === 'methods' ? dotPlot : <div className="cdem-fill">{perSurvey}</div>}
       </div>
     </PlotCard>
-  );
-  // in the story's docked panel the card takes the height its parts need and the panel scrolls; in the App it fills its column
-  const docked = part === 'panel';
-  const panel = (
-    <PlotCard
-      fill={!docked}
-      title={{ en: 'The selected method on each survey', es: 'El método seleccionado en cada muestreo' }}
-      lane="replay"
-      provenance="real"
-      dataKey={stateKey}
-      note={bandNote(chosen, best, (v) => num(v, { digits: 3 }))}
-    >
-      <div className="cdem-stack" data-caos-flow="">
-        <div className="cdem-tablewrap">
-          <table className="caos-table" data-state="ready">
-            <tbody>
-              <tr>
-                <th className="caos-col-text">{t('Method', 'Método')}</th>
-                <td className="caos-col-text">
-                  {rows.map((r) => (
-                    <span key={r.id} style={{ marginRight: '0.6rem', display: 'inline-block' }}>
-                      <MethodButton row={r} best={best?.id === r.id} lang={lang} />
-                    </span>
-                  ))}
-                </td>
-              </tr>
-              <tr>
-                <th className="caos-col-text">{t('Survey', 'Muestreo')}</th>
-                <td className="caos-col-text">
-                  {surveys.map((k) => (
-                    <span key={k} style={{ marginRight: '0.5rem' }}>
-                      <SurveyButton n={k} current={survey === k} onPick={() => onPickCase(caseOfSurvey(k))} />
-                    </span>
-                  ))}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div className={docked ? undefined : 'cdem-fill'}>
-          <UPlotChart
-            title={{ en: `Measured and held-out prediction per survey (${unit})`, es: `Medido y predicción reservada por muestreo (${unit})` }}
-            height={docked ? 260 : 'fill'}
-            x={{ values: surveys, label: { en: 'Survey', es: 'Muestreo' }, ticks: surveys.map((k) => ({ value: k, label: { en: String(k), es: String(k) } as BiText })), range: [0.5, n + 0.5] }}
-            y={{ label: target === 'tph' ? { en: 'Throughput', es: 'Capacidad' } : { en: 'Power', es: 'Potencia' }, unit }}
-            series={bandSeries}
-            marks={survey ? [{ x: survey, label: { en: 'selected survey', es: 'muestreo seleccionado' } }] : []}
-            onPick={(i) => onPickCase(caseOfSurvey(i + 1))}
-          />
-        </div>
-      </div>
-    </PlotCard>
-  );
-  if (part === 'stage') return stage;
-  if (part === 'panel') return panel;
-  return (
-    <ViewsRow shares={[3, 2]}>
-      {stage}
-      {panel}
-    </ViewsRow>
   );
 }
 

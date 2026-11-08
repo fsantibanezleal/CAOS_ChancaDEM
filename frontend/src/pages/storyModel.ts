@@ -161,7 +161,7 @@ export function storyHeadlines(input: StoryInputs, lang: 'en' | 'es'): Record<St
         : ` CrusherBayes is not available: ${bare((input.cbReason ?? { en: 'its document is not available in this build', es: '' }).en)}.`;
     const sure = certaintyText(input.comparison ?? null, input.comparisonReason ?? null, 'kW', (v, o) => n(v, o ?? { digits: 3 }));
     compare = {
-      headline: es ? `${best.name.es}: menor error en potencia, ${n(best.mape, { digits: 4 })}% en promedio` : `${best.name.en}: lowest held-out power error, ${n(best.mape, { digits: 4 })}% on average`,
+      headline: es ? `${best.name.es}: menor error reservado, ${n(best.mape, { digits: 4 })}% en promedio` : `${best.name.en}: lowest held-out power error, ${n(best.mape, { digits: 4 })}% on average`,
       summary:
         (es
           ? `El menor error porcentual absoluto medio de ${methods} métodos, cada muestreo fuera de su propio ajuste. `

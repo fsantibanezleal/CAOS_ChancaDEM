@@ -1,14 +1,18 @@
 // The anchored callouts of every primary view and story stage (ADR-0082 section 5, SH-007), on the shell's SceneCallouts in its header
 // placement: the cards sit in a band at the top of the view, each with a leader to the point of the drawing it describes, so no card
 // covers its subject or another card. The drawing takes the rest of the view below the band. Two hosts:
-// - CalloutStage, for a drawing of the product's own (the circuit): the drawing reports where its subjects are, in pixels of the stage,
-//   and the anchors are those points, exact;
-// - ChartCallouts, over a shell chart: the anchors are the data points mapped onto the chart's plot area (uPlot's `.u-over`, measured
-//   after layout) on the axes the view declares; the mapping is the view's declared range, so an anchor can sit a few pixels off the
-//   rendered point when uPlot widens a range (a review obligation of ADR-0082 rule 5, recorded in the report).
+// - CalloutStage, for a drawing of the product's own (the circuit, the chamber section): the drawing reports where its subjects are, in
+//   pixels of the stage, and the anchors are those points, exact;
+// - ChartCallouts, over a shell chart: each anchor is the data point on the chart as uPlot rendered it, in the callout layer's own pixels.
+//   The x scale is the one uPlot rendered (the chart publishes it as `data-view-x`), the y scale the chart's fixed `y.range` (every
+//   callout chart passes the frame's y as its range, so uPlot renders exactly it), and the plot area is uPlot's `.u-over` measured
+//   against the callout layer at the same instant, so a transform of the stage (the story's entry) or a band that moves the chart
+//   without resizing it (the band is first sized for the default width, then for the measured one) cannot leave an anchor behind:
+//   the anchors are re-measured after every render, when the host, the layer or the plot resizes, and when uPlot's scale changes
+//   (B3 of the 0.13.000 review, measured in the browser by src/views/showcase.browser.mjs within 4 px).
 // Every value carries its unit and its source; a callout whose value is missing says "not available" with the reason as its source.
 import { SceneCallouts, Stage, useShellLang, type BiText, type CalloutState, type SceneCalloutDef } from '@fasl-work/caos-app-shell';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
 type Both = { en: string; es: string };
 
@@ -115,46 +119,116 @@ export interface ChartFrame {
   yLog?: boolean;
 }
 
-/** The normalised position of a data point on a plot area inside a host, from the axes' declared ranges. */
-export function chartAnchor(p: ChartPoint, frame: ChartFrame, plot: { left: number; top: number; width: number; height: number }, host: { width: number; height: number }) {
-  const t = (v: number, [lo, hi]: [number, number], log?: boolean) => {
-    if (log) return (Math.log10(Math.max(v, 1e-12)) - Math.log10(lo)) / (Math.log10(hi) - Math.log10(lo));
-    return (v - lo) / (hi - lo || 1);
-  };
-  const fx = Math.max(0, Math.min(1, t(p.x, frame.x, frame.xLog)));
-  const fy = Math.max(0, Math.min(1, t(p.y, frame.y, frame.yLog)));
-  return { x: (plot.left + fx * plot.width) / Math.max(1, host.width), y: (plot.top + (1 - fy) * plot.height) / Math.max(1, host.height) };
+export interface PlotBox {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
 }
 
-/** A shell chart with its callouts: the band at the top, the chart below it, the anchors on the chart's measured plot area. */
+/** The fraction of an axis a value sits at on a rendered scale [lo, hi] (log when the axis is), clamped to the plot. */
+export function scaleFraction(v: number, [lo, hi]: [number, number], log?: boolean): number {
+  const l = (u: number) => Math.log10(Math.max(u, 1e-12));
+  const t = log ? (l(v) - l(lo)) / (l(hi) - l(lo) || 1) : (v - lo) / (hi - lo || 1);
+  return Math.max(0, Math.min(1, Number.isFinite(t) ? t : 0.5));
+}
+
+/**
+ * The anchor of a data point, normalised to the callout layer: the point on the rendered scales (uPlot's valToPos: left plus the
+ * fraction of the width, top plus one minus the fraction of the height of its plot area), with the plot area in the layer's own
+ * pixels, divided by the layer's size, which is what the shell's SceneCallouts multiplies back.
+ */
+export function layerAnchor(p: ChartPoint, scale: ChartFrame, plot: PlotBox, layer: { width: number; height: number }): { x: number; y: number } {
+  const fx = scaleFraction(p.x, scale.x, scale.xLog);
+  const fy = scaleFraction(p.y, scale.y, scale.yLog);
+  return { x: (plot.left + fx * plot.width) / Math.max(1, layer.width), y: (plot.top + (1 - fy) * plot.height) / Math.max(1, layer.height) };
+}
+
+/** The x scale uPlot rendered, from the chart's `data-view-x` ("min,max"), or null before the chart is drawn. */
+export function renderedX(attr: string | null | undefined): [number, number] | null {
+  if (!attr) return null;
+  const v = attr.split(',').map(Number);
+  return v.length === 2 && v.every(Number.isFinite) && v[1] > v[0] ? [v[0], v[1]] : null;
+}
+
+export interface ChartGeom {
+  layer: { width: number; height: number };
+  plot: PlotBox | null;
+  viewX: [number, number] | null;
+}
+
+const near = (a: number, b: number) => Math.abs(a - b) < 0.25;
+const sameBox = (a: PlotBox | null, b: PlotBox | null) => a === b || (!!a && !!b && near(a.left, b.left) && near(a.top, b.top) && near(a.width, b.width) && near(a.height, b.height));
+const sameGeom = (a: ChartGeom, b: ChartGeom) =>
+  near(a.layer.width, b.layer.width) && near(a.layer.height, b.layer.height) && sameBox(a.plot, b.plot) && (a.viewX === b.viewX || (!!a.viewX && !!b.viewX && a.viewX[0] === b.viewX[0] && a.viewX[1] === b.viewX[1]));
+
+/** The layer's size and uPlot's plot area in the layer's pixels, from two rectangles read at the same instant: a transform of an
+ * ancestor scales both alike, and the ratio of the layer's untransformed width to its drawn width undoes it. */
+export function measureChart(host: HTMLElement): ChartGeom {
+  const layerEl = host.querySelector<HTMLElement>(':scope > [data-caos-callout-layer]') ?? host;
+  const lr = layerEl.getBoundingClientRect();
+  const k = lr.width > 0 && layerEl.offsetWidth > 0 ? layerEl.offsetWidth / lr.width : 1;
+  const layer = { width: lr.width * k, height: lr.height * k };
+  const over = host.querySelector('.u-over');
+  const o = over ? over.getBoundingClientRect() : null;
+  const plot = o && o.width > 0 && o.height > 0 ? { left: (o.left - lr.left) * k, top: (o.top - lr.top) * k, width: o.width * k, height: o.height * k } : null;
+  const viewX = renderedX(host.querySelector('[data-view-x]')?.getAttribute('data-view-x'));
+  return { layer, plot, viewX };
+}
+
+/** A shell chart with its callouts: the band at the top, the chart below it, the anchors on the chart as uPlot rendered it. */
 export function ChartCallouts({ callouts, points, frame, children }: { callouts: CalloutSpec[]; points: ChartPoint[]; frame: ChartFrame; children: ReactNode }) {
   const lang = useShellLang();
   const host = useRef<HTMLDivElement | null>(null);
-  const [geom, setGeom] = useState<{ width: number; height: number; plot: { left: number; top: number; width: number; height: number } | null }>({ width: 0, height: 0, plot: null });
+  const [geom, setGeom] = useState<ChartGeom>({ layer: { width: 0, height: 0 }, plot: null, viewX: null });
+  const remeasure = useRef<() => void>(() => undefined);
+  remeasure.current = () => {
+    const node = host.current;
+    if (!node) return;
+    const next = measureChart(node);
+    setGeom((g) => (sameGeom(g, next) ? g : next));
+  };
+  // after every render: a new band moves the chart without resizing anything an observer watches
+  useLayoutEffect(() => remeasure.current());
   useEffect(() => {
     const node = host.current;
     if (!node || typeof ResizeObserver === 'undefined') return;
-    const measure = () => {
-      const r = node.getBoundingClientRect();
-      const over = node.querySelector('.u-over');
-      const o = over ? over.getBoundingClientRect() : null;
-      const plot = o && o.width > 0 && o.height > 0 ? { left: o.left - r.left, top: o.top - r.top, width: o.width, height: o.height } : null;
-      setGeom((g) => (g.width === r.width && g.height === r.height && JSON.stringify(g.plot) === JSON.stringify(plot) ? g : { width: r.width, height: r.height, plot }));
+    const run = () => remeasure.current();
+    const ro = new ResizeObserver(run);
+    const watched = new Set<Element>();
+    const watch = () => {
+      for (const el of [node, node.querySelector(':scope > [data-caos-callout-layer]'), node.querySelector('.u-over')]) {
+        if (el && !watched.has(el)) {
+          watched.add(el);
+          ro.observe(el);
+        }
+      }
     };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(node);
-    return () => ro.disconnect();
+    watch();
+    // the plot area appears when uPlot is built, and its scale changes on a zoom or new data
+    const mo =
+      typeof MutationObserver === 'undefined'
+        ? null
+        : new MutationObserver(() => {
+            watch();
+            run();
+          });
+    mo?.observe(node, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-view-x', 'data-drawn'] });
+    run();
+    return () => {
+      ro.disconnect();
+      mo?.disconnect();
+    };
   }, []);
-  const band = calloutBand(callouts.length, geom.width || 900);
-  // before the first layout the plot area is the host below the band, less the axes' usual room
-  const plot = geom.plot ?? { left: 56, top: band + 8, width: Math.max(1, geom.width - 72), height: Math.max(1, geom.height - band - 72) };
+  const band = calloutBand(callouts.length, geom.layer.width || 900);
+  const scale: ChartFrame = { ...frame, x: geom.viewX ?? frame.x };
   const items = callouts.map((c) => {
     const p = points.find((q) => q.id === c.id);
-    return toCallout(c, p ? chartAnchor(p, frame, plot, geom) : { x: 0.5, y: 0.7 }, lang);
+    // before the chart is drawn there is no plot area to anchor to: the callout waits at the middle of the drawing
+    return toCallout(c, p && geom.plot ? layerAnchor(p, scale, geom.plot, geom.layer) : { x: 0.5, y: 0.7 }, lang);
   });
   return (
-    <div ref={host} className="cdem-callout-host cdem-callout-fill" data-callout-band={band}>
+    <div ref={host} className="cdem-callout-host cdem-callout-fill" data-callout-band={band} data-anchored={geom.plot ? 'true' : 'false'}>
       <div className="cdem-callout-drawing" style={{ top: band }}>
         {children}
       </div>

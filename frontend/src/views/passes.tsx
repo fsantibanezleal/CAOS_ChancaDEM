@@ -3,7 +3,7 @@
 // p_n = (I - C) sum_{k<n} (B C)^k f, drawn on the axes of the size distribution (V3) against the closed form p = (I - C)(I - B C)^-1 f;
 // B is strictly lower triangular, so the series is exact after as many passes as size classes, and the residual against n shows how
 // fast it gets close before that. The pass count is the shell's shared cursor, so the gradation view draws the same pass (SH-004).
-import { PlotCard, ViewsRow, useLinkedCursor, useShellLang, useWorkbenchState, type BiText } from '@fasl-work/caos-app-shell';
+import { PlotCard, useLinkedCursor, useShellLang, useWorkbenchState, type BiText } from '@fasl-work/caos-app-shell';
 import { UPlotChart, type ChartSeries } from '@fasl-work/caos-app-shell/chart';
 import { useEffect, useMemo, useState } from 'react';
 import { neumannPasses, passesToResidual, passingOf, whitenMatrices, type PassSeries } from '../engine/passes';
@@ -114,23 +114,29 @@ export function passCallouts(series: PassSeries, n: number, fmt: (v: number, o: 
       id: 'pass',
       eyebrow: { en: 'PASSES', es: 'PASADAS' },
       value: `${fmt(k, { decimals: 0 })}`,
-      unit: { en: `of ${series.n} passes`, es: `de ${series.n} pasadas` },
+      unit: { en: `of ${series.n}`, es: `de ${series.n}` },
       state: 'selected',
       source,
     },
     {
       id: 'residual',
-      eyebrow: { en: 'RESIDUAL', es: 'RESIDUO' },
+      // the residual's eyebrow is the shortest true name, ERROR against the closed form: a value of 7 characters and its unit take the rest
+      // of the card's row at 164 px (M2); the source says it is the residual
+      eyebrow: { en: 'ERROR', es: 'ERROR' },
       value: floor ? '< 1e-15' : fmt(r, { digits: 2 }),
-      unit: floor ? { en: 'of feed, machine precision', es: 'de alim., precisión de máquina' } : { en: 'of feed', es: 'de alimentación' },
+      // a share of the feed mass; an eyebrow and a value share one row of a fixed-width card, so the unit is short (M2), and a residual
+      // below round-off says so in its source
+      unit: { en: '/feed', es: '/alim.' },
       state: r < SOLVE_TOLERANCE ? 'normal' : 'warning',
-      source: { en: 'L1 distance of p_n to the closed form', es: 'Distancia L1 de p_n a la forma cerrada' },
+      source: floor
+        ? { en: 'Residual below machine precision: the L1 distance of p_n to the closed form, a share of the feed', es: 'Residuo bajo la precisión de máquina: la distancia L1 de p_n a la forma cerrada, fracción de la alimentación' }
+        : { en: 'Residual: the L1 distance of p_n to the closed form, a share of the feed', es: 'Residuo: la distancia L1 de p_n a la forma cerrada, fracción de la alimentación' },
     },
     {
       id: 'sent',
       eyebrow: { en: 'SENT BACK', es: 'DEVUELTA' },
       value: fmt(sent * 100, { digits: 3 }),
-      unit: { en: '% of feed at this pass', es: '% de alim. en esta pasada' },
+      unit: { en: '% feed', es: '% alim.' },
       state: 'normal',
       source: { en: `Mass nipped and sent back at pass ${k}, C times the mass in the chamber, ${caseId}`, es: `Masa atrapada y devuelta en la pasada ${k}, C por la masa en la cámara, ${caseId}` },
     },
@@ -192,6 +198,8 @@ export function PassesView() {
   const n = series?.n ?? 28;
   const start = series ? openingPass(series) : n;
   const count = usePassCount(n, start);
+  const lang = useShellLang();
+  const [view, setView] = useState<'passes' | 'convergence'>('passes');
   if (!sel || !series) return <Pending />;
   const cls = selectedClass(selectedId, n);
   const residual = series.residual.map((r) => (r > 0 ? r : null));
@@ -200,63 +208,66 @@ export function PassesView() {
   const mid = asc(sel.result.feed.midMm);
   const classMark = cls !== null ? [{ x: sel.result.feed.midMm[cls], label: { en: 'selected class', es: 'clase seleccionada' } as BiText }] : [];
   const followed = cls !== null ? { size: sel.result.feed.midMm[cls], now: series.product[Math.min(series.product.length - 1, count)][cls], final: series.closed[cls] } : null;
+  const passNote: BiText = {
+    en: `p_n = (I - C) sum_{k < n} (B C)^k f from the live engine's matrices; the dashed curve is the closed form p = (I - C)(I - B C)^-1 f. B is strictly lower triangular, so after ${n} passes (one per size class) the series is exact. Before that, the solid curve is the product that has already left the chamber, as a share of the final product.`,
+    es: `p_n = (I - C) suma_{k < n} (B C)^k f con las matrices del motor en vivo; la curva segmentada es la forma cerrada p = (I - C)(I - B C)^-1 f. B es estrictamente triangular inferior, así que tras ${n} pasadas (una por clase de tamaño) la serie es exacta. Antes, la curva continua es el producto que ya salió de la cámara, como fracción del producto final.`,
+  };
+  const convergenceNote: BiText = followed
+    ? {
+        en: `Selected class at ${num(followed.size, { digits: 3 })} mm: ${num(followed.now, { digits: 3 })} of the feed has left in it after ${count} ${passesWord(count, 'en')}, of ${num(followed.final, { digits: 3 })} in the closed form.`,
+        es: `Clase seleccionada en ${num(followed.size, { digits: 3 })} mm: ${num(followed.now, { digits: 3 })} de la alimentación salió en ella tras ${count} ${passesWord(count, 'es')}, de ${num(followed.final, { digits: 3 })} en la forma cerrada.`,
+      }
+    : { en: 'Select a size class on the gradation to follow its mass through the passes.', es: 'Seleccione una clase de tamaño en la gradación para seguir su masa a través de las pasadas.' };
+  // one primary chart takes the view (M12): the product after n passes; the convergence and the mass sent back are its second view
   return (
-    <ViewsRow shares={[3, 2]}>
-      <PlotCard
-        fill
-        title={{ en: 'The population balance, pass by pass', es: 'El balance poblacional, pasada a pasada' }}
-        lane="live"
-        provenance={provenanceOf(sel)}
-        dataKey={stateKey}
-        note={{
-          en: `p_n = (I - C) sum_{k < n} (B C)^k f from the live engine's matrices; the dashed curve is the closed form p = (I - C)(I - B C)^-1 f. B is strictly lower triangular, so after ${n} passes (one per size class) the series is exact. Before that, the solid curve is the product that has already left the chamber, as a share of the final product.`,
-          es: `p_n = (I - C) suma_{k < n} (B C)^k f con las matrices del motor en vivo; la curva segmentada es la forma cerrada p = (I - C)(I - B C)^-1 f. B es estrictamente triangular inferior, así que tras ${n} pasadas (una por clase de tamaño) la serie es exacta. Antes, la curva continua es el producto que ya salió de la cámara, como fracción del producto final.`,
-        }}
-      >
-        <div className="cdem-stack" data-caos-flow="" data-pass-count={count} data-selected-class={cls ?? ''}>
+    <PlotCard
+      fill
+      title={view === 'passes' ? { en: 'The population balance, pass by pass', es: 'El balance poblacional, pasada a pasada' } : { en: 'Convergence and the mass sent back', es: 'Convergencia y la masa devuelta' }}
+      lane="live"
+      provenance={provenanceOf(sel)}
+      dataKey={stateKey}
+      note={view === 'passes' ? passNote : convergenceNote}
+    >
+      <div className="cdem-stack" data-caos-flow="" data-pass-count={count} data-selected-class={cls ?? ''} data-passes-view={view}>
+        <div className="cdem-controls">
           <PassControls n={n} start={start} />
+          <div className="cdem-controls" role="group" aria-label={lang === 'es' ? 'Lo que muestra el gráfico' : 'What the chart shows'}>
+            <button type="button" className="btn" aria-pressed={view === 'passes'} onClick={() => setView('passes')}>
+              {lang === 'es' ? 'Pasada a pasada' : 'Pass by pass'}
+            </button>
+            <button type="button" className="btn" aria-pressed={view === 'convergence'} onClick={() => setView('convergence')}>
+              {lang === 'es' ? 'Convergencia' : 'Convergence'}
+            </button>
+          </div>
+        </div>
+        {view === 'passes' ? (
           <PassesChart sel={sel} series={series} count={count} />
-        </div>
-      </PlotCard>
-      <PlotCard
-        fill
-        title={{ en: 'Convergence and the mass sent back', es: 'Convergencia y la masa devuelta' }}
-        lane="live"
-        provenance={provenanceOf(sel)}
-        dataKey={stateKey}
-        note={
-          followed
-            ? {
-                en: `Selected class at ${num(followed.size, { digits: 3 })} mm: ${num(followed.now, { digits: 3 })} of the feed has left in it after ${count} ${passesWord(count, 'en')}, of ${num(followed.final, { digits: 3 })} in the closed form.`,
-                es: `Clase seleccionada en ${num(followed.size, { digits: 3 })} mm: ${num(followed.now, { digits: 3 })} de la alimentación salió en ella tras ${count} ${passesWord(count, 'es')}, de ${num(followed.final, { digits: 3 })} en la forma cerrada.`,
-              }
-            : { en: 'Select a size class on the gradation to follow its mass through the passes.', es: 'Seleccione una clase de tamaño en la gradación para seguir su masa a través de las pasadas.' }
-        }
-      >
-        <div className="cdem-stack" data-caos-flow="">
-          <div className="cdem-fill">
-            <UPlotChart
-              title={{ en: 'Residual against the pass count', es: 'Residuo contra el número de pasadas' }}
-              height="fill"
-              x={{ values: passes, label: { en: 'Passes', es: 'Pasadas' }, format: { decimals: 0 } }}
-              y={{ label: { en: 'Residual (share of the feed)', es: 'Residuo (fracción de la alimentación)' }, log: true }}
-              series={[{ id: 'residual', label: { en: 'L1 residual', es: 'Residuo L1' }, values: residual, color: LIVE_COLOR, width: 2, dots: true }]}
-              marks={[{ x: count, label: { en: `pass ${count}`, es: `pasada ${count}` } }]}
-            />
-          </div>
-          <div className="cdem-fill">
-            <UPlotChart
-              title={{ en: 'Mass nipped and sent back at this pass, per size class', es: 'Masa atrapada y devuelta en esta pasada, por clase de tamaño' }}
-              height="fill"
-              x={{ values: mid, label: { en: 'Size', es: 'Tamaño' }, unit: 'mm', log: true }}
-              y={{ label: { en: 'Mass (share of the feed)', es: 'Masa (fracción de la alimentación)' } }}
-              series={[{ id: 'sent', label: { en: `Sent back at pass ${k}`, es: `Devuelta en la pasada ${k}` }, values: finAll(asc(series.sentBack[k])), color: '--color-warn', width: 2, dots: true }]}
-              marks={classMark}
-            />
-          </div>
-        </div>
-      </PlotCard>
-    </ViewsRow>
+        ) : (
+          <>
+            <div className="cdem-fill">
+              <UPlotChart
+                title={{ en: 'Residual against the pass count', es: 'Residuo contra el número de pasadas' }}
+                height="fill"
+                x={{ values: passes, label: { en: 'Passes', es: 'Pasadas' }, format: { decimals: 0 } }}
+                y={{ label: { en: 'Residual (share of the feed)', es: 'Residuo (fracción de la alimentación)' }, log: true }}
+                series={[{ id: 'residual', label: { en: 'L1 residual', es: 'Residuo L1' }, values: residual, color: LIVE_COLOR, width: 2, dots: true }]}
+                marks={[{ x: count, label: { en: `pass ${count}`, es: `pasada ${count}` } }]}
+              />
+            </div>
+            <div className="cdem-fill">
+              <UPlotChart
+                title={{ en: 'Mass nipped and sent back at this pass, per size class', es: 'Masa atrapada y devuelta en esta pasada, por clase de tamaño' }}
+                height="fill"
+                x={{ values: mid, label: { en: 'Size', es: 'Tamaño' }, unit: 'mm', log: true }}
+                y={{ label: { en: 'Mass (share of the feed)', es: 'Masa (fracción de la alimentación)' } }}
+                series={[{ id: 'sent', label: { en: `Sent back at pass ${k}`, es: `Devuelta en la pasada ${k}` }, values: finAll(asc(series.sentBack[k])), color: '--color-warn', width: 2, dots: true }]}
+                marks={classMark}
+              />
+            </div>
+          </>
+        )}
+      </div>
+    </PlotCard>
   );
 }
 

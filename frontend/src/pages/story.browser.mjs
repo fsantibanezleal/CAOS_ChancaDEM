@@ -4,7 +4,7 @@
 // stops autoplay for good; the exit landing on the step's case, group and view, with the Operate target kept (M5 of the 0.13.000 review);
 // the Solve stage opening at the pass its headline names; the Measure stage drawing the ten surveys' feed rates; the scene and the panel
 // selecting each other both ways; the
-// survey scrubber opening that survey; reduced motion stopping the circuit's flow. Nothing here holds a number of the product: the
+// survey scrubber opening that survey; reduced motion stopping the circuit's flow; then the drawing checks of src/views/showcase.browser.mjs. Nothing here holds a number of the product: the
 // numbers are proven in src/pages/Story.test.tsx against the committed documents.
 //   node src/pages/story.browser.mjs            serves dist/ on a free loopback port
 //   node src/pages/story.browser.mjs <origin>   checks a running build
@@ -171,8 +171,13 @@ try {
   ok((await page.locator('[data-story] [data-flow="moving"]').count()) === 2, 'with motion allowed the two streams of the active stage move');
 
   assert.deepEqual(errors, [], 'no uncaught page errors');
+  const storyChecks = checks;
+  // the drawings of the App and the story (src/views/showcase.browser.mjs): anchors within 4 px, staged step changes, nothing cut, the
+  // comparison readable on a phone, one chart per view, the 3D parts selected both ways
+  const { showcaseChecks } = await import('../views/showcase.browser.mjs');
+  const drawn = await showcaseChecks({ browser, base, ok });
   console.log(
-    `story.browser: ${checks} checks on ${steps.length} steps (${steps.join(', ')}): headlines, callouts, exits with their view and target, the opening states, the pause on a key press, the two-way selection, the survey scrubber and reduced motion.`,
+    `story.browser: ${storyChecks} checks on ${steps.length} steps (${steps.join(', ')}): headlines, callouts, exits with their view and target, the opening states, the pause on a key press, the two-way selection, the survey scrubber and reduced motion; ${checks - storyChecks} drawing checks (worst anchor ${drawn.worstAnchorPx?.toFixed(1)} px): anchors, staged step changes, cut eyebrows and values, method labels, one chart per view, the table header, the panel's scroll cue and the 3D parts.`,
   );
 } finally {
   await browser.close();

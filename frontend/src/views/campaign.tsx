@@ -13,6 +13,7 @@ import type { Operating } from '../engine/types';
 import type { Text } from '../lib/contract.types';
 import { Fill, Stack } from './draw';
 import { ChartCallouts, type CalloutSpec, type ChartPoint } from './callouts';
+import { useEntry } from './staging';
 import { useHours } from './linked';
 import { Pending, provenanceOf, useNum, useT, useView } from './shared';
 import { finAll, LIVE_COLOR, logSpace } from './series';
@@ -296,19 +297,35 @@ export function hoursCallouts(
     { id: 'target', eyebrow: { en: 'TARGET P80', es: 'P80 OBJETIVO' }, value: fmt(target, { digits: 3 }), unit: { en: 'mm', es: 'mm' }, state: 'warning', source: reader },
     useHours
       ? { id: 'cross', eyebrow: { en: 'CROSSED AT', es: 'CRUZADO EN' }, value: curve.crossingH === null ? null : fmt(curve.crossingH, { digits: 3 }), unit: { en: 'h', es: 'h' }, state: 'alarm', source: { en: `${source.en}, at your drift rate`, es: `${source.es}, a su velocidad` }, missing: notReached }
-      : { id: 'cross', eyebrow: { en: 'OPENING ALLOWED', es: 'APERTURA PERMITIDA' }, value: curve.crossingMm === null ? null : fmt(curve.crossingMm, { digits: 3 }), unit: { en: 'mm', es: 'mm' }, state: 'alarm', source, missing: notReached },
+      : {
+          id: 'cross',
+          eyebrow: { en: 'MARGIN', es: 'MARGEN' },
+          value: curve.crossingMm === null ? null : fmt(curve.crossingMm, { digits: 3 }),
+          unit: { en: 'mm', es: 'mm' },
+          state: 'alarm',
+          source: { en: `Opening the setting may drift before P80 reaches the target; ${source.en}`, es: `Apertura que la abertura puede desplazarse antes de que el P80 llegue al objetivo; ${source.es}` },
+          missing: notReached,
+        },
     atCursorP80 !== null
-      ? { id: 'now', eyebrow: { en: 'P80 AT THE NOW LINE', es: 'P80 EN LA LÍNEA DE AHORA' }, value: fmt(atCursorP80, { digits: 3 }), unit: { en: 'mm', es: 'mm' }, state: 'selected', source }
+      ? { id: 'now', eyebrow: { en: 'P80 NOW', es: 'P80 AHORA' }, value: fmt(atCursorP80, { digits: 3 }), unit: { en: 'mm', es: 'mm' }, state: 'selected', source: { en: `At the now line; ${source.en}`, es: `En la línea de ahora; ${source.es}` } }
       : {
           id: 'now',
-          eyebrow: { en: 'P80 PER MM', es: 'P80 POR MM' },
+          eyebrow: { en: 'SLOPE', es: 'PENDIENTE' },
           value: secant === null ? null : fmt(secant, { digits: 3 }),
           unit: { en: 'mm/mm', es: 'mm/mm' },
           state: 'selected',
-          source: { en: `Secant to the target over the drawn range, live engine, ${caseId}`, es: `Secante al objetivo en el rango dibujado, motor en vivo, ${caseId}` },
+          source: { en: `Secant to the target over the drawn range, P80 per mm of drift, live engine, ${caseId}`, es: `Secante al objetivo en el rango dibujado, P80 por mm de desplazamiento, motor en vivo, ${caseId}` },
           missing: { en: 'the target is not reached on the drawn range', es: 'el objetivo no se alcanza en el rango dibujado' },
         },
   ];
+}
+
+/** The curve drawn out to a share `reveal` of the way to the target's crossing (the whole curve at 1): the values past it are gaps. */
+export function drawnTo(values: (number | null)[], xs: readonly number[], crossX: number | null, reveal: number): (number | null)[] {
+  if (reveal >= 1) return values;
+  const end = crossX ?? xs[xs.length - 1] ?? 0;
+  const upTo = xs[0] + Math.max(0, reveal) * (end - xs[0]);
+  return values.map((v, i) => (i === 0 || xs[i] <= upTo ? v : null));
 }
 
 export function HoursView() {
@@ -317,6 +334,8 @@ export function HoursView() {
   const lang = useShellLang();
   const num = useNum();
   const { hours, setHours } = useHours();
+  // the story's entry draws the curve out from the current setting to the target's crossing (views/staging.tsx); the App draws it whole
+  const { reveal } = useEntry();
   if (!sel) return <Pending />;
   const op = sel.op;
   const target = sharedTarget > sel.result.p80 ? sharedTarget : defaultP80Target(sel.result.p80);
@@ -333,7 +352,8 @@ export function HoursView() {
   const yLo = Math.min(target, ...p80s) * 0.95;
   const yHi = Math.max(target, ...p80s) * 1.05;
   const points: ChartPoint[] = [
-    { id: 'target', x: xs[1] ?? 0, y: target },
+    // the target line is dashed from the plot's left edge, where its first dash is drawn: the anchor stands on ink at any width
+    { id: 'target', x: xs[0] ?? 0, y: target },
     { id: 'cross', x: crossX ?? xMax, y: target },
     { id: 'now', x: cursorX ?? xs[0], y: atCursor ? atCursor.p80 : (curve.p80[0] ?? target) },
   ];
@@ -388,7 +408,7 @@ export function HoursView() {
             height="fill"
             x={useHoursAxis ? { values: xs, label: { en: 'Operating hours', es: 'Horas de operación' }, unit: 'h' } : { values: xs, label: { en: 'Opening of the setting', es: 'Desplazamiento de la abertura' }, unit: 'mm' }}
             y={{ label: { en: 'Product P80', es: 'P80 del producto' }, unit: 'mm', range: [yLo, yHi] }}
-            series={[{ id: 'p80', label: { en: 'P80 (live engine)', es: 'P80 (motor en vivo)' }, values: curve.p80, color: LIVE_COLOR, width: 2.4 }]}
+            series={[{ id: 'p80', label: { en: 'P80 (live engine)', es: 'P80 (motor en vivo)' }, values: drawnTo(curve.p80, xs, crossX, Math.ceil(reveal * 12) / 12), color: LIVE_COLOR, width: 2.4 }]}
             yMarks={[{ y: target, label: { en: 'target P80', es: 'P80 objetivo' }, tone: 'neutral' }]}
             marks={marks}
           />

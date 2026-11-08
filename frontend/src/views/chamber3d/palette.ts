@@ -1,7 +1,7 @@
 // The scene's colours, read from the shell's tokens (a WebGL renderer cannot read CSS variables). Read at mount and
 // again on a theme change; there is no colour literal here.
 import { Color } from 'three';
-import { resolveToken } from '@fasl-work/caos-app-shell';
+import { resolveToken, sceneEnvironment, type SceneEnvironment } from '@fasl-work/caos-app-shell';
 
 export interface ScenePalette {
   /** Rock ramp, coarse to fine. */
@@ -12,6 +12,10 @@ export interface ScenePalette {
   plateSwing: Color;
   eccentric: Color;
   ambient: number;
+  /** The selected part's glow. */
+  accent?: Color;
+  /** The shell's scene environment of the theme: the ground and the key, fill and ambient lights (their colours are the shell's). */
+  env?: SceneEnvironment;
 }
 
 type Resolve = (token: string) => string;
@@ -36,5 +40,7 @@ export function readPalette(theme: 'light' | 'dark', resolve: Resolve = (t) => r
     plateSwing: token(resolve, '--color-good'),
     eccentric: token(resolve, '--color-warn'),
     ambient: theme === 'dark' ? 0.7 : 0.9,
+    accent: token(resolve, '--color-accent'),
+    env: sceneEnvironment(theme),
   };
 }

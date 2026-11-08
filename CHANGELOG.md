@@ -74,6 +74,23 @@ open industrial data.
 - Solve and the population-balance view open at the pass the Solve headline names (6 on survey 1) instead of pass 1 and pass 28;
   one pass is singular; the second quantity beside the residual is the mass sent back at the pass; a round-off residual reads below
   machine precision; the Spanish drift axis reads "Desplazamiento de la abertura" (SH-013, SH-014).
+- The 0.13.000 visualization review's findings on geometry, motion and visuals. The chart callouts' leaders end on the points they
+  name at every size and with the reduced-motion preference: each anchor is the point on the scale uPlot rendered, measured in the
+  callout layer's own pixels and re-measured after every render, where the band that moved the chart without resizing it left the
+  anchors 46 px off at 390 px (SH-015). A story step change is staged: the subject changes first (Solve plays its passes up to the
+  headline's pass, Compare grows the methods' dots one by one, Operate draws the drift curve out to the crossing, Measure and Look
+  inside move their drawing in), then the subject is highlighted, the callouts enter one at a time and the panel builds with its
+  numbers counting; under reduced motion the first frame is the final one (SH-016). No callout eyebrow or value is cut at 390 or
+  1280 px in either language: shorter eyebrows and units, with the speed, the interval and the machine-precision note in the source
+  (SH-017). The chamber section draws the nip angle at the engine's value with the grip limit as a second wedge, and the NIP ANGLE
+  callout is anchored inside it (SH-018). The 3D chamber names its mantle, concave, gap and feed, each selectable by its label or a
+  click, linked both ways to the section and its callouts, on a ground with soft shadows lit by the shell's scene environment of the
+  theme (SH-019). The population balance and the comparison open on one chart, their secondary charts a second view; the comparison
+  numbers its methods below 640 px and its method buttons wrap; the chamber's table header is whole; a story panel that scrolls shows
+  a "more below" cue; the Spanish Compare headline keeps "reservado" (SH-020, SH-011).
+- `src/views/showcase.browser.mjs`, run by `npm run check:story`: the drawings measured in a browser (each chart leader within 4 px of
+  the drawn ink at 390 and 1280 px with and without reduced motion, the frame sequence of every step change, cut eyebrows and values,
+  touching method labels, one chart per view, the table header, the panel's scroll cue, the 3D parts selected both ways).
 
 ## [0.12.001] · 2026-11-02
 

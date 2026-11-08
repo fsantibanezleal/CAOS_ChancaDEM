@@ -53,8 +53,8 @@ export function gradationCallouts(sel: Selection, cls: number | null, fmt: (v: n
   const passing = cls !== null ? r.product.passing[cls] : r.pctPassing[1];
   return {
     callouts: [
-      { id: 'f80', eyebrow: { en: 'MODEL FEED F80', es: 'F80 DEL MODELO' }, value: Number.isFinite(r.f80) ? fmt(r.f80, { digits: 3 }) : null, unit: { en: 'mm', es: 'mm' }, state: 'normal', source: modelF80Source(sel.data.manifest.case_id, measuredF80, fmt) },
-      { id: 'p80', eyebrow: { en: 'PRODUCT P80', es: 'P80 DEL PRODUCTO' }, value: Number.isFinite(r.p80) ? fmt(r.p80, { digits: 3 }) : null, unit: { en: 'mm', es: 'mm' }, state: 'selected', source },
+      { id: 'f80', eyebrow: { en: 'MODEL F80', es: 'F80 MODELO' }, value: Number.isFinite(r.f80) ? fmt(r.f80, { digits: 3 }) : null, unit: { en: 'mm', es: 'mm' }, state: 'normal', source: modelF80Source(sel.data.manifest.case_id, measuredF80, fmt) },
+      { id: 'p80', eyebrow: { en: 'PRODUCT P80', es: 'P80 PRODUCTO' }, value: Number.isFinite(r.p80) ? fmt(r.p80, { digits: 3 }) : null, unit: { en: 'mm', es: 'mm' }, state: 'selected', source },
       {
         id: 'class',
         eyebrow: cls !== null ? { en: `PASSING ${fmt(edge, { digits: 3 })} MM`, es: `PASANTE ${fmt(edge, { digits: 3 })} MM` } : { en: 'PASSING 1 MM', es: 'PASANTE 1 MM' },

@@ -6,6 +6,10 @@
 //   4 Compare (V6), 5 Operate (V4).
 // The headlines are storyHeadlines() (story.ts), every number read from the committed documents or the live engine. The exit lands on the
 // App with the step's case, group and view, and the Operate target (exitHref).
+// A step change is staged (views/staging.tsx, B4 of the 0.13.000 review): the subject changes first (Solve plays its passes from 1 to
+// the headline's pass, Compare grows the methods' dots one by one, Operate draws the drift curve out to the crossing, Measure and Look
+// inside move their drawing in), then the subject is highlighted, then the callouts enter one at a time in reading order, then the panel
+// builds and its numbers count; under reduced motion the first frame is the final one.
 import { StoryFrame, useLinkedCursor, useLinkedItem, useLinkedView, useShellLang, formatNumber, type StoryStep } from '@fasl-work/caos-app-shell';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
@@ -20,6 +24,7 @@ import { CompareBody, surveyOfCase, caseOfSurvey, type CompareTarget } from '../
 import { linkedId } from '../views/linked';
 import { MACHINE_FLOOR, openingPass, PassControls, PassesChart, passesWord, passSeriesOf, usePassCount } from '../views/passes';
 import { ViewContext, type ViewCtx } from '../views/shared';
+import { counted, EntryContext, useStagedEntry, type Entry } from '../views/staging';
 import { operatingOf, railOf, selectionOf, type Selection } from '../workbench/model';
 import type { Machine } from '../engine/types';
 import { exitHref, feedStrip, isStep, operatePoint, STORY_STEPS, stepHref, storyHeadlines, type StoryStepId } from './storyModel';
@@ -159,10 +164,20 @@ export function Story() {
   const solveStart = sel ? openingPass(passSeriesOf(sel.op)) : 1;
   useEffect(() => {
     if (active === 'measure') scrub(survey ?? 1);
-    else if (active === 'solve') scrub(solveStart);
-    else scrub(null);
-  }, [active, survey, scrub, solveStart]);
+    else if (active !== 'solve') scrub(null);
+  }, [active, survey, scrub]);
+  // the staged entry of the step; Solve's subject is its passes, scrubbed from 1 to the headline's pass. A stage that has no data to show
+  // (the comparison without its document, a case still loading or absent) keeps its state, and nothing plays over it.
+  const stageReady = Boolean(sel) && !(active === 'compare' && loo.state !== 'ready');
+  const entry = useStagedEntry(
+    active === 'solve' ? `solve:${solveStart}` : active,
+    3,
+    stageReady,
+    active === 'solve' ? (t: number) => scrub(Math.max(1, Math.round(1 + t * (solveStart - 1)))) : undefined,
+  );
 
+  // a number of the panel counts up to its value as the panel builds; its final text is the value's own
+  const cnt = (v: number, o: { digits?: number; decimals?: number }) => num(counted(v, entry.panel), o);
   const shownCase = data?.manifest.case_id ?? caseId ?? '';
   const withCase = (id: string) => {
     const next = new URLSearchParams(query);
@@ -293,19 +308,19 @@ export function Story() {
       )}
     >
       <p>
-        {t('Closed-side setting', 'Abertura de descarga')} <strong>{num(op.cssMm, { digits: 3 })} mm</strong>, {t('open-side setting', 'abertura del lado abierto')}{' '}
-        <strong>{num(r.ossMm, { digits: 3 })} mm</strong>.
+        {t('Closed-side setting', 'Abertura de descarga')} <strong>{cnt(op.cssMm, { digits: 3 })} mm</strong>, {t('open-side setting', 'abertura del lado abierto')}{' '}
+        <strong>{cnt(r.ossMm, { digits: 3 })} mm</strong>.
       </p>
       <p>
-        {t('Nip angle', 'Ángulo de nip')} <strong>{num(r.nipAngleDeg, { decimals: 1 })}°</strong> {t('against the grip limit', 'contra el límite de agarre')}{' '}
-        <strong>{num(r.nipLimitDeg, { decimals: 2 })}°</strong>:{' '}
+        {t('Nip angle', 'Ángulo de nip')} <strong>{cnt(r.nipAngleDeg, { decimals: 1 })}°</strong> {t('against the grip limit', 'contra el límite de agarre')}{' '}
+        <strong>{cnt(r.nipLimitDeg, { decimals: 2 })}°</strong>:{' '}
         {r.nipAngleDeg <= r.nipLimitDeg
           ? t('the particle is gripped and crushed.', 'la partícula se agarra y se tritura.')
           : t('the particle is squeezed upward.', 'la partícula es escupida hacia arriba.')}
       </p>
       <p>
-        {t('Product P80', 'P80 del producto')} <strong>{num(r.p80, { digits: 3 })} mm</strong> {t('from the model’s feed F80 of', 'desde el F80 de alimentación del modelo,')}{' '}
-        <strong>{num(r.f80, { digits: 3 })} mm</strong>
+        {t('Product P80', 'P80 del producto')} <strong>{cnt(r.p80, { digits: 3 })} mm</strong> {t('from the model’s feed F80 of', 'desde el F80 de alimentación del modelo,')}{' '}
+        <strong>{cnt(r.f80, { digits: 3 })} mm</strong>
         {measuredF80 !== null
           ? t(`, reconstructed from the measured ${num(measuredF80, { digits: 3 })} mm.`, `, reconstruido desde los ${num(measuredF80, { digits: 3 })} mm medidos.`)
           : '.'}
@@ -394,10 +409,10 @@ export function Story() {
       <p data-drift-secant={drawn?.secant ?? ''}>
         {drawn && drawn.secant !== null && drawn.crossingMm !== null ? (
           <>
-            {t('Over the drawn range, P80 rises from', 'En el rango dibujado, el P80 sube de')} <strong>{num(r.p80, { digits: 3 })} mm</strong>{' '}
-            {t('to the', 'al objetivo de')} <strong>{num(drawn.targetMm, { digits: 3 })} mm</strong> {t('target in', 'en')}{' '}
-            <strong>{num(drawn.crossingMm, { digits: 3 })} mm</strong> {t('of drift:', 'de desplazamiento:')}{' '}
-            <strong>{num(drawn.secant, { digits: 3 })} mm</strong> {t('of P80 per mm of setting.', 'de P80 por mm de abertura.')}
+            {t('Over the drawn range, P80 rises from', 'En el rango dibujado, el P80 sube de')} <strong>{cnt(r.p80, { digits: 3 })} mm</strong>{' '}
+            {t('to the', 'al objetivo de')} <strong>{cnt(drawn.targetMm, { digits: 3 })} mm</strong> {t('target in', 'en')}{' '}
+            <strong>{cnt(drawn.crossingMm, { digits: 3 })} mm</strong> {t('of drift:', 'de desplazamiento:')}{' '}
+            <strong>{cnt(drawn.secant, { digits: 3 })} mm</strong> {t('of P80 per mm of setting.', 'de P80 por mm de abertura.')}
           </>
         ) : (
           t('The target is not reached on the drawn range.', 'El objetivo no se alcanza en el rango dibujado.')
@@ -435,12 +450,13 @@ export function Story() {
     summary: { en: heads[s.id].summary, es: heads[s.id].summary },
     href: stepHref(s.id, shownCase),
     accent: s.accent,
-    stage: content[s.id].stage,
+    stage: s.id === active ? <StagedStage entry={entry}>{content[s.id].stage}</StagedStage> : content[s.id].stage,
     // the docked panel keeps the height the layout gives it and scrolls inside, so a long panel never squeezes the stepper
-    panel: <div className="cdem-story-dock">{content[s.id].panel}</div>,
+    panel: <Dock entry={s.id === active ? entry : null}>{content[s.id].panel}</Dock>,
   }));
   return (
     <ViewContext.Provider value={ctx}>
+      <EntryContext.Provider value={entry}>
       <StoryFrame
         className="cdem-story"
         steps={steps}
@@ -457,6 +473,7 @@ export function Story() {
           exit: { en: 'Explore in the App', es: 'Explorar en la App' },
         }}
       />
+      </EntryContext.Provider>
     </ViewContext.Provider>
   );
 }
@@ -480,5 +497,61 @@ function SolveReadout({ sel, start }: { sel: Selection; start: number }) {
         ? `Tras ${count} ${passesWord(count, 'es')} el residuo es ${res} de la masa alimentada y ${f(series.inChamber[k] * 100, { digits: 3 })} % de la alimentación sigue en la cámara.`
         : `After ${count} ${passesWord(count, 'en')} the residual is ${res} of the feed mass and ${f(series.inChamber[k] * 100, { digits: 3 })} % of the feed is still in the chamber.`}
     </p>
+  );
+}
+
+/** The step's stage with its entry: the drawing moves in with the subject's progress, the subject is highlighted, and the callouts are
+ * shown one at a time in reading order (their cards and leaders in the order the shell lays them out, left to right). */
+function StagedStage({ entry, children }: { entry: Entry; children: ReactNode }) {
+  return (
+    <div
+      className="cdem-staged"
+      data-entry={entry.running ? 'on' : 'off'}
+      data-highlight={entry.highlight ? 'on' : 'off'}
+      data-callouts-shown={entry.shown === null ? undefined : entry.shown}
+      style={{ ['--cdem-reveal' as string]: entry.reveal }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** The docked panel: it builds top-down with the entry's panel progress, and says so when its content scrolls (m8: a fade at the foot
+ * and a "more" cue that scrolls it, gone once the reader is at the end). */
+function Dock({ entry, children }: { entry: Entry | null; children: ReactNode }) {
+  const lang = useShellLang();
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [more, setMore] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const check = () => setMore(el.scrollHeight > el.clientHeight + 1 && el.scrollTop + el.clientHeight < el.scrollHeight - 4 && getComputedStyle(el).overflowY !== 'visible');
+    check();
+    el.addEventListener('scroll', check, { passive: true });
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(check);
+    ro?.observe(el);
+    if (el.firstElementChild) ro?.observe(el.firstElementChild);
+    return () => {
+      el.removeEventListener('scroll', check);
+      ro?.disconnect();
+    };
+  }, []);
+  const building = entry !== null && entry.running;
+  return (
+    <div className="cdem-dock-frame" data-more={more ? 'true' : 'false'}>
+      <div ref={ref} className="cdem-story-dock" data-overflow={more ? 'true' : 'false'} data-build={building ? 'on' : 'off'} style={{ ['--cdem-panel' as string]: entry?.panel ?? 1 }}>
+        {children}
+      </div>
+      {more && (
+        <button
+          type="button"
+          className="cdem-scroll-cue"
+          data-scroll-cue=""
+          onClick={() => ref.current?.scrollBy({ top: Math.max(80, (ref.current?.clientHeight ?? 200) * 0.8), behavior: 'smooth' })}
+        >
+          {lang === 'es' ? 'más abajo' : 'more below'}
+        </button>
+      )}
+    </div>
   );
 }
