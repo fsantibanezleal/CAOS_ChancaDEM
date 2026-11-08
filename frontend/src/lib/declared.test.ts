@@ -1,4 +1,5 @@
 // The build copies what the index declares: one artifact or several per manifest, and the index's further files.
+// A product takes this file verbatim: it tests the base script scripts/declared.mjs (0.15.003).
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
