@@ -254,15 +254,19 @@ describe('M1: the band a view reserves is the one the shell measured', () => {
 });
 
 describe('M1: a band that swings between two card orders is held', () => {
-  it('adversarial: an A, B, A cycle of reports holds the larger band; a new width starts again', async () => {
+  it('adversarial: an A, B, A cycle of reports holds the larger band; any other report is followed, and a new width starts again', async () => {
     const { nextBand } = await import('./callouts');
     let h = nextBand(null, 'k', 100);
     h = nextBand(h, 'k', 130);
     expect(h.band).toBe(130);
     h = nextBand(h, 'k', 100);
     expect(h.band).toBe(130);
-    expect(h.frozen).toBe(true);
+    expect(h.swing).toEqual([100, 130]);
     expect(nextBand(h, 'k', 100).band).toBe(130);
+    expect(nextBand(h, 'k', 130).band).toBe(130);
+    // any other report is a new situation: followed, so a transient band is never kept
+    expect(nextBand(h, 'k', 720).band).toBe(720);
+    expect(nextBand(nextBand(h, 'k', 720), 'k', 232).band).toBe(232);
     expect(nextBand(h, 'k2', 90).band).toBe(90);
   });
 });

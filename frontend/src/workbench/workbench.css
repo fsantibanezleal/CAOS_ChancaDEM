@@ -230,6 +230,14 @@
   }
 }
 
+/* A story chart on a phone holds the taller callout band of shell 0.24.0 (cards with their state word, two rows) and the chart's key
+   under its plot: the plot keeps at least about 150 px. */
+@media (max-width: 760px) {
+  .cdem-story-chart .cdem-callout-fill {
+    min-height: 34rem;
+  }
+}
+
 /* The story's docked panel content: bounded to the layout's height, so its natural height never shrinks the stepper above it. */
 .cdem-story-dock {
   max-height: calc(100dvh - 15rem);

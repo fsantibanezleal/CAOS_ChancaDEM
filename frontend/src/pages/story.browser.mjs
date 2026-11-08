@@ -66,6 +66,8 @@ try {
     await page.goto(`${base}/story/${step}?case=${CASE}${extra}`, { waitUntil: 'domcontentloaded' });
     await page.locator('[data-story]').waitFor({ state: 'visible', timeout: 20000 });
     await page.waitForFunction(() => document.querySelectorAll('[data-story] [data-stage] [data-caos-callout]').length >= 3, null, { timeout: 20000 });
+    // the step's staged entry (views/staging.tsx) plays to its final state first: Solve's passes run up to the headline's pass
+    await page.waitForFunction(() => !document.querySelector('[data-story] [data-entry="on"]'), null, { timeout: 20000 });
   };
 
   // SH-005, SH-007: each step, its headline and its three callouts; SH-006: its exit

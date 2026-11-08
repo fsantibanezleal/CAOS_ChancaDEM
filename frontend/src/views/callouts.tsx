@@ -76,17 +76,21 @@ interface HeldBand {
   key: string;
   band: number;
   prev: number | null;
-  frozen: boolean;
+  /** The two bands of a detected swing (an A, B, A cycle of reports), or null. */
+  swing: [number, number] | null;
 }
 
-/** The next held band after a report `v` (exported for its test): it follows the reports, and when one swings back to the band before
- * the last (an A, B, A cycle) it takes the larger of the two and keeps it, growing only, for these cards at this width. */
+const same = (a: number, b: number) => Math.abs(a - b) < 0.5;
+
+/** The next held band after a report `v` (exported for its test): it follows the reports; when one swings back to the band before the
+ * last (an A, B, A cycle) it holds the larger of the two while the reports stay on those two, and follows again on any other report
+ * (a new width, new cards), so a transient band is never kept. */
 export function nextBand(h: HeldBand | null, key: string, v: number): HeldBand {
-  if (!h || h.key !== key) return { key, band: v, prev: null, frozen: false };
-  if (Math.abs(v - h.band) < 0.5) return h;
-  if (h.frozen) return v > h.band ? { ...h, band: v } : h;
-  if (h.prev !== null && Math.abs(v - h.prev) < 0.5) return { key, band: Math.max(h.band, v), prev: h.band, frozen: true };
-  return { key, band: v, prev: h.band, frozen: false };
+  if (!h || h.key !== key) return { key, band: v, prev: null, swing: null };
+  if (h.swing && (same(v, h.swing[0]) || same(v, h.swing[1]))) return h;
+  if (same(v, h.band)) return h;
+  if (!h.swing && h.prev !== null && same(v, h.prev)) return { key, band: Math.max(h.band, v), prev: h.band, swing: [Math.min(h.band, v), Math.max(h.band, v)] };
+  return { key, band: v, prev: h.band, swing: null };
 }
 
 /**

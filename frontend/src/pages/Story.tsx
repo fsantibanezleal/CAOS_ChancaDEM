@@ -458,7 +458,8 @@ export function Story() {
         className="cdem-story"
         steps={steps}
         activeId={active}
-        mobileStageMinHeight={560}
+        // the phone stage holds the callout band of shell 0.24.0's taller cards (their state word) above a chart that keeps its plot
+        mobileStageMinHeight={800}
         onStepChange={(next) => navigate(stepHref(next as StoryStepId, shownCase))}
         onExit={() => navigate(exitHref(active, shownCase, { targetMm: ctx.target }))}
         labels={{

@@ -92,7 +92,8 @@ open industrial data.
   out on the cards' measured heights in the order of their anchors' x. The views reserve the band the shell measures
   (`onLayout({ bandHeight })`) instead of the nominal card sizes, so no two callout cards overlap and no two leaders cross at 390
   and 1280 px in either language (M1, M3; SH-021). The story's staged entry keeps its state in a provider of its own, so a step of
-  the entry re-renders only what reads it.
+  the entry re-renders only what reads it. On a phone the story stage is 800 px tall and a story chart keeps 34rem, so the
+  taller cards of 0.24.0 leave the plot its room; the comparison's reason and certainty open the docked panel's note.
 - `src/views/showcase.browser.mjs`, run by `npm run check:story`: the drawings measured in a browser (each chart leader within 4 px of
   the drawn ink at 390 and 1280 px with and without reduced motion, the frame sequence of every step change, cut eyebrows and values,
   touching method labels, one chart per view, the table header, the panel's scroll cue, the 3D parts selected both ways).

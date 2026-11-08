@@ -303,7 +303,7 @@ export function hoursCallouts(
           value: curve.crossingMm === null ? null : fmt(curve.crossingMm, { digits: 3 }),
           unit: { en: 'mm', es: 'mm' },
           state: 'alarm',
-          source: { en: `Opening the setting may drift before P80 reaches the target; ${source.en}`, es: `Apertura que la abertura puede desplazarse antes de que el P80 llegue al objetivo; ${source.es}` },
+          source: { en: `Drift allowed to the target; ${source.en}`, es: `Desplazamiento hasta el objetivo; ${source.es}` },
           missing: notReached,
         },
     atCursorP80 !== null

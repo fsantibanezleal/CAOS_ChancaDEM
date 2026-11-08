@@ -98,7 +98,7 @@ export interface NipWedge {
   /** The filled sector of the nip angle (an SVG path) and the dashed arc of the limit. */
   sector: string;
   limitArc: string;
-  /** A point inside the sector: the NIP ANGLE callout's anchor. */
+  /** The middle of the sector's arc: the NIP ANGLE callout's anchor. */
   anchor: Pt;
 }
 
@@ -130,7 +130,8 @@ export function nipWedge(c: Pt, m: Pt, tc: Pt, tm: Pt, nipDeg: number, limitDeg:
   const l0 = ray(-b, rl * 0.92);
   const l1 = ray(b, rl * 0.92);
   const limitArc = `M${l0[0]},${l0[1]} A${rl * 0.92},${rl * 0.92} 0 0 1 ${l1[0]},${l1[1]}`;
-  const anchor = ray(0, r * 0.62);
+  // on the wedge's arc, where the angle is read (drawn in full colour, so the anchor is on ink at any theme)
+  const anchor = ray(0, r);
   return { apex, nip, limit, sector, limitArc, anchor };
 }
 
@@ -171,7 +172,7 @@ const partProps = (part: ChamberPart, link: PartLink) => {
 function WedgeMarks({ w }: { w: NipWedge }) {
   return (
     <g data-nip-wedge="" data-subject="">
-      <path d={w.sector} fill="color-mix(in oklab, var(--color-warn) 32%, transparent)" stroke="none" />
+      <path d={w.sector} fill="color-mix(in oklab, var(--color-warn) 32%, transparent)" stroke={TOKEN.warn} strokeWidth={2} />
       {w.nip.map((p, i) => (
         <line key={`n${i}`} x1={w.apex[0]} y1={w.apex[1]} x2={p[0]} y2={p[1]} stroke={TOKEN.warn} strokeWidth={1.6} />
       ))}

@@ -425,6 +425,12 @@ export function CompareBody({
     en: `${reason.en} The large dot is a method's mean absolute percent error with every survey held out of its own fit; the small dots are its ten errors.${narrow ? ' The axis numbers the methods; the list above the chart names them, and hovering a method reads its name.' : ''}${cbNote ? ` ${cbNote.en}` : ''}`,
     es: `${reason.es} El punto grande es el error porcentual absoluto medio de un método con cada muestreo fuera de su propio ajuste; los puntos chicos son sus diez errores.${narrow ? ' El eje numera los métodos; la lista sobre el gráfico los nombra, y al pasar sobre un método se lee su nombre.' : ''}${cbNote ? ` ${cbNote.es}` : ''}`,
   };
+  // the story's stage keeps the chart's room: its note says how to read the dots, and the reason and the certainty open the docked panel
+  const readDots: Text = {
+    en: `The large dot is a method's mean absolute percent error with every survey held out of its own fit; the small dots are its ten errors.${narrow ? ' The axis numbers the methods; the panel names them.' : ''}`,
+    es: `El punto grande es el error porcentual absoluto medio de un método con cada muestreo fuera de su propio ajuste; los puntos chicos son sus diez errores.${narrow ? ' El eje numera los métodos; el panel los nombra.' : ''}`,
+  };
+  const panelNote = (b: Text): Text => ({ en: `${reason.en}${cbNote ? ` ${cbNote.en}` : ''} ${b.en}`.trim(), es: `${reason.es}${cbNote ? ` ${cbNote.es}` : ''} ${b.es}`.trim() });
   const targetButtons = (
     <div className="cdem-controls" role="group" aria-label={t('Target of the forecast', 'Objetivo del pronóstico')}>
       <button type="button" className="btn" aria-pressed={target === 'tph'} onClick={() => setTarget('tph')}>
@@ -480,7 +486,7 @@ export function CompareBody({
   const stageAttrs = { 'data-target': target, 'data-recommended': best?.id ?? '', 'data-selected-method': chosen.id, 'data-gap': gap ? String(gap.mean_diff_pts) : '', 'data-narrow': narrow ? 'true' : 'false' };
   if (part === 'stage')
     return (
-      <PlotCard fill title={{ en: 'Held-out error of every method, ten surveys', es: 'Error reservado de cada método, diez muestreos' }} lane="replay" provenance="real" dataKey={stateKey} note={note}>
+      <PlotCard fill title={{ en: 'Held-out error of every method, ten surveys', es: 'Error reservado de cada método, diez muestreos' }} lane="replay" provenance="real" dataKey={stateKey} note={readDots}>
         <div ref={measure} className="cdem-stack" data-caos-flow="" {...stageAttrs}>
           {targetButtons}
           {dotPlot}
@@ -489,7 +495,7 @@ export function CompareBody({
     );
   if (part === 'panel')
     return (
-      <PlotCard title={{ en: 'The selected method on each survey', es: 'El método seleccionado en cada muestreo' }} lane="replay" provenance="real" dataKey={stateKey} note={bandNote(chosen, best, (v) => num(v, { digits: 3 }))}>
+      <PlotCard title={{ en: 'The selected method on each survey', es: 'El método seleccionado en cada muestreo' }} lane="replay" provenance="real" dataKey={stateKey} note={panelNote(bandNote(chosen, best, (v) => num(v, { digits: 3 })))}>
         <div className="cdem-stack" data-caos-flow="">
           {pickers}
           {perSurvey}
