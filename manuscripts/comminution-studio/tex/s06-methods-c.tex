@@ -140,9 +140,13 @@ t_{out} = \frac{\max(\Delta s,\ 0)}{r},\qquad r > 0 ,
 \label{eq:hours}
 \end{equation}
 with $s_0$ the current setting, $P_{80}(\mathbf u;s')$ the engine's product size at the operating point with the setting replaced by $s'$, and
-$r$ the drift rate in mm/h. The view plots $t_{out}$ against $r$ on logarithmic axes from $0.01$ to $1$~mm/h, with the target as a control that opens
-at the case's $P_{80}$ plus $10\%$ (a control value, not a claim) and the $45$~h interval of that plant as the one reference line
-(Figure~\ref{fig:drift} in Section~\ref{sec:results-drift}).
+$r$ the drift rate in mm/h. The App's campaign view draws $P_{80}$ against the millimetres of setting drift $s'-s_0$ until the reader sets a
+drift rate, and against the operating hours $(s'-s_0)/r$ once one is set. The target is the threshold, opened by one rule for the App and the
+guided story at the case's $P_{80}$ plus $10\%$ (a control value, not a claim); the setting $s^{\ast}$, or the hour $t_{out}$, at which it is
+crossed is marked, and the $45$~h re-set interval of that plant is the one reference line. The margin $\Delta s$ carries a state by its meaning
+over the drawn range $R$, the class's training range above $s_0$: alarm when $\Delta s \le 0$, warning when $0 < \Delta s < 0.25\,R$, normal
+otherwise, and no state but its reason when the target is not reached in range. Figure~\ref{fig:drift} in Section~\ref{sec:results-drift}
+plots $t_{out}$ against $r$ for case S01, and Figure~\ref{fig:drift-response} gives the drift response of survey 1.
 
 \emph{Numerical scheme.} Algorithm~\ref{alg:target} finds $s^{\ast}$ by a bracket and a bisection. It samples the engine on $64$ settings from $s_0$
 to a ceiling $s_{\max}$, stops at the first setting the engine marks invalid (for example a pass-through feed), requires that $P_{80}$ never falls

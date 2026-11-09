@@ -59,6 +59,12 @@ open industrial data.
   scrolls under a resting pointer (0.25.0).
   The shell brings the story frame, the anchored callouts, the linked-view store and gates G6, G18 and G21, and keeps the story's
   step row at its height under a tall panel.
+- The release generation (`scripts/local/02_generate-data --release`) trains the learned models (`data-pipeline/run.py models`)
+  before the bake, so every stamped document of a release carries its version; the models and their metrics are no longer
+  carried into the stage as inputs (the 0.13.000 bake refused a carried `model-metrics.json` of 0.12.001 as mixed).
+- The technical report covers the paired comparison contract, the paired differences against the recommended method, the
+  drift response as the secant over the drawn range with the cause of its bend, and the App's six views and guided story;
+  its tables, macros and figures are regenerated from the 0.13.000 bake.
 
 ### Fixed
 
