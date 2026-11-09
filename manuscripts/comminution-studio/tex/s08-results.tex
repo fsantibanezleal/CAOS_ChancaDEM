@@ -130,6 +130,64 @@ their nested Gaussian band and CrusherBayes with its posterior predictive. Highe
 \input{tables/tab-lpd}
 \end{table}
 
+\subsection{Paired differences against the recommended method}\label{sec:results-paired}
+
+Table~\ref{tab:comparison} gives the comparison document of Section~\ref{sec:data-comparison}: per target, the method the studio
+recommends and every other method by its mean paired difference $\bar d_k$ (Equation~\eqref{eq:paired-d}), with the $95\%$
+interval, the wins and $p_{\mathrm{better}}$ of Equation~\eqref{eq:paired-boot} over $\cmpB$ resamples of the ten surveys. It is the
+question Table~\ref{tab:pairs} answers for every pair, narrowed to the one pair a reader of the studio acts on: is the method the
+view marks as recommended separated from the others? The intervals of the document agree with the corresponding cells of
+Table~\ref{tab:pairs} within $\cmpAgreeEnd$ points at either end and the point differences within $\cmpAgreePoint$ points, the
+differences that the other seed and the rounding of Section~\ref{sec:data-comparison} leave.
+
+On power the setting-only line is recommended at $\cmpPLineMape\%$. The runner-up, the free-form fit on the setting and $f_{80}$
+($\cmpPFreeMape\%$), is behind it by $\cmpPFree$ points, with an interval from $\cmpPFreeLo$ to $\cmpPFreeHi$ that contains zero; the
+line has the lower error on $\cmpPFreeWins$ of the ten surveys and the free-form fit on the other five, and the line is ahead on
+average in a share $\cmpPFreePb$ of the resamples, so in about a quarter of them the order reverses. CrusherBayes is behind the line by
+$\cmpPCb$ points ($\cmpPCbLo$ to $\cmpPCbHi$, $\cmpPCbWins$ wins of ten, $p_{\mathrm{better}}=\cmpPCbPb$), the numbers the CrusherBayes
+manuscript prints for the same pair~\cite{crusherbayes2026}, where its five wins are the surveys on which CrusherBayes has the lower
+error, the complement of the five here, and Morrell with a no-load term by
+$\cmpPMornl$ points ($\cmpPMornlLo$ to $\cmpPMornlHi$), the widest interval of the three because its per-survey differences to the
+line are the most spread. Four methods are separated from the line, every one of them by an interval that excludes zero:
+the constant mean ($\cmpPMean$ points, $\cmpPMeanLo$ to $\cmpPMeanHi$), the bounded residual ($\cmpPRes$, $\cmpPResLo$ to
+$\cmpPResHi$, worse on all $\cmpPResWins$ surveys), the calibrated backbone ($\cmpPBb$, $\cmpPBbLo$ to $\cmpPBbHi$) and Morrell
+through the origin ($\cmpPMor$, $\cmpPMorLo$ to $\cmpPMorHi$). The three methods with the lowest power errors are therefore not ranked
+by ten surveys: the recommendation names the lowest point error, and the interval says how far that choice can be trusted. If the
+per-survey differences kept their spread, the half-width of an interval would shrink as $1/\sqrt{N_s}$, and the runner-up's interval
+would exclude zero at about $\cmpPFreeNeed$ surveys and CrusherBayes's at about $\cmpPCbNeed$; that is a statement about the size of a
+survey programme that would settle the order, not a prediction of its outcome.
+
+On throughput CrusherBayes is recommended at $\cmpQCbMape\%$. The runner-up, the calibrated backbone, is behind it by $\cmpQBb$
+points with an interval from $\cmpQBbLo$ to $\cmpQBbHi$ ($\cmpQBbWins$ wins of ten, $p_{\mathrm{better}}=\cmpQBbPb$): the two are
+indistinguishable, and the order of their point errors is a coin toss over the resamples. The free-form fit ($\cmpQFree$ points,
+$\cmpQFreeLo$ to $\cmpQFreeHi$) and the setting-only line ($\cmpQLine$, $\cmpQLineLo$ to $\cmpQLineHi$) are not separated either. Only
+the bounded residual is, behind by $\cmpQRes$ points ($\cmpQResLo$ to $\cmpQResHi$) with the higher error on $\cmpQResWins$ of the ten
+surveys; both methods correct the engine with a plane in the setting and $f_{80}$, so the paired difference isolates how the plane is
+fitted, and it is the pair Section~\ref{sec:results-bench} names. The constant mean, $\cmpQMean$ points behind, has an interval from
+$\cmpQMeanLo$ to $\cmpQMeanHi$ that reaches below zero against CrusherBayes although the backbone beats it
+(Table~\ref{tab:uncertainty}), because the backbone and the constant mean have their largest errors on the same surveys while CrusherBayes
+does not, so its difference to the constant mean varies more from survey to survey. The published throughput model of Rocha et al.\ is not in the document: no product document stores its
+predictions, and the report's script runs it (Table~\ref{tab:uncertainty}, $\uqQRocha\%$, not distinguishable from CrusherBayes).
+
+What the table does not show is the error of a method on a new plant or a new ore: every number is a paired difference on the same
+ten surveys of one machine, and a method chosen by a screen on those surveys, as the line was (Section~\ref{sec:m-line}), carries
+an optimism the paired interval does not remove. The studio states the comparison the same way: the comparison view opens on the
+runner-up, draws its paired gap as a bracket from $\cmpPFreeLo$ to $\cmpPFreeHi$ beside its dot, and its takeaway, which the guided
+story repeats, says that the interval includes zero, so ten surveys do not settle the ranking (Section~\ref{sec:arch-showcase}).
+
+\begin{table}[!t]
+\centering
+\caption{Paired differences of the held-out absolute percentage error of every method against the recommended method on the ten
+HP500 surveys, per target: document MAPE, mean paired difference $\bar d$ in points (positive: worse than the recommended method), its
+$95\%$ percentile bootstrap interval over $\cmpB$ resamples (seed $\cmpSeed$; bold where it excludes zero), the surveys on which the
+recommended method has the lower error and the share of resamples in which it is better on average. Generated from
+\texttt{comparison.json}.}
+\label{tab:comparison}
+\scriptsize
+\setlength{\tabcolsep}{3pt}
+\input{tables/tab-comparison}
+\end{table}
+
 \subsection{Optimism of an evaluation that leaks}\label{sec:results-leaky}
 
 Table~\ref{tab:leaky} gives the same predictors when the held-out survey is allowed into its own fit. The fits that adapt most to the data gain
@@ -340,6 +398,57 @@ $8.67$~mm. The hours to the target are inversely proportional to the drift rate:
 $45$~h re-set interval of one plant is reached by the $10\%$ target at a drift of $0.071$~mm/h; at a faster drift that target is left before the
 re-set. The figure is a what-if on the engine: the product asserts no drift rate, and the reader supplies the one measured at the plant, for example
 from the movement of the adjustment ring between two liner changes.
+
+\emph{The drift response over the drawn range.} Before a drift rate is entered, the drift view draws $P_{80}$ against the opening of
+the setting, from the current setting $s_0$ over the drawn range (twice the opening that reaches the target, and at most the room
+$R$ the setting has below the ceiling of its class's training range), and it states how much the product
+coarsens per millimetre of drift. That number is the secant of the drawn curve from its start to the crossing of the target,
+\begin{equation}
+g_{\mathrm{sec}} = \frac{P_{80}(\mathbf u; s_0+\Delta s) - P_{80}(\mathbf u; s_0)}{\Delta s},\qquad \Delta s = s^{\ast}-s_0 ,
+\label{eq:drift-secant}
+\end{equation}
+with $s^{\ast}$ from Equation~\eqref{eq:target} and the target opened at the case's $P_{80}$ plus $10\%$, the one rule the App and the
+guided story share; it is compared with the local slope at the current setting, the central difference
+\begin{equation}
+g_{0} = \frac{P_{80}(\mathbf u; s_0+h) - P_{80}(\mathbf u; s_0-h)}{2h},\qquad h=\max(0.25,\ 0.01\,s_0)~\mathrm{mm}.
+\label{eq:drift-local}
+\end{equation}
+The two agree only where $P_{80}$ is linear in the setting, and the engine's $P_{80}$ is not: it is piecewise in the setting, because
+the classification of Equation~\eqref{eq:class} switches a size class between broken and unbroken where $K_1$ or $K_2$ passes the
+class's mid-size. Figure~\ref{fig:drift-response} gives the case where the difference matters, survey 1 (case HP500-01) on the
+calibrated lane. At its setting of $\drCss$~mm the engine's $P_{80}$ is $\drPnow$~mm and the target $\drTarget$~mm; the target is
+reached at a setting of $\drSstar$~mm, after $\Delta s=\drOpen$~mm of the $\drRoom$~mm the setting can still open below the
+$\drCeil$~mm ceiling of the class, so the rise of $\drRise$~mm over that opening gives $g_{\mathrm{sec}}=\drSecant$~mm per mm. The
+local slope at the current setting is $g_0=\drLocal$~mm per mm (with $h=\drH$~mm), $\drRatio$ times the secant: read as the drift
+response, it would predict the target after $\drLinOpen$~mm of drift instead of $\drOpen$~mm.
+
+The cause of the difference is a single break in the slope, which the engine establishes. On the calibrated lane the escape size is
+$K_1=0.23\,s+0.30\,F_{80}$ (Equation~\eqref{eq:hp500class}), with the engine's grid $F_{80}=\drFeighty$~mm of survey 1, so $K_1=\drKoneNow$~mm
+at $s_0$, just below the $\drMidOne$~mm mid-size of the class between the $\drEdgeHi$ and $\drEdgeLo$~mm sieves. As the setting
+opens, $K_1$ reaches that mid-size at $s=\drSone$~mm, $\drSoneGap$~mm above the current setting; from there $C=0$ for the class,
+which then leaves the chamber unbroken, and the finite-difference slope of $P_{80}$ over $0.02$~mm falls from $\drBelow$ just below
+that setting to $\drAbove$ just above it (Figure~\ref{fig:drift-response}(b)). The break follows from Equation~\eqref{eq:class}: with
+$x=(K_2-d)/(K_2-K_1)$ the classification of a class of mid-size $d$ is $C=1-x^{K_3}$, and as $K_1$ rises to $d$, $x$ tends to one and
+$\partial C/\partial K_1=-K_3\,x^{K_3}/(K_2-K_1)$ stays away from zero, so $C$ reaches zero with a finite slope and then stays at zero:
+the product size keeps its value but changes its slope. The escape size $K_2$ crosses the next mid-size, $\drMidTwo$~mm, at
+$s=\drStwo$~mm, and there the slope is the same on either side ($\drKtwoBelow$ and $\drKtwoAbove$): as $K_2$ falls to $d$, $x$ tends
+to zero and $\partial C/\partial K_2=-K_3\,x^{K_3-1}\,(K_2-K_1)^{-1}(1-x)$ vanishes for $K_3>1$ ($K_3=2.3$ on this lane), so $C$ reaches
+one smoothly. Past the break the slope rises steadily as the window moves, and the secant averages that part of the curve. The local
+slope therefore describes the first $\drSoneGap$~mm of the drawn range, and the secant the whole opening to the target, which is what
+a reader of the view needs to know before entering a drift rate. The state of the margin $m=\Delta s$ the view shows is
+read against the room $R$ ($R=\drRoom$~mm here, so the drawn range reaches the ceiling): an alarm when $m\le0$, a warning when $0<m<0.25\,R$, and normal otherwise; with
+$m/R=\drShare$, survey 1 is normal.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig-drift-response.pdf}
+\caption{The drift response of survey 1 (case HP500-01) on the calibrated lane, from the canonical engine: (a) product $P_{80}$ against
+the closed-side setting over the drawn range from $\drCss$ to $\drCeil$~mm, with the target ($P_{80}$ plus $10\%$), the secant of
+Equation~\eqref{eq:drift-secant} to its crossing, the local slope of Equation~\eqref{eq:drift-local} at the current setting and the
+setting at which $K_1$ reaches the next class mid-size; (b) the slope of $P_{80}$ in the setting by finite differences of $0.02$~mm,
+with the secant and the crossing of the target.}
+\label{fig:drift-response}
+\end{figure}
 
 \begin{figure}[!t]
 \centering

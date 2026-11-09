@@ -10,6 +10,9 @@ Sources read (nothing else):
   data/examples/hp500-surveys.csv, data/examples/params.csv           the two source tables
   data/derived/manifests/*.json, data/derived/*/trace.json            the 27 baked cases
   data/derived/hp500/backbone.json, loo.json, crusherbayes.json       the HP500 documents
+  data/derived/hp500/comparison.json                                  the paired comparison (tab-comparison)
+  data/derived/readiness.json                                         the readiness rows (the counts the text states)
+  data-pipeline/pipeline/model/crusher/ (evaluate, campaign)          the drift response of survey 1 (numbers-drift)
   data/derived/model-metrics.json, data/derived/models/*.json         the learned models
   docs/contracts/catalog.md, docs/contracts/schemas/*.schema.json     the data contracts
   data-pipeline/pipeline/model/crusher/ (KMODEL, CAP, REF_THROW_MM), data-pipeline/pipeline/model/sweep.py (RANGES)
@@ -343,6 +346,157 @@ def tab_pairs() -> None:
     write("numbers-pairs", "\n".join(macros))
 
 
+# the methods of hp500-comparison by their names in the report, and the macro stem of each (the document's ids are data keys)
+CMP_NAME = {"M0_backbone": "Calibrated backbone", "M1_residual": "Backbone with bounded residual",
+            "M2_freeform": "Free-form fit on CSS and $f_{80}$", "B_lin": "Setting-only line",
+            "Morrell": "Morrell, through the origin", "Morrell_noload": "Morrell with a no-load term",
+            "constant_mean": "Constant mean", "M1_label_shuffle": "Label-shuffle control",
+            "crusherbayes": "CrusherBayes (predictive mean)"}
+CMP_MACRO = {"M0_backbone": "Bb", "M1_residual": "Res", "M2_freeform": "Free", "B_lin": "Line", "Morrell": "Mor",
+             "Morrell_noload": "Mornl", "constant_mean": "Mean", "M1_label_shuffle": "Shuf", "crusherbayes": "Cb"}
+
+
+def tab_comparison() -> None:
+    """The paired comparison of the held-out methods against the recommended one (data/derived/hp500/comparison.json,
+    contract hp500-comparison): per target the recommended method, then every method with per-survey predictions by its
+    mean paired difference, with the 95 % interval (bold where it excludes zero), the wins and p_better; with the macros the
+    text cites (\\cmp<Q|P><method>, Mape, Lo, Hi, Wins, Pb; \\cmp<Q|P>Rec and Run, the names of the recommended method and of
+    the runner-up)."""
+    doc = _json(HP / "comparison.json")
+    boot = doc["bootstrap"]
+    macros = [f"\\newcommand{{\\cmpB}}{{{boot['resamples']:,}}}".replace(",", "{,}"),
+              f"\\newcommand{{\\cmpSeed}}{{{boot['seed']}}}", f"\\newcommand{{\\cmpN}}{{{doc['n']}}}",
+              f"\\newcommand{{\\cmpQlo}}{{{boot['quantiles'][0]}}}", f"\\newcommand{{\\cmpQhi}}{{{boot['quantiles'][1]}}}",
+              f"\\newcommand{{\\cmpCbIncluded}}{{{'yes' if doc['crusherbayes']['included'] else 'no'}}}"]
+    lines = []
+    for t, tl, title in (("tph", "Q", "Throughput"), ("kW", "P", "Power")):
+        block = doc["targets"][t]
+        mape = {m["id"]: m["mape_pct"] for m in block["methods"]}
+        rec, run = block["recommended"], block["runner_up"]
+        bare = lambda k: CMP_NAME[k].replace(" (predictive mean)", "")  # noqa: E731
+        macros += [f"\\newcommand{{\\cmp{tl}Rec}}{{{bare(rec)}}}", f"\\newcommand{{\\cmp{tl}Run}}{{{bare(run)}}}"]
+        for m in block["methods"]:
+            macros.append(f"\\newcommand{{\\cmp{tl}{CMP_MACRO[m['id']]}Mape}}{{{m['mape_pct']:.2f}}}")
+        if lines:
+            lines.append(r"\midrule")
+        lines.append(r"\multicolumn{6}{@{}l}{\textit{" + title + ": every method minus " + bare(rec).lower().replace(
+            "crusherbayes", "CrusherBayes") + r", the recommended method}} \\")
+        lines.append(r"\midrule")
+        lines.append(" & ".join([CMP_NAME[rec] + " (recommended)", num(mape[rec]), DASH, DASH, DASH, DASH]) + r" \\")
+        for p in sorted(block["paired"], key=lambda r: r["mean_diff_pts"]):
+            k = p["method"]
+            lo, hi = p["ci95"]
+            cell = f"[${lo:+.2f}$, ${hi:+.2f}$]"
+            if lo > 0 or hi < 0:
+                cell = f"[$\\mathbf{{{lo:+.2f}}}$, $\\mathbf{{{hi:+.2f}}}$]"
+            name = CMP_NAME[k] + (" (runner-up)" if k == run else "")
+            lines.append(" & ".join([name, num(mape[k]), f"${p['mean_diff_pts']:+.2f}$", cell,
+                                     f"{p['wins']} of {doc['n']}", num(p["p_better"])]) + r" \\")
+            m = f"cmp{tl}{CMP_MACRO[k]}"
+            macros += [f"\\newcommand{{\\{m}}}{{{p['mean_diff_pts']:.2f}}}", f"\\newcommand{{\\{m}Lo}}{{{lo:.2f}}}",
+                       f"\\newcommand{{\\{m}Hi}}{{{hi:.2f}}}", f"\\newcommand{{\\{m}Wins}}{{{p['wins']}}}",
+                       f"\\newcommand{{\\{m}Pb}}{{{p['p_better']:.2f}}}"]
+        paired_ids = {p["method"] for p in block["paired"]}
+        for m in block["methods"]:
+            if m["id"] != rec and m["id"] not in paired_ids:
+                lines.append(" & ".join([CMP_NAME[m["id"]] + " (no per-survey predictions)", num(m["mape_pct"]), DASH, DASH,
+                                         DASH, DASH]) + r" \\")
+    # the document against the report's own bootstrap (figures/heldout_uq.py, another seed): the largest difference of an
+    # interval end and of a point difference over every paired row, and the surveys a halved interval would need
+    import heldout_uq as uq
+
+    pairs = uq.pairwise(uq.heldout_errors())
+    # heldout_uq's prediction keys (data keys of hp500-loo's strict block) against the comparison document's method ids
+    from_uq = {"M0": "M0_backbone", "M1": "M1_residual", "M2": "M2_freeform", "B_lin": "B_lin", "Morrell": "Morrell",
+               "Morrell_noload": "Morrell_noload", "constant_mean": "constant_mean", "CrusherBayes": "crusherbayes"}
+    to_uq = {doc_id: uq_key for uq_key, doc_id in from_uq.items()}
+    worst_end, worst_point = 0.0, 0.0
+    for t in ("tph", "kW"):
+        block = doc["targets"][t]
+        for p in block["paired"]:
+            a, b = to_uq[p["method"]], to_uq[block["recommended"]]
+            r = pairs[t][(a, b)] if (a, b) in pairs[t] else {"d": -pairs[t][(b, a)]["d"], "lo": -pairs[t][(b, a)]["hi"],
+                                                               "hi": -pairs[t][(b, a)]["lo"]}
+            worst_end = max(worst_end, abs(p["ci95"][0] - r["lo"]), abs(p["ci95"][1] - r["hi"]))
+            worst_point = max(worst_point, abs(p["mean_diff_pts"] - r["d"]))
+    macros += [f"\\newcommand{{\\cmpAgreeEnd}}{{{worst_end:.2f}}}", f"\\newcommand{{\\cmpAgreePoint}}{{{worst_point:.3f}}}"]
+    # surveys at which the runner-up's interval on power would exclude zero if the per-survey differences kept their spread
+    # (the half-width of a mean shrinks as one over the square root of the number of surveys)
+    for t, tl in (("kW", "P"),):
+        block = doc["targets"][t]
+        for p in block["paired"]:
+            if p["method"] in ("M2_freeform", "crusherbayes"):
+                half = (p["ci95"][1] - p["ci95"][0]) / 2
+                need = doc["n"] * (half / p["mean_diff_pts"]) ** 2
+                macros.append(f"\\newcommand{{\\cmp{tl}{CMP_MACRO[p['method']]}Need}}{{{need:.0f}}}")
+    head = ["Method", r"MAPE (\%)", "Mean $\\bar d$ (points)", r"95\% interval", "Wins", "$p_{\\mathrm{better}}$"]
+    body = [r"\begin{tabular}{@{}l r r c r r@{}}", r"\toprule", " & ".join(head) + r" \\", r"\midrule"] + lines + [
+        r"\bottomrule", r"\end{tabular}"]
+    write("tab-comparison", "\n".join(body))
+    write("numbers-comparison", "\n".join(macros))
+
+
+def numbers_drift() -> None:
+    """The drift response of survey 1 (case HP500-01, calibrated lane) from the canonical engine, as the App draws it: the
+    target by the one rule of the App and the story (the case's P80 plus 10 percent), the opening at which P80 reaches it
+    (css_at_p80_target, ceiling at the top of the class's training range), the secant over that opening, the local slope at
+    the current setting (the central difference of p80PerMm, h = max(0.25, 0.01 CSS)), and the cause of the bend: the setting
+    at which the escape size K1 = 0.23 CSS + 0.30 F80 of the calibrated classification crosses the mid-size of the next class
+    (and K2 the next one), with the finite-difference slopes on either side."""
+    from pipeline.model.crusher import evaluate
+    from pipeline.model.crusher.campaign import css_at_p80_target
+    from pipeline.model.crusher.classification import hp500_params
+    from pipeline.model.crusher.types import Operating
+
+    op = Operating(**_json(DER / "manifests" / "HP500-01.json")["params"])
+    ceil = RANGES[op.machine]["css_mm"][1]
+    r0 = evaluate(op)
+
+    def p80(css: float) -> float:
+        return evaluate(Operating(**{**op.__dict__, "css_mm": css})).p80
+
+    target = 1.1 * r0.p80
+    s_star = css_at_p80_target(op, target, ceil)
+    opening = s_star - op.css_mm
+    secant = (p80(s_star) - r0.p80) / opening
+    h = max(0.25, 0.01 * op.css_mm)
+    local = (p80(op.css_mm + h) - p80(op.css_mm - h)) / (2 * h)
+    f80 = r0.f80
+    mids = list(r0.feed.mid_mm)
+    k0 = hp500_params(op.css_mm, f80)
+    m1 = min(m for m in mids if m > k0.k1)          # the class mid-size K1 reaches first as the setting opens
+    m2 = min(m for m in mids if m > k0.k2)          # and K2
+    s1 = (m1 - 0.3 * f80) / 0.23
+    s2 = (m2 - 12.0 - 0.4 * f80) / 0.55
+
+    def fd(a: float, b: float) -> float:
+        return (p80(b) - p80(a)) / (b - a)
+
+    below, above = fd(s1 - 0.026, s1 - 0.006), fd(s1 + 0.006, s1 + 0.026)
+    k2_below, k2_above = fd(s2 - 0.026, s2 - 0.006), fd(s2 + 0.006, s2 + 0.026)
+    room = ceil - op.css_mm
+    j = mids.index(m1)
+    edge_hi, edge_lo = r0.feed.edges_mm[j], r0.feed.edges_mm[j + 1]   # the sieves that bound the class (coarse to fine)
+    write("numbers-drift", "\n".join([
+        f"\\newcommand{{\\drEdgeHi}}{{{edge_hi:.2f}}}", f"\\newcommand{{\\drEdgeLo}}{{{edge_lo:.2f}}}",
+        f"\\newcommand{{\\drSoneGap}}{{{s1 - op.css_mm:.2f}}}",
+        f"\\newcommand{{\\drCss}}{{{op.css_mm:.0f}}}", f"\\newcommand{{\\drPnow}}{{{r0.p80:.3f}}}",
+        f"\\newcommand{{\\drFeighty}}{{{f80:.2f}}}", f"\\newcommand{{\\drTarget}}{{{target:.2f}}}",
+        f"\\newcommand{{\\drTargetHead}}{{{target:.3g}}}", f"\\newcommand{{\\drSstar}}{{{s_star:.3f}}}",
+        f"\\newcommand{{\\drOpen}}{{{opening:.3f}}}", f"\\newcommand{{\\drOpenHead}}{{{opening:.3g}}}",
+        f"\\newcommand{{\\drCeil}}{{{ceil:.0f}}}", f"\\newcommand{{\\drRoom}}{{{room:.0f}}}",
+        f"\\newcommand{{\\drShare}}{{{opening / room:.2f}}}", f"\\newcommand{{\\drRise}}{{{target - r0.p80:.3f}}}",
+        f"\\newcommand{{\\drSecant}}{{{secant:.3f}}}", f"\\newcommand{{\\drLocal}}{{{local:.3f}}}",
+        f"\\newcommand{{\\drH}}{{{h:.2f}}}", f"\\newcommand{{\\drRatio}}{{{local / secant:.2f}}}",
+        f"\\newcommand{{\\drLinOpen}}{{{(target - r0.p80) / local:.2f}}}",
+        f"\\newcommand{{\\drKoneNow}}{{{k0.k1:.3f}}}", f"\\newcommand{{\\drMidOne}}{{{m1:.3f}}}",
+        f"\\newcommand{{\\drSone}}{{{s1:.3f}}}", f"\\newcommand{{\\drBelow}}{{{below:.3f}}}",
+        f"\\newcommand{{\\drAbove}}{{{above:.3f}}}", f"\\newcommand{{\\drKtwoNow}}{{{k0.k2:.3f}}}",
+        f"\\newcommand{{\\drMidTwo}}{{{m2:.3f}}}", f"\\newcommand{{\\drStwo}}{{{s2:.3f}}}",
+        f"\\newcommand{{\\drKtwoBelow}}{{{k2_below:.4f}}}", f"\\newcommand{{\\drKtwoAbove}}{{{k2_above:.4f}}}",
+    ]))
+
+
 RESOURCE_ROWS = [("bake", r"Bake (\texttt{run.py all}: 27 cases, the three HP500 documents, index, readiness)", "workstation"),
                  ("hp500", r"HP500 step alone (\texttt{run.py hp500}: backbone, CrusherCal, the CrusherBayes sampler)", "workstation"),
                  ("models", r"Training (\texttt{run.py models}: sweeps, two networks, export, evaluation)", "workstation, CPU"),
@@ -585,6 +739,13 @@ def tab_contracts() -> None:
     macros = [r"\expandafter\def\csname cv@" + r["id"] + r"\endcsname{" + r["version"] + "}" for r in catalog_rows()]
     macros.append(r"\newcommand{\cver}[1]{\ifcsname cv@#1\endcsname\csname cv@#1\endcsname\else"
                   r"\errmessage{no contract #1 in the catalog}\fi}")
+    # the counts the text states in words: contracts in the catalog, readiness rows and the rows available in the build
+    words = {10: "ten", 11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen", 15: "fifteen", 16: "sixteen"}
+    ready = _json(DER / "readiness.json")["contracts"]
+    avail = sum(1 for c in ready if c["state"] == "available")
+    macros += [f"\\newcommand{{\\ncontracts}}{{{words[len(catalog_rows())]}}}",
+               f"\\newcommand{{\\nreadyrows}}{{{words[len(ready)]}}}",
+               f"\\newcommand{{\\nreadyavail}}{{{words[avail]}}}"]
     write("numbers-contracts", "\n".join(macros))
 
 
@@ -722,7 +883,8 @@ def schemas() -> None:
 # provenance
 # ------------------------------------------------------------------------------------------------------------------------
 HASHED = ["data/examples/hp500-surveys.csv", "data/examples/params.csv", "data/derived/hp500/backbone.json",
-          "data/derived/hp500/loo.json", "data/derived/hp500/crusherbayes.json", "data/derived/model-metrics.json",
+          "data/derived/hp500/loo.json", "data/derived/hp500/crusherbayes.json", "data/derived/hp500/comparison.json",
+          "data/derived/model-metrics.json",
           "data/derived/models/surrogate.onnx", "data/derived/models/psd-ae.onnx", "data/derived/manifests/index.json"]
 
 
@@ -786,6 +948,8 @@ if __name__ == "__main__":
     tab_leaky()
     tab_uncertainty()
     tab_pairs()
+    tab_comparison()
+    numbers_drift()
     numbers_fits()
     tab_resources()
     tab_band()

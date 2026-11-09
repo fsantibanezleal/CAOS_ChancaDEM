@@ -7,9 +7,13 @@
 \expandafter\def\csname cv@hp500-backbone\endcsname{1.0.0}
 \expandafter\def\csname cv@hp500-loo\endcsname{1.2.0}
 \expandafter\def\csname cv@hp500-crusherbayes\endcsname{1.0.0}
+\expandafter\def\csname cv@hp500-comparison\endcsname{1.0.0}
 \expandafter\def\csname cv@surrogate-model\endcsname{1.0.0}
 \expandafter\def\csname cv@anomaly-model\endcsname{1.0.0}
 \expandafter\def\csname cv@model-metrics\endcsname{1.0.0}
 \expandafter\def\csname cv@readiness\endcsname{1.0.0}
 \expandafter\def\csname cv@api\endcsname{1.0.1}
 \newcommand{\cver}[1]{\ifcsname cv@#1\endcsname\csname cv@#1\endcsname\else\errmessage{no contract #1 in the catalog}\fi}
+\newcommand{\ncontracts}{fourteen}
+\newcommand{\nreadyrows}{thirteen}
+\newcommand{\nreadyavail}{twelve}

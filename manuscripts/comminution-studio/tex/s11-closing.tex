@@ -7,8 +7,9 @@ everything derived from it). Every number of the report is read from the artifac
 
 \emph{Commands.} From the repository root, with the pipeline environment of \texttt{requirements-precompute.txt}:
 \begin{itemize}
-\item \texttt{python data-pipeline/\allowbreak{}run.py all} bakes the $27$ cases, the three HP500 documents (the sampler of CrusherBayes runs in this step), the index
-and the readiness document; \texttt{python data-pipeline/\allowbreak{}run.py hp500} rebuilds only the three HP500 documents;
+\item \texttt{python data-pipeline/\allowbreak{}run.py all} bakes the $27$ cases, the four HP500 documents (the sampler of CrusherBayes runs in this step), the index
+and the readiness document; \texttt{python data-pipeline/\allowbreak{}run.py hp500} rebuilds only the four HP500 documents, and
+\texttt{python data-pipeline/\allowbreak{}run.py comparison} only the paired comparison, from the two documents it reads;
 \item \texttt{python data-pipeline/\allowbreak{}run.py models} draws the sweeps, trains and exports the two learned models and scores them held out (torch on the
 processor);
 \item \texttt{python manuscripts/\allowbreak{}comminution-studio/\allowbreak{}figures/\allowbreak{}make\_tables.py} regenerates every table of the report from the committed artifacts, the
@@ -16,8 +17,9 @@ catalog and the schemas, recomputes the engine parity figure, runs the bootstrap
 (\texttt{heldout\_uq.py}), and writes the digests of \texttt{data/\allowbreak{}sha256.txt};
 \item \texttt{python manuscripts/\allowbreak{}comminution-studio/\allowbreak{}figures/\allowbreak{}measure\_resources.py} records the measured resources of the stages, each run into a sandbox
 output root under a process-tree monitor, and the engine time per case, in \texttt{data/\allowbreak{}resources.json};
-\item \texttt{python manuscripts/\allowbreak{}comminution-studio/\allowbreak{}figures/\allowbreak{}make\_figs.py} regenerates the thirteen figures as vector PDF (matplotlib, from the
-notebook environment); two of them call the engine code (the chamber functions and the particle-replacement walk);
+\item \texttt{python manuscripts/\allowbreak{}comminution-studio/\allowbreak{}figures/\allowbreak{}make\_figs.py} regenerates the fourteen figures as vector PDF (matplotlib, from the
+notebook environment); three of them call the engine code (the chamber functions, the drift response of survey 1 and the
+particle-replacement walk);
 \item \texttt{latexmk -pdf main.tex}, run in \texttt{manuscripts/\allowbreak{}comminution-studio/\allowbreak{}tex}, builds the report.
 \end{itemize}
 
@@ -28,8 +30,8 @@ the product version to mark a document stale, and the seeds $42$ (surveys), $123
 
 \emph{Archived artifacts.} Table~\ref{tab:hashes} gives the SHA-256 digests of the artifacts the report reads; the full digests are in
 \texttt{manuscripts/\allowbreak{}comminution-studio/\allowbreak{}data/\allowbreak{}sha256.txt}, and the CrusherBayes document records the digest of its own inputs
-(\texttt{483d24c5\ldots b0ce605a}). A full bake of release \docrelease{} into a sandbox output root reproduces every committed trace and the three
-HP500 documents byte for byte; its manifests differ from the committed ones only in the field that records which model answered each slot, and
+(\texttt{483d24c5\ldots b0ce605a}). A full bake of release \docrelease{} into a sandbox output root reproduces every committed trace and the backbone,
+leave-one-survey-out and CrusherBayes documents byte for byte, and the comparison document is a pure function of the last two; its manifests differ from the committed ones only in the field that records which model answered each slot, and
 its index only in the list of model files, because a sandbox root holds no released model bundle and the slots answer with their baselines.
 
 \emph{Notebooks.} \texttt{notebooks/\allowbreak{}en} and \texttt{notebooks/\allowbreak{}es} hold the same didactic notebooks, from getting started and the size distributions and the breakage and
