@@ -65,8 +65,24 @@ open industrial data.
 - The technical report covers the paired comparison contract, the paired differences against the recommended method, the
   drift response as the secant over the drawn range with the cause of its bend, and the App's six views and guided story;
   its tables, macros and figures are regenerated from the 0.13.000 bake.
+- Every field of the thirteen JSON schemas carries a description that ends with its unit in brackets, transcribed from its producer;
+  a patch version each, with its History row and the lock (params-record, hp500-survey, case-index, hp500-backbone,
+  hp500-crusherbayes, hp500-comparison, surrogate-model, anomaly-model, model-metrics and readiness 1.0.1, case-manifest 1.1.1,
+  trace 1.0.2, hp500-loo 1.2.1); no field, type, bound or requirement changed, and the readiness document is recomputed from the
+  catalog. The technical report's appendix tables list every field down to its leaves (through `$ref`, `$defs`, `allOf`, `items`
+  and maps, a shared structure once), with its unit and its meaning.
 
 ### Fixed
+
+- The technical report after its second reading. The view of P80 against operating hours is named by what it draws and where it
+  sits (the first view of the Performance group), and the figure of hours against the drift rate is the App's "Hours by drift" view; the room R (the training range
+  of the setting above the current setting, the reference of the margin's state) and the drawn range min(2 Delta s, R) are kept
+  apart; the agreement of the report's bootstrap with the comparison document is stated by its measured bounds (0.35 points at an
+  interval end, 0.009 in a point difference) and the details that differ are the two that do; the surveys at which an interval
+  would exclude zero are derived in the text and given as a range (64 to 82 for the free-form fit, 29 to 30 for CrusherBayes); the
+  K2 crossing is described in the direction the setting opens; the slope panel of Figure 12 marks the K1 crossing and the local
+  slope; section 7 says which predictions the bootstrap recomputes; the System group names its third view, the nip angle; the
+  Resources table names the four HP500 documents and the paired comparison; the measurement date is set in text.
 
 - The shell pin test reads 0.25.0, the version the product pins.
 - The 0.13.000 visualization review's findings on numbers and words. The Operate headline stated the local slope over the first
