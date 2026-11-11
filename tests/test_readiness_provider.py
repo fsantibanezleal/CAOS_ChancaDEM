@@ -95,10 +95,28 @@ def test_check_readiness_runs_the_declared_provider_on_the_repository():
 
 @pytest.fixture()
 def tree(tmp_path: Path) -> Path:
-    """A copy of the committed bake, judged by the checkout's provider as a stage would be."""
+    """A stage built as scripts/local/workflow.py generate() builds one (VERSION, the docs/contracts tree, the authored
+    stage inputs, product.json and app/openapi.json when present), holding a copy of the committed bake in place of the
+    generation's output, judged by the checkout's provider as a stage would be."""
     root = tmp_path / "stage"
     shutil.copytree(ROOT / "data/derived", root / "data/derived")
+    shutil.copy2(ROOT / "VERSION", root / "VERSION")
+    shutil.copytree(ROOT / "docs/contracts", root / "docs/contracts")
+    for name in settings()["stage_inputs"]:
+        (root / name).parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ROOT / name, root / name)
+    for name in ("product.json", "app/openapi.json"):
+        if (ROOT / name).is_file():
+            (root / name).parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(ROOT / name, root / name)
     return root
+
+
+def test_adversarial_the_provider_judges_the_stage_own_version(tree):
+    """The provider judges the stage's VERSION, not the checkout's: a stage stamped with another version is refused."""
+    (tree / "VERSION").write_text("0.0.001\n", encoding="utf-8")
+    with pytest.raises(ValueError, match="product_version"):
+        provider().validate(tree)
 
 
 def test_the_provider_accepts_an_exact_copy_of_the_bake(tree):
