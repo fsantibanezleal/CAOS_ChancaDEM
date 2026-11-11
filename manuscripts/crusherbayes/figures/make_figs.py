@@ -2,7 +2,8 @@
 """Regenerate every figure, table and number of the CrusherBayes preprint from the COMMITTED artifacts.
 
 Reads (never writes) ``data/derived/hp500/crusherbayes.json``, ``loo.json``, ``backbone.json`` and
-``data/examples/hp500-surveys.csv``. Writes, inside ``manuscripts/crusherbayes/`` only:
+``data/examples/hp500-surveys.csv``, and runs the published throughput model of Rocha et al. 2024 through
+``rocha_published.py`` (beside this script). Writes, inside ``manuscripts/crusherbayes/`` only:
 
   figures/fig-band.pdf         held-out 80 percent predictive band against the measured value, power and throughput
   figures/fig-posterior.pdf    prior against posterior of every parameter (a normal summary of the posterior)
@@ -20,6 +21,7 @@ import csv
 import hashlib
 import json
 import math
+import sys
 from pathlib import Path
 
 import matplotlib
@@ -29,6 +31,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+import rocha_published as rocha  # noqa: E402   the published model of Rocha et al. 2024, Eqs. 10 to 15 and Table 4
 OUT = HERE.parent
 ROOT = HERE.parents[2]
 DER = ROOT / "data" / "derived" / "hp500"
@@ -36,7 +40,8 @@ CSV = ROOT / "data" / "examples" / "hp500-surveys.csv"
 GEN = OUT / "tex" / "generated"
 DATA = OUT / "data"
 REL = {"cb": "data/derived/hp500/crusherbayes.json", "loo": "data/derived/hp500/loo.json",
-       "bb": "data/derived/hp500/backbone.json", "csv": "data/examples/hp500-surveys.csv"}
+       "bb": "data/derived/hp500/backbone.json", "csv": "data/examples/hp500-surveys.csv",
+       "rocha": "manuscripts/crusherbayes/figures/rocha_published.py (Rocha et al. 2024, Eqs. 10 to 15, Table 4) on data/examples/hp500-surveys.csv"}
 
 INK, GRID = "#1a1a2e", "#d8d8e0"
 BLUE, ORANGE, GREY, GREEN = "#0072B2", "#D55E00", "#6b6b7a", "#009E73"
@@ -93,6 +98,7 @@ put("constKwMape", loo["loo"]["kW"]["strict"]["constant_mean"]["mape_pct"], "loo
 put("morrellMape", loo["loo"]["kW"]["strict"]["Morrell"]["mape_pct"], "loo", "loo.kW.strict.Morrell.mape_pct", 2)
 put("morrellNoloadMape", loo["loo"]["kW"]["strict"]["Morrell_noload"]["mape_pct"], "loo", "loo.kW.strict.Morrell_noload.mape_pct", 2)
 put("shuffleTphMape", loo["loo"]["tph"]["strict"]["M1_label_shuffle"]["mape_pct"], "loo", "loo.tph.strict.M1_label_shuffle.mape_pct", 2)
+put("shuffleKwMape", loo["loo"]["kW"]["strict"]["M1_label_shuffle"]["mape_pct"], "loo", "loo.kW.strict.M1_label_shuffle.mape_pct", 2)
 # derived widths
 w_red_kw = 100 * (1 - cb["loo"]["kW"]["scores"]["mean_width"] / cmp_["kW"]["M0"]["mean_width"])
 w_red_tph = 100 * (1 - cb["loo"]["tph"]["scores"]["mean_width"] / cmp_["tph"]["M0"]["mean_width"])
@@ -273,13 +279,19 @@ write("tab-surveys.tex", "\n".join(sv) + "\n")
 # scalar a method fits on the surveys is refit without the held-out one). Two rows fit nothing on the surveys: the bare Bond
 # draw (work index of the ore blend) and the engine at its shipped constants (the product's engine: the classification,
 # t10, zeta and Pn numbers of Rocha et al. 2024 inside the product's reduced capacity form and its Bond draw, so not the
-# model of Rocha et al.; those numbers were fitted by them on these surveys). The 95 percent intervals of MAPE and RMSE are percentile bootstraps over
+# model of Rocha et al.; those numbers were fitted by them on these surveys). The published throughput model of Rocha et al.
+# (rocha_published.py) adds two rows: as published (lambda fitted by its authors on survey 10, no fit in the folds) and with
+# lambda refit on the nine training surveys of each fold. The 95 percent intervals of MAPE and RMSE are percentile bootstraps over
 # the ten surveys (B resamples, seeded); the interval of a coverage is the Wilson score interval of a binomial proportion.
 BOOT = 20000
 BOOT_SEED = 42
 rng_boot = np.random.default_rng(BOOT_SEED)
 BOOT_IDX = rng_boot.integers(0, 10, size=(BOOT, 10))
 strict = {t: loo["loo"][t]["strict"] for t in ("tph", "kW")}
+# the published throughput model of Rocha et al. 2024 (rocha_published.py): as published (lambda = 0.84, fitted by the authors
+# on survey 10, so its constants were set with the surveys at hand) and strict (lambda refit on the nine training surveys)
+ROCHA_TPH = rocha.throughput(css, f80, tph_m)
+assert round(rocha.relative_ssq(tph_m, ROCHA_TPH["published"]), 2) == rocha.PRINTED_FIT_SSQ   # the fit the paper prints
 meas = {"tph": tph_m, "kW": kw_m}
 PRED: dict[str, dict[str, tuple[str, np.ndarray, str]]] = {
     "kW": {
@@ -304,6 +316,8 @@ PRED: dict[str, dict[str, tuple[str, np.ndarray, str]]] = {
         "const": ("Constant mean", None, "the mean"),
         "pub": ("Engine at its shipped constants", np.array([r["backbone"] for r in loo["tph_parity"]["per_survey"]]),
                 "none"),
+        "rochapub": ("Rocha et al., as published", ROCHA_TPH["published"], r"none ($\lambda$ fitted by the authors on survey 10)"),
+        "rochafit": (r"Rocha et al., $\lambda$ refit", ROCHA_TPH["refit"], r"$\lambda$"),
     },
 }
 for t in ("tph", "kW"):   # the constant mean of each fold: the mean of the nine training surveys
@@ -363,11 +377,14 @@ for t in ("tph", "kW"):
         STATS[t][key] = row
 tk = {"tph": "Tph", "kW": "Kw"}
 KEYN = {"cb": "Cb", "blin": "Blin", "free": "Free", "mnl": "Mnl", "back": "Back", "resid": "Resid", "mor": "Mor",
-        "const": "Const", "bond": "Bond", "pub": "Pub"}
+        "const": "Const", "bond": "Bond", "pub": "Pub", "rochapub": "RochaPub", "rochafit": "RochaFit"}
+# the text counts the methods compared with CrusherBayes ("eleven other methods"): every distinct row label of both targets
+assert len({k for t in PRED for k in PRED[t] if k != "cb"}) == 11
 for t in ("tph", "kW"):
     for key, row in STATS[t].items():
         base = f"{KEYN[key].lower()}{tk[t]}"
-        put(f"{base}MapeBoot", row["mape"], "loo" if key != "cb" else "cb", f"mean absolute percentage error of {key} ({t}), recomputed", 2)
+        src = "cb" if key == "cb" else ("rocha" if key.startswith("rocha") else "loo")
+        put(f"{base}MapeBoot", row["mape"], src, f"mean absolute percentage error of {key} ({t}), recomputed", 2)
         put(f"{base}MapeLo", row["mape_ci"][0], "loo", f"2.5 percent bootstrap quantile of the MAPE of {key} ({t}), {BOOT} resamples, seed {BOOT_SEED}", 1)
         put(f"{base}MapeHi", row["mape_ci"][1], "loo", f"97.5 percent bootstrap quantile of the MAPE of {key} ({t})", 1)
         if "coverage_ci" in row:
@@ -389,6 +406,14 @@ for t in ("tph", "kW"):
         put(f"{base}Lo", PAIRED[t][key]["ci"][0], "cb", f"2.5 percent paired-bootstrap quantile ({t}, {key})", 2)
         put(f"{base}Hi", PAIRED[t][key]["ci"][1], "cb", f"97.5 percent paired-bootstrap quantile ({t}, {key})", 2)
         put(f"{base}Wins", PAIRED[t][key]["wins"], "cb", f"surveys where CrusherBayes has the lower APE ({t}, {key})")
+# the engine-based power models against the constant mean, paired on the same resamples (positive: worse than the mean)
+for key in ("back", "resid", "bond", "mor", "pub"):
+    d = ape("kW", key) - ape("kW", "const")
+    s = d[BOOT_IDX].mean(axis=1)
+    base = f"vsConst{KEYN[key]}Kw"
+    put(base, float(d.mean()), "loo", f"mean over surveys of APE({key}) - APE(constant mean) (kW), points", 2)
+    put(f"{base}Lo", float(np.quantile(s, 0.025)), "loo", f"2.5 percent paired-bootstrap quantile (kW, {key} - constant mean)", 2)
+    put(f"{base}Hi", float(np.quantile(s, 0.975)), "loo", f"97.5 percent paired-bootstrap quantile (kW, {key} - constant mean)", 2)
 # dropping-rule table; the gains are computed from the unrounded errors of the predictions, as the paired differences are,
 # so the table, the text and Table paired print one number (the rule document subtracts the two rounded MAPEs)
 gain_blin_kw = -PAIRED["kW"]["blin"]["diff"]
@@ -522,6 +547,31 @@ walls = [ABL[n]["wall_seconds"] for n, _ in ABL_ORDER[1:]]
 put("wallMin", min(walls) / 60.0, "cb", "min of ablation wall_seconds / 60", 0)
 put("wallMax", max(walls) / 60.0, "cb", "max of ablation wall_seconds / 60", 0)
 put("ablCpu", ABL["full-seed43"]["machine"]["cpu_count"], "cb", "ablation machine.cpu_count")
+# derived differences the text reads from the ablation (power and throughput MAPE against the method, seed 42)
+put("engFixGainKw", ABL["engine-fixed"]["loo"]["kW"]["scores"]["mape_pct"] - cb["loo"]["kW"]["scores"]["mape_pct"], "cb",
+    "data/ablation/engine-fixed.json loo.kW.scores.mape_pct - loo.kW.scores.mape_pct (derived)", 2)
+PRIOR_VARIANTS = ("wide-priors", "tau-half", "tau-double")
+for t in ("tph", "kW"):
+    shift = max(abs(ABL[n]["loo"][t]["scores"]["mape_pct"] - cb["loo"][t]["scores"]["mape_pct"]) for n in PRIOR_VARIANTS)
+    put(f"priorShiftMax{tk[t]}", shift, "cb", f"max over {PRIOR_VARIANTS} of |loo.{t}.scores.mape_pct - the method's| (derived)", 2)
+put("costEvals", f"{meth['walkers'] * meth['steps'] * (cb['n'] - 1) / 1e6:.2f}", "cb",
+    "method.walkers * method.steps * (n - 1) / 1e6 (engine evaluations of one posterior, derived)")
+# the published model of Rocha et al.: its work-index sensitivity, the fitted lambda per fold, and the power inputs it lacks
+for wi, nm in ((rocha.WI_BOUNDS[0], "Lo"), (rocha.WI_BLEND, ""), (rocha.WI_BOUNDS[1], "Hi")):
+    r_wi = rocha.throughput(css, f80, tph_m, wi)
+    put(f"rochaSsq{nm}", rocha.relative_ssq(tph_m, r_wi["published"]), "rocha",
+        f"sum of squared relative deviations of the published variant, Wi = {wi} kWh/t", 3)
+    put(f"rochaPubMape{nm}", 100 * float(np.mean(np.abs(r_wi["published"] - tph_m) / tph_m)), "rocha",
+        f"MAPE of the published variant, Wi = {wi} kWh/t", 2)
+    put(f"rochaWi{nm}", wi, "rocha", "work index of the variant (kWh/t)", 1)
+put("rochaSsqPrinted", rocha.PRINTED_FIT_SSQ, "rocha", "Rocha et al. 2024, Section 4.3 (printed)", 2)
+put("rochaLamMin", ROCHA_TPH["lam_fold"].min(), "rocha", "min over folds of the lambda refit on the nine training surveys", 3)
+put("rochaLamMax", ROCHA_TPH["lam_fold"].max(), "rocha", "max over folds of the lambda refit on the nine training surveys", 3)
+pb_ = rocha.power_blockers(css, f80)
+put("rochaTtenMin", pb_["t10_min_pct"], "rocha", "min over the surveys of t10 by Eq. 5 with Table 5 (percent)", 1)
+put("rochaTtenMax", pb_["t10_max_pct"], "rocha", "max over the surveys of t10 by Eq. 5 with Table 5 (percent)", 1)
+put("rochaTtenTable", pb_["t10_table_max_pct"], "rocha", "largest t10 of Table A2 (percent)", 0)
+put("rochaTtenAbove", pb_["surveys_above_table"], "rocha", "surveys whose Eq. 5 t10 exceeds the largest t10 of Table A2")
 
 # ---------------------------------------------------------------- the theory checks (analysis/theory_check.py)
 put("thOutOfSpan", f"{TH['throughput_shape_out_of_span_rel']:.1e}".replace("e-", r"\times 10^{-") + "}", THREL,
@@ -777,7 +827,7 @@ def mape_panel(ax, t, title):
     for y, (key, row) in zip(yy, rows_t):
         col = BLUE if key == "cb" else (GREEN if key == "blin" else GREY)
         ax.plot(row["mape_ci"], [y, y], color=col, lw=1.6)
-        ax.plot(row["mape"], y, "o" if key != "pub" else "s", color=col, ms=4)
+        ax.plot(row["mape"], y, "s" if key in ("pub", "rochapub") else "o", color=col, ms=4)
     ax.set_yticks(yy)
     ax.set_yticklabels([row["label"] for _, row in rows_t], fontsize=6.5)
     ax.set_xlabel("held-out MAPE (%), 95% interval")
