@@ -278,9 +278,19 @@ None of these is a model judging a model.
   on the measured throughput and power with a noise per target; a low-order discrepancy on the setting variables in the form
   of Kennedy and O'Hagan 2001 (https://doi.org/10.1111/1467-9868.00294), sampled with the moves of ter Braak 2006 (https://doi.org/10.1007/s11222-006-8769-1) and ter Braak and Vrugt 2008 (https://doi.org/10.1007/s11222-008-9104-9), in emcee (Foreman-Mackey et al. 2013, https://doi.org/10.1086/670067), whose stretch move (Goodman and Weare 2010, https://doi.org/10.2140/camcos.2010.5.65) was tried first and did not converge; weakly informative priors from the literature
   ranges; a differential-evolution ensemble sampler (gradient-free; ter Braak 2006, ter Braak and Vrugt 2008); posterior predictive intervals per held-out survey. Closest
-  work and difference: general Bayesian calibration with discrepancy is Kennedy and O'Hagan 2001; the searches of 2026-10-28
-  found no Bayesian calibration with discrepancy of a cone-crusher population-balance model, evaluated held out (not exhaustive:
-  Scopus and Web of Science were not searched; CAOS_MANAGE `wip/chancadem/beyond-sota-research-2026-10-28.md` section 3).
+  work and difference: general Bayesian calibration with discrepancy is Kennedy and O'Hagan 2001, and the confounding of
+  calibration parameters with the discrepancy is treated by Arendt, Apley and Chen 2012 (https://doi.org/10.1115/1.4007390),
+  Tuo and Wu 2015 (https://doi.org/10.1214/15-AOS1314) and Plumlee 2017, whose orthogonal discrepancy prior removes it
+  (https://doi.org/10.1080/01621459.2016.1211016); the identifiability of a mill population balance is assessed by profile
+  likelihood in Bhonsale, Stokbroekx and Van Impe 2020 (https://doi.org/10.1016/j.compchemeng.2020.107056). Duarte et al. 2021
+  (https://doi.org/10.3390/min11111256) validate a least-squares cone-crusher calibration of the product size distribution on
+  an industrial data set left out of the fit, with point estimates; Rocha et al. 2024 fit their model on the same ten surveys.
+  The searches of 2026-10-28 and 2026-11-11 found no posterior of the fitted scalars of a crusher model, no predictive
+  interval and no survey-by-survey held-out evaluation of crusher throughput and power (not exhaustive: Scopus and Web of
+  Science were not searched; CAOS_MANAGE `wip/chancadem/beyond-sota-research-2026-10-28.md` section 3 and
+  `wip/chancadem/r6-crusherbayes-ms-2026-11-10.md` section D1). What CrusherBayes adds: a Bayesian posterior with a
+  structural discrepancy, a predictive distribution per held-out survey, strict leave-one-survey-out against eleven methods
+  (the published throughput model of Rocha et al. among them), and the exact form of the confounding in this engine.
   Evaluation, stated before the run: strict leave-one-survey-out with the posterior refit without the held-out survey;
   scores the LOO MAPE of the posterior mean, the log predictive density, the nested 80 percent coverage and the mean band width,
   against B-lin, the backbone M0 and the free-form M2 of CrusherCal and the CrusherCal band; and a prior-against-posterior
