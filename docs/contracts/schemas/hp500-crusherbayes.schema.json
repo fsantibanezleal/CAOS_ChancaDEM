@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "hp500-crusherbayes.schema.json",
   "title": "Hp500CrusherBayes",
-  "description": "Catalog row hp500-crusherbayes 1.0.0: CrusherBayes, the Bayesian calibration of the crusher engine's fitted scalars with a structural discrepancy per target, held out on the ten HP500 surveys, written by data-pipeline/pipeline/hp500/crusherbayes.py to data/derived/hp500/crusherbayes.json by the offline bake (CI never runs the sampler, ADR-0074: it validates the committed document). One posterior per fold from nine surveys (strict leave-one-survey-out as hp500-loo) and one from all ten for the contraction table; per held-out survey the posterior predictive mean and 80 percent interval for the two measured targets (throughput tph [t/h] and power kW [kW]; P80 is not measured and is never a target); scores beside B_lin, M0 (the CrusherCal band) and M2; the convergence diagnostic of every posterior; the kill criterion of the SDD evaluated into a verdict. Rules the schema cannot state, checked by the producer test: n equals the length of every per-survey list; the verdict equals kill_criterion recomputed from the numbers it carries; convergence.all_converged is true exactly when every fold entry is converged; a posterior that fails its diagnostic is recorded with converged false and is never dropped from the document; the document is byte-identical for the same inputs and seed. Derived from data licensed CC BY 4.0 (https://doi.org/10.3390/min14090919).",
+  "description": "Catalog row hp500-crusherbayes 1.0.1: CrusherBayes, the Bayesian calibration of the crusher engine's fitted scalars with a structural discrepancy per target, held out on the ten HP500 surveys, written by data-pipeline/pipeline/hp500/crusherbayes.py to data/derived/hp500/crusherbayes.json by the offline bake (CI never runs the sampler, ADR-0074: it validates the committed document). One posterior per fold from nine surveys (strict leave-one-survey-out as hp500-loo) and one from all ten for the contraction table; per held-out survey the posterior predictive mean and 80 percent interval for the two measured targets (throughput tph [t/h] and power kW [kW]; P80 is not measured and is never a target); scores beside B_lin, M0 (the CrusherCal band) and M2; the convergence diagnostic of every posterior; the kill criterion of the SDD evaluated into a verdict. Rules the schema cannot state, checked by the producer test: n equals the length of every per-survey list; the verdict equals kill_criterion recomputed from the numbers it carries; convergence.all_converged is true exactly when every fold entry is converged; a posterior that fails its diagnostic is recorded with converged false and is never dropped from the document; the document is byte-identical for the same inputs and seed. Derived from data licensed CC BY 4.0 (https://doi.org/10.3390/min14090919).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -24,21 +24,26 @@
   ],
   "properties": {
     "schema": {
-      "const": "chancadem.hp500.crusherbayes/v1"
+      "const": "chancadem.hp500.crusherbayes/v1",
+      "description": "The document schema identifier, chancadem.hp500.crusherbayes/v1."
     },
     "source": {
-      "$ref": "#/$defs/source"
+      "$ref": "#/$defs/source",
+      "description": "The source publication of the surveys (Rocha, Campos, Silva and Tavares 2024), as the survey reader states it."
     },
     "engine_version": {
       "type": "string",
-      "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$"
+      "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$",
+      "description": "The product version that wrote the document (format X.XX.XXX); a version other than VERSION makes the row stale."
     },
     "n": {
       "type": "integer",
-      "minimum": 3
+      "minimum": 3,
+      "description": "The number of surveys, and of held-out folds."
     },
     "seed": {
-      "type": "integer"
+      "type": "integer",
+      "description": "The seed from which the seed of every posterior (ten folds and the fit to all ten surveys) is spawned."
     },
     "inputs_sha256": {
       "type": "string",
@@ -65,39 +70,48 @@
       ],
       "properties": {
         "sampler": {
-          "const": "emcee"
+          "const": "emcee",
+          "description": "The sampler package, emcee."
         },
         "sampler_version": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The emcee release the document was sampled with."
         },
         "move": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The ensemble moves: DEMove 0.8 and DESnookerMove 0.2, with their sources."
         },
         "walkers": {
           "type": "integer",
-          "minimum": 2
+          "minimum": 2,
+          "description": "The number of walkers of each chain."
         },
         "steps": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 1,
+          "description": "The number of steps of each chain."
         },
         "burn_in_steps": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 0,
+          "description": "The steps discarded at the start of each chain."
         },
         "thin": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 1,
+          "description": "The thinning of the retained chain (every thin-th step)."
         },
         "predictive_draws_per_sample": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 1,
+          "description": "The predictive draws per retained posterior sample; the 80 percent interval is their quantile."
         },
         "likelihood": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The likelihood in words: Gaussian on the measured throughput and power, the discrepancy integrated out exactly."
         },
         "discrepancy_prior_sd": {
           "type": "object",
@@ -108,12 +122,15 @@
           ],
           "properties": {
             "tph": {
-              "type": "number"
+              "type": "number",
+              "description": "Tau on throughput [t/h]."
             },
             "kW": {
-              "type": "number"
+              "type": "number",
+              "description": "Tau on power [kW]."
             }
-          }
+          },
+          "description": "The prior standard deviation tau of each discrepancy coefficient, per target, per standardised unit of the setting and f80."
         },
         "noise_prior": {
           "type": "object",
@@ -125,7 +142,8 @@
           ],
           "properties": {
             "family": {
-              "type": "string"
+              "type": "string",
+              "description": "The prior family in words."
             },
             "median": {
               "type": "object",
@@ -136,28 +154,36 @@
               ],
               "properties": {
                 "tph": {
-                  "type": "number"
+                  "type": "number",
+                  "description": "Median noise on throughput [t/h]."
                 },
                 "kW": {
-                  "type": "number"
+                  "type": "number",
+                  "description": "Median noise on power [kW]."
                 }
-              }
+              },
+              "description": "The median of sigma per target, 5 percent of a typical survey level."
             },
             "log_sd": {
               "type": "number",
-              "minimum": 0
+              "minimum": 0,
+              "description": "The standard deviation of ln sigma."
             }
-          }
+          },
+          "description": "The prior of the observation noise sigma of each target: ln sigma normal around ln of a median."
         },
         "p80": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "Why P80 is not a target: it is not measured."
         },
         "interval_80": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "How the 80 percent interval is read: the 10th and 90th percentiles of the predictive draws of the held-out survey."
         }
-      }
+      },
+      "description": "The sampler, its size, the likelihood and the priors of the discrepancy and of the noise."
     },
     "priors": {
       "type": "array",
@@ -179,38 +205,48 @@
         "properties": {
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "description": "The scalar's name."
           },
           "unit": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "description": "The scalar's unit, or - when it has none."
           },
           "nominal": {
-            "type": "number"
+            "type": "number",
+            "description": "The engine's shipped value, in the natural scale and the unit of the row."
           },
           "log": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "True when the scalar is sampled as its natural log."
           },
           "mu": {
-            "type": "number"
+            "type": "number",
+            "description": "The prior mean in the sampled space."
           },
           "sd": {
             "type": "number",
-            "exclusiveMinimum": 0
+            "exclusiveMinimum": 0,
+            "description": "The prior standard deviation in the sampled space."
           },
           "lo": {
-            "type": "number"
+            "type": "number",
+            "description": "The lower truncation bound in the sampled space."
           },
           "hi": {
-            "type": "number"
+            "type": "number",
+            "description": "The upper truncation bound in the sampled space."
           },
           "source": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "description": "The source of the nominal value and the reason for the width."
           }
         },
         "description": "One truncated normal per engine scalar, in the sampled space (ln of the value when log is true), with its source."
-      }
+      },
+      "description": "The truncated normal prior of every engine scalar, in the sampled space, with its source."
     },
     "convergence": {
       "type": "object",
@@ -224,11 +260,13 @@
       "properties": {
         "criterion": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The convergence rule in words."
         },
         "tau_factor": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 1,
+          "description": "A chain converges when its post-burn length is at least this many integrated autocorrelation times."
         },
         "folds": {
           "type": "array",
@@ -259,36 +297,45 @@
                 ]
               },
               "converged": {
-                "type": "boolean"
+                "type": "boolean",
+                "description": "Whether the posterior meets the rule."
               },
               "tau_max": {
                 "type": "number",
-                "minimum": 0
+                "minimum": 0,
+                "description": "The largest integrated autocorrelation time over the parameters [steps]."
               },
               "post_burn_steps": {
                 "type": "integer",
-                "minimum": 1
+                "minimum": 1,
+                "description": "The chain length after the burn-in [steps]."
               },
               "chain_over_tau": {
                 "type": "number",
-                "minimum": 0
+                "minimum": 0,
+                "description": "The post-burn length over tau_max."
               },
               "acceptance_fraction": {
                 "type": "number",
                 "minimum": 0,
-                "maximum": 1
+                "maximum": 1,
+                "description": "The mean acceptance fraction of the walkers [fraction]."
               },
               "samples": {
                 "type": "integer",
-                "minimum": 1
+                "minimum": 1,
+                "description": "The number of retained posterior samples (walkers times post-burn steps over thin)."
               }
             }
-          }
+          },
+          "description": "One row per posterior: the ten folds, then the fit to all ten surveys."
         },
         "all_converged": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "True when every posterior converged."
         }
-      }
+      },
+      "description": "The convergence diagnostics of every posterior."
     },
     "loo": {
       "type": "object",
@@ -299,12 +346,15 @@
       ],
       "properties": {
         "tph": {
-          "$ref": "#/$defs/target"
+          "$ref": "#/$defs/target",
+          "description": "The held-out predictive on throughput [t/h]."
         },
         "kW": {
-          "$ref": "#/$defs/target"
+          "$ref": "#/$defs/target",
+          "description": "The held-out predictive on power [kW]."
         }
-      }
+      },
+      "description": "The held-out predictive of CrusherBayes per measured target."
     },
     "comparators": {
       "type": "object",
@@ -315,16 +365,20 @@
       ],
       "properties": {
         "tph": {
-          "$ref": "#/$defs/comparators"
+          "$ref": "#/$defs/comparators",
+          "description": "The comparators on throughput."
         },
         "kW": {
-          "$ref": "#/$defs/comparators"
+          "$ref": "#/$defs/comparators",
+          "description": "The comparators on power."
         }
-      }
+      },
+      "description": "Three CrusherCal models scored the way CrusherBayes is, per target."
     },
     "comparators_note": {
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "description": "How the comparators are scored, in words."
     },
     "contraction": {
       "type": "array",
@@ -344,36 +398,45 @@
         "properties": {
           "name": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "description": "The scalar's name (an engine scalar, sigma of a target, or a discrepancy coefficient)."
           },
           "unit": {
             "type": "string",
-            "minLength": 1
+            "minLength": 1,
+            "description": "The scalar's unit, or - when it has none."
           },
           "nominal": {
-            "type": "number"
+            "type": "number",
+            "description": "The prior centre in the natural scale (0 for a discrepancy coefficient)."
           },
           "prior_sd": {
             "type": "number",
-            "exclusiveMinimum": 0
+            "exclusiveMinimum": 0,
+            "description": "The prior standard deviation in the natural scale, in the unit of the row."
           },
           "posterior_mean": {
-            "type": "number"
+            "type": "number",
+            "description": "The posterior mean, in the unit of the row."
           },
           "posterior_sd": {
             "type": "number",
-            "minimum": 0
+            "minimum": 0,
+            "description": "The posterior standard deviation, in the unit of the row."
           },
           "contraction": {
             "type": "number",
-            "minimum": 0
+            "minimum": 0,
+            "description": "Posterior over prior standard deviation: below 0.5 the surveys identify the scalar, near 1 it stays at its prior."
           }
         }
-      }
+      },
+      "description": "Posterior against prior on the fit to all ten surveys, one row per sampled scalar and discrepancy coefficient."
     },
     "contraction_note": {
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "description": "How the contraction is read, in words."
     },
     "kill_criterion": {
       "type": "object",
@@ -402,11 +465,13 @@
       "properties": {
         "rule": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The rule in words."
         },
         "margin_mape_pts": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "The MAPE margin of the rule, 3 points [points]."
         },
         "coverage_band": {
           "type": "array",
@@ -416,38 +481,48 @@
             "type": "number",
             "minimum": 0,
             "maximum": 1
-          }
+          },
+          "description": "The coverage band of the 80 percent interval, 0.7 to 0.9 [fraction]."
         },
         "power_mape_pct": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "CrusherBayes's held-out MAPE on power [%]."
         },
         "power_mape_blin_pct": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "The setting-only line's held-out MAPE on power [%]."
         },
         "power_gain_over_blin_pts": {
-          "type": "number"
+          "type": "number",
+          "description": "The line's MAPE minus CrusherBayes's on power [points]."
         },
         "a_power_beats_blin_by_margin": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether that gain is at least the margin."
         },
         "tph_mape_pct": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "CrusherBayes's held-out MAPE on throughput [%]."
         },
         "tph_mape_m0_pct": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "The calibrated backbone's held-out MAPE on throughput [%]."
         },
         "tph_gain_over_m0_pts": {
-          "type": "number"
+          "type": "number",
+          "description": "The backbone's MAPE minus CrusherBayes's on throughput [points]."
         },
         "a_tph_beats_m0_by_margin": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether that gain is at least the margin."
         },
         "a_holds": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Condition (a): neither gain reaches the margin."
         },
         "coverage": {
           "type": "object",
@@ -460,14 +535,17 @@
             "tph": {
               "type": "number",
               "minimum": 0,
-              "maximum": 1
+              "maximum": 1,
+              "description": "Coverage on throughput [fraction]."
             },
             "kW": {
               "type": "number",
               "minimum": 0,
-              "maximum": 1
+              "maximum": 1,
+              "description": "Coverage on power [fraction]."
             }
-          }
+          },
+          "description": "The empirical coverage of the 80 percent interval per target."
         },
         "coverage_outside_band": {
           "type": "object",
@@ -478,12 +556,15 @@
           ],
           "properties": {
             "tph": {
-              "type": "boolean"
+              "type": "boolean",
+              "description": "On throughput."
             },
             "kW": {
-              "type": "boolean"
+              "type": "boolean",
+              "description": "On power."
             }
-          }
+          },
+          "description": "Per target, whether the coverage lies outside the band."
         },
         "mean_width": {
           "type": "object",
@@ -495,13 +576,16 @@
           "properties": {
             "tph": {
               "type": "number",
-              "minimum": 0
+              "minimum": 0,
+              "description": "On throughput [t/h]."
             },
             "kW": {
               "type": "number",
-              "minimum": 0
+              "minimum": 0,
+              "description": "On power [kW]."
             }
-          }
+          },
+          "description": "The mean width of CrusherBayes's 80 percent interval per target."
         },
         "mean_width_crushercal": {
           "type": "object",
@@ -513,13 +597,16 @@
           "properties": {
             "tph": {
               "type": "number",
-              "minimum": 0
+              "minimum": 0,
+              "description": "On throughput [t/h]."
             },
             "kW": {
               "type": "number",
-              "minimum": 0
+              "minimum": 0,
+              "description": "On power [kW]."
             }
-          }
+          },
+          "description": "The mean width of the CrusherCal band (the nested band of the calibrated backbone) per target."
         },
         "band_wider_than_crushercal": {
           "type": "object",
@@ -530,23 +617,29 @@
           ],
           "properties": {
             "tph": {
-              "type": "boolean"
+              "type": "boolean",
+              "description": "On throughput."
             },
             "kW": {
-              "type": "boolean"
+              "type": "boolean",
+              "description": "On power."
             }
-          }
+          },
+          "description": "Per target, whether CrusherBayes's mean width exceeds the CrusherCal band's."
         },
         "b_holds": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Condition (b): on either target the coverage lies outside the band or the band is wider."
         },
         "verdict": {
           "enum": [
             "kept",
             "dropped as a predictor"
-          ]
+          ],
+          "description": "The outcome: dropped as a predictor when (a) and (b) hold, kept otherwise."
         }
-      }
+      },
+      "description": "The rule of the design document that drops CrusherBayes as a predictor, with every term evaluated."
     }
   },
   "$defs": {
@@ -562,17 +655,21 @@
       "properties": {
         "paper": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "Authors, year and title of the source publication."
         },
         "doi": {
-          "const": "10.3390/min14090919"
+          "const": "10.3390/min14090919",
+          "description": "The DOI of the source publication."
         },
         "license": {
-          "const": "CC BY 4.0"
+          "const": "CC BY 4.0",
+          "description": "The licence of the source data, which the derived document carries."
         },
         "table": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The table of the source publication the survey rows are transcribed from."
         }
       }
     },
@@ -589,23 +686,28 @@
       "properties": {
         "mape_pct": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "Mean absolute percentage error of the predictive mean [%]."
         },
         "rmse": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "Root-mean-square error of the predictive mean [t/h or kW]."
         },
         "lpd_mean": {
-          "type": "number"
+          "type": "number",
+          "description": "The mean over the surveys of the log predictive density of the held-out measured value."
         },
         "coverage_80": {
           "type": "number",
           "minimum": 0,
-          "maximum": 1
+          "maximum": 1,
+          "description": "The share of held-out surveys inside their 80 percent interval [fraction]."
         },
         "mean_width": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "The mean width of the 80 percent interval [t/h or kW]."
         }
       },
       "description": "MAPE [%], RMSE and mean 80 percent width in the target's unit, the mean log predictive density of the held-out value, and the share of held-out surveys inside their 80 percent interval."
@@ -625,30 +727,36 @@
           "type": "array",
           "items": {
             "type": "number"
-          }
+          },
+          "description": "The measured values, in survey order [t/h or kW]."
         },
         "pred_mean": {
           "type": "array",
           "items": {
             "type": "number"
-          }
+          },
+          "description": "The predictive mean of each held-out survey, from the posterior of its fold [t/h or kW]."
         },
         "lo80": {
           "type": "array",
           "items": {
             "type": "number"
-          }
+          },
+          "description": "The 10th percentile of the predictive draws of each held-out survey [t/h or kW]."
         },
         "hi80": {
           "type": "array",
           "items": {
             "type": "number"
-          }
+          },
+          "description": "The 90th percentile of the predictive draws of each held-out survey [t/h or kW]."
         },
         "scores": {
-          "$ref": "#/$defs/scores"
+          "$ref": "#/$defs/scores",
+          "description": "The scores of the held-out predictive."
         }
-      }
+      },
+      "description": "The held-out predictive of one target."
     },
     "comparators": {
       "type": "object",
@@ -660,15 +768,19 @@
       ],
       "properties": {
         "M0": {
-          "$ref": "#/$defs/scores"
+          "$ref": "#/$defs/scores",
+          "description": "The calibrated backbone (the CrusherCal band)."
         },
         "B_lin": {
-          "$ref": "#/$defs/scores"
+          "$ref": "#/$defs/scores",
+          "description": "The setting-only least-squares line."
         },
         "M2": {
-          "$ref": "#/$defs/scores"
+          "$ref": "#/$defs/scores",
+          "description": "The free-form least-squares plane on the setting and f80."
         }
-      }
+      },
+      "description": "Three CrusherCal models scored with the nested 80 percent band."
     }
   }
 }

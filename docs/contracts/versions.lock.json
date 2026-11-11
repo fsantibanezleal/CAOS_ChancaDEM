@@ -1,68 +1,68 @@
 {
   "params-record": {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "schema": "docs/contracts/schemas/params-record.schema.json",
-    "sha256": "7331d2884a78c86f40f9aead737d60589db63e8e5c7c68f919031508c02b0da7"
+    "sha256": "42e69cf754d0ddd25f0985f733493f335b8a5d7427c02f395584828ee75c2e72"
   },
   "hp500-survey": {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "schema": "docs/contracts/schemas/hp500-survey.schema.json",
-    "sha256": "d85549838b8f6138d1c6a688f0d090b2ff32721faea4f7c2b2c1a055afce1abe"
+    "sha256": "becffd2eaff768ac1144db154cf6bbdea34766fa40a0a26c7350e50a73c5a12e"
   },
   "case-index": {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "schema": "docs/contracts/schemas/case-index.schema.json",
-    "sha256": "b711399d6bc7e9ee78e7d4e39ca2a96683f67f6e89c80e42a3b4272d4f85fd55"
+    "sha256": "aaf45c24dcf46541828c65ae737d3a3e3e7a7322c4d34d12b82bf3ecd39d6a14"
   },
   "case-manifest": {
-    "version": "1.1.0",
+    "version": "1.1.1",
     "schema": "docs/contracts/schemas/case-manifest.schema.json",
-    "sha256": "8c15d447186751e0851a7dfdf054191839f822e4d0579a5de551699973696bc6"
+    "sha256": "7be9b642c80943e6053b15fc70ba23c6a4782f130bb74ec02f399b797a2e32cd"
   },
   "trace": {
-    "version": "1.0.1",
+    "version": "1.0.2",
     "schema": "docs/contracts/schemas/trace.schema.json",
-    "sha256": "c9fd21842d2a853d7922a46826673097594e5a3e1bce43a2a84626a5b8e35f28"
+    "sha256": "c986c346511cb1675a694bbf112babcd0e6f2587eeb961990f26da708a99417e"
   },
   "hp500-backbone": {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "schema": "docs/contracts/schemas/hp500-backbone.schema.json",
-    "sha256": "704cc5f306c72ed1d8f4cfaae9e65ab7d80ef5dbd32b328ed95cc79328285125"
+    "sha256": "a967acf209e1a90ada218bbeb43447c3c631d2a43edcf7e537960320c2373524"
   },
   "hp500-loo": {
-    "version": "1.2.0",
+    "version": "1.2.1",
     "schema": "docs/contracts/schemas/hp500-loo.schema.json",
-    "sha256": "5e788adc282c66ccec1f99c1f82b02b0e3b1e34a484331ae1a282c4cb16e2a60"
+    "sha256": "76e6623fc82392c4a2dc7f2e49f656ff780d5db8d3c01867f83b200374bdaa43"
   },
   "hp500-crusherbayes": {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "schema": "docs/contracts/schemas/hp500-crusherbayes.schema.json",
-    "sha256": "cedc649f770045c491562927ff269cfd2054b14e532d651c2fd1b7b6d4da29e0"
+    "sha256": "b9c8c9a822fd39b596876a0fe125ef82968db43251379be402d8d14980ffa1db"
   },
   "hp500-comparison": {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "schema": "docs/contracts/schemas/hp500-comparison.schema.json",
-    "sha256": "7b1fbfb959c5b2f4a6333e0fd4f22789632509ff536e22a51437bf5a0efb59c8"
+    "sha256": "40d676e7628f8e86ca8bbbdee23fcb4e3132d9e589a882bc8a0540f2c23cc114"
   },
   "surrogate-model": {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "schema": "docs/contracts/schemas/surrogate-model.schema.json",
-    "sha256": "51d3838052d8fa27ad8c36d0079fb32c5ce8c81d6c902fa0fee46cfa7ef330e6"
+    "sha256": "7363dabc07f3d8fbd3e1b318aee5ad5e0b852551b327bfa3eb6e7b08e1abf820"
   },
   "anomaly-model": {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "schema": "docs/contracts/schemas/anomaly-model.schema.json",
-    "sha256": "57f23ddb34cbbcf44939ac01c04b9d03ed08c153cad1ff5d96d6820da4a8d492"
+    "sha256": "4b69282854c0829e69926c181ee42bfccbc1930f6485fc4fb5ce21e5e9a1e801"
   },
   "model-metrics": {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "schema": "docs/contracts/schemas/model-metrics.schema.json",
-    "sha256": "f4dd8d73d930b78df6c44d5e955ca693b82afded2aaaa93a2ab92541ae386cfa"
+    "sha256": "66a09c59bbfd285a98f34901c506280540fa2b79de53fa86bb79dd1f4c94ab77"
   },
   "readiness": {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "schema": "docs/contracts/schemas/readiness.schema.json",
-    "sha256": "c12cefa7d5ecac1f06569756b128bccaddbfc03815f33c3e57bd27342033eff5"
+    "sha256": "5660d7c0075c574db78115ff967d209d6d82ef498a71b3ff18160b82685bf8c8"
   },
   "api": {
     "version": "1.0.1",

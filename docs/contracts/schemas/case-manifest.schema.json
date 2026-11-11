@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "case-manifest.schema.json",
   "title": "CaseManifest",
-  "description": "Contract 2 (artifact), catalog row case-manifest 1.0.0: the authoritative record of one baked crushing case, written by data-pipeline/pipeline/core/manifest.py build_case_manifest to data/derived/manifests/<case>.json. A pure function of (params, seed): no wall-clock time. Rules the schema cannot state, checked by scripts/check_artifacts.py and the producer test: artifact.bytes equals the size of the file at artifact.path; lane equals gate.lane; measured is present exactly when real_or_synthetic is real; every metric named in expect is a key of metrics and lies inside its range.",
+  "description": "Contract 2 (artifact), catalog row case-manifest 1.1.1: the authoritative record of one baked crushing case, written by data-pipeline/pipeline/core/manifest.py build_case_manifest to data/derived/manifests/<case>.json. A pure function of (params, seed): no wall-clock time. Rules the schema cannot state, checked by scripts/check_artifacts.py and the producer test: artifact.bytes equals the size of the file at artifact.path; lane equals gate.lane; measured is present exactly when real_or_synthetic is real; every metric named in expect is a key of metrics and lies inside its range.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -29,17 +29,21 @@
   ],
   "properties": {
     "schema": {
-      "const": "chancadem.manifest/v1"
+      "const": "chancadem.manifest/v1",
+      "description": "The document schema identifier, chancadem.manifest/v1."
     },
     "case_id": {
       "type": "string",
-      "minLength": 1
+      "minLength": 1,
+      "description": "The case identifier, for example S01 or HP500-01."
     },
     "title": {
-      "$ref": "#/$defs/text"
+      "$ref": "#/$defs/text",
+      "description": "The case title in English and Spanish."
     },
     "category": {
-      "$ref": "#/$defs/text"
+      "$ref": "#/$defs/text",
+      "description": "The case category in English and Spanish."
     },
     "stage": {
       "enum": [
@@ -63,7 +67,8 @@
       "enum": [
         "real",
         "synthetic"
-      ]
+      ],
+      "description": "real: one of the measured HP500 surveys; synthetic: a circuit case of the engine."
     },
     "expected_band": {
       "$ref": "#/$defs/text",
@@ -80,13 +85,16 @@
       "description": "The case write-up shown in the workbench Context: the question, the variables that matter and how to read the views.",
       "properties": {
         "problem": {
-          "$ref": "#/$defs/text"
+          "$ref": "#/$defs/text",
+          "description": "The question the case answers."
         },
         "variables": {
-          "$ref": "#/$defs/text"
+          "$ref": "#/$defs/text",
+          "description": "The variables that matter for it."
         },
         "reading": {
-          "$ref": "#/$defs/text"
+          "$ref": "#/$defs/text",
+          "description": "How to read the views on it."
         }
       }
     },
@@ -100,16 +108,20 @@
       ],
       "properties": {
         "package": {
-          "const": "pipeline.model.crusher"
+          "const": "pipeline.model.crusher",
+          "description": "The Python package of the canonical engine."
         },
         "version": {
-          "$ref": "#/$defs/version"
+          "$ref": "#/$defs/version",
+          "description": "The product version of the engine."
         },
         "model": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The models the engine chains, in words, with the HP500 calibration named on a calibrated case."
         }
-      }
+      },
+      "description": "The engine that baked the case."
     },
     "params": {
       "type": "object",
@@ -134,31 +146,40 @@
             "cone-short-head",
             "gyratory",
             "jaw"
-          ]
+          ],
+          "description": "The crusher kind; the engine's per-machine constants follow it."
         },
         "css_mm": {
-          "type": "number"
+          "type": "number",
+          "description": "Closed-side setting, the narrowest gap between the mantle and the concave (or the jaws) [mm]."
         },
         "throw_mm": {
-          "type": "number"
+          "type": "number",
+          "description": "Eccentric throw, the open-side setting minus the closed-side setting [mm]."
         },
         "speed_rpm": {
-          "type": "number"
+          "type": "number",
+          "description": "Eccentric (gyration) speed [rpm]."
         },
         "feed_x63_mm": {
-          "type": "number"
+          "type": "number",
+          "description": "Rosin-Rammler characteristic size of the feed (63.2 percent passing) [mm]."
         },
         "feed_m": {
-          "type": "number"
+          "type": "number",
+          "description": "Rosin-Rammler uniformity exponent of the feed, dimensionless."
         },
         "ore_axb": {
-          "type": "number"
+          "type": "number",
+          "description": "JKMRC drop-weight ore competence A times b, dimensionless; lower is harder."
         },
         "ore_wi": {
-          "type": "number"
+          "type": "number",
+          "description": "Bond work index of the ore [kWh/t]."
         },
         "calibrated": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "True only on the HP500 surveys, whose engine runs with the calibration of Rocha et al. 2024."
         }
       }
     },
@@ -176,24 +197,30 @@
       "properties": {
         "survey": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 1,
+          "description": "The survey number as published."
         },
         "f80_mm": {
-          "type": "number"
+          "type": "number",
+          "description": "Measured feed 80 percent passing size [mm]."
         },
         "css_mm": {
-          "type": "number"
+          "type": "number",
+          "description": "Measured closed-side setting [mm]."
         },
         "feed_tph": {
-          "type": "number"
+          "type": "number",
+          "description": "Measured solid feed rate [t/h]."
         },
         "power_kw": {
-          "type": "number"
+          "type": "number",
+          "description": "Crusher power estimated from the measured current [kW]."
         }
       }
     },
     "seed": {
-      "type": "integer"
+      "type": "integer",
+      "description": "The seed the case was baked with; the manifest is a pure function of the operating point and this seed."
     },
     "artifact": {
       "type": "object",
@@ -212,27 +239,32 @@
           "description": "Relative to data/derived; no leading slash, no '..', no backslash."
         },
         "format": {
-          "const": "json"
+          "const": "json",
+          "description": "The file format, json."
         },
         "trace_schema": {
-          "const": "chancadem.trace/v1"
+          "const": "chancadem.trace/v1",
+          "description": "The schema identifier of the trace, chancadem.trace/v1."
         },
         "bytes": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 1,
+          "description": "The size of the trace file as committed [bytes]."
         },
         "sha256": {
           "type": "string",
           "pattern": "^[0-9a-f]{64}$",
           "description": "SHA-256 of the trace file bytes as committed."
         }
-      }
+      },
+      "description": "The case's trace file."
     },
     "lane": {
       "enum": [
         "live",
         "precompute"
-      ]
+      ],
+      "description": "How the App serves the case: live (the engine may run it in the browser) or precompute (the App replays the committed trace)."
     },
     "gate": {
       "type": "object",
@@ -251,34 +283,41 @@
           "enum": [
             "live",
             "precompute"
-          ]
+          ],
+          "description": "The lane the measurement assigns, the same as lane."
         },
         "pure_python": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "Whether the engine is pure Python."
         },
         "wheels": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "The compiled packages the engine depends on; a live case may use only numpy."
         },
         "trace_bytes": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 1,
+          "description": "The size of the trace [bytes]."
         },
         "run_ms_budget": {
           "type": "number",
-          "exclusiveMinimum": 0
+          "exclusiveMinimum": 0,
+          "description": "The time one engine run may take for a live case, 1500 ms [ms]."
         },
         "trace_bytes_budget": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 1,
+          "description": "The largest trace a live case may have, 262,144 bytes [bytes]."
         },
         "reasons": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "Why the case is not live; empty for a live case."
         }
       },
       "description": "The measured lane verdict of data-pipeline/pipeline/core/gate.py classify_lane: the engine run is timed in the bake (the median of several warmed runs) and judged against run_ms_budget, but the measured time is not stored, so the manifest stays a pure function of (params, seed)."
@@ -305,7 +344,7 @@
     },
     "metrics": {
       "type": "object",
-      "description": "The case's result scalars (p80_mm, p50_mm, p20_mm, f80_mm, reduction_ratio, throughput_tph, power_kw, specific_energy_kwh_t) and, on a real case, the model error against the survey (throughput_err_pct, power_err_pct).",
+      "description": "The case's result scalars (p80_mm, p50_mm, p20_mm and f80_mm in mm, reduction_ratio, throughput_tph in t/h, power_kw in kW, specific_energy_kwh_t in kWh/t) and, on a real case, the model error against the survey (throughput_err_pct and power_err_pct, in percent).",
       "additionalProperties": {
         "type": "number"
       },
@@ -362,7 +401,8 @@
           ],
           "properties": {
             "kind": {
-              "const": "authored"
+              "const": "authored",
+              "description": "authored: a case of the circuit matrix."
             }
           }
         },
@@ -377,18 +417,22 @@
           ],
           "properties": {
             "kind": {
-              "const": "publication"
+              "const": "publication",
+              "description": "publication: a measured survey."
             },
             "citation": {
               "type": "string",
-              "minLength": 1
+              "minLength": 1,
+              "description": "The publication the survey is transcribed from."
             },
             "doi": {
               "type": "string",
-              "pattern": "^10\\.[0-9]{4,9}/\\S+$"
+              "pattern": "^10\\.[0-9]{4,9}/\\S+$",
+              "description": "Its DOI."
             },
             "license": {
-              "const": "CC BY 4.0"
+              "const": "CC BY 4.0",
+              "description": "The licence of the published data."
             }
           }
         }
@@ -407,11 +451,13 @@
       "properties": {
         "en": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The English text."
         },
         "es": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The Spanish text."
         }
       }
     },

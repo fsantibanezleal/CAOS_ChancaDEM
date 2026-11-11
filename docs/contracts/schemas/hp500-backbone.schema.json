@@ -2,16 +2,16 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "hp500-backbone.schema.json",
   "title": "Hp500Backbone",
-  "description": "Catalog row hp500-backbone 1.0.0: the calibrated engine evaluated on each of the ten HP500 surveys, written by data-pipeline/pipeline/hp500/backbone.py to data/derived/hp500/backbone.json. The engine is the canonical Python engine (pipeline.model.crusher) with calibrated true, the survey's measured closed-side setting and f80, and the HP500 nominal throw and speed; the measured block repeats the survey row. Derived from data licensed CC BY 4.0 (Rocha, Campos, Silva and Tavares 2024, https://doi.org/10.3390/min14090919). Rules the schema cannot state, checked by the producer test: n equals the number of surveys and the surveys are numbered 1 to n in order.",
+  "description": "Catalog row hp500-backbone 1.0.1: the calibrated engine evaluated on each of the ten HP500 surveys, written by data-pipeline/pipeline/hp500/backbone.py to data/derived/hp500/backbone.json. The engine is the canonical Python engine (pipeline.model.crusher) with calibrated true, the survey's measured closed-side setting and f80, and the HP500 nominal throw and speed; the measured block repeats the survey row. Derived from data licensed CC BY 4.0 (Rocha, Campos, Silva and Tavares 2024, https://doi.org/10.3390/min14090919). Rules the schema cannot state, checked by the producer test: n equals the number of surveys and the surveys are numbered 1 to n in order.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "source", "engine_version", "note", "n", "surveys"],
   "properties": {
-    "schema": {"const": "chancadem.hp500.backbone/v1"},
-    "source": {"$ref": "#/$defs/source"},
-    "engine_version": {"type": "string", "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$"},
-    "note": {"type": "string", "minLength": 1},
-    "n": {"type": "integer", "minimum": 1},
+    "schema": {"const": "chancadem.hp500.backbone/v1", "description": "The document schema identifier, chancadem.hp500.backbone/v1."},
+    "source": {"$ref": "#/$defs/source", "description": "The source publication of the surveys (Rocha, Campos, Silva and Tavares 2024), as the survey reader states it."},
+    "engine_version": {"type": "string", "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$", "description": "The product version that wrote the document (format X.XX.XXX); a version other than VERSION makes the row stale."},
+    "note": {"type": "string", "minLength": 1, "description": "What the backbone is: the canonical engine with the HP500 calibration at each survey's measured setting and f80, the nominal throw and speed."},
+    "n": {"type": "integer", "minimum": 1, "description": "The number of surveys evaluated."},
     "surveys": {
       "type": "array",
       "minItems": 1,
@@ -20,33 +20,36 @@
         "additionalProperties": false,
         "required": ["id", "n", "measured", "backbone"],
         "properties": {
-          "id": {"type": "string", "pattern": "^HP500-[0-9]{2}$"},
-          "n": {"type": "integer", "minimum": 1},
+          "id": {"type": "string", "pattern": "^HP500-[0-9]{2}$", "description": "The case identifier of the survey, HP500-01 to HP500-10."},
+          "n": {"type": "integer", "minimum": 1, "description": "The survey number as published."},
           "measured": {
             "type": "object",
             "additionalProperties": false,
             "required": ["css_mm", "f80_mm", "feed_tph", "power_kw"],
             "properties": {
-              "css_mm": {"type": "number"},
-              "f80_mm": {"type": "number"},
-              "feed_tph": {"type": "number"},
-              "power_kw": {"type": "number"}
-            }
+              "css_mm": {"type": "number", "description": "Measured closed-side setting [mm]."},
+              "f80_mm": {"type": "number", "description": "Measured feed 80 percent passing size [mm]."},
+              "feed_tph": {"type": "number", "description": "Measured solid feed rate [t/h]."},
+              "power_kw": {"type": "number", "description": "Crusher power estimated from the measured current [kW]."}
+            },
+            "description": "The survey row as the hp500-survey contract accepted it."
           },
           "backbone": {
             "type": "object",
             "additionalProperties": false,
             "required": ["p80_mm", "throughput_tph", "bond_power_kw", "calibrated_power_kw", "f80_model_mm"],
             "properties": {
-              "p80_mm": {"type": "number", "minimum": 0},
-              "throughput_tph": {"type": "number", "minimum": 0},
-              "bond_power_kw": {"type": "number", "minimum": 0, "description": "The classical Bond draw of the engine at the survey."},
-              "calibrated_power_kw": {"type": "number", "minimum": 0, "description": "The paper's current-based form, 1.30 times the Bond draw plus 110 kW."},
-              "f80_model_mm": {"type": "number", "minimum": 0, "description": "The f80 of the Rosin-Rammler feed the engine reconstructed from the measured f80."}
-            }
+              "p80_mm": {"type": "number", "minimum": 0, "description": "The engine's product 80 percent passing size, a model output (the paper's size curves are figures only) [mm]."},
+              "throughput_tph": {"type": "number", "minimum": 0, "description": "The engine's capacity at the survey's setting, with the capacity base QT = 647 t/h [t/h]."},
+              "bond_power_kw": {"type": "number", "minimum": 0, "description": "Bond's power draw of the engine's throughput, f80 and P80 at the blend work index (9.0 kWh/t) [kW]."},
+              "calibrated_power_kw": {"type": "number", "minimum": 0, "description": "The paper's power form Pc = 1.30 Pd + 110 applied to the Bond draw above [kW]."},
+              "f80_model_mm": {"type": "number", "minimum": 0, "description": "The feed f80 the engine reads on its sieve grid (the grid truncates the feed's top size) [mm]."}
+            },
+            "description": "The calibrated engine's outputs at the survey's operating point, rounded to two decimals."
           }
         }
-      }
+      },
+      "description": "The calibrated engine on each survey, in survey order."
     }
   },
   "$defs": {
@@ -55,10 +58,10 @@
       "additionalProperties": false,
       "required": ["paper", "doi", "license", "table"],
       "properties": {
-        "paper": {"type": "string", "minLength": 1},
-        "doi": {"const": "10.3390/min14090919"},
-        "license": {"const": "CC BY 4.0"},
-        "table": {"type": "string", "minLength": 1}
+        "paper": {"type": "string", "minLength": 1, "description": "Authors, year and title of the source publication."},
+        "doi": {"const": "10.3390/min14090919", "description": "The DOI of the source publication."},
+        "license": {"const": "CC BY 4.0", "description": "The licence of the source data, which the derived document carries."},
+        "table": {"type": "string", "minLength": 1, "description": "The table of the source publication the survey rows are transcribed from."}
       }
     }
   }

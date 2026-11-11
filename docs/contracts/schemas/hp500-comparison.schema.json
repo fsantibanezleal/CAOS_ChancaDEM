@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "hp500-comparison.schema.json",
   "title": "Hp500Comparison",
-  "description": "Catalog row hp500-comparison 1.0.0: the paired comparison of the held-out forecasting methods on the ten HP500 surveys, written by data-pipeline/pipeline/hp500/comparison.py to data/derived/hp500/comparison.json from hp500-loo and, when present, hp500-crusherbayes (read only). Per measured target (throughput tph [t/h], power kW [kW]): the measured values, every method with its document MAPE and its ten held-out absolute percent errors, the recommended method (the lowest document MAPE among the methods that are not controls) and the runner-up (the next lowest), and for every method with predictions its paired difference against the recommended one: d_i = APE_i(method) - APE_i(recommended) in percentage points (positive: the method is worse), the mean of d, its 95 percent percentile bootstrap interval over the surveys (numpy.random.default_rng(seed).integers(0, n, size=(resamples, n)), the mean of d over each resample, the 2.5 and 97.5 percent quantiles: the resampling of the CrusherBayes manuscript), wins (the surveys where the recommended method has the strictly lower APE) and p_better (the share of resamples whose mean is above 0). The label-shuffle control has no per-survey predictions and carries no paired row. With hp500-crusherbayes absent, crusherbayes.included is false, its note says so and no CrusherBayes row appears. Rules the schema cannot state, checked by the producer test: n equals the length of every per-survey list; recommended and runner_up name methods that are not controls, recommended has the lowest mape_pct and runner_up the next; every paired row's against is the recommended method; ci95 low is at most mean_diff_pts and high at least it; the document is byte-identical for the same inputs. Derived from data licensed CC BY 4.0 (https://doi.org/10.3390/min14090919).",
+  "description": "Catalog row hp500-comparison 1.0.1: the paired comparison of the held-out forecasting methods on the ten HP500 surveys, written by data-pipeline/pipeline/hp500/comparison.py to data/derived/hp500/comparison.json from hp500-loo and, when present, hp500-crusherbayes (read only). Per measured target (throughput tph [t/h], power kW [kW]): the measured values, every method with its document MAPE and its ten held-out absolute percent errors, the recommended method (the lowest document MAPE among the methods that are not controls) and the runner-up (the next lowest), and for every method with predictions its paired difference against the recommended one: d_i = APE_i(method) - APE_i(recommended) in percentage points (positive: the method is worse), the mean of d, its 95 percent percentile bootstrap interval over the surveys (numpy.random.default_rng(seed).integers(0, n, size=(resamples, n)), the mean of d over each resample, the 2.5 and 97.5 percent quantiles: the resampling of the CrusherBayes manuscript), wins (the surveys where the recommended method has the strictly lower APE) and p_better (the share of resamples whose mean is above 0). The label-shuffle control has no per-survey predictions and carries no paired row. With hp500-crusherbayes absent, crusherbayes.included is false, its note says so and no CrusherBayes row appears. Rules the schema cannot state, checked by the producer test: n equals the length of every per-survey list; recommended and runner_up name methods that are not controls, recommended has the lowest mape_pct and runner_up the next; every paired row's against is the recommended method; ci95 low is at most mean_diff_pts and high at least it; the document is byte-identical for the same inputs. Derived from data licensed CC BY 4.0 (https://doi.org/10.3390/min14090919).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -17,18 +17,22 @@
   ],
   "properties": {
     "schema": {
-      "const": "chancadem.hp500.comparison/v1"
+      "const": "chancadem.hp500.comparison/v1",
+      "description": "The document schema identifier, chancadem.hp500.comparison/v1."
     },
     "source": {
-      "$ref": "#/$defs/source"
+      "$ref": "#/$defs/source",
+      "description": "The source publication of the surveys (Rocha, Campos, Silva and Tavares 2024), as the survey reader states it."
     },
     "engine_version": {
       "type": "string",
-      "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$"
+      "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$",
+      "description": "The product version that wrote the document (format X.XX.XXX); a version other than VERSION makes the row stale."
     },
     "n": {
       "type": "integer",
-      "minimum": 3
+      "minimum": 3,
+      "description": "The number of surveys paired (ten in the committed build); every per-survey list has this length."
     },
     "bootstrap": {
       "type": "object",
@@ -42,14 +46,17 @@
       "properties": {
         "method": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The resampling in words: a percentile bootstrap over the surveys of the mean paired difference."
         },
         "resamples": {
           "type": "integer",
-          "minimum": 1
+          "minimum": 1,
+          "description": "The number B of bootstrap resamples of the survey indices (20,000 in the committed build)."
         },
         "seed": {
-          "type": "integer"
+          "type": "integer",
+          "description": "The seed of numpy.random.default_rng that draws the resampled survey indices (42)."
         },
         "quantiles": {
           "type": "array",
@@ -62,9 +69,11 @@
             }
           ],
           "items": false,
-          "minItems": 2
+          "minItems": 2,
+          "description": "The lower and upper percentiles of the 95 percent interval, 2.5 and 97.5 [%]."
         }
-      }
+      },
+      "description": "How the paired intervals are resampled: the resampling of the CrusherBayes manuscript."
     },
     "inputs": {
       "type": "object",
@@ -75,7 +84,8 @@
       ],
       "properties": {
         "loo": {
-          "$ref": "#/$defs/input"
+          "$ref": "#/$defs/input",
+          "description": "The CrusherCal held-out document (hp500-loo) the predictions are read from."
         },
         "crusherbayes": {
           "oneOf": [
@@ -85,9 +95,11 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The CrusherBayes document (hp500-crusherbayes) when it is in the build; null when it is absent."
         }
-      }
+      },
+      "description": "The two documents the comparison is computed from, with their schema and product version."
     },
     "crusherbayes": {
       "type": "object",
@@ -98,7 +110,8 @@
       ],
       "properties": {
         "included": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "True when the CrusherBayes document is present and sampled on the same surveys, so its rows are paired."
         },
         "note": {
           "oneOf": [
@@ -108,9 +121,11 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "Why CrusherBayes is not compared (its document is absent or was sampled on other surveys); null when it is included."
         }
-      }
+      },
+      "description": "Whether CrusherBayes takes part in the comparison."
     },
     "targets": {
       "type": "object",
@@ -121,12 +136,15 @@
       ],
       "properties": {
         "tph": {
-          "$ref": "#/$defs/target"
+          "$ref": "#/$defs/target",
+          "description": "The comparison on the measured throughput, errors in percent of the measured t/h."
         },
         "kW": {
-          "$ref": "#/$defs/target"
+          "$ref": "#/$defs/target",
+          "description": "The comparison on the measured power, errors in percent of the measured kW."
         }
-      }
+      },
+      "description": "The comparison per measured target: throughput (tph) and power (kW)."
     }
   },
   "$defs": {
@@ -140,13 +158,16 @@
       "properties": {
         "en": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The English text."
         },
         "es": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The Spanish text."
         }
-      }
+      },
+      "description": "A reader-facing string in English and Spanish."
     },
     "input": {
       "type": "object",
@@ -159,24 +180,29 @@
       "properties": {
         "path": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The input's path relative to data/derived."
         },
         "schema": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The schema identifier the input document declares."
         },
         "engine_version": {
           "type": "string",
-          "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$"
+          "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$",
+          "description": "The product version that wrote the input document."
         }
-      }
+      },
+      "description": "One input document: where it is, its schema and the product version that wrote it."
     },
     "series": {
       "type": "array",
       "items": {
         "type": "number"
       },
-      "minItems": 3
+      "minItems": 3,
+      "description": "One value per survey, in survey order."
     },
     "method": {
       "type": "object",
@@ -190,14 +216,17 @@
       "properties": {
         "id": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The method's key as its source document stores it: a key of the strict block of hp500-loo, or crusherbayes."
         },
         "control": {
-          "type": "boolean"
+          "type": "boolean",
+          "description": "True for a control (the constant mean and the label shuffle), which is never recommended."
         },
         "mape_pct": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "The method's held-out MAPE as its source document states it [%]."
         },
         "ape_pct": {
           "oneOf": [
@@ -207,9 +236,11 @@
             {
               "type": "null"
             }
-          ]
+          ],
+          "description": "The held-out absolute percentage error at each survey, in survey order; null for the label shuffle, whose per-survey predictions no document stores [%]."
         }
-      }
+      },
+      "description": "One method compared on the target: its identifier, whether it is a control, its MAPE and its per-survey errors."
     },
     "paired": {
       "type": "object",
@@ -225,14 +256,17 @@
       "properties": {
         "method": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The method compared."
         },
         "against": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The method it is compared against: always the recommended method of the target."
         },
         "mean_diff_pts": {
-          "type": "number"
+          "type": "number",
+          "description": "The mean over the surveys of d_i = APE_i(method) - APE_i(recommended); positive when the method is worse [points]."
         },
         "ci95": {
           "type": "array",
@@ -245,18 +279,22 @@
             }
           ],
           "items": false,
-          "minItems": 2
+          "minItems": 2,
+          "description": "The 2.5th and 97.5th percentiles of the mean of d over the bootstrap resamples: the 95 percent interval [points]."
         },
         "wins": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 0,
+          "description": "The number of surveys on which the recommended method has the strictly lower absolute percentage error."
         },
         "p_better": {
           "type": "number",
           "minimum": 0,
-          "maximum": 1
+          "maximum": 1,
+          "description": "The share of resamples whose mean of d is above zero: how often the recommended method is better on average [fraction]."
         }
-      }
+      },
+      "description": "The paired difference of one method against the recommended method over the same surveys."
     },
     "target": {
       "type": "object",
@@ -270,30 +308,36 @@
       ],
       "properties": {
         "measured": {
-          "$ref": "#/$defs/series"
+          "$ref": "#/$defs/series",
+          "description": "The measured values of the target at each survey, in survey order [t/h or kW]."
         },
         "methods": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/method"
           },
-          "minItems": 2
+          "minItems": 2,
+          "description": "Every method with its MAPE and its per-survey errors, in the order the App lists them."
         },
         "recommended": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The method with the lowest MAPE among the methods that are not controls (a tie keeps the listing order)."
         },
         "runner_up": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The method with the next lowest MAPE among the methods that are not controls."
         },
         "paired": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/paired"
-          }
+          },
+          "description": "One paired row per method with per-survey predictions, other than the recommended one."
         }
-      }
+      },
+      "description": "The comparison on one measured target."
     },
     "source": {
       "type": "object",
@@ -307,17 +351,21 @@
       "properties": {
         "paper": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "Authors, year and title of the source publication."
         },
         "doi": {
-          "const": "10.3390/min14090919"
+          "const": "10.3390/min14090919",
+          "description": "The DOI of the source publication."
         },
         "license": {
-          "const": "CC BY 4.0"
+          "const": "CC BY 4.0",
+          "description": "The licence of the source data, which the derived document carries."
         },
         "table": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The table of the source publication the survey rows are transcribed from."
         }
       }
     }

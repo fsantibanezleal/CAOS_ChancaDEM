@@ -2,51 +2,52 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "trace.schema.json",
   "title": "Trace",
-  "description": "Contract 2 (artifact), catalog row trace 1.0.0: the replay artifact of one crushing case, written by data-pipeline/pipeline/core/trace.py to data/derived/<case>/trace.json. It holds what the Python engine computed at the case's operating point: the feed and product gradations on the engine's sieve grid, the result scalars, two one-dimensional sweeps around the point (the capacity against eccentric speed, and the product size and capacity against the closed-side setting) and the classification and appearance curves. The web replays it and holds the live TypeScript engine to it. Rules the schema cannot state, checked by the producer test: sieve_mm is strictly descending and has one more value than mid_mm; feed_passing and product_passing have the length of sieve_mm, lie in [0, 1] and do not increase along the grid; each sweep's arrays have the same length; summary equals the case manifest's metrics.",
+  "description": "Contract 2 (artifact), catalog row trace 1.0.2: the replay artifact of one crushing case, written by data-pipeline/pipeline/core/trace.py to data/derived/<case>/trace.json. It holds what the Python engine computed at the case's operating point: the feed and product gradations on the engine's sieve grid, the result scalars, two one-dimensional sweeps around the point (the capacity against eccentric speed, and the product size and capacity against the closed-side setting) and the classification and appearance curves. The web replays it and holds the live TypeScript engine to it. Rules the schema cannot state, checked by the producer test: sieve_mm is strictly descending and has one more value than mid_mm; feed_passing and product_passing have the length of sieve_mm, lie in [0, 1] and do not increase along the grid; each sweep's arrays have the same length; summary equals the case manifest's metrics.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "case_id", "sieve_mm", "mid_mm", "feed_passing", "product_passing", "feed_mass", "product_mass", "classification", "appearance_t10", "summary", "speed_sweep", "css_sweep"],
   "properties": {
-    "schema": {"const": "chancadem.trace/v1"},
-    "case_id": {"type": "string", "minLength": 1},
-    "sieve_mm": {"$ref": "#/$defs/series", "description": "Sieve aperture edges, coarse to fine, mm (the engine grid: 256 mm, square-root-of-two series, 29 edges)."},
-    "mid_mm": {"$ref": "#/$defs/series", "description": "Geometric mid-size of each size class, mm."},
-    "feed_passing": {"$ref": "#/$defs/fractions", "description": "Feed cumulative fraction passing at each edge."},
-    "product_passing": {"$ref": "#/$defs/fractions", "description": "Product cumulative fraction passing at each edge."},
-    "feed_mass": {"$ref": "#/$defs/fractions", "description": "Feed mass fraction in each class (sums to 1)."},
-    "product_mass": {"$ref": "#/$defs/fractions", "description": "Product mass fraction in each class (sums to 1 within the mass-closure tolerance)."},
-    "classification": {"$ref": "#/$defs/fractions", "description": "Whiten classification function C(d) at each class mid-size: the probability a particle of that size is selected for breakage."},
-    "appearance_t10": {"type": "number", "minimum": 0, "maximum": 100, "description": "The t10 of the breakage appearance function used: the fraction of the progeny passing one tenth of the parent size, in [0, 0.44] (the engine caps it at 0.44)."},
+    "schema": {"const": "chancadem.trace/v1", "description": "The document schema identifier, chancadem.trace/v1."},
+    "case_id": {"type": "string", "minLength": 1, "description": "The case identifier, the same as its manifest's."},
+    "sieve_mm": {"$ref": "#/$defs/series", "description": "Sieve aperture edges, coarse to fine (the engine grid: 256 mm, square-root-of-two series, 29 edges) [mm]."},
+    "mid_mm": {"$ref": "#/$defs/series", "description": "Geometric mid-size of each size class [mm]."},
+    "feed_passing": {"$ref": "#/$defs/fractions", "description": "Feed cumulative fraction passing at each edge [fraction]."},
+    "product_passing": {"$ref": "#/$defs/fractions", "description": "Product cumulative fraction passing at each edge [fraction]."},
+    "feed_mass": {"$ref": "#/$defs/fractions", "description": "Feed mass fraction in each class (sums to 1) [fraction]."},
+    "product_mass": {"$ref": "#/$defs/fractions", "description": "Product mass fraction in each class (sums to 1 within the mass-closure tolerance) [fraction]."},
+    "classification": {"$ref": "#/$defs/fractions", "description": "Whiten classification function C(d) at each class mid-size: the probability a particle of that size is selected for breakage [fraction]."},
+    "appearance_t10": {"type": "number", "minimum": 0, "maximum": 100, "description": "The t10 of the breakage appearance function used: the fraction of the progeny passing one tenth of the parent size, in [0, 0.44] (the engine caps it at 0.44) [fraction]."},
     "summary": {
       "type": "object",
       "additionalProperties": false,
       "required": ["f80_mm", "p80_mm", "p50_mm", "p20_mm", "reduction_ratio", "pct_passing", "throughput_tph", "power_kw", "specific_energy_kwh_t", "oss_mm", "nip_angle_deg", "nip_limit_deg", "regime", "valid", "out_of_envelope", "implausible", "mass_closure", "cond_estimate"],
       "properties": {
-        "f80_mm": {"type": "number", "minimum": 0},
-        "p80_mm": {"type": "number", "minimum": 0},
-        "p50_mm": {"type": "number", "minimum": 0},
-        "p20_mm": {"type": "number", "minimum": 0},
+        "f80_mm": {"type": "number", "minimum": 0, "description": "Feed 80 percent passing size on the engine grid [mm]."},
+        "p80_mm": {"type": "number", "minimum": 0, "description": "Product 80 percent passing size [mm]."},
+        "p50_mm": {"type": "number", "minimum": 0, "description": "Product 50 percent passing size [mm]."},
+        "p20_mm": {"type": "number", "minimum": 0, "description": "Product 20 percent passing size [mm]."},
         "reduction_ratio": {"type": "number", "minimum": 0, "description": "F80 over P80."},
         "pct_passing": {
           "type": "object",
           "additionalProperties": false,
           "required": ["1", "4", "8", "16", "32"],
-          "description": "Product fraction passing at 1, 4, 8, 16 and 32 mm.",
+          "description": "Product fraction passing at 1, 4, 8, 16 and 32 mm, keyed by the size [fraction].",
           "patternProperties": {"^(1|4|8|16|32)$": {"type": "number", "minimum": 0, "maximum": 1}}
         },
-        "throughput_tph": {"type": "number", "minimum": 0},
-        "power_kw": {"type": "number", "minimum": 0},
-        "specific_energy_kwh_t": {"type": "number", "minimum": 0},
-        "oss_mm": {"type": "number", "minimum": 0, "description": "Open-side setting, the closed-side setting plus the throw, mm."},
-        "nip_angle_deg": {"type": "number", "minimum": 0},
-        "nip_limit_deg": {"type": "number", "minimum": 0},
-        "regime": {"enum": ["choke", "trickle", "pass-through", "invalid"]},
-        "valid": {"type": "boolean"},
-        "out_of_envelope": {"type": "boolean"},
-        "implausible": {"type": "boolean"},
-        "mass_closure": {"type": "number", "minimum": 0},
+        "throughput_tph": {"type": "number", "minimum": 0, "description": "Capacity of the machine at the operating point [t/h]."},
+        "power_kw": {"type": "number", "minimum": 0, "description": "Power draw [kW]."},
+        "specific_energy_kwh_t": {"type": "number", "minimum": 0, "description": "Specific comminution energy effectively applied [kWh/t]."},
+        "oss_mm": {"type": "number", "minimum": 0, "description": "Open-side setting, the closed-side setting plus the throw [mm]."},
+        "nip_angle_deg": {"type": "number", "minimum": 0, "description": "Nip angle between the mantle and the concave (or the jaws) at the setting [deg]."},
+        "nip_limit_deg": {"type": "number", "minimum": 0, "description": "Grip limit 2 arctan(mu) of the nip angle [deg]."},
+        "regime": {"enum": ["choke", "trickle", "pass-through", "invalid"], "description": "The operating regime: choke, trickle, pass-through (setting at or above F80, or a reduction ratio near one) or invalid (setting at or above the feed's top size)."},
+        "valid": {"type": "boolean", "description": "False when the point is not valid: nothing gripped, an ill-conditioned breakage matrix or a physically implausible input."},
+        "out_of_envelope": {"type": "boolean", "description": "True when any envelope check tripped (an implausible or an extrapolating input)."},
+        "implausible": {"type": "boolean", "description": "True for a physically nonsensical input, worse than an extrapolation."},
+        "mass_closure": {"type": "number", "minimum": 0, "description": "The absolute difference between the summed product and feed mass fractions, about 0 [fraction]."},
         "cond_estimate": {"type": ["number", "string"], "description": "Conditioning proxy of (I - B C); the string Infinity when the solve is singular."}
-      }
+      },
+      "description": "The result scalars of the engine at the case's operating point."
     },
     "speed_sweep": {
       "type": "object",
@@ -54,9 +55,9 @@
       "required": ["speed_rpm", "throughput_tph", "power_kw"],
       "description": "The capacity hump: the engine at the case's point with only the eccentric speed varied over the machine's range.",
       "properties": {
-        "speed_rpm": {"$ref": "#/$defs/series"},
-        "throughput_tph": {"$ref": "#/$defs/series"},
-        "power_kw": {"$ref": "#/$defs/series"}
+        "speed_rpm": {"$ref": "#/$defs/series", "description": "The eccentric speeds of the sweep [rpm]."},
+        "throughput_tph": {"$ref": "#/$defs/series", "description": "The throughput at each speed; 0 where the engine cannot evaluate the point [t/h]."},
+        "power_kw": {"$ref": "#/$defs/series", "description": "The power at each speed; 0 where the engine cannot evaluate the point [kW]."}
       }
     },
     "css_sweep": {
@@ -65,10 +66,10 @@
       "required": ["css_mm", "p80_mm", "throughput_tph", "power_kw"],
       "description": "The setting trade-off: the engine at the case's point with only the closed-side setting varied.",
       "properties": {
-        "css_mm": {"$ref": "#/$defs/series"},
-        "p80_mm": {"$ref": "#/$defs/series"},
-        "throughput_tph": {"$ref": "#/$defs/series"},
-        "power_kw": {"$ref": "#/$defs/series"}
+        "css_mm": {"$ref": "#/$defs/series", "description": "The closed-side settings of the sweep [mm]."},
+        "p80_mm": {"$ref": "#/$defs/series", "description": "The product P80 at each setting; 0 where the engine cannot evaluate the point [mm]."},
+        "throughput_tph": {"$ref": "#/$defs/series", "description": "The throughput at each setting; 0 where the engine cannot evaluate the point [t/h]."},
+        "power_kw": {"$ref": "#/$defs/series", "description": "The power at each setting; 0 where the engine cannot evaluate the point [kW]."}
       }
     }
   },

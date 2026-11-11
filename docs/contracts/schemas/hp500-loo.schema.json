@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "hp500-loo.schema.json",
   "title": "Hp500Loo",
-  "description": "Catalog row hp500-loo 1.2.0: CrusherCal, the leave-one-survey-out validation of the calibrated backbone on the ten HP500 surveys, written by data-pipeline/pipeline/hp500/loo.py to data/derived/hp500/loo.json. Per target (throughput tph and power kW measured; P80 a model output reported as self-consistency), strict folds (every fitted scalar refit without the held-out survey) and leaky folds (fitted on all ten) grade M0 the calibrated backbone, M1 the backbone plus a bounded ridge residual, M2 a free-form least-squares fit, a constant-mean baseline and a label-shuffle negative control (from 1.2.0 also B_lin, the setting-only least-squares line on CSS, for both measured targets, and for power the two variants of Morrell's size-specific crusher energy, Morrell and Morrell_noload, whose M_ic and no-load power are fitted per fold because the ore's M_ic is not published); the strict folds carry an 80 percent predictive interval, its empirical coverage (in sample: sigma comes from the same residuals the coverage checks) and its nested coverage (out of sample: for each survey, sigma from the held-out residuals of the other surveys only). The two parity blocks are in-sample contrasts of the power forms and of the capacity backbone against the measured values. Deterministic for a seed. Derived from data licensed CC BY 4.0 (https://doi.org/10.3390/min14090919). Rules the schema cannot state, checked by the producer test: B_lin is present for tph and kW and Morrell, Morrell_noload and morrell_fit for kW in every strict and leaky block, and every pred list of them has n values; a held-out survey never enters its own fold (planted-target test); every measured and pred list has n values in survey order; the label-shuffle control does not beat M0 on throughput; nested_covered and nested_sigma have n values in survey order and nested_coverage is the share of true entries of nested_covered.",
+  "description": "Catalog row hp500-loo 1.2.1: CrusherCal, the leave-one-survey-out validation of the calibrated backbone on the ten HP500 surveys, written by data-pipeline/pipeline/hp500/loo.py to data/derived/hp500/loo.json. Per target (throughput tph and power kW measured; P80 a model output reported as self-consistency), strict folds (every fitted scalar refit without the held-out survey) and leaky folds (fitted on all ten) grade M0 the calibrated backbone, M1 the backbone plus a bounded ridge residual, M2 a free-form least-squares fit, a constant-mean baseline and a label-shuffle negative control (from 1.2.0 also B_lin, the setting-only least-squares line on CSS, for both measured targets, and for power the two variants of Morrell's size-specific crusher energy, Morrell and Morrell_noload, whose M_ic and no-load power are fitted per fold because the ore's M_ic is not published); the strict folds carry an 80 percent predictive interval, its empirical coverage (in sample: sigma comes from the same residuals the coverage checks) and its nested coverage (out of sample: for each survey, sigma from the held-out residuals of the other surveys only). The two parity blocks are in-sample contrasts of the power forms and of the capacity backbone against the measured values. Deterministic for a seed. Derived from data licensed CC BY 4.0 (https://doi.org/10.3390/min14090919). Rules the schema cannot state, checked by the producer test: B_lin is present for tph and kW and Morrell, Morrell_noload and morrell_fit for kW in every strict and leaky block, and every pred list of them has n values; a held-out survey never enters its own fold (planted-target test); every measured and pred list has n values in survey order; the label-shuffle control does not beat M0 on throughput; nested_covered and nested_sigma have n values in survey order and nested_coverage is the share of true entries of nested_covered.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -18,21 +18,26 @@
   ],
   "properties": {
     "schema": {
-      "const": "chancadem.hp500.loo/v1"
+      "const": "chancadem.hp500.loo/v1",
+      "description": "The document schema identifier, chancadem.hp500.loo/v1."
     },
     "source": {
-      "$ref": "#/$defs/source"
+      "$ref": "#/$defs/source",
+      "description": "The source publication of the surveys (Rocha, Campos, Silva and Tavares 2024), as the survey reader states it."
     },
     "engine_version": {
       "type": "string",
-      "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$"
+      "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$",
+      "description": "The product version that wrote the document (format X.XX.XXX); a version other than VERSION makes the row stale."
     },
     "n": {
       "type": "integer",
-      "minimum": 3
+      "minimum": 3,
+      "description": "The number of surveys, and of folds of each block."
     },
     "seed": {
-      "type": "integer"
+      "type": "integer",
+      "description": "The seed of the label-shuffle permutation (seed for throughput, seed + 1 for power, seed + 2 for P80)."
     },
     "config": {
       "type": "object",
@@ -47,17 +52,20 @@
       "properties": {
         "resid_clip_frac": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "The bound of the bounded residual: at most this fraction of the backbone value at the held-out survey [fraction]."
         },
         "ridge_lambda": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "The ridge penalty on the two slopes of the bounded residual on the standardised features."
         },
         "features": {
           "type": "array",
           "items": {
             "type": "string"
-          }
+          },
+          "description": "The features of the residual and free-form fits, in order: the closed-side setting and f80."
         },
         "targets_primary": {
           "type": "array",
@@ -66,13 +74,15 @@
               "tph",
               "kW"
             ]
-          }
+          },
+          "description": "The measured targets: throughput (tph) and power (kW)."
         },
         "target_secondary": {
           "type": "array",
           "items": {
             "const": "p80"
-          }
+          },
+          "description": "The model output reported as self-consistency only: P80."
         },
         "morrell": {
           "type": "object",
@@ -99,7 +109,8 @@
               "enum": [
                 "closed",
                 "open"
-              ]
+              ],
+              "description": "The circuit the K2 constant is taken for."
             },
             "inputs": {
               "type": "string",
@@ -111,9 +122,11 @@
               "minLength": 1,
               "description": "Which scalars are fitted per fold and why."
             }
-          }
+          },
+          "description": "The constants and the fitted scalars of the two Morrell power variants."
         }
-      }
+      },
+      "description": "The settings of the held-out evaluation."
     },
     "loo": {
       "type": "object",
@@ -125,15 +138,19 @@
       ],
       "properties": {
         "tph": {
-          "$ref": "#/$defs/target"
+          "$ref": "#/$defs/target",
+          "description": "The evaluation on the measured throughput [t/h]."
         },
         "kW": {
-          "$ref": "#/$defs/target"
+          "$ref": "#/$defs/target",
+          "description": "The evaluation on the measured power [kW]."
         },
         "p80": {
-          "$ref": "#/$defs/target"
+          "$ref": "#/$defs/target",
+          "description": "The self-consistency check on the backbone's own P80, a model output and not a measurement [mm]."
         }
-      }
+      },
+      "description": "The held-out evaluation per target."
     },
     "power_parity": {
       "type": "object",
@@ -151,19 +168,24 @@
       "properties": {
         "note": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "What the contrast shows, in words."
         },
         "bond_pd_range_kw": {
-          "$ref": "#/$defs/range"
+          "$ref": "#/$defs/range",
+          "description": "The smallest and largest Bond draw of the engine over the surveys [kW]."
         },
         "measured_range_kw": {
-          "$ref": "#/$defs/range"
+          "$ref": "#/$defs/range",
+          "description": "The smallest and largest measured power over the surveys [kW]."
         },
         "bare_bond": {
-          "$ref": "#/$defs/scores"
+          "$ref": "#/$defs/scores",
+          "description": "The scores of the bare Bond draw against the measured power."
         },
         "engine_pc_1p30_110": {
-          "$ref": "#/$defs/scores"
+          "$ref": "#/$defs/scores",
+          "description": "The scores of the paper's power form Pc = 1.30 Pd + 110 on the engine's Bond draw."
         },
         "refit_pc": {
           "allOf": [
@@ -178,15 +200,19 @@
           ],
           "properties": {
             "zeta": {
-              "type": "number"
+              "type": "number",
+              "description": "The fitted slope zeta of Pc = zeta Pd + Pn."
             },
             "pn": {
-              "type": "number"
+              "type": "number",
+              "description": "The fitted no-load power Pn of Pc = zeta Pd + Pn [kW]."
             }
-          }
+          },
+          "description": "The scores of the same form refit by least squares on all ten surveys, with its two fitted scalars."
         },
         "constant_mean": {
-          "$ref": "#/$defs/scores"
+          "$ref": "#/$defs/scores",
+          "description": "The scores of the mean measured power used as the prediction for every survey."
         },
         "per_survey": {
           "type": "array",
@@ -203,27 +229,35 @@
             ],
             "properties": {
               "n": {
-                "type": "integer"
+                "type": "integer",
+                "description": "The survey number."
               },
               "css": {
-                "type": "number"
+                "type": "number",
+                "description": "The measured closed-side setting [mm]."
               },
               "measured": {
-                "type": "number"
+                "type": "number",
+                "description": "The measured power [kW]."
               },
               "bare_bond": {
-                "type": "number"
+                "type": "number",
+                "description": "The engine's Bond draw [kW]."
               },
               "engine_pc": {
-                "type": "number"
+                "type": "number",
+                "description": "The paper's form 1.30 Pd + 110 [kW]."
               },
               "refit_pc": {
-                "type": "number"
+                "type": "number",
+                "description": "The form refit on all ten surveys [kW]."
               }
             }
-          }
+          },
+          "description": "The four powers of each survey, in survey order."
         }
-      }
+      },
+      "description": "In-sample contrast of the power forms against the ten measured powers."
     },
     "tph_parity": {
       "type": "object",
@@ -236,10 +270,12 @@
       "properties": {
         "note": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "What the contrast shows, in words."
         },
         "backbone": {
-          "$ref": "#/$defs/scores"
+          "$ref": "#/$defs/scores",
+          "description": "The scores of the backbone throughput against the measured feed rate."
         },
         "per_survey": {
           "type": "array",
@@ -254,21 +290,27 @@
             ],
             "properties": {
               "n": {
-                "type": "integer"
+                "type": "integer",
+                "description": "The survey number."
               },
               "css": {
-                "type": "number"
+                "type": "number",
+                "description": "The measured closed-side setting [mm]."
               },
               "measured": {
-                "type": "number"
+                "type": "number",
+                "description": "The measured feed rate [t/h]."
               },
               "backbone": {
-                "type": "number"
+                "type": "number",
+                "description": "The backbone throughput [t/h]."
               }
             }
-          }
+          },
+          "description": "The measured and the backbone throughput of each survey, in survey order."
         }
-      }
+      },
+      "description": "In-sample contrast of the calibrated capacity backbone against the ten measured feed rates."
     }
   },
   "$defs": {
@@ -283,7 +325,8 @@
         }
       ],
       "minItems": 2,
-      "maxItems": 2
+      "maxItems": 2,
+      "description": "[low, high]."
     },
     "scores": {
       "type": "object",
@@ -296,20 +339,25 @@
       "properties": {
         "mape_pct": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "Mean absolute percentage error [%]."
         },
         "rmse": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "Root-mean-square error, in the target's unit [t/h, kW or mm]."
         },
         "r2": {
-          "type": "number"
+          "type": "number",
+          "description": "Coefficient of determination; 0 when the measured values have no variance."
         },
         "maxdev_pct": {
           "type": "number",
-          "minimum": 0
+          "minimum": 0,
+          "description": "The largest absolute percentage deviation over the surveys [%]."
         }
-      }
+      },
+      "description": "The four scores of a set of held-out predictions against the measured values."
     },
     "folds": {
       "type": "object",
@@ -324,19 +372,24 @@
       ],
       "properties": {
         "M0_backbone": {
-          "$ref": "#/$defs/scores"
+          "$ref": "#/$defs/scores",
+          "description": "Scores of the calibrated backbone, with its scalars refit per fold (QT for throughput, zeta and Pn for power)."
         },
         "M1_residual": {
-          "$ref": "#/$defs/scores"
+          "$ref": "#/$defs/scores",
+          "description": "Scores of the bounded residual: the backbone plus a ridge residual, clipped, on the standardised setting and f80."
         },
         "M2_freeform": {
-          "$ref": "#/$defs/scores"
+          "$ref": "#/$defs/scores",
+          "description": "Scores of the free-form fit, an unconstrained least-squares plane on the setting and f80 predicting the target."
         },
         "constant_mean": {
-          "$ref": "#/$defs/scores"
+          "$ref": "#/$defs/scores",
+          "description": "Scores of the control that predicts the mean of the fold's training surveys."
         },
         "M1_label_shuffle": {
-          "$ref": "#/$defs/scores"
+          "$ref": "#/$defs/scores",
+          "description": "Scores of the control that fits the bounded residual to one seeded permutation of the measured values."
         },
         "pred": {
           "type": "object",
@@ -351,39 +404,46 @@
               "type": "array",
               "items": {
                 "type": "number"
-              }
+              },
+              "description": "Predictions of the calibrated backbone [t/h, kW or mm]."
             },
             "M1": {
               "type": "array",
               "items": {
                 "type": "number"
-              }
+              },
+              "description": "Predictions of the bounded residual [t/h, kW or mm]."
             },
             "M2": {
               "type": "array",
               "items": {
                 "type": "number"
-              }
+              },
+              "description": "Predictions of the free-form fit [t/h, kW or mm]."
             },
             "B_lin": {
               "type": "array",
               "items": {
                 "type": "number"
-              }
+              },
+              "description": "Predictions of the setting-only least-squares line, throughput and power only [t/h or kW]."
             },
             "Morrell": {
               "type": "array",
               "items": {
                 "type": "number"
-              }
+              },
+              "description": "Predictions of Morrell through the origin, power only [kW]."
             },
             "Morrell_noload": {
               "type": "array",
               "items": {
                 "type": "number"
-              }
+              },
+              "description": "Predictions of Morrell with a no-load term, power only [kW]."
             }
-          }
+          },
+          "description": "The held-out prediction of each model at each survey, in survey order, rounded to two decimals."
         },
         "uq": {
           "type": "object",
@@ -399,34 +459,40 @@
           "properties": {
             "sigma": {
               "type": "number",
-              "minimum": 0
+              "minimum": 0,
+              "description": "The sample standard deviation (ddof 1) of the ten held-out residuals of the calibrated backbone [t/h, kW or mm]."
             },
             "band_halfwidth": {
               "type": "number",
-              "minimum": 0
+              "minimum": 0,
+              "description": "The half-width of the band, 1.2816 times sigma [t/h, kW or mm]."
             },
             "nominal_coverage": {
               "type": "number",
               "minimum": 0,
-              "maximum": 1
+              "maximum": 1,
+              "description": "The coverage the band is built for, 0.80 [fraction]."
             },
             "empirical_coverage": {
               "type": "number",
               "minimum": 0,
-              "maximum": 1
+              "maximum": 1,
+              "description": "The share of surveys whose held-out residual lies within the half-width, in sample [fraction]."
             },
             "band_rel_pct": {
               "type": "number",
-              "minimum": 0
+              "minimum": 0,
+              "description": "The half-width in percent of the mean measured value [%]."
             },
             "note": {
-              "type": "string"
+              "type": "string",
+              "description": "How the band is built, in words."
             },
             "nested_coverage": {
               "type": "number",
               "minimum": 0,
               "maximum": 1,
-              "description": "Out-of-sample coverage of the 80 percent band: the share of surveys whose held-out residual lies within the factor times the sigma of the other surveys' residuals."
+              "description": "Out-of-sample coverage of the 80 percent band: the share of surveys whose held-out residual lies within the factor times the sigma of the other surveys' residuals [fraction]."
             },
             "nested_covered": {
               "type": "array",
@@ -441,22 +507,26 @@
                 "type": "number",
                 "minimum": 0
               },
-              "description": "Per survey, in survey order: the sample standard deviation of the held-out residuals of the other surveys."
+              "description": "Per survey, in survey order: the sample standard deviation of the held-out residuals of the other surveys [t/h, kW or mm]."
             },
             "nested_note": {
               "type": "string",
               "description": "States which coverage is in sample (empirical_coverage) and which is out of sample (nested_coverage)."
             }
-          }
+          },
+          "description": "The 80 percent predictive band of the calibrated backbone from its strict held-out residuals, with its coverage."
         },
         "B_lin": {
-          "$ref": "#/$defs/scores"
+          "$ref": "#/$defs/scores",
+          "description": "Scores of the setting-only least-squares line on the closed-side setting (throughput and power)."
         },
         "Morrell": {
-          "$ref": "#/$defs/scores"
+          "$ref": "#/$defs/scores",
+          "description": "Scores of Morrell's size-specific energy through the origin, M_ic refit per fold (power only)."
         },
         "Morrell_noload": {
-          "$ref": "#/$defs/scores"
+          "$ref": "#/$defs/scores",
+          "description": "Scores of Morrell's size-specific energy with a refit no-load power (power only)."
         },
         "morrell_fit": {
           "type": "object",
@@ -473,29 +543,34 @@
               "type": "array",
               "items": {
                 "type": "number"
-              }
+              },
+              "description": "M_ic of the through-origin variant in each fold [kWh/t]."
             },
             "m_ic_noload_kwh_t": {
               "type": "array",
               "items": {
                 "type": "number"
-              }
+              },
+              "description": "M_ic of the variant with a no-load term in each fold [kWh/t]."
             },
             "no_load_kw": {
               "type": "array",
               "items": {
                 "type": "number"
-              }
+              },
+              "description": "The no-load power of that variant in each fold [kW]."
             },
             "noload_variant_m_ic_positive": {
               "type": "array",
               "items": {
                 "type": "boolean"
-              }
+              },
+              "description": "Whether that variant's M_ic is positive in each fold (a negative M_ic is not Morrell's physics)."
             }
           }
         }
-      }
+      },
+      "description": "One set of folds (strict or leaky): the scores of every model and its held-out predictions."
     },
     "target": {
       "type": "object",
@@ -512,13 +587,15 @@
             "tph",
             "kW",
             "p80"
-          ]
+          ],
+          "description": "The target: tph, kW or p80."
         },
         "measured": {
           "type": "array",
           "items": {
             "type": "number"
-          }
+          },
+          "description": "The values the predictions are graded against, in survey order: measured for tph and kW, the backbone's own P80 for p80 [t/h, kW or mm]."
         },
         "strict": {
           "allOf": [
@@ -528,12 +605,15 @@
           ],
           "required": [
             "uq"
-          ]
+          ],
+          "description": "Strict folds: every fitted scalar refit without the held-out survey; they also carry the predictive band (uq)."
         },
         "leaky": {
-          "$ref": "#/$defs/folds"
+          "$ref": "#/$defs/folds",
+          "description": "Leaky folds: every model fitted on all ten surveys, so the gap to the strict folds measures the optimism of a leaking evaluation."
         }
-      }
+      },
+      "description": "The evaluation of one target."
     },
     "source": {
       "type": "object",
@@ -547,17 +627,21 @@
       "properties": {
         "paper": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "Authors, year and title of the source publication."
         },
         "doi": {
-          "const": "10.3390/min14090919"
+          "const": "10.3390/min14090919",
+          "description": "The DOI of the source publication."
         },
         "license": {
-          "const": "CC BY 4.0"
+          "const": "CC BY 4.0",
+          "description": "The licence of the source data, which the derived document carries."
         },
         "table": {
           "type": "string",
-          "minLength": 1
+          "minLength": 1,
+          "description": "The table of the source publication the survey rows are transcribed from."
         }
       }
     }
