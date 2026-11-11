@@ -268,11 +268,13 @@ resamples in which it is better on average. The resampling is the one of the Cru
 resamples, its quantiles), so the CrusherBayes row against the setting-only line on power is the paired difference that
 manuscript prints, and a producer test asserts the equality. Equation~\eqref{eq:paired-boot} is the estimator of
 Equation~\eqref{eq:bootstrap}, because the mean of $d_{k,i}$ over a resample equals the difference of the two resampled MAPEs;
-the report's own tables differ from the document in three details that change the second decimal and nothing else: they draw
-their resamples with another seed ($\uqSeed$), their point difference subtracts the two documents' MAPEs as rounded to two
-decimals where the document takes the mean of the unrounded $d_{k,i}$ (on power, the free-form fit minus the line is $\uqPFreedl$
-points in Table~\ref{tab:uncertainty} and $\cmpPFree$ in the document), and they recompute the calibrated backbone at full
-precision where the document pairs the predictions \texttt{hp500-loo} stores to two decimals.
+the report's own tables differ from the document in two details, which move an interval end by at most $\cmpAgreeEnd$ points
+and a point difference by at most $\cmpAgreePoint$ points over every paired row: they draw their resamples with another seed
+($\uqSeed$), and their point difference subtracts the two documents' MAPEs as rounded to two decimals where the document takes the
+mean of the unrounded $d_{k,i}$ (on power, the free-form fit minus the line is $\uqPFreedl$ points in Table~\ref{tab:uncertainty}
+and $\cmpPFree$ in the document). Both pair the same held-out predictions, those \texttt{hp500-loo} stores to two decimals; the
+report's script recomputes the calibrated backbone at full precision only as the base of the label-shuffle control, which the
+document does not pair.
 
 \emph{Missing and partial data.} When \texttt{hp500-crusherbayes} is absent the document carries the methods of
 \texttt{hp500-loo} only, sets \texttt{crusherbayes.included} to false and writes the reason in English and Spanish; when that

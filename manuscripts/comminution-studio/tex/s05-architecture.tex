@@ -54,8 +54,9 @@ The site is static and is deployed to GitHub Pages; it holds no secret and calls
 index declares into the site, and the web's types are generated from the contract schemas. The App is a workbench on the shared
 CAOS application shell: a case selector, the six controls, and five groups of views with a context tab: System (the circuit, then the
 chamber as a two-dimensional section beside a three-dimensional kinematic view of its geometry and motion, which is not a particle
-simulation), Product (the size distribution with the classification curve, then the population balance), Performance ($P_{80}$
-against operating hours first, then the hours to a target against the drift rate of Figure~\ref{fig:drift}, the result, the setting
+simulation, then the nip angle against its grip limit), Product (the size distribution with the classification curve, then the
+population balance), Performance ($P_{80}$ against operating hours first, then the hours to a target against the drift rate, the
+tab ``Hours by drift'' that draws Figure~\ref{fig:drift} for the selected case, then the result, the setting
 and power responses and the variants), Learned (the two learned models) and Validation (the methods compared on the
 surveys first). Each group opens on one view of the catalog of Section~\ref{sec:arch-showcase}, and each view draws the live engine
 and, dashed, the replay of the committed trace. The two ONNX graphs run in
@@ -99,7 +100,7 @@ live engine's chamber & System, second; Look inside \\
 Size distribution & Cumulative passing of feed and product on a logarithmic size axis, $F_{80}$ and $P_{80}$ marked, the classification
 curve on the same axis & What size distribution does the crusher make, and where do $F_{80}$ and $P_{80}$ sit? & \texttt{trace},
 \texttt{case-manifest} & Product, first; Solve \\
-Drift & $P_{80}$ against operating hours at the reader's drift rate (against the opening of the setting until one is entered), the target
+$P_{80}$ against hours & $P_{80}$ against operating hours at the reader's drift rate (against the opening of the setting until one is entered), the target
 crossed, the drift response, the $45$~h re-set line & How does the product drift as the liners wear, and when does $P_{80}$ leave its
 target? & \texttt{trace}, the live engine's drift functions & Performance, first; Operate \\
 Population balance & The Neumann series of the Whiten solve, pass by pass on the size-distribution axes against the closed form, with
@@ -122,7 +123,8 @@ the canvas and selectable, and the drawing says that it is kinematic and not a p
 domain's diagram of Section~\ref{sec:m-feed}. The population-balance view shows Equation~\eqref{eq:whiten} at work: the product after
 $n$ passes, $\mathbf p_n=(\mathrm I-\mathrm C)\sum_{k<n}(\mathrm B\mathrm C)^k\mathbf f$, converges onto the closed form, and because
 $\mathrm B$ is strictly lower triangular the series is exact after at most as many passes as size classes; its tests require the
-series at the last pass to equal the engine's product to $10^{-9}$ on cases of every machine. The drift view is the projection of
+series at the last pass to equal the engine's product to $10^{-9}$ on cases of every machine. The view of $P_{80}$ against operating hours (the first view of the Performance group)
+is the projection of
 Section~\ref{sec:m-drift} with the drift response of Section~\ref{sec:results-drift} and the state of the margin to the target by its
 meaning. The comparison view reads Section~\ref{sec:results-paired}: it opens on the runner-up, so the recommended and the selected
 method differ, draws the paired gap of the selected method as its mean and its $95\%$ interval, and its takeaway says how sure the
@@ -133,7 +135,7 @@ ranking is with ten surveys; with the comparison document absent, the gap and th
 the ten surveys' feed rates drawn on the stage, $813$ to $1639$~t/h), what happens inside the chamber (the section), how the engine
 computes the product (the population balance on the size-distribution axes, playing its passes up to the first pass at which the
 residual falls below $10^{-6}$), which method to trust (the comparison, whose headline names the setting-only line at its held-out power MAPE of $\cmpPLineMape\%$,
-shown to one decimal) and what to do with it (the drift view, whose headline states that $P_{80}$ reaches the
+shown to one decimal) and what to do with it (the view of $P_{80}$ against operating hours, whose headline states that $P_{80}$ reaches the
 $\drTargetHead$~mm target after $\drOpenHead$~mm of setting drift on survey 1). Each step has a headline that states a number read
 from the artifacts or computed by the live engine, a stage with three anchored callouts that carry a value, a unit and a source, and a
 docked panel; a unit test asserts every headline's number against its source document or the engine. The exit of each step opens the
@@ -142,12 +144,12 @@ App on the step's case and view and, from the last step, on the story's target, 
 \emph{Linked selection.} The views share the shell's linked-view store, both ways: a size class selected in the size distribution is
 selected in the population balance, a survey selected in the comparison is the case of the circuit and the size distribution, a part
 selected in the three-dimensional chamber is selected in the section and its callout, and the pass count of the population balance is
-one cursor for both views that draw it. The hours cursor of the drift view is a second instance of the same store, which sets the
+one cursor for both views that draw it. The hours cursor of the view of $P_{80}$ against operating hours is a second instance of the same store, which sets the
 setting drawn in the chamber and the product drawn in the size distribution.
 
 \emph{Staged motion and its reduced-motion path.} A change of story step is staged on the shell's staged-transition and camera
 functions: the subject changes first (the population balance plays its passes, the comparison grows its methods' dots one by one, the
-drift view draws its curve out to the crossing, and the circuit and the chamber move their drawing in), then the subject is
+view of $P_{80}$ against operating hours draws its curve out to the crossing, and the circuit and the chamber move their drawing in), then the subject is
 highlighted, the three callouts enter one at a time and the panel builds with its numbers counting. A stage that is still entering
 declares the shell's loading state, so the layout checks measure the settled stage. Under the reduced-motion preference every stage
 applies at once and its first frame is its final one. Each callout's leader ends on the data point it names: the anchor is placed on
@@ -159,7 +161,7 @@ together, on at least $80\%$, which the shell's layout check measures.
 \subsection{Resources}\label{sec:arch-resources}
 
 Table~\ref{tab:resources} gives what each stage of the pipeline needs on the development workstation (Windows 11, Python
-$\resPython$ in the pipeline environment, Node $24$, a processor with $\resThreads$ threads), measured on $\resDate$ with a
+$\resPython$ in the pipeline environment, Node $24$, a processor with $\resThreads$ threads), measured on \resDate{} with a
 process-tree monitor that polls the peak memory of the command and of every process it starts every $20$~ms. The three pipeline
 stages that write artifacts (the bake, the HP500 step and the training) were run into a sandbox output root, so the committed artifacts were not rewritten; the disk column of a
 sandbox run is the bytes it wrote there, without the released model bundles that the committed tree also holds. No stage needs a
@@ -170,7 +172,7 @@ threads. Every other stage takes seconds to minutes. The built site is $\resSite
 
 \begin{table}[!t]
 \centering
-\caption{Measured resources of each stage of the pipeline and the web on the development workstation, measured on $\resDate$: peak
+\caption{Measured resources of each stage of the pipeline and the web on the development workstation, measured on \resDate: peak
 memory of the process tree, disk written and wall time. Generated from \texttt{data/\allowbreak{}resources.json} of the report, which records
 each measurement with its exit status.}
 \label{tab:resources}

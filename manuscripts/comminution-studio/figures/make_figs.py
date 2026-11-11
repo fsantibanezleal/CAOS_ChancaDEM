@@ -496,12 +496,16 @@ def fig_drift_response() -> None:
     slope = np.array([(p80(x + step) - p80(x)) / step for x in xs])
     a2.plot(xs + step / 2, slope, color=BLUE, lw=0.9, label="finite difference over 0.02 mm")
     a2.axhline(secant, color=GREEN, lw=1.0, ls="-", label="secant over the opening to the target")
-    a2.axvline(s1, color=GREY, lw=0.8, ls="-.")
+    # the local slope at the current setting and the K1 crossing, so the short segment before the break (s0 to s1) reads
+    a2.axhline(local, color=ORANGE, lw=1.0, ls=":", label=f"local slope at {s0:.0f} mm, {local:.3f} mm/mm")
+    a2.plot([s0], [local], color=ORANGE, marker="o", ms=3.5, ls="none")
+    a2.axvline(s1, color=GREY, lw=0.8, ls="-.", label=f"$K_1$ reaches the {m1:.2f} mm class at {s1:.2f} mm")
     a2.axvline(s_star, color=RED, lw=0.8, ls="--", label=f"target reached at {s_star:.2f} mm")
+    a2.set_ylim(0.0, 1.55 * float(np.max(slope)))
     a2.set_xlabel("closed-side setting (mm)")
     a2.set_ylabel("slope of $P_{80}$ (mm per mm)")
     a2.set_title("(b) the slope is piecewise in the setting", fontsize=8.6)
-    a2.legend(fontsize=5.9, frameon=True, facecolor="white", edgecolor=GRID, loc="upper right")
+    a2.legend(fontsize=5.6, frameon=True, facecolor="white", edgecolor=GRID, loc="upper right")
     _clean(a2)
     _save(fig, "fig-drift-response.pdf")
     print(f"drift response: P80 {p0:.3f} mm, target {target:.3f} mm at {s_star:.3f} mm, secant {secant:.4f}, local {local:.4f}, "

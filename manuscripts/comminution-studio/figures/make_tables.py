@@ -420,15 +420,22 @@ def tab_comparison() -> None:
             worst_end = max(worst_end, abs(p["ci95"][0] - r["lo"]), abs(p["ci95"][1] - r["hi"]))
             worst_point = max(worst_point, abs(p["mean_diff_pts"] - r["d"]))
     macros += [f"\\newcommand{{\\cmpAgreeEnd}}{{{worst_end:.2f}}}", f"\\newcommand{{\\cmpAgreePoint}}{{{worst_point:.3f}}}"]
-    # surveys at which the runner-up's interval on power would exclude zero if the per-survey differences kept their spread
-    # (the half-width of a mean shrinks as one over the square root of the number of surveys)
+    # surveys at which the interval on power of the runner-up and of CrusherBayes would exclude zero if the per-survey
+    # differences kept their spread: a distance from the point difference to an interval end shrinks as sqrt(N_s / N), so the
+    # end that must cross zero, the lower one, reaches it at N = N_s ((d - lo) / d)^2; the symmetric half-width (hi - lo) / 2
+    # in place of d - lo gives N = N_s ((hi - lo) / 2d)^2. The text gives the two as a range (lower to upper).
     for t, tl in (("kW", "P"),):
         block = doc["targets"][t]
         for p in block["paired"]:
             if p["method"] in ("M2_freeform", "crusherbayes"):
-                half = (p["ci95"][1] - p["ci95"][0]) / 2
-                need = doc["n"] * (half / p["mean_diff_pts"]) ** 2
-                macros.append(f"\\newcommand{{\\cmp{tl}{CMP_MACRO[p['method']]}Need}}{{{need:.0f}}}")
+                d, lo, hi = p["mean_diff_pts"], p["ci95"][0], p["ci95"][1]
+                by_lower = doc["n"] * ((d - lo) / d) ** 2
+                by_half = doc["n"] * ((hi - lo) / 2 / d) ** 2
+                name = CMP_MACRO[p["method"]]
+                macros += [f"\\newcommand{{\\cmp{tl}{name}NeedLower}}{{{by_lower:.0f}}}",
+                           f"\\newcommand{{\\cmp{tl}{name}NeedHalf}}{{{by_half:.0f}}}",
+                           f"\\newcommand{{\\cmp{tl}{name}NeedLo}}{{{min(by_lower, by_half):.0f}}}",
+                           f"\\newcommand{{\\cmp{tl}{name}NeedHi}}{{{max(by_lower, by_half):.0f}}}"]
     head = ["Method", r"MAPE (\%)", "Mean $\\bar d$ (points)", r"95\% interval", "Wins", "$p_{\\mathrm{better}}$"]
     body = [r"\begin{tabular}{@{}l r r c r r@{}}", r"\toprule", " & ".join(head) + r" \\", r"\midrule"] + lines + [
         r"\bottomrule", r"\end{tabular}"]
@@ -497,8 +504,8 @@ def numbers_drift() -> None:
     ]))
 
 
-RESOURCE_ROWS = [("bake", r"Bake (\texttt{run.py all}: 27 cases, the three HP500 documents, index, readiness)", "workstation"),
-                 ("hp500", r"HP500 step alone (\texttt{run.py hp500}: backbone, CrusherCal, the CrusherBayes sampler)", "workstation"),
+RESOURCE_ROWS = [("bake", r"Bake (\texttt{run.py all}: 27 cases, the four HP500 documents, index, readiness)", "workstation"),
+                 ("hp500", r"HP500 step alone (\texttt{run.py hp500}: backbone, CrusherCal, the CrusherBayes sampler, the paired comparison)", "workstation"),
                  ("models", r"Training (\texttt{run.py models}: sweeps, two networks, export, evaluation)", "workstation, CPU"),
                  ("tests", "Python tests, the whole suite", "workstation"),
                  ("install", r"Web install (\texttt{npm ci})", "workstation, CI"),
@@ -749,11 +756,29 @@ def tab_contracts() -> None:
     write("numbers-contracts", "\n".join(macros))
 
 
+def _def_of(v: dict, defs: dict) -> dict | None:
+    """The definition a local ``$ref`` names, or None."""
+    return defs.get(v["$ref"].split("/")[-1]) if "$ref" in v else None
+
+
+def _alternatives(v: dict) -> list[dict]:
+    """The alternatives of a ``oneOf`` or ``anyOf``, the null one last."""
+    alts = [a for a in (v.get("oneOf") or v.get("anyOf") or []) if isinstance(a, dict)]
+    return sorted(alts, key=lambda a: a.get("type") == "null")
+
+
 def _type_of(v: dict, defs: dict) -> str:
+    d = _def_of(v, defs)
+    if d is not None:
+        return _type_of(d, defs)
     if "$ref" in v:
-        ref = v["$ref"].split("/")[-1]
-        d = defs.get(ref, {})
-        return _type_of(d, defs) if d else ref
+        return v["$ref"].split("/")[-1]
+    alts = _alternatives(v)
+    if alts:
+        return " or ".join(dict.fromkeys(_type_of(a, defs) for a in alts))
+    for m in v.get("allOf", []):
+        if isinstance(m, dict) and ("$ref" in m or "type" in m):
+            return _type_of(m, defs)
     if "const" in v:
         return "const"
     if "enum" in v:
@@ -762,17 +787,20 @@ def _type_of(v: dict, defs: dict) -> str:
     if isinstance(t, list):
         t = " or ".join(t)
     if t == "array" and isinstance(v.get("items"), dict):
-        it = v["items"]
-        inner = _type_of(it, defs)
+        return f"array of {_type_of(v['items'], defs)}"
+    if t == "array" and isinstance(v.get("prefixItems"), list) and v["prefixItems"]:
+        inner = " or ".join(dict.fromkeys(_type_of(p, defs) for p in v["prefixItems"]))
         return f"array of {inner}"
     return t
 
 
 def _range_of(v: dict, defs: dict) -> str:
-    if "$ref" in v:
-        d = defs.get(v["$ref"].split("/")[-1], {})
-        if d:
-            return _range_of(d, defs)
+    d = _def_of(v, defs)
+    if d is not None:
+        return _range_of(d, defs)
+    alts = _alternatives(v)
+    if alts:
+        return " or ".join(r for r in (_range_of(a, defs) for a in alts) if r)
     parts = []
     if "const" in v:
         parts.append(chr(0) + str(v["const"]) + chr(1))
@@ -783,7 +811,16 @@ def _range_of(v: dict, defs: dict) -> str:
             parts.append(f"{sym} {v[key]}")
     if "minItems" in v or "maxItems" in v:
         lo, hi = v.get("minItems"), v.get("maxItems")
-        parts.append(f"{lo if lo is not None else 0} to {hi if hi is not None else 'n'} items")
+        if hi is None and v.get("items") is False and isinstance(v.get("prefixItems"), list):
+            hi = len(v["prefixItems"])   # no item past the prefix: the prefix length is the maximum
+        if lo is not None and hi is not None and lo == hi:
+            parts.append(f"exactly {lo} items")
+        elif hi is None:
+            parts.append(f"at least {lo} items")
+        elif lo is None:
+            parts.append(f"at most {hi} items")
+        else:
+            parts.append(f"{lo} to {hi} items")
     if "pattern" in v:
         parts.append("pattern " + chr(0) + v["pattern"] + chr(1))
     items = v.get("items")
@@ -802,51 +839,135 @@ def breakable(text: str) -> str:
     return re.sub(chr(0) + "(.*?)" + chr(1), split, text)
 
 
+def _record(v: dict, defs: dict, chain: tuple[str, ...]) -> tuple[dict, set, str, tuple[str, ...]] | None:
+    """The fields of a record schema ``v``, their required set and the separator of the path to them: ``.`` for an object
+    with properties, ``[].`` for an array whose items are one, ``.<key>.`` for a map (additionalProperties or
+    patternProperties) whose values are one. A ``$ref``, the ``allOf`` members that name fields and a single non-null
+    ``oneOf``/``anyOf`` alternative are followed; None for a leaf. ``chain`` holds the definitions already entered, so a
+    recursive schema stops."""
+    if "$ref" in v:
+        name = v["$ref"].split("/")[-1]
+        d = defs.get(name)
+        if d is None or name in chain:
+            return None
+        return _record(d, defs, chain + (name,))
+    alts = [a for a in _alternatives(v) if a.get("type") != "null"]
+    if len(alts) == 1:
+        return _record(alts[0], defs, chain)
+    if len(alts) > 1:   # several record alternatives: the union of their fields, required where every alternative requires
+        subs = [_record(a, defs, chain) for a in alts]
+        if all(sub is not None and sub[2] == "." for sub in subs):
+            merged: dict = {}
+            for sub in subs:
+                for k, f in sub[0].items():
+                    if k not in merged:
+                        merged[k] = f
+                    elif f != merged[k]:   # a field in several alternatives with different schemas: one of them
+                        prev = merged[k]["oneOf"] if "oneOf" in merged[k] and "type" not in merged[k] else [merged[k]]
+                        desc = next((g["description"] for g in [*prev, f] if g.get("description")), None)
+                        merged[k] = {"oneOf": [*prev, f], **({"description": desc} if desc else {})}
+            return merged, set.intersection(*(sub[1] for sub in subs)), ".", chain
+    props: dict = dict(v.get("properties") or {})
+    req = set(v.get("required", []))
+    entered = chain
+    for m in v.get("allOf", []):
+        if isinstance(m, dict) and ("$ref" in m or "properties" in m) and "if" not in m:
+            sub = _record(m, defs, chain)
+            if sub is not None and sub[2] == ".":
+                props = {**sub[0], **props}
+                req |= sub[1]
+                entered = sub[3] if not v.get("properties") else entered   # a bare allOf of one definition is that definition
+    if props:
+        return props, req, ".", entered
+    if v.get("type") == "array" and isinstance(v.get("items"), dict):
+        sub = _record(v["items"], defs, chain)
+        if sub is not None and sub[2] == ".":
+            return sub[0], sub[1], "[].", sub[3]
+    maps = [v["additionalProperties"]] if isinstance(v.get("additionalProperties"), dict) else []
+    maps += [p for p in (v.get("patternProperties") or {}).values() if isinstance(p, dict)]
+    for mv in maps:
+        sub = _record(mv, defs, chain)
+        if sub is not None and sub[2] == ".":
+            return sub[0], sub[1], ".<key>.", sub[3]
+    return None
+
+
+UNIT_BRACKET = re.compile(r"\s*\[([^\[\]]+)\]\.?\s*$")
+
+
+def _meaning(v: dict, defs: dict) -> tuple[str, str]:
+    """The field's description (its own, else the one of the definition it names) and its unit: the bracket that ends the
+    description (``... [t/h].``), the schemas' notation for the unit of a field."""
+    desc = v.get("description")
+    if not desc:
+        d = _def_of(v, defs)
+        desc = d.get("description") if d else None
+    desc = re.sub(r"\s+", " ", (desc or "").strip())
+    m = UNIT_BRACKET.search(desc)
+    unit = ""
+    if m:
+        unit, desc = m.group(1).strip(), desc[:m.start()].rstrip()
+        desc = desc if not desc or desc.endswith((".", ":", ")")) else desc + "."
+    desc = desc.replace("verdict", "decision")   # the report's vocabulary; the field names stay verbatim
+    return desc, unit
+
+
 def schema_longtable(cid: str, version: str, schema_path: Path) -> None:
+    """The appendix table of one contract: every field down to its leaves (through ``$ref``, ``$defs``, ``allOf``, ``items``
+    and maps), with its type, range, requirement, unit and meaning as the schema states them."""
     s = _json(schema_path)
     defs = s.get("$defs", {})
-    req = set(s.get("required", []))
     rows = []
+    first: dict[str, str] = {}
 
-    def walk(props: dict, prefix: str, required: set, depth: int) -> None:
+    def field(path: str) -> str:
+        """A dotted path in typewriter type that may break after a dot or an underscore (a long path fits its column)."""
+        return r"\texttt{" + tex(path).replace(".", r".\allowbreak{}").replace(r"\_", r"\_\allowbreak{}") + "}"
+
+    def walk(props: dict, prefix: str, required: set, chain: tuple[str, ...]) -> None:
         for k, v in props.items():
             if not isinstance(v, dict):
                 continue
             name = prefix + k
             rng = _range_of(v, defs)
-            desc = (v.get("description") or "").strip()
-            desc = re.sub(r"\s+", " ", desc)
-            if len(desc) > 150:
-                desc = desc[:147].rsplit(" ", 1)[0] + " ..."
-            desc = desc.replace("verdict", "decision")   # the report's vocabulary; the field names stay verbatim
-            rows.append([r"\texttt{" + tex(name) + "}", tex(_type_of(v, defs)), breakable(tex(rng)) if rng else DASH,
-                         "yes" if k in required else "no", tex(desc) if desc else DASH])
-            sub = v
-            if "$ref" in v:
-                sub = defs.get(v["$ref"].split("/")[-1], v)
-            if depth < 1 and sub.get("type") == "object" and "properties" in sub:
-                walk(sub["properties"], name + ".", set(sub.get("required", [])), depth + 1)
-            elif depth < 1 and sub.get("type") == "array" and isinstance(sub.get("items"), dict):
-                it = sub["items"]
-                if "$ref" in it:
-                    it = defs.get(it["$ref"].split("/")[-1], it)
-                if "properties" in it:
-                    walk(it["properties"], name + "[].", set(it.get("required", [])), depth + 1)
+            desc, unit = _meaning(v, defs)
+            sub = _record(v, defs, chain)
+            # a definition's fields are listed once, under the first path that reaches it; a later path refers to it
+            entered = sub[3][-1] if sub is not None and sub[3] != chain else None
+            meaning = tex(desc) if desc else ""
+            if entered in first:
+                meaning = (meaning + " " if meaning else "") + "Its fields are those of " + field(first[entered]) + "."
+            rows.append([field(name), tex(_type_of(v, defs)), breakable(tex(rng)) if rng else DASH,
+                         "yes" if k in required else "no", tex(unit) if unit else DASH, meaning or DASH])
+            if sub is not None and entered not in first:
+                fields, req, sep, sub_chain = sub
+                if entered is not None:
+                    first[entered] = name
+                walk(fields, name + sep, req, sub_chain)
 
-    walk(s.get("properties", {}), "", req, 0)
+    walk(s.get("properties", {}), "", set(s.get("required", [])), ())
     caption = (r"Fields of the \texttt{" + tex(cid) + "} contract, version $" + tex(version) + "$"
-               + r", generated from its schema file \texttt{" + tex(schema_path.name) + "}: the dotted path of each field, "
-               "its type, its range or allowed values as the schema states them, whether it is required at its level, "
-               "and its meaning.")
-    head = r"Field & Type & Range or values & Req. & Meaning \\"
+               + r", generated from its schema file \texttt{" + tex(schema_path.name) + "}: the dotted path of each field "
+               r"down to its leaves (\texttt{[]} an element of a list, \texttt{<key>} any key of a map; a structure met "
+               "again is listed once, where it first appears), its type, its range or allowed values as the schema states "
+               "them, whether it is required at its level, its unit and its meaning.")
+    head = r"Field & Type & Range or values & Req. & Unit & Meaning \\"
     lines = [r"\begingroup\scriptsize",
-             r"\begin{longtable}{@{}p{0.21\textwidth} p{0.10\textwidth} p{0.19\textwidth} p{0.05\textwidth} p{0.33\textwidth}@{}}",
+             r"\begin{longtable}{@{}p{0.20\textwidth} p{0.09\textwidth} p{0.16\textwidth} p{0.04\textwidth} "
+             r"p{0.07\textwidth} p{0.30\textwidth}@{}}",
              r"\caption{" + caption + r"}\label{tab:schema-" + cid + r"}\\",
              r"\toprule", head, r"\midrule", r"\endfirsthead",
-             r"\multicolumn{5}{@{}l}{\footnotesize Table~\thetable{} (continued)}\\", r"\toprule", head, r"\midrule",
+             r"\multicolumn{6}{@{}l}{\footnotesize Table~\thetable{} (continued)}\\", r"\toprule", head, r"\midrule",
              r"\endhead", r"\bottomrule", r"\endfoot"]
-    # a schema field named verdict is quoted verbatim: the voice check is told so on that line
-    lines += [" & ".join(r) + r" \\" + (" % voice-ok: schema field name" if "verdict" in r[0] else "") for r in rows]
+    # a schema field is quoted verbatim, so its key may be a word the checks refuse in prose: a field named verdict (the voice
+    # check) and a key that is a method's ladder id (M1_residual, pred.M2: the internal-names check). The marker names it on
+    # that line only, and only in the Field column: the Meaning column names every method by its name.
+    def marker(r: list[str]) -> str:
+        notes = [n for n, hit in (("voice-ok", "verdict" in r[0]), ("internal-name-ok", re.search(r"(?<![A-Za-z0-9])M\d", r[0])))
+                 if hit]
+        return (" % " + " ".join(notes) + ": schema field name") if notes else ""
+
+    lines += [" & ".join(r) + r" \\" + marker(r) for r in rows]
     lines += [r"\end{longtable}", r"\endgroup"]
     write(f"schema-{cid}", "\n".join(lines))
 
