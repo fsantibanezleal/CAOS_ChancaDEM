@@ -43,8 +43,10 @@ UNVERIFIED in this unit.
 (`chancadem.hp500.backbone/v1`): the measured values and, per survey, the modelled $P_{80}$, throughput, Bond power,
 calibrated power and the engine's own $F_{80}$. The paper reports the particle size distributions only as figures, so the
 $P_{80}$ is a model output and is judged by a physical relation (0.35 to 1.1 times the setting) rather than by a
-measurement. The in-sample throughput agreement of the backbone with the ten measured values is a MAPE of 11.55 percent
-(`data/derived/hp500/loo.json`, `tph_parity.backbone`).
+measurement. At its shipped constants the backbone reproduces the ten measured throughputs with a MAPE of 11.55 percent
+(`data/derived/hp500/loo.json`, `tph_parity.backbone`); its base-case capacity of 647 t/h comes from a Bruno simulation, so
+nothing of it is fitted to the surveys. The in-sample figure, the capacity base fitted on all ten surveys, is 10.95 percent
+(`loo.tph.leaky.M0_backbone`).
 
 ## Where it runs
 

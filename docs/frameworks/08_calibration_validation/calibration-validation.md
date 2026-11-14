@@ -45,8 +45,10 @@ What this says, as the data stand:
 
 - **t/h, a genuine win over the baseline.** The strict LOO MAPE of the backbone, 12.09 percent, beats the
   constant mean (18.29) and the label-shuffle control (25.04); no comparison with an error band of the paper is claimed,
-  because the repository holds no source for one. The in-sample figure is 11.55 percent, so the held-out
-  number is not an in-sample artifact. The free-form model M2 is equally good on throughput (12.18); the backbone matches
+  because the repository holds no source for one. The in-sample figure, the capacity base fitted on all ten surveys (the
+  leaky fold), is 10.95 percent, so the held-out number is not an in-sample artifact. The engine at its shipped constants
+  scores 11.55 percent; its base-case capacity of 647 t/h comes from a Bruno simulation, so nothing of it is fitted to the
+  surveys. The free-form model M2 is equally good on throughput (12.18); the backbone matches
   a two-parameter regression with one fitted scalar and a physical shape.
 - **kW, an honest negative for the backbone.** The strict MAPE of M0, 25.94 percent, is no better than the constant mean
   (24.48). The free-form model M2, at 14.03 percent, does better on power, against the expectation written in the

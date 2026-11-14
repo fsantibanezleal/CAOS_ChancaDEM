@@ -203,7 +203,10 @@ two primary targets and the secondary one, and the Morrell settings $K_s=55$, $K
 MAPE in percent, RMSE in the target unit, $R^2$ and largest deviation in percent of every predictor, the held-out predictions per
 survey, and, on the strict block, the band: $\sigma$ of the held-out residuals, the half-width, the nominal and in-sample
 coverage, the relative half-width in percent, the nested coverage with the per-survey $\sigma_{-i}$ and whether each survey is
-covered. The power block adds the per-fold Morrell fits. Two further blocks give the in-sample power and throughput parity. The
+covered. The power block adds the per-fold Morrell fits. Two further blocks score predictors that are not refit in the folds:
+the power parity sets four power estimates against the measured powers, and the throughput parity sets against the measured
+feed rates the engine at its shipped constants, whose capacity base of $\qtShip$~t/h comes from a simulation and is fitted to none
+of the surveys; the in-sample figure of the throughput backbone, its capacity base fitted on all ten surveys, is the leaky block. The
 version moved to $1.2.0$ when the setting-only line and the two Morrell variants were added. The producer is
 \texttt{pipeline/\allowbreak{}hp500/\allowbreak{}loo.py}; the consumers are CrusherBayes, the paired comparison of Section~\ref{sec:data-comparison}, the web's Benchmark and Experiments views, the band shown on the
 real-survey gauges and the lower-bound band of the synthetic secondary-cone cases. Missing-data behaviour: readiness says
@@ -242,7 +245,14 @@ version of each input, and a CrusherBayes block that says whether that method is
 
 \emph{The recommended method} of a target is the method with the lowest document MAPE among the methods that are not
 controls, $\star=\arg\min_{k\notin\mathcal C}\mathrm{MAPE}_k$, where $\mathcal C$ holds the constant mean and the
-label-shuffle control; a tie keeps the listing order of the document. The runner-up is the next method in that order. The rule
+label-shuffle control; a tie keeps the listing order of the document. The runner-up is the next method in that order. The
+methods it ranks, $\rankN$ on throughput, are those that refit every fitted quantity in each fold: the strict rows of
+\texttt{hp500-loo} that are not controls, and CrusherBayes. Two throughput predictors of this report fit nothing in the folds and are not ranked: the
+engine at its shipped constants ($\bbShipMape\%$, nothing of it fitted to the surveys) and the published model of Rocha
+et al.\ ($\uqQRocha\%$, its $\lambda_{\mathrm R}$ set by the authors on survey~10). Both tie with CrusherBayes: on the resamples
+of this document, the error of CrusherBayes minus theirs is $\rankShipD$ points (interval $\rankShipLo$ to $\rankShipHi$) and
+$\rankRochaD$ points ($\rankRochaLo$ to $\rankRochaHi$). The recommended method is therefore the lowest held-out error among the
+methods refit in every fold, not among every predictor the report scores. The rule
 is the one the web applied before the contract existed, so the document and the view cannot name different methods, and the
 consumer test checks that they do not. The constant mean of a fold is the mean of its nine training surveys, as the CrusherBayes
 manuscript computes it~\cite{crusherbayes2026}, so the control carries per-survey errors and a paired row; the label-shuffle

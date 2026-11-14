@@ -580,6 +580,64 @@ def numbers_fits() -> None:
     ]))
 
 
+def numbers_ranking() -> None:
+    """The throughput backbone's figures by what was fitted where, and the two throughput predictors that the paired
+    comparison does not rank. The engine at its shipped constants (``tph_parity``: the base-case capacity HP500_QREF of a
+    Bruno simulation, nothing fitted to the surveys) and the capacity base fitted on all ten surveys (the leaky fold, the
+    in-sample figure) are kept apart. The engine at its shipped constants and the published model of Rocha et al. are paired
+    with CrusherBayes (CrusherBayes minus the predictor) on the resamples of ``hp500-comparison``, which are those of the
+    CrusherBayes manuscript (its seed, its number of resamples, its quantiles)."""
+    import heldout_uq as uq
+    import numpy as np
+
+    lo = _json(HP / "loo.json")
+    cmp_ = _json(HP / "comparison.json")
+    cb = _json(HP / "crusherbayes.json")
+    bb = _json(HP / "backbone.json")["surveys"]
+    ship = lo["tph_parity"]["backbone"]
+    leaky = lo["loo"]["tph"]["leaky"]["M0_backbone"]
+    strict = lo["loo"]["tph"]["strict"]
+    per = lo["tph_parity"]["per_survey"]
+    meas = np.array([r["measured"] for r in per], float)
+    pred_ship = np.array([r["backbone"] for r in per], float)
+    k = int(np.argmax(np.abs(pred_ship - meas) / meas))
+    css = np.array([s["measured"]["css_mm"] for s in bb], float)
+    f80 = np.array([s["measured"]["f80_mm"] for s in bb], float)
+    assert np.array_equal(meas, np.array(lo["loo"]["tph"]["measured"], float))
+    slope = float(np.polyfit(css, meas, 1)[0])
+    boot = cmp_["bootstrap"]
+    n = meas.size
+    idx = np.random.default_rng(boot["seed"]).integers(0, n, size=(boot["resamples"], n))
+    a_cb = uq.ape(meas, np.array(cb["loo"]["tph"]["pred_mean"], float))
+    pairs = {}
+    for name, pred in (("Ship", pred_ship), ("Rocha", uq.rocha_throughput(css, f80, meas)["published"])):
+        d = a_cb - uq.ape(meas, pred)
+        s = d[idx].mean(axis=1)
+        q_lo, q_hi = np.percentile(s, boot["quantiles"])
+        pairs[name] = (float(d.mean()), float(q_lo), float(q_hi))
+    ranked = {m["id"] for m in cmp_["targets"]["tph"]["methods"] if not m["control"]}
+    assert "crusherbayes" in ranked and cmp_["targets"]["tph"]["recommended"] == "crusherbayes"
+    lines = [
+        f"\\newcommand{{\\qtShip}}{{{HP500_QREF:.0f}}}",
+        f"\\newcommand{{\\bbShipMape}}{{{ship['mape_pct']:.2f}}}",
+        f"\\newcommand{{\\bbShipRsq}}{{{ship['r2']:.3f}}}",
+        f"\\newcommand{{\\bbShipMaxdev}}{{{ship['maxdev_pct']:.2f}}}",
+        f"\\newcommand{{\\bbShipMaxdevSurvey}}{{{per[k]['n']}}}",
+        f"\\newcommand{{\\bbShipMaxdevMeas}}{{{meas[k]:.0f}}}",
+        f"\\newcommand{{\\bbLeakyMape}}{{{leaky['mape_pct']:.2f}}}",
+        f"\\newcommand{{\\bbLeakyGap}}{{{strict['M0_backbone']['mape_pct'] - leaky['mape_pct']:.2f}}}",
+        f"\\newcommand{{\\bbNestedCovN}}{{{int(sum(strict['uq']['nested_covered']))}}}",
+        f"\\newcommand{{\\bbBandPct}}{{{100 * strict['uq']['nominal_coverage']:.0f}}}",
+        f"\\newcommand{{\\uqLevelPct}}{{{100 * uq.LEVEL:.0f}}}",
+        f"\\newcommand{{\\lineSlopeQ}}{{{slope:.0f}}}",
+        f"\\newcommand{{\\rankN}}{{{len(ranked)}}}",
+    ]
+    for name, (d, q_lo, q_hi) in pairs.items():
+        lines += [f"\\newcommand{{\\rank{name}D}}{{{d:+.2f}}}", f"\\newcommand{{\\rank{name}Lo}}{{{q_lo:+.2f}}}",
+                  f"\\newcommand{{\\rank{name}Hi}}{{{q_hi:+.2f}}}"]
+    write("numbers-ranking", "\n".join(lines))
+
+
 def tab_band() -> None:
     loo = _json(HP / "loo.json")["loo"]
     rows = []
@@ -1072,6 +1130,7 @@ if __name__ == "__main__":
     tab_comparison()
     numbers_drift()
     numbers_fits()
+    numbers_ranking()
     tab_resources()
     tab_band()
     tab_morrell()

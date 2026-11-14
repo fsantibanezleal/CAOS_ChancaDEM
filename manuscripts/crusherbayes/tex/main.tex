@@ -158,8 +158,8 @@ and with its fitting parameter refit in each fold;
 \item an ablation of the discrepancy, the engine scalars, the population-balance scalars, the prior widths, the
 discrepancy scale and the sampler, with three seeds of the full method.
 \end{enumerate}
-The main result is partly negative. Held out, CrusherBayes is as accurate as the refit engine and the published throughput
-model of Rocha et al. on throughput and no more accurate than a line in the closed-side setting on power; its 80\pct{} bands cover \cbTphCovN{} and \cbKwCovN{} of the ten
+The main result is partly negative. Held out, CrusherBayes is as accurate as the refit engine, the engine at its shipped
+constants and the published throughput model of Rocha et al. on throughput and no more accurate than a line in the closed-side setting on power; its 80\pct{} bands cover \cbTphCovN{} and \cbKwCovN{} of the ten
 surveys, a coverage that ten surveys cannot tell apart from that of a slightly miscalibrated band, and they are narrower
 than the residual band of the refit engine. The surveys identify the noise and the dependence of both outputs on the
 setting. They narrow the capacity base only through the scale of the discrepancy prior: the engine's throughput lies in the
@@ -268,7 +268,7 @@ Tuo and Wu~\cite{tuowu} take the calibration parameter to be the minimizer of th
 response and the model, and prove, for physical data with random error, that their $L_2$ calibration is semiparametric
 efficient while ordinary least squares is consistent but not efficient. Plumlee~\cite{plumlee} notes that the parameter of the predominant Bayesian calibration is left
 undefined, so its posterior is broader than it should be, and proposes a prior on the discrepancy that is orthogonal to
-the gradient of the computer model in the parameters. That prior removes by construction the confounding of
+the gradient of the computer model in the parameters. That prior is built to mitigate the confounding of
 Proposition~\ref{prop:span} below, where the gradient of the throughput in $\ln Q_{\mathrm{ref}}$ lies in the span of the
 discrepancy. Our propositions do not add a general result to these works: they are exact instances, for a discrepancy
 linear in two regressors and for this engine, of the confounding they describe, and they say which scalars it reaches.
@@ -922,7 +922,10 @@ are not printed by the source: the work index of the blend, for which we use the
 \rochaWiLo{} and \rochaWiHi~kWh/t of its two ore types, and the moisture of each survey, taken below 1\pct{} so that its
 correction factor is one. As a check of the implementation, the sum over the ten surveys of the squared relative
 deviations of the published variant is \rochaSsq, which the source prints as \rochaSsqPrinted{} (\rochaSsqLo{} and
-\rochaSsqHi{} at the two ore work indices). Their power model, $P_c=\zeta P_d+P_n$ with the drop-weight power
+\rochaSsqHi{} at the two ore work indices). One scalar fitted on one survey reproduces that survey exactly, and the shape of
+Eq.~10 scales as $W_i^{-\eta}$, so the exact survey-10 value of $\lambda_{\mathrm R}$ scales as $W_i^{\eta}$: at our
+\rochaWi~kWh/t it is \rochaLamTen, and the printed \rochaLamPrinted{} is the exact value at a work index of \rochaWiTen~kWh/t, between those
+of the two ore types. The published variant at our work index is therefore close to, but not exactly, the authors' fit. Their power model, $P_c=\zeta P_d+P_n$ with the drop-weight power
 $P_d=Q\sum_iE_{\mathrm{cs},i}C_iw_i$ of their Eq.~8, cannot be run from the source, because two of its inputs are not
 printed: the mass fraction $w_i$ of each size class in the crusher, since the source tabulates only the $f_{80}$ of each
 survey and gives the size distributions as figures, and the specific energy $E_{\mathrm{cs}}$ at the $t_{10}$ of each
@@ -1008,7 +1011,8 @@ draws the intervals. On throughput the posterior predictive mean has a MAPE of \
 free-form fit, \residTphMapeBoot\pct{} with the bounded residual, \blinTphMapeBoot\pct{} for the setting-only line and
 \constTphMapeBoot\pct{} for the constant mean. The engine at its shipped constants reaches \pubTphMapeBoot\pct{}; on
 throughput only its capacity form and the base-case capacity $Q_{\mathrm{ref}}=647$~t/h of a Bruno simulation enter, and
-nothing of it is fitted to the surveys, so this row is a held-out figure, with no band. The published throughput model of
+nothing of it is fitted to the surveys, so this row is a held-out figure, with no band, \dPubTph{} points below CrusherBayes
+and tied with it (paired interval \dPubTphLo{} to \dPubTphHi, Table~\ref{tab:paired}). The published throughput model of
 Rocha et al. reaches \rochapubTphMapeBoot\pct{} (\rochapubTphMapeLo{} to \rochapubTphMapeHi), the lowest point value on
 throughput, but its $\lambda_{\mathrm R}$ was fitted on survey~10 and its work index is not printed by the source: at the
 work indices of the two ore types it gives \rochaPubMapeLo\pct{} and \rochaPubMapeHi\pct. With $\lambda_{\mathrm R}$ refit in
@@ -1045,7 +1049,7 @@ separate the two groups on power; the paired differences resolve one more pair o
 \begin{figure*}[!t]
 \centering
 \includegraphics[width=0.95\textwidth]{fig-comparison.pdf}
-\caption{Held-out mean absolute percentage error of every method on the ten HP500 surveys with its 95\pct{} bootstrap interval, for (a) power and (b) throughput; CrusherBayes in blue, the setting-only line in green, the engine at its shipped constants and the published model of Rocha et al. (no fit in the folds) as squares.}
+\caption{Mean absolute percentage error of every method on the ten HP500 surveys under the leave-one-survey-out folds, with its 95\pct{} bootstrap interval, for (a) power and (b) throughput; CrusherBayes in blue, the setting-only line in green, the engine at its shipped constants and the published model of Rocha et al. (no fit in the folds) as squares. The published model of Rocha et al. set its $\lambda$ on survey 10, so its row is not held out.}
 \label{fig:comparison}
 \end{figure*}
 
@@ -1070,10 +1074,14 @@ fold it is \dRochaFitTph{} points (\dRochaFitTphLo{} to \dRochaFitTphHi), on \dR
 published variant is not held out on survey~10, on which its one fitted number was set, and its point value depends on
 a work index the source does not print, so the tie is the reading the data support. The closest published model of this
 crusher is therefore no better and no worse than CrusherBayes on throughput, and its power model could not be run
-(Section~\ref{sec:design}).
+(Section~\ref{sec:design}). The engine at its shipped constants ties CrusherBayes too, at \dPubTph{} points (\dPubTphLo{} to
+\dPubTphHi), with CrusherBayes lower on \dPubTphWins{} of the ten surveys. The paired comparison that the product's App reads
+ranks only the methods that refit every fitted quantity in each fold (the strict rows of the held-out document and
+CrusherBayes) and names CrusherBayes on throughput among them; the engine at its shipped constants and the published model of
+Rocha et al. fit nothing in the folds and are not ranked there, so its recommendation is not a claim over these two rows.
 
 \begin{table}[!t]
-\caption{Paired differences of held-out MAPE, CrusherBayes minus each comparator (negative favours CrusherBayes), with the 95\pct{} paired-bootstrap interval, the fraction of resamples favouring CrusherBayes and the surveys on which it has the lower error.}
+\caption{Paired differences of MAPE under the leave-one-survey-out folds, CrusherBayes minus each comparator (negative favours CrusherBayes; the published model of Rocha et al. set its $\lambda$ on survey 10, so its row is not held out), with the 95\pct{} paired-bootstrap interval, the fraction of resamples favouring CrusherBayes and the surveys on which it has the lower error.}
 \label{tab:paired}
 \centering\footnotesize
 \resizebox{\columnwidth}{!}{\input{generated/tab-paired}}
@@ -1419,7 +1427,7 @@ capacity base moves with $\tau_{\mathrm{tph}}$ as the theory states; a different
 median of each noise scale and the scale $\tau_t$ of each discrepancy were set at about 5 and 12\pct{} of typical levels of
 1,200~t/h and 300~kW read from all ten surveys, so every fold's prior carries a little information from its held-out
 survey; the doubling and halving of $\tau_t$ bound its effect on the scores. The discrepancy prior of Kennedy and O'Hagan was
-kept; the orthogonal discrepancy prior of Plumlee~\cite{plumlee}, which removes the confounding of
+kept; the orthogonal discrepancy prior of Plumlee~\cite{plumlee}, which is built to mitigate the confounding of
 Proposition~\ref{prop:span}, was not tried. The convergence
 criterion uses the autocorrelation time of one ensemble per posterior, and the Monte Carlo error is measured by three seeds,
 not by independent ensembles started from dispersed points. The linearized posterior of Section~\ref{sec:theory} is
@@ -1492,8 +1500,9 @@ exactly at their prior is refuted: the two classification multipliers move by up
 deviations in all three seeds, and fixing the four scalars changes the held-out power MAPE by \balFixGainKw{} points
 against a seed spread of \seedSpreadKw. Held out, CrusherBayes reaches \cbTphMape\pct{} on throughput and \cbKwMape\pct{}
 on power, no better than a line in the closed-side setting (\BlinKwMape\pct{} on power, paired difference \dBlinKw{} points,
-interval \dBlinKwLo{} to \dBlinKwHi), and on throughput it ties the published model of Rocha et al. (paired difference
-\dRochaPubTph{} points, \dRochaPubTphLo{} to \dRochaPubTphHi), whose power model the published numbers do not allow to run. Its 80\pct{} bands cover \cbTphCovN{} and \cbKwCovN{} of the ten held-out surveys and
+interval \dBlinKwLo{} to \dBlinKwHi), and on throughput it ties the engine at its shipped constants (paired difference
+\dPubTph{} points, \dPubTphLo{} to \dPubTphHi), which fits nothing to the surveys, and the published model of Rocha et al.
+(\dRochaPubTph{} points, \dRochaPubTphLo{} to \dRochaPubTphHi), whose power model the published numbers do not allow to run. Its 80\pct{} bands cover \cbTphCovN{} and \cbKwCovN{} of the ten held-out surveys and
 are \widthRedKw\pct{} narrower on power than the residual band of the refit engine; ten surveys cannot tell these
 coverages from those of a slightly miscalibrated band. The ablation shows that the discrepancy carries the power
 prediction and that the population-balance scalars change the scores by far less than the survey-level uncertainty. Every
