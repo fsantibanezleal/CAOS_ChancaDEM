@@ -53,7 +53,12 @@ if (!base) {
 
 const CASE = 'HP500-04';
 const errors = [];
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({
+  headless: true,
+  // the checks talk only to a loopback server: no proxy resolution, which on a machine that auto-detects its proxy stalls the
+  // first request of every new browser context about 21 s (a context per size and setting here, so a 30 s navigation times out)
+  args: ['--no-proxy-server'],
+});
 let checks = 0;
 const ok = (cond, msg) => {
   assert.ok(cond, msg);

@@ -96,6 +96,16 @@ open industrial data.
   not ranked).
 - The implementation page's contract table and the generated contract types follow the catalog's patch versions and field
   descriptions (`contract-rows.ts`; `contract.gen.ts`, doc comments only).
+- The third reading's fixes. Notebook 05-real-surveys/02 (en, es) no longer calls its throughput error in sample: the power numbers
+  are, and the 11.55 percent fits nothing to the surveys without being a held-out test; notebooks 05-real-surveys/01 and
+  06-crushercal/04 say the same without a contradiction. The ranked population is the methods of the comparison document, all of
+  which refit in each fold (the per-fold refit of Rocha et al. is scored by the report's script); the CrusherBayes manuscript names
+  the bare Bond draw among the rows whose constants were fitted on the surveys, does not call every row of its comparison figure and
+  paired table held out, and defines the comparison it cites.
+- On a phone the App's chart hosts keep their callout band plus 18rem for the drawing: with shell 0.26.0's taller cards the
+  comparison's plot was 43 px tall with one tick, so its anchors had no scale to land on (`check:story`).
+- The product's browser checks launch Chromium without a proxy: they talk only to a loopback server, and on a machine that
+  auto-detects its proxy the first request of each new browser context waited about 21 s, past the 30 s navigation limit under load.
 - The technical report after its second reading. The view of P80 against operating hours is named by what it draws and where it
   sits (the first view of the Performance group), and the figure of hours against the drift rate is the App's "Hours by drift" view; the room R (the training range
   of the setting above the current setting, the reference of the margin's state) and the drawn range min(2 Delta s, R) are kept

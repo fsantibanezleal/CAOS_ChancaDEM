@@ -906,8 +906,8 @@ of~\eqref{eq:capacity} refit by least squares for throughput and the slope and i
 $P_c=\zeta P_d+P_n$ of~\eqref{eq:power}, with its Bond draw $P_d$, refit for power, and the same refit plus a ridge residual
 on the standardized regressors bounded to $\pm20$\pct{} of the engine value. For power only: Morrell's size-specific
 energy~\cite{morrell,gmsg} with the crusher work index $M_{ic}$ refit per fold through the origin, and the same with a
-refit no-load term, both on the measured $f_{80}$, the measured throughput and the engine's $P_{80}$. Two references fit
-nothing on the surveys: the bare Bond draw at the blend work index, and the engine at its shipped constants. The latter is
+refit no-load term, both on the measured $f_{80}$, the measured throughput and the engine's $P_{80}$. Two references are not refit in the folds: the bare Bond draw at the blend work index, whose $P_{80}$ carries the
+classification and $t_{10}$ numbers Rocha et al.\ fitted on these surveys, and the engine at its shipped constants. The latter is
 not the model of Rocha et al.~\cite{rocha} (Section~\ref{sec:related}): it carries their classification, $t_{10}$ and
 $\zeta$ numbers, which they fitted on these ten surveys, and their $P_n$, a third of the installed power, inside the
 engine's own capacity form and Bond draw, so on power it is neither a held-out figure nor a reproduction of their fit. On throughput it fits nothing to the surveys: only the
@@ -1028,7 +1028,7 @@ for the refit power form, \residKwMapeBoot\pct{} with the bounded residual, \bon
 \morKwMapeBoot\pct{} for Morrell through the origin and \pubKwMapeBoot\pct{} for the engine at its shipped constants,
 against \constKwMapeBoot\pct{} for the constant mean.
 
-Figure~\ref{fig:comparison} sorts the methods by their held-out MAPE. On power it shows two groups: four methods whose
+Figure~\ref{fig:comparison} sorts the methods by their MAPE under the leave-one-survey-out folds. On power it shows two groups: four methods whose
 intervals overlap one another almost entirely (the setting-only line, the free-form fit, CrusherBayes and Morrell with a
 no-load term), and the engine-based forms and the constant mean, whose intervals lie wholly above the point value of
 CrusherBayes. On throughput the intervals of all nine methods overlap; the constant mean has the highest point value and
@@ -1040,7 +1040,7 @@ intervals resolve no ranking within the first group on power or among the method
 separate the two groups on power; the paired differences resolve one more pair on throughput, read below.
 
 \begin{table*}[!t]
-\caption{Held-out scores of CrusherBayes and of every compared method on the ten HP500 surveys (strict leave-one-survey-out, the same folds for all), with 95\pct{} percentile bootstrap intervals of the MAPE over the surveys, and the coverage of the 80\pct{} interval with its Wilson interval and the mean width for the methods that give a band. Two rows fit nothing in the folds and had constants set with these surveys at hand: the engine at its shipped constants on power, whose classification, $t_{10}$ and $\zeta$ Rocha et al. fitted on them, and the published throughput model of Rocha et al., whose $\lambda$ they fitted on survey 10; the engine at its shipped constants on throughput fits nothing to the surveys.}
+\caption{Held-out scores of CrusherBayes and of every compared method on the ten HP500 surveys (strict leave-one-survey-out, the same folds for all), with 95\pct{} percentile bootstrap intervals of the MAPE over the surveys, and the coverage of the 80\pct{} interval with its Wilson interval and the mean width for the methods that give a band. Three rows fit nothing in the folds and had constants set with these surveys at hand: the bare Bond draw, whose $P_{80}$ carries the classification and $t_{10}$ numbers Rocha et al.\ fitted on them, the engine at its shipped constants on power, whose classification, $t_{10}$ and $\zeta$ Rocha et al. fitted on them, and the published throughput model of Rocha et al., whose $\lambda$ they fitted on survey 10; the engine at its shipped constants on throughput fits nothing to the surveys.}
 \label{tab:comparison}
 \centering\footnotesize
 \resizebox{\textwidth}{!}{\input{generated/tab-comparison}}
@@ -1075,13 +1075,12 @@ published variant is not held out on survey~10, on which its one fitted number w
 a work index the source does not print, so the tie is the reading the data support. The closest published model of this
 crusher is therefore no better and no worse than CrusherBayes on throughput, and its power model could not be run
 (Section~\ref{sec:design}). The engine at its shipped constants ties CrusherBayes too, at \dPubTph{} points (\dPubTphLo{} to
-\dPubTphHi), with CrusherBayes lower on \dPubTphWins{} of the ten surveys. The paired comparison that the product's App reads
-ranks only the methods that refit every fitted quantity in each fold (the strict rows of the held-out document and
-CrusherBayes) and names CrusherBayes on throughput among them; the engine at its shipped constants and the published model of
+\dPubTphHi), with CrusherBayes lower on \dPubTphWins{} of the ten surveys. The paired comparison of the CAOS\_ChancaDEM release, which its comparison view reads, ranks only the methods that refit
+every fitted quantity in each fold (the strict leave-one-survey-out rows of the comparison, and CrusherBayes) and names CrusherBayes on throughput among them; the engine at its shipped constants and the published model of
 Rocha et al. fit nothing in the folds and are not ranked there, so its recommendation is not a claim over these two rows.
 
 \begin{table}[!t]
-\caption{Paired differences of MAPE under the leave-one-survey-out folds, CrusherBayes minus each comparator (negative favours CrusherBayes; the published model of Rocha et al. set its $\lambda$ on survey 10, so its row is not held out), with the 95\pct{} paired-bootstrap interval, the fraction of resamples favouring CrusherBayes and the surveys on which it has the lower error.}
+\caption{Paired differences of MAPE under the leave-one-survey-out folds, CrusherBayes minus each comparator (negative favours CrusherBayes; the published model of Rocha et al.\ set its $\lambda$ on survey 10, and the bare Bond draw and the engine at its shipped constants on power carry constants Rocha et al.\ fitted on these surveys, so these rows are not held out), with the 95\pct{} paired-bootstrap interval, the fraction of resamples favouring CrusherBayes and the surveys on which it has the lower error.}
 \label{tab:paired}
 \centering\footnotesize
 \resizebox{\columnwidth}{!}{\input{generated/tab-paired}}

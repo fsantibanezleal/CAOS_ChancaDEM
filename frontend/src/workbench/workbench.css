@@ -228,6 +228,13 @@
   .cdem-fill-tall {
     min-height: 26rem;
   }
+  /* A host with a callout band keeps the band plus 18rem for its drawing: the axis title, the plot, its axes, a key of two rows and
+     the readout (measured at 390 px on the comparison: 187 px of chart chrome, so a plot of about 100 px, three or more ticks). With
+     shell 0.26.0 the callout value sits on its own row, the band of three cards at 390 px is 186 px, and the fixed 26rem left the
+     comparison a plot 43 px tall with a single tick. The band is width-driven, so the floor never feeds back into it. */
+  .cdem-callout-host.cdem-callout-fill {
+    min-height: max(26rem, calc(var(--cdem-band, 0px) + 18rem));
+  }
 }
 
 /* A story chart on a phone: the stage is the viewport less the header (N7), and Story.tsx fits the callout host to the stage's free

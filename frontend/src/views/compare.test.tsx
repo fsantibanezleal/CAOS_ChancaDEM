@@ -61,8 +61,8 @@ describe('SH-009: every method on shared axes, read from the documents', () => {
       // its shipped constants, t/h) or a published model whose constant was set on them is not ranked, so the reason names the
       // methods it ranks
       const ranked = compareRows(loo, cb, target).filter((r) => !r.control).length;
-      expect(reason.en).toContain(`of the ${ranked} methods that refit every fitted quantity in each fold`);
-      expect(reason.es).toContain(`de los ${ranked} métodos que reajustan cada cantidad ajustada en cada pliegue`);
+      expect(reason.en).toContain(`of the ${ranked} methods of the comparison, all of which refit every fitted quantity in each fold`);
+      expect(reason.es).toContain(`de los ${ranked} métodos de la comparación, que reajustan todos cada cantidad ajustada en cada pliegue`);
     });
   }
   it('adversarial: a planted ordering where another method is the lowest moves the recommendation to it', () => {

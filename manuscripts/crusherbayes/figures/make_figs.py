@@ -839,7 +839,7 @@ def mape_panel(ax, t, title):
         ax.plot(row["mape"], y, "s" if key in ("pub", "rochapub") else "o", color=col, ms=4)
     ax.set_yticks(yy)
     ax.set_yticklabels([row["label"] for _, row in rows_t], fontsize=6.5)
-    ax.set_xlabel("held-out MAPE (%), 95% interval")
+    ax.set_xlabel("MAPE under the leave-one-survey-out folds (%), 95% interval")
     ax.set_title(title, loc="left", fontsize=8)
 
 

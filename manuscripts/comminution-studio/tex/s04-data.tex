@@ -246,13 +246,13 @@ version of each input, and a CrusherBayes block that says whether that method is
 \emph{The recommended method} of a target is the method with the lowest document MAPE among the methods that are not
 controls, $\star=\arg\min_{k\notin\mathcal C}\mathrm{MAPE}_k$, where $\mathcal C$ holds the constant mean and the
 label-shuffle control; a tie keeps the listing order of the document. The runner-up is the next method in that order. The
-methods it ranks, $\rankN$ on throughput, are those that refit every fitted quantity in each fold: the strict rows of
-\texttt{hp500-loo} that are not controls, and CrusherBayes. Two throughput predictors of this report fit nothing in the folds and are not ranked: the
+methods it ranks, $\rankN$ on throughput, are the methods of the document, all of which refit every fitted quantity in each
+fold: the strict rows of \texttt{hp500-loo} that are not controls, and CrusherBayes; the per-fold refit of the published model
+of Rocha et al.\ ($\uqQRocharef\%$) is scored by this report's own script, not by the document. Two throughput predictors of this report fit nothing in the folds and are not ranked: the
 engine at its shipped constants ($\bbShipMape\%$, nothing of it fitted to the surveys) and the published model of Rocha
 et al.\ ($\uqQRocha\%$, its $\lambda_{\mathrm R}$ set by the authors on survey~10). Both tie with CrusherBayes: on the resamples
 of this document, the error of CrusherBayes minus theirs is $\rankShipD$ points (interval $\rankShipLo$ to $\rankShipHi$) and
-$\rankRochaD$ points ($\rankRochaLo$ to $\rankRochaHi$). The recommended method is therefore the lowest held-out error among the
-methods refit in every fold, not among every predictor the report scores. The rule
+$\rankRochaD$ points ($\rankRochaLo$ to $\rankRochaHi$). The recommended method is therefore the lowest held-out error among the methods of the document, not among every predictor the report scores. The rule
 is the one the web applied before the contract existed, so the document and the view cannot name different methods, and the
 consumer test checks that they do not. The constant mean of a fold is the mean of its nine training surveys, as the CrusherBayes
 manuscript computes it~\cite{crusherbayes2026}, so the control carries per-survey errors and a paired row; the label-shuffle

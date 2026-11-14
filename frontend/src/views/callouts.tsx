@@ -310,6 +310,9 @@ export function ChartCallouts({
     <div
       ref={host}
       className="cdem-callout-host cdem-callout-fill"
+      // the reserved band, for the stacked layout's floor (workbench.css: below 900 px the host keeps the band plus the drawing a
+      // chart needs, so taller cards never take the plot's room)
+      style={{ ['--cdem-band' as string]: `${band}px` }}
       data-callout-band={band}
       data-anchored={geom.plot ? 'true' : 'false'}
       // the data point each callout names, for the browser's anchor check: it places the point on the scales uPlot rendered (its tick

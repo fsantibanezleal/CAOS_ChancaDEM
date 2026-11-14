@@ -594,7 +594,12 @@ if (import.meta.url === `file:///${process.argv[1]?.replace(/\\/g, '/').replace(
   if (!base) throw new Error('usage: node src/views/showcase.browser.mjs <origin> [anchors,frames,layout,parts]');
   const only = process.argv[3] ? process.argv[3].split(',') : null;
   const { chromium } = await import('playwright');
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({
+  headless: true,
+  // the checks talk only to a loopback server: no proxy resolution, which on a machine that auto-detects its proxy stalls the
+  // first request of every new browser context about 21 s (a context per size and setting here, so a 30 s navigation times out)
+  args: ['--no-proxy-server'],
+});
   let checks = 0;
   const failures = [];
   const soft = process.env.SHOWCASE_SOFT === '1';

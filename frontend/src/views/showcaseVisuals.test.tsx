@@ -232,6 +232,21 @@ describe('M8, m7, M12: the comparison is readable on a phone and opens on one ch
     expect(compareCallouts(rows, best, openingChoice(rows, best, comparison, 'kW')!, comparison, null, 'kW', (v, o) => num(v, o))[2].unit.en).toBe('points');
     void createLinkedViewStore;
   });
+  it('adversarial: on a phone the callout host keeps its band plus 18rem for the drawing, so taller cards never take the plot (shell 0.26.0: the value on its own row; the comparison at 390 px had a plot 43 px tall with one tick)', () => {
+    const html = renderToStaticMarkup(
+      <LinkedViewProvider>
+        <CompareBody loo={loo} cb={cb} cbReason={null} comparison={comparison} target="kW" setTarget={() => undefined} caseId="HP500-01" onPickCase={() => undefined} />
+      </LinkedViewProvider>,
+    );
+    // the host publishes the band it reserves, the same number as its data-callout-band
+    const host = html.match(/class="cdem-callout-host cdem-callout-fill" style="--cdem-band:(\d+)px" data-callout-band="(\d+)"/);
+    expect(host).not.toBeNull();
+    expect(host![1]).toBe(host![2]);
+    // the stacked layout's floor follows the band; a fixed floor alone (26rem) is what squeezed the plot
+    const css = readFileSync(new URL('../workbench/workbench.css', import.meta.url), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const narrow = css.slice(css.indexOf('@media (max-width: 899px)'));
+    expect(narrow).toMatch(/\.cdem-callout-host\.cdem-callout-fill\s*\{\s*min-height:\s*max\(26rem,\s*calc\(var\(--cdem-band,\s*0px\)\s*\+\s*18rem\)\);\s*\}/);
+  });
 });
 
 describe('G21: the story header keeps one line of subline', () => {
