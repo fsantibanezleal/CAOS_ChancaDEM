@@ -565,6 +565,15 @@ for wi, nm in ((rocha.WI_BOUNDS[0], "Lo"), (rocha.WI_BLEND, ""), (rocha.WI_BOUND
         f"MAPE of the published variant, Wi = {wi} kWh/t", 2)
     put(f"rochaWi{nm}", wi, "rocha", "work index of the variant (kWh/t)", 1)
 put("rochaSsqPrinted", rocha.PRINTED_FIT_SSQ, "rocha", "Rocha et al. 2024, Section 4.3 (printed)", 2)
+# the authors fitted lambda on survey 10 (their Section 4.3): one scalar on one survey, so their value reproduces it exactly.
+# The shape of Equation 10 scales as Wi^(-eta), so the exact survey-10 lambda scales as Wi^eta, and lambda = 0.84 is the exact
+# fit at Wi = Wi_blend * (0.84 / lambda_10(Wi_blend))^(1 / eta): the blend work index the printed lambda corresponds to
+lam_ten = float(tph_m[9] / rocha.shape(css, f80)[9])
+wi_ten = rocha.WI_BLEND * (rocha.TABLE4["lam"] / lam_ten) ** (1.0 / rocha.TABLE4["eta"])
+assert abs(tph_m[9] / rocha.shape(css, f80, wi_ten)[9] - rocha.TABLE4["lam"]) < 1e-9
+put("rochaLamTen", lam_ten, "rocha", "lambda that reproduces survey 10 exactly at the blend work index (derived)", 3)
+put("rochaLamPrinted", rocha.TABLE4["lam"], "rocha", "Rocha et al. 2024, Table 4 (printed lambda)", 2)
+put("rochaWiTen", wi_ten, "rocha", "work index at which lambda = 0.84 reproduces survey 10 exactly (derived, kWh/t)", 1)
 put("rochaLamMin", ROCHA_TPH["lam_fold"].min(), "rocha", "min over folds of the lambda refit on the nine training surveys", 3)
 put("rochaLamMax", ROCHA_TPH["lam_fold"].max(), "rocha", "max over folds of the lambda refit on the nine training surveys", 3)
 pb_ = rocha.power_blockers(css, f80)

@@ -37,8 +37,10 @@ and of the $21$ pairs among these seven predictors three intervals exclude zero:
 $\uqQpResCbhi$), and the published factor of Rocha et al.\ beats the same model
 with its factor refit per fold ($\uqQpRochaRocharef$, $\uqQpRochaRochareflo$ to $\uqQpRochaRocharefhi$). The calibrated backbone beats the constant mean ($18.29\%$; difference $\uqQMeandb$ points, interval $\uqQMeandblo$ to
 $\uqQMeandbhi$), and the label-shuffle control ($25.04\%$) is worse than the backbone, as it must be. The calibrated backbone, with one fitted
-scalar and the engine's shape, matches the three-coefficient free-form fit ($12.09\%$ against $12.18\%$), and its in-sample error is $11.55\%$,
-so its held-out number is not an artifact of the fit. The bounded residual does not improve on the backbone held out ($13.45\%$), the null
+scalar and the engine's shape, matches the three-coefficient free-form fit ($\uqQBb\%$ against $\uqQFree\%$). Fitted on all ten surveys, its
+in-sample error is $\bbLeakyMape\%$ (Table~\ref{tab:leaky}), so refitting it without the held-out survey costs $\bbLeakyGap$ points and its
+held-out number is not an artifact of the fit; at its shipped constants, with the base-case capacity of $\qtShip$~t/h and nothing fitted
+to the surveys, it scores $\bbShipMape\%$, a predictor the paired comparison does not rank (Section~\ref{sec:data-comparison}). The bounded residual does not improve on the backbone held out ($13.45\%$), the null
 result stated as the expectation before the run. The published throughput model reaches its point estimate with no parameter fitted to nine of
 the ten surveys; refit per fold by least squares, its factor $\lambda_{\mathrm R}$ moves from $0.84$ to between $\rochaLamLo$ and $\rochaLamHi$ and its
 error rises to $\uqQRocharef\%$, because a least-squares fit of the feed rate weighs the large feed rates most while the score weighs relative
@@ -162,7 +164,9 @@ gives $\cmpPFreeNeedHalf$ and $\cmpPCbNeedHalf$, so the runner-up's interval wou
 $\cmpPFreeNeedHi$ surveys and CrusherBayes's at about $\cmpPCbNeedLo$ to $\cmpPCbNeedHi$. That is a statement about the size of a
 survey programme that would settle the order, not a prediction of its outcome.
 
-On throughput CrusherBayes is recommended at $\cmpQCbMape\%$. The runner-up, the calibrated backbone, is behind it by $\cmpQBb$
+On throughput CrusherBayes is recommended at $\cmpQCbMape\%$, among the methods refit in every fold; the engine at its shipped
+constants and the published model of Rocha et al., which fit nothing in the folds, are not ranked and tie with it
+(Section~\ref{sec:data-comparison}). The runner-up, the calibrated backbone, is behind it by $\cmpQBb$
 points with an interval from $\cmpQBbLo$ to $\cmpQBbHi$ ($\cmpQBbWins$ wins of ten, $p_{\mathrm{better}}=\cmpQBbPb$): the two are
 indistinguishable, and the order of their point errors is a coin toss over the resamples. The free-form fit ($\cmpQFree$ points,
 $\cmpQFreeLo$ to $\cmpQFreeHi$) and the setting-only line ($\cmpQLine$, $\cmpQLineLo$ to $\cmpQLineHi$) are not separated either. Only

@@ -20,9 +20,9 @@
     "sha256": "7be9b642c80943e6053b15fc70ba23c6a4782f130bb74ec02f399b797a2e32cd"
   },
   "trace": {
-    "version": "1.0.2",
+    "version": "1.0.3",
     "schema": "docs/contracts/schemas/trace.schema.json",
-    "sha256": "c986c346511cb1675a694bbf112babcd0e6f2587eeb961990f26da708a99417e"
+    "sha256": "a11418e810514a6cfb8b4cbf31a6ba9ea9fbfee924b18485e0722dce6d9f06d1"
   },
   "hp500-backbone": {
     "version": "1.0.1",
@@ -30,9 +30,9 @@
     "sha256": "a967acf209e1a90ada218bbeb43447c3c631d2a43edcf7e537960320c2373524"
   },
   "hp500-loo": {
-    "version": "1.2.1",
+    "version": "1.2.2",
     "schema": "docs/contracts/schemas/hp500-loo.schema.json",
-    "sha256": "76e6623fc82392c4a2dc7f2e49f656ff780d5db8d3c01867f83b200374bdaa43"
+    "sha256": "e9ca11f2a183e12696c618bb4b37be317ee733a0cb8e1a3e805be565d95f2ae2"
   },
   "hp500-crusherbayes": {
     "version": "1.0.1",

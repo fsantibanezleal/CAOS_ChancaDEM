@@ -3,9 +3,10 @@
 \subsection{What the results mean for the setting decision}\label{sec:disc-meaning}
 
 The question a process engineer asks of a calibrated crusher model is how well it predicts a survey it was not fitted to. On the ten HP500 surveys
-the answer has two parts. For throughput, the calibrated engine is a useful predictor: its held-out error of $12.09\%$ is close to its in-sample
-error of $11.55\%$, it beats the constant mean by six points (interval $\uqQMeandblo$ to $\uqQMeandbhi$), and a nested $80\%$ band of half-width $\bandQlo$ to $\bandQhi$~t/h
-covers the measured feed rate at the stated rate. The capacity physics, with one refit scalar, does as well as a free-form regression with three
+the answer has two parts. For throughput, the calibrated engine is a useful predictor: its held-out error of $\uqQBb\%$ is close to its
+in-sample error of $\bbLeakyMape\%$, with its capacity base fitted on all ten surveys, and to the $\bbShipMape\%$ of the engine at its shipped
+constants, which is fitted to none of them; it beats the constant mean by $\uqQMeandb$ points (interval $\uqQMeandblo$ to $\uqQMeandbhi$),
+and a nested $\bbBandPct\%$ band of half-width $\bandQlo$ to $\bandQhi$~t/h covers the measured feed rate at the stated rate. The capacity physics, with one refit scalar, does as well as a free-form regression with three
 coefficients, which is what a physical shape should buy on ten points, and as well as the published throughput model of Rocha et al.\ run with
 its own parameters ($\uqQRocha\%$, not distinguishable from the engine's $12.09\%$). For power, the calibrated engine is not a useful predictor: the Bond draw it computes hardly varies across the
 surveys while the measured power spans almost a factor of two, and the published power constants belong to a different net power. A plant that

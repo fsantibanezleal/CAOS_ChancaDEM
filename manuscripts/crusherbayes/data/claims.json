@@ -2890,6 +2890,21 @@
   "artifact": "manuscripts/crusherbayes/figures/rocha_published.py (Rocha et al. 2024, Eqs. 10 to 15, Table 4) on data/examples/hp500-surveys.csv",
   "key": "Rocha et al. 2024, Section 4.3 (printed)"
  },
+ "rochaLamTen": {
+  "value": "0.858",
+  "artifact": "manuscripts/crusherbayes/figures/rocha_published.py (Rocha et al. 2024, Eqs. 10 to 15, Table 4) on data/examples/hp500-surveys.csv",
+  "key": "lambda that reproduces survey 10 exactly at the blend work index (derived)"
+ },
+ "rochaLamPrinted": {
+  "value": "0.84",
+  "artifact": "manuscripts/crusherbayes/figures/rocha_published.py (Rocha et al. 2024, Eqs. 10 to 15, Table 4) on data/examples/hp500-surveys.csv",
+  "key": "Rocha et al. 2024, Table 4 (printed lambda)"
+ },
+ "rochaWiTen": {
+  "value": "7.8",
+  "artifact": "manuscripts/crusherbayes/figures/rocha_published.py (Rocha et al. 2024, Eqs. 10 to 15, Table 4) on data/examples/hp500-surveys.csv",
+  "key": "work index at which lambda = 0.84 reproduces survey 10 exactly (derived, kWh/t)"
+ },
  "rochaLamMin": {
   "value": "0.862",
   "artifact": "manuscripts/crusherbayes/figures/rocha_published.py (Rocha et al. 2024, Eqs. 10 to 15, Table 4) on data/examples/hp500-surveys.csv",

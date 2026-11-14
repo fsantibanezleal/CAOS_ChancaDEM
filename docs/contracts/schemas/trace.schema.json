@@ -40,7 +40,7 @@
         "oss_mm": {"type": "number", "minimum": 0, "description": "Open-side setting, the closed-side setting plus the throw [mm]."},
         "nip_angle_deg": {"type": "number", "minimum": 0, "description": "Nip angle between the mantle and the concave (or the jaws) at the setting [deg]."},
         "nip_limit_deg": {"type": "number", "minimum": 0, "description": "Grip limit 2 arctan(mu) of the nip angle [deg]."},
-        "regime": {"enum": ["choke", "trickle", "pass-through", "invalid"], "description": "The operating regime: choke, trickle, pass-through (setting at or above F80, or a reduction ratio near one) or invalid (setting at or above the feed's top size)."},
+        "regime": {"enum": ["choke", "trickle", "pass-through", "invalid"], "description": "The operating regime the engine assigns: choke (the default, a choke-fed chamber), pass-through (setting at or above F80, or a reduction ratio near one) or invalid (setting at or above the top size of the feed grid). The enum also admits trickle, a state of the type that the engine never assigns."},
         "valid": {"type": "boolean", "description": "False when the point is not valid: nothing gripped, an ill-conditioned breakage matrix or a physically implausible input."},
         "out_of_envelope": {"type": "boolean", "description": "True when any envelope check tripped (an implausible or an extrapolating input)."},
         "implausible": {"type": "boolean", "description": "True for a physically nonsensical input, worse than an extrapolation."},

@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "hp500-loo.schema.json",
   "title": "Hp500Loo",
-  "description": "Catalog row hp500-loo 1.2.1: CrusherCal, the leave-one-survey-out validation of the calibrated backbone on the ten HP500 surveys, written by data-pipeline/pipeline/hp500/loo.py to data/derived/hp500/loo.json. Per target (throughput tph and power kW measured; P80 a model output reported as self-consistency), strict folds (every fitted scalar refit without the held-out survey) and leaky folds (fitted on all ten) grade M0 the calibrated backbone, M1 the backbone plus a bounded ridge residual, M2 a free-form least-squares fit, a constant-mean baseline and a label-shuffle negative control (from 1.2.0 also B_lin, the setting-only least-squares line on CSS, for both measured targets, and for power the two variants of Morrell's size-specific crusher energy, Morrell and Morrell_noload, whose M_ic and no-load power are fitted per fold because the ore's M_ic is not published); the strict folds carry an 80 percent predictive interval, its empirical coverage (in sample: sigma comes from the same residuals the coverage checks) and its nested coverage (out of sample: for each survey, sigma from the held-out residuals of the other surveys only). The two parity blocks are in-sample contrasts of the power forms and of the capacity backbone against the measured values. Deterministic for a seed. Derived from data licensed CC BY 4.0 (https://doi.org/10.3390/min14090919). Rules the schema cannot state, checked by the producer test: B_lin is present for tph and kW and Morrell, Morrell_noload and morrell_fit for kW in every strict and leaky block, and every pred list of them has n values; a held-out survey never enters its own fold (planted-target test); every measured and pred list has n values in survey order; the label-shuffle control does not beat M0 on throughput; nested_covered and nested_sigma have n values in survey order and nested_coverage is the share of true entries of nested_covered.",
+  "description": "Catalog row hp500-loo 1.2.2: CrusherCal, the leave-one-survey-out validation of the calibrated backbone on the ten HP500 surveys, written by data-pipeline/pipeline/hp500/loo.py to data/derived/hp500/loo.json. Per target (throughput tph and power kW measured; P80 a model output reported as self-consistency), strict folds (every fitted scalar refit without the held-out survey) and leaky folds (fitted on all ten) grade M0 the calibrated backbone, M1 the backbone plus a bounded ridge residual, M2 a free-form least-squares fit, a constant-mean baseline and a label-shuffle negative control (from 1.2.0 also B_lin, the setting-only least-squares line on CSS, for both measured targets, and for power the two variants of Morrell's size-specific crusher energy, Morrell and Morrell_noload, whose M_ic and no-load power are fitted per fold because the ore's M_ic is not published); the strict folds carry an 80 percent predictive interval, its empirical coverage (in sample: sigma comes from the same residuals the coverage checks) and its nested coverage (out of sample: for each survey, sigma from the held-out residuals of the other surveys only). The two parity blocks are in-sample contrasts of the power forms and of the capacity backbone against the measured values. Deterministic for a seed. Derived from data licensed CC BY 4.0 (https://doi.org/10.3390/min14090919). Rules the schema cannot state, checked by the producer test: B_lin is present for tph and kW and Morrell, Morrell_noload and morrell_fit for kW in every strict and leaky block, and every pred list of them has n values; a held-out survey never enters its own fold (planted-target test); every measured and pred list has n values in survey order; the label-shuffle control does not beat M0 on throughput; nested_covered and nested_sigma have n values in survey order and nested_coverage is the share of true entries of nested_covered.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -181,11 +181,11 @@
         },
         "bare_bond": {
           "$ref": "#/$defs/scores",
-          "description": "The scores of the bare Bond draw against the measured power."
+          "description": "The scores of the engine's bare Bond draw against the measured power: the blend work index of 9.0 kWh/t, set apart from the surveys, applied to the engine's throughput and to its reduction from F80 to P80, whose classification and t10 constants Rocha et al. fitted on these surveys."
         },
         "engine_pc_1p30_110": {
           "$ref": "#/$defs/scores",
-          "description": "The scores of the paper's power form Pc = 1.30 Pd + 110 on the engine's Bond draw."
+          "description": "The scores of the paper's power form Pc = 1.30 Pd + 110 on the engine's Bond draw, at the published constants: the slope 1.30, which Rocha et al. fitted on these surveys, and 110 kW, a third of the installed power."
         },
         "refit_pc": {
           "allOf": [
@@ -208,11 +208,11 @@
               "description": "The fitted no-load power Pn of Pc = zeta Pd + Pn [kW]."
             }
           },
-          "description": "The scores of the same form refit by least squares on all ten surveys, with its two fitted scalars."
+          "description": "The scores of the same form refit by least squares on all ten surveys, with its two fitted scalars: fitted on the surveys it is scored on, so in sample."
         },
         "constant_mean": {
           "$ref": "#/$defs/scores",
-          "description": "The scores of the mean measured power used as the prediction for every survey."
+          "description": "The scores of the mean of the ten measured powers used as the prediction for every survey: fitted on the surveys it is scored on, so in sample."
         },
         "per_survey": {
           "type": "array",
@@ -257,7 +257,7 @@
           "description": "The four powers of each survey, in survey order."
         }
       },
-      "description": "In-sample contrast of the power forms against the ten measured powers."
+      "description": "Contrast of four power estimates against the ten measured powers, none refit in the folds. The bare Bond draw and the published form carry constants Rocha et al. fitted on these surveys, so they are neither held out nor fitted here; the refit form and the constant mean are fitted on all ten surveys they are scored on, so they are in sample."
     },
     "tph_parity": {
       "type": "object",
@@ -275,7 +275,7 @@
         },
         "backbone": {
           "$ref": "#/$defs/scores",
-          "description": "The scores of the backbone throughput against the measured feed rate."
+          "description": "The scores of the backbone throughput at the shipped constants against the measured feed rate."
         },
         "per_survey": {
           "type": "array",
@@ -310,7 +310,7 @@
           "description": "The measured and the backbone throughput of each survey, in survey order."
         }
       },
-      "description": "In-sample contrast of the calibrated capacity backbone against the ten measured feed rates."
+      "description": "Contrast of the engine at its shipped constants against the ten measured feed rates: the capacity backbone with the base-case capacity of 647 t/h, which Rocha et al. take from a Bruno simulation, so nothing of it is fitted to the surveys. The in-sample figure of the same backbone, its capacity base fitted on all ten surveys, is the leaky block of loo.tph."
     }
   },
   "$defs": {
@@ -345,7 +345,7 @@
         "rmse": {
           "type": "number",
           "minimum": 0,
-          "description": "Root-mean-square error, in the target's unit [t/h, kW or mm]."
+          "description": "Root-mean-square error, in the unit of the target it scores: t/h under tph and tph_parity, kW under kW and power_parity, mm under p80 [unit of the target]."
         },
         "r2": {
           "type": "number",
@@ -357,7 +357,7 @@
           "description": "The largest absolute percentage deviation over the surveys [%]."
         }
       },
-      "description": "The four scores of a set of held-out predictions against the measured values."
+      "description": "The four scores of a set of predictions against the measured values: held out in the strict folds, fitted on all ten surveys in the leaky folds, as each parity block states."
     },
     "folds": {
       "type": "object",

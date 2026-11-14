@@ -307,7 +307,9 @@ CrusherCal (M10) is the evaluation protocol every method above is held to, not a
   (https://doi.org/10.3390/min14090919), and the learned surrogates of comminution models (Koh et al. 2021,
   https://doi.org/10.1016/j.mineng.2021.107026) report no held-out industrial parity and no uncertainty. Evidence, from the
   committed `data/derived/hp500/loo.json`: the calibrated capacity backbone reproduces the measured throughput with a strict
-  leave-one-survey-out MAPE of 12.09 percent, against 11.55 percent in sample for the same backbone (`tph_parity`) and
+  leave-one-survey-out MAPE of 12.09 percent, against 10.95 percent in sample for the same backbone (its capacity base
+  fitted on all ten surveys, `loo.tph.leaky`), 11.55 percent for the engine at its shipped constants (`tph_parity`: the
+  base-case capacity of 647 t/h comes from a Bruno simulation, so it fits nothing to the surveys) and
   18.29 percent for the constant-mean baseline; the label-shuffle control (25.04 percent) does not beat it; the 80 percent
   band's coverage is reported twice, in sample (0.90 on throughput, sigma taken from the same ten residuals) and nested out
   of sample (0.80 on throughput and 0.90 on power, sigma of each survey taken from the other nine only); and the bounded

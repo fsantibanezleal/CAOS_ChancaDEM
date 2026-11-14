@@ -157,6 +157,22 @@ open industrial data.
   Bhonsale, Stokbroekx and Van Impe 2020), restates the engine-based power models as no better than the constant mean with
   their paired intervals, says on throughput that the engine at its shipped constants fits nothing to the surveys, and prints
   the SHA-256 of the 0.13.000 `crusherbayes.json`; the SDD's CrusherBayes entry names the same closest work.
+- The throughput backbone's 11.55 percent is no longer called in sample. It is the engine at its shipped constants, whose
+  base-case capacity of 647 t/h Rocha et al. take from a Bruno simulation, so nothing of it is fitted to the surveys; the
+  in-sample figure is the capacity base fitted on all ten surveys, 10.95 percent (the leaky fold). The technical report says so
+  in its six places and compares the held-out 12.09 percent with 10.95; the producer's `tph_parity` note, the `hp500-loo`
+  descriptions (version 1.2.2: `tph_parity`, each row of `power_parity` with what was fitted where, `scores.rmse` in the unit
+  of the target it scores), the SDD's CrusherCal paragraph with its test, and notebook 04 of topic 06 (en and es, re-executed:
+  the ledger prints 10.95 in sample and 11.55 at the shipped constants) carry the same labels. The `trace` description of
+  `summary.regime` (version 1.0.3) names the values the engine assigns and says trickle is never assigned.
+- The ranking of the paired comparison is stated with its population: it ranks the methods that refit every fitted quantity
+  in each fold (the strict rows of `hp500-loo` and CrusherBayes); the engine at its shipped constants (11.55 percent) and
+  the published model of Rocha et al. (10.62 percent) fit nothing in the folds, are not ranked, and both tie with CrusherBayes
+  (CrusherBayes minus each, +0.45 points, -3.44 to 4.49, and +1.38, -5.81 to 7.93), in the report's data section, its
+  results and notebook 03 of topic 08 (en and es). The CrusherBayes manuscript names the engine at its shipped constants
+  among the throughput ties (Introduction, Results, Conclusions), qualifies the two caption headings whose rows include the
+  published model of Rocha et al., says Plumlee's orthogonal prior is built to mitigate the confounding, and derives that the
+  printed lambda of 0.84 reproduces survey 10 exactly at a work index of 7.8 kWh/t (0.858 at the blend's 9.0).
 
 ## [0.12.001] · 2026-11-02
 
