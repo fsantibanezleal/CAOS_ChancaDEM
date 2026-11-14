@@ -389,7 +389,10 @@ export function drawCircuit({
     const b = boxes[activeIdx];
     const m = mid(b);
     const css = fmt(values.css, { digits: 3 });
-    labels.push(L.place(`CSS ${css ?? '-'} mm`, m.x, b.y + b.h - 10, 'middle', { fill: TOKEN.warn, weight: 600 }));
+    // a vertical box keeps the stage and the machine; the CSS stands beside it, so a short phone drawing (46 px boxes under the taller
+    // callout band of shell 0.26.0) never pushes it out of the box onto the product stream's label (G10, wide-font pass at 390 px)
+    if (vertical) labels.push(L.place(`CSS ${css ?? '-'} mm`, b.x + b.w + 8, m.y + 4, 'start', { fill: TOKEN.warn, weight: 600 }));
+    else labels.push(L.place(`CSS ${css ?? '-'} mm`, m.x, b.y + b.h - 10, 'middle', { fill: TOKEN.warn, weight: 600 }));
     const fe = midOf(feedEnd);
     const pe = midOf(prodEnd);
     const tph = fmt(values.feedTph, { digits: 4 });

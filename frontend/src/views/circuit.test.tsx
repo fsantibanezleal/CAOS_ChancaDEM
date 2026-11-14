@@ -93,6 +93,36 @@ describe('SH-002: the streams carry the case’s own values', () => {
   });
 });
 
+describe('G10 on shell 0.26.0: the active stage keeps its CSS clear of the product stream on a short phone drawing', () => {
+  // the gate's wide-font pass at 390 x 844 in Spanish: under the taller callout band of shell 0.26.0 the flowsheet keeps about 200 px,
+  // the stage boxes their 46 px minimum, and a CSS label pushed out of its box overlapped the P80 label of the product stream
+  it('adversarial: in the vertical layout the CSS label stands beside the active box, within its height, and touches no stream label', () => {
+    const values = circuitValues(real, realTrace, null);
+    for (const height of [200, 260, 420]) {
+      const svg = wrap(drawCircuit({ values, stageMachines: {}, onPickStage: null, label: { en: 'Circuit', es: 'Circuito' }, width: 327, height, lang: 'es', num, reduced: false }).node);
+      const active = /data-active="true"[^]*?<rect x="([\d.]+)" y="([\d.]+)" width="([\d.]+)" height="([\d.]+)"/.exec(svg);
+      expect(active).not.toBeNull();
+      const [bx, by, bw, bh] = active!.slice(1).map(Number);
+      const text = (prefix: string) => {
+        const m = new RegExp(`<text x="([\\d.-]+)" y="([\\d.-]+)"[^>]*>(${prefix}[^<]*)</text>`).exec(svg);
+        expect(m, `${prefix} at height ${height}`).not.toBeNull();
+        return { x: Number(m![1]), y: Number(m![2]), t: m![3] };
+      };
+      const css = text('CSS ');
+      const p80 = text('P80 ');
+      expect(css.x, `CSS beside the box at height ${height}`).toBeGreaterThanOrEqual(bx + bw);
+      expect(css.y).toBeGreaterThan(by);
+      expect(css.y).toBeLessThanOrEqual(by + bh);
+      // a wide fallback font: 1.4 times the 11 px line and 8 px a character, the P80 label never within reach of the CSS label
+      const box = (l: { x: number; y: number; t: string }) => ({ x0: l.x, x1: l.x + l.t.length * 8, y0: l.y - 11 * 1.4, y1: l.y + 4 });
+      const a = box(css);
+      const b = box(p80);
+      const overlap = a.x0 < b.x1 && b.x0 < a.x1 && a.y0 < b.y1 && b.y0 < a.y1;
+      expect(overlap, `CSS ${JSON.stringify(css)} and P80 ${JSON.stringify(p80)} at height ${height}`).toBe(false);
+    }
+  });
+});
+
 describe('SH-002: a stage loads a case of its own machine', () => {
   it('each stage loads the first case of the index on one of its machines, never a control', () => {
     expect(caseForStage('primary', staged)).toBe('G01');

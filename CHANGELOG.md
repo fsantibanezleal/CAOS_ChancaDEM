@@ -69,7 +69,9 @@ open industrial data.
   Measured without the hold on the 0.26.0 build: 144 three-second windows (the five App views and the five story steps at 390 x 844
   and 1280 x 800, en and es, dark and light, each opened and each chart zoomed by keyboard and wheel) with no band swing, no band
   still moving in its last 1.5 s and no React update-limit warning. The Spanish NIP ANGLE eyebrow reads ÁNGULO DE NIP again (it was
-  cut to NIP when the value shared its row).
+  cut to NIP when the value shared its row). The vertical flowsheet sets the active stage's CSS beside its box: under the taller
+  cards the phone drawing keeps about 200 px, and the gate's wide-font pass at 390 x 844 in Spanish found the CSS label pushed out of
+  its 46 px box onto the product stream's P80 label (G10, 4 findings).
 - The release generation (`scripts/local/02_generate-data --release`) trains the learned models (`data-pipeline/run.py models`)
   before the bake, so every stamped document of a release carries its version; the models and their metrics are no longer
   carried into the stage as inputs (the 0.13.000 bake refused a carried `model-metrics.json` of 0.12.001 as mixed).
