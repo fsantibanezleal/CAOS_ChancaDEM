@@ -8,6 +8,7 @@
     "data/examples/params.csv",
     "data/examples/hp500-surveys.csv"
   ],
+  "stage_engine_versions": {},
   "readiness_exceptions": {"api": "missing"},
   "readiness_check": "scripts/check_readiness.py",
   "primary_environment": ".venv-pipeline",
