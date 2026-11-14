@@ -164,7 +164,11 @@ open industrial data.
   descriptions (version 1.2.2: `tph_parity`, each row of `power_parity` with what was fitted where, `scores.rmse` in the unit
   of the target it scores), the SDD's CrusherCal paragraph with its test, and notebook 04 of topic 06 (en and es, re-executed:
   the ledger prints 10.95 in sample and 11.55 at the shipped constants) carry the same labels. The `trace` description of
-  `summary.regime` (version 1.0.3) names the values the engine assigns and says trickle is never assigned.
+  `summary.regime` (version 1.0.3) names the values the engine assigns and says trickle is never assigned. The same label
+  is corrected in the framework cards 08 and 16, in notebooks 05-real-surveys/01 (markdown), 06-crushercal/03 and
+  08-crusherbayes/02 (en and es; the last two re-executed, the shipped engine's printed line now says nothing is fitted to
+  the surveys), in the comment above `tph_parity` in `loo.py`, and in the provider tree (`data-pipeline/run.py fixtures`:
+  the `tph_parity` note, and the readiness fixture's catalog digest and contract versions).
 - The ranking of the paired comparison is stated with its population: it ranks the methods that refit every fitted quantity
   in each fold (the strict rows of `hp500-loo` and CrusherBayes); the engine at its shipped constants (11.55 percent) and
   the published model of Rocha et al. (10.62 percent) fit nothing in the folds, are not ranked, and both tie with CrusherBayes

@@ -358,7 +358,8 @@ def build(backbone: dict, version: str, seed: int = SEED) -> dict:
                         "refit_pc": round(float(refit_pc[i]), 1)} for i in range(len(surveys))],
     }
 
-    # ---- t/h parity (the guaranteed real result): measured vs calibrated backbone, in-sample ----
+    # ---- t/h parity: measured vs the engine at its shipped constants (QT = 647 t/h of a Bruno simulation, nothing fitted
+    # to the surveys); the in-sample figure of the backbone is the leaky M0 row ----
     tph_parity = {
         "note": "t/h parity of the engine at its shipped constants: the Evertsson capacity backbone with the base-case "
                 "capacity QT = 647 t/h, which Rocha et al. 2024 (p. 5) take from a Bruno simulation, vs the 10 MEASURED "
