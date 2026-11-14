@@ -87,6 +87,15 @@ open industrial data.
 
 ### Fixed
 
+- The campaign views on a refused case. Where the engine gives no valid P80 at any opening of the drawn range (the control cases CI1,
+  a setting above the feed's top size, and CP1, a pass-through), the view of P80 as the setting drifts open states why and draws no
+  chart, and the "Hours by drift" view draws its chart only when there is a curve; before, both drew an empty interactive frame whose
+  crosshair had no point to step to (G20 of the gate on shell 0.26.0, which starts its keyboard check at Home). SH-010 states the rule.
+- The App's recommendation in the method comparison names the population it ranks: the lowest held-out error of the methods that refit
+  every fitted quantity in each fold (the second reading's N3; the engine at its shipped constants fits nothing to the surveys and is
+  not ranked).
+- The implementation page's contract table and the generated contract types follow the catalog's patch versions and field
+  descriptions (`contract-rows.ts`; `contract.gen.ts`, doc comments only).
 - The technical report after its second reading. The view of P80 against operating hours is named by what it draws and where it
   sits (the first view of the Performance group), and the figure of hours against the drift rate is the App's "Hours by drift" view; the room R (the training range
   of the setting above the current setting, the reference of the margin's state) and the drawn range min(2 Delta s, R) are kept

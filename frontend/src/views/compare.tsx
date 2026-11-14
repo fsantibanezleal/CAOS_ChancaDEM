@@ -132,8 +132,8 @@ export function recommendReason(best: MethodRow, rows: readonly MethodRow[], tar
   const methods = rows.filter((r) => !r.control).length;
   const what: Text = target === 'tph' ? { en: 'throughput', es: 'capacidad' } : { en: 'power', es: 'potencia' };
   return {
-    en: `Recommended for ${what.en}: ${best.name.en}, the lowest held-out error of the ${methods} methods on the ten surveys it never saw (${fmt(best.mape)} percent mean absolute error).`,
-    es: `Recomendado para ${what.es}: ${best.name.es}, el menor error reservado de los ${methods} métodos en los diez muestreos que nunca vio (${fmt(best.mape)} por ciento de error absoluto medio).`,
+    en: `Recommended for ${what.en}: ${best.name.en}, the lowest held-out error of the ${methods} methods that refit every fitted quantity in each fold, on the ten surveys it never saw (${fmt(best.mape)} percent mean absolute error).`,
+    es: `Recomendado para ${what.es}: ${best.name.es}, el menor error reservado de los ${methods} métodos que reajustan cada cantidad ajustada en cada pliegue, en los diez muestreos que nunca vio (${fmt(best.mape)} por ciento de error absoluto medio).`,
   };
 }
 

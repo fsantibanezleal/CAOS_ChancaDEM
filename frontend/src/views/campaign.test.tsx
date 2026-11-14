@@ -90,7 +90,8 @@ describe('no wear rate is asserted', () => {
 });
 
 // SH-010 and catalog row V4: P80 against the hours at the reader's drift rate, never a drift rate of the product's own.
-import { driftCurve, driftSecant, DRIFT_TEXT, hoursCallouts, p80PerMm } from './campaign';
+import { curveHasPoint, driftCurve, driftSecant, DRIFT_TEXT, hoursCallouts, p80PerMm } from './campaign';
+import { CSS_MAX_MM } from '../engine/campaign';
 
 describe('SH-010: the campaign view asserts no wear rate', () => {
   const target = defaultP80Target(p80);
@@ -128,6 +129,24 @@ describe('SH-010: the campaign view asserts no wear rate', () => {
     expect(set.find((c) => c.id === 'cross')!.source.en).toContain('at your drift rate');
     expect(DRIFT_TEXT.control.en).toMatch(/asserts no wear rate and sets none/);
     expect(DRIFT_TEXT.control.es).toMatch(/no afirma ni fija ninguna tasa de desgaste/);
+  });
+  it('adversarial: the refused control cases (CP1 pass-through, CI1 setting above the feed top size) have no point to draw, so the view states why instead of drawing a chart whose crosshair cannot step (G20)', () => {
+    const cp1: Operating = { ...BASE, cssMm: 160 };
+    const ci1: Operating = { ...BASE, cssMm: 280 };
+    for (const op of [cp1, ci1]) {
+      const curve = driftCurve(op, defaultP80Target(evaluate(op).p80), CSS_MAX_MM[op.machine], null);
+      expect(curveHasPoint(curve)).toBe(false);
+      expect(curveHasPoint(driftCurve(op, 30, CSS_MAX_MM[op.machine], 0.2))).toBe(false);
+    }
+    expect(curveHasPoint(driftCurve(BASE, target, CSS_MAX_MM[BASE.machine], null))).toBe(true);
+    // a single finite point is enough to draw and read
+    expect(curveHasPoint({ openingMm: [0, 1], hours: null, p80: [null, 12], crossingMm: null, crossingH: null, rangeMm: 1 })).toBe(true);
+    expect(curveHasPoint({ openingMm: [0, 1], hours: null, p80: [null, Number.NaN], crossingMm: null, crossingH: null, rangeMm: 1 })).toBe(false);
+    for (const l of ['en', 'es'] as const) expect(CAMPAIGN_TEXT.noPoint[l]).toMatch(/P80/);
+    // both campaign views draw a chart only when it has a point: the source gates each UPlotChart on it
+    const src = readFileSync(fileURLToPath(new URL('./campaign.tsx', import.meta.url)), 'utf8');
+    expect(src).toContain("model.kind === 'curve' && (");
+    expect(src).toContain('if (!curveHasPoint(curve)) {');
   });
   it('adversarial: no default drift rate exists anywhere the view reads it from', () => {
     const shared = readFileSync(fileURLToPath(new URL('./shared.tsx', import.meta.url)), 'utf8');

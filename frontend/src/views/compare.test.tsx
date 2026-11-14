@@ -57,6 +57,12 @@ describe('SH-009: every method on shared axes, read from the documents', () => {
       expect(reason.en).toContain(best.name.en);
       expect(reason.en).toContain('lowest held-out error');
       expect(reason.es).toContain(best.name.es);
+      // N3 of the second reading: the ranking states its population; a predictor that fits nothing to the surveys (the engine at
+      // its shipped constants, t/h) or a published model whose constant was set on them is not ranked, so the reason names the
+      // methods it ranks
+      const ranked = compareRows(loo, cb, target).filter((r) => !r.control).length;
+      expect(reason.en).toContain(`of the ${ranked} methods that refit every fitted quantity in each fold`);
+      expect(reason.es).toContain(`de los ${ranked} métodos que reajustan cada cantidad ajustada en cada pliegue`);
     });
   }
   it('adversarial: a planted ordering where another method is the lowest moves the recommendation to it', () => {

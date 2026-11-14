@@ -63,6 +63,10 @@ export const CAMPAIGN_TEXT = {
     en: 'No curve is drawn for this target: the statement above the figure says why.',
     es: 'No se dibuja curva para este objetivo: el enunciado sobre la figura dice por qué.',
   },
+  noPoint: {
+    en: 'The engine gives no valid P80 for this case at any opening of the setting on the drawn range, so there is no curve to draw and no point to read: the other views say why.',
+    es: 'El motor no entrega un P80 válido para este caso en ningún desplazamiento de la abertura del rango dibujado, así que no hay curva que dibujar ni punto que leer: las otras vistas dicen por qué.',
+  },
   ceiling: {
     en: 'The ceiling of the setting is the upper end of the training range of the machine type, the range the engine was swept over.',
     es: 'El techo de la abertura es el extremo superior del rango de entrenamiento del tipo de máquina, el rango sobre el que se barrió el motor.',
@@ -96,7 +100,8 @@ export function campaignModel(op: Operating, p80TargetMm: number, cssMaxMm: numb
 /** The props of the chart for a curve: hours against the drift rate on log axes, the re-set reference line, the drift that uses the opening in that interval. */
 export function campaignChart(m: CampaignModel) {
   const drift = m.kind === 'curve' ? m.driftMmPerH : logSpace(DRIFT_RANGE[0], DRIFT_RANGE[1], CURVE_POINTS);
-  // no curve (target exceeded, never reached, invalid point): the frame and the reference line are drawn, the series is empty
+  // no curve (target exceeded, never reached, invalid point): the series is empty, and CampaignView draws no chart for it (a crosshair
+  // over no data has nothing to read; its statement says why)
   const hours: (number | null)[] = m.kind === 'curve' ? finAll(m.hours) : drift.map(() => null);
   const series: ChartSeries[] = [{ label: { en: 'Hours until the P80 target is exceeded', es: 'Horas hasta superar el P80 objetivo' }, values: hours, color: LIVE_COLOR, width: 2.4 }];
   const yMarks: { y: number; label: Text; tone: 'neutral' }[] = [{ y: REFERENCE_RESET_H, label: REFERENCE_LABEL, tone: 'neutral' }];
@@ -189,17 +194,19 @@ export function CampaignView() {
             {model.kind === 'exceeded' ? t(`${statement.en} Hours remaining: 0.`, `${statement.es} Horas restantes: 0.`) : statement[lang]}
           </p>
         )}
-        <Fill>
-          <UPlotChart
-            title={{ en: 'Hours until the P80 target is exceeded, against the drift rate of the setting', es: 'Horas hasta superar el P80 objetivo, contra la velocidad de desplazamiento de la abertura' }}
-            height="fill"
-            x={chart.x}
-            y={chart.y}
-            series={chart.series}
-            marks={chart.marks}
-            yMarks={chart.yMarks}
-          />
-        </Fill>
+        {model.kind === 'curve' && (
+          <Fill>
+            <UPlotChart
+              title={{ en: 'Hours until the P80 target is exceeded, against the drift rate of the setting', es: 'Horas hasta superar el P80 objetivo, contra la velocidad de desplazamiento de la abertura' }}
+              height="fill"
+              x={chart.x}
+              y={chart.y}
+              series={chart.series}
+              marks={chart.marks}
+              yMarks={chart.yMarks}
+            />
+          </Fill>
+        )}
       </Stack>
     </PlotCard>
   );
@@ -339,6 +346,11 @@ export function hoursCallouts(
   ];
 }
 
+/** Whether the drift curve has a point to draw and read: false when the engine answers no valid P80 at any opening of the drawn range
+ * (the refused control cases, for example a setting above the feed's top size), where the view states why instead of drawing a chart
+ * whose crosshair has nothing to step to (G20). */
+export const curveHasPoint = (curve: DriftCurve): boolean => curve.p80.some((v) => v !== null && Number.isFinite(v));
+
 /** The curve drawn out to a share `reveal` of the way to the target's crossing (the whole curve at 1): the values past it are gaps. */
 export function drawnTo(values: (number | null)[], xs: readonly number[], crossX: number | null, reveal: number): (number | null)[] {
   if (reveal >= 1) return values;
@@ -418,6 +430,18 @@ export function HoursView({ part }: { part?: 'stage' | 'controls' } = {}) {
       </div>
   );
   if (part === 'controls') return controls;
+  if (!curveHasPoint(curve)) {
+    return (
+      <PlotCard fill title={{ en: 'P80 as the setting drifts open', es: 'P80 a medida que la abertura se abre' }} lane="live" provenance={provenanceOf(sel)} dataKey={stateKey}>
+        <div className="cdem-stack" data-caos-flow="" data-drift={drift ?? ''} data-hours="">
+          {part !== 'stage' && controls}
+          <p className="caos-pending" data-state="empty" data-no-curve="">
+            {CAMPAIGN_TEXT.noPoint[lang]}
+          </p>
+        </div>
+      </PlotCard>
+    );
+  }
   return (
     <PlotCard
       fill
