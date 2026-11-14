@@ -84,42 +84,28 @@ export function reservedBand(measured: number | null, count: number, width: numb
   return Math.min(band, bandLimit(hostHeight));
 }
 
-interface HeldBand {
+interface ReadBand {
   key: string;
   band: number;
-  prev: number | null;
-  /** The two bands of a detected swing (an A, B, A cycle of reports), or null. */
-  swing: [number, number] | null;
 }
 
-const same = (a: number, b: number) => Math.abs(a - b) < 0.5;
-
-/** The next held band after a report `v` (exported for its test): it follows the reports; when one swings back to the band before the
- * last (an A, B, A cycle) it holds the larger of the two while the reports stay on those two, and follows again on any other report
- * (a new width, new cards), so a transient band is never kept. A larger band past `limit` (bandLimit: it would leave the drawing no
- * room, a band reported while the layer had collapsed) is never the one held: the swing holds the smaller (N5). */
-export function nextBand(h: HeldBand | null, key: string, v: number, limit = Number.POSITIVE_INFINITY): HeldBand {
-  if (!h || h.key !== key) return { key, band: v, prev: null, swing: null };
-  if (h.swing && (same(v, h.swing[0]) || same(v, h.swing[1]))) return h;
-  if (same(v, h.band)) return h;
-  if (!h.swing && h.prev !== null && same(v, h.prev)) {
-    const lo = Math.min(h.band, v);
-    const hi = Math.max(h.band, v);
-    return { key, band: hi + BAND_GAP <= limit ? hi : lo, prev: h.band, swing: [lo, hi] };
-  }
-  return { key, band: v, prev: h.band, swing: null };
+/** The band read after a report `v` (exported for its test): the report itself, for the host `key` it was made for. From shell 0.26.0
+ * the layer reports a band only for a settled layout (known defect 65, SHW-065), so no report is transient and none is held; the
+ * reservation alone bounds a band that would leave the drawing no room (reservedBand, N5). */
+export function nextBand(h: ReadBand | null, key: string, v: number): ReadBand {
+  return h && h.key === key && h.band === v ? h : { key, band: v };
 }
 
 /**
- * The measured band of a host's SceneCallouts, from the shell's onLayout. The band sets the plot's height, the plot the anchors, and
- * the anchors the shell's card order (fewest crossings), so the band could swing between two orders without end (React's update
- * limit, seen on a zoomed chart at 390 px): a swing back is held at the larger band (nextBand).
+ * The measured band of a host's SceneCallouts, from the shell's onLayout, read as the shell settled it. The band sets the plot's
+ * height, the plot the anchors and the anchors the shell's card order; on shell 0.26.0 that chain settles without a hold of the
+ * product's (measured on a zoomed chart at 390 px for 0.13.000, CHANGELOG), and the chart's anchors are still measured at most a few
+ * times in one task (ChartCallouts).
  */
-export function useMeasuredBand(key: string, hostHeight = 0): [number | null, (info: { bandHeight: number }) => void] {
-  const [held, setHeld] = useState<HeldBand | null>(null);
-  const limit = bandLimit(hostHeight);
-  const onLayout = useCallback((info: { bandHeight: number }) => setHeld((h) => nextBand(h, key, info.bandHeight, limit)), [key, limit]);
-  return [held && held.key === key ? held.band : null, onLayout];
+export function useMeasuredBand(key: string): [number | null, (info: { bandHeight: number }) => void] {
+  const [read, setRead] = useState<ReadBand | null>(null);
+  const onLayout = useCallback((info: { bandHeight: number }) => setRead((h) => nextBand(h, key, info.bandHeight)), [key]);
+  return [read && read.key === key ? read.band : null, onLayout];
 }
 
 export interface Subject {
@@ -142,7 +128,7 @@ export function CalloutStage({
   className?: string;
 }) {
   const lang = useShellLang();
-  // a drawing of the product's own holds the tallest band of its cards (its anchors move with the band only through the drawing's own
+  // a drawing of the product's own reads the band its cards settle on (its anchors move with the band only through the drawing's own
   // layout, which a width change redraws)
   const [measured, onLayout] = useMeasuredBand(callouts.map((c) => c.id).join(','));
   return (
@@ -307,7 +293,7 @@ export function ChartCallouts({
       mo?.disconnect();
     };
   }, []);
-  const [measured, onLayout] = useMeasuredBand(`${callouts.map((c) => c.id).join(',')}:${Math.round(geom.layer.width)}`, geom.layer.height);
+  const [measured, onLayout] = useMeasuredBand(`${callouts.map((c) => c.id).join(',')}:${Math.round(geom.layer.width)}`);
   const band = reservedBand(measured, callouts.length, geom.layer.width || 900, geom.layer.height);
   const scale: ChartFrame = { ...frame, x: geom.viewX ?? frame.x };
   const items = callouts.map((c) => {

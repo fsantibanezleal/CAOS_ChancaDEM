@@ -253,20 +253,18 @@ describe('M1: the band a view reserves is the one the shell measured', () => {
   });
 });
 
-describe('M1: a band that swings between two card orders is held', () => {
-  it('adversarial: an A, B, A cycle of reports holds the larger band; any other report is followed, and a new width starts again', async () => {
+describe('M1: the band read is the one the shell settled (shell 0.26.0, known defect 65)', () => {
+  it('adversarial: every report is read as reported, an A, B, A cycle included, and a new key starts again; no swing is held', async () => {
     const { nextBand } = await import('./callouts');
     let h = nextBand(null, 'k', 100);
     h = nextBand(h, 'k', 130);
     expect(h.band).toBe(130);
+    // the shell reports a band only for a settled layout: a report back to an earlier band is the settled layout, never held at the larger
     h = nextBand(h, 'k', 100);
-    expect(h.band).toBe(130);
-    expect(h.swing).toEqual([100, 130]);
-    expect(nextBand(h, 'k', 100).band).toBe(130);
+    expect(h.band).toBe(100);
     expect(nextBand(h, 'k', 130).band).toBe(130);
-    // any other report is a new situation: followed, so a transient band is never kept
     expect(nextBand(h, 'k', 720).band).toBe(720);
-    expect(nextBand(nextBand(h, 'k', 720), 'k', 232).band).toBe(232);
-    expect(nextBand(h, 'k2', 90).band).toBe(90);
+    expect(nextBand(h, 'k2', 90)).toEqual({ key: 'k2', band: 90 });
+    expect(Object.keys(h).sort()).toEqual(['band', 'key']);
   });
 });

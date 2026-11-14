@@ -378,13 +378,13 @@ export function sectionCallouts(op: Operating, nip: number, limit: number, hours
     { id: 'css', eyebrow: { en: 'CSS', es: 'ABERTURA' }, value: num(op.cssMm, { digits: 3 }), unit: { en: 'mm', es: 'mm' }, state: hours !== null ? 'warning' : 'normal', source, trend: hours !== null ? 'up' : undefined },
     {
       id: 'nip',
-      eyebrow: { en: 'NIP ANGLE', es: 'NIP' },
+      eyebrow: { en: 'NIP ANGLE', es: 'ÁNGULO DE NIP' },
       value: num(nip, { decimals: 1 }),
       unit: { en: '°', es: '°' },
       state: nip <= limit ? 'normal' : 'alarm',
       source: { en: `Grip limit ${num(limit, { decimals: 2 })}° = 2 arctan 0.35`, es: `Límite de agarre ${num(limit, { decimals: 2 })}° = 2 arctan 0,35` },
     },
-    // the speed is in the source: an eyebrow and a value share one row of a fixed-width card, so the eyebrow stays short (M2)
+    // the speed is in the source (M2): the eyebrow names the quantity alone
     {
       id: 'throw',
       eyebrow: { en: 'THROW', es: 'CARRERA' },

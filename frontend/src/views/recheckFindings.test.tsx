@@ -108,18 +108,15 @@ describe('N5: a callout band that leaves the drawing no room is never reserved',
     // an unmeasured host does not bound the band
     expect(reservedBand(166, 3, 327, 0)).toBe(174);
   });
-  it('adversarial: a swing through a transient band (a collapsed width) holds the band that leaves room, not the transient one', () => {
-    let h = nextBand(null, 'k', 166, 384);
-    h = nextBand(h, 'k', 508, 384);
-    h = nextBand(h, 'k', 166, 384);
+  it('adversarial: a large band the shell reports is read as reported and bounded by the reservation alone, never held over a later one', () => {
+    let h = nextBand(null, 'k', 166);
+    h = nextBand(h, 'k', 508);
+    expect(h.band).toBe(508);
+    expect(reservedBand(h.band, 3, 327, 544)).toBe(384);
+    h = nextBand(h, 'k', 166);
     expect(h.band).toBe(166);
-    h = nextBand(h, 'k', 508, 384);
-    expect(h.band).toBe(166);
-  });
-  it('a swing between two bands that both leave room still holds the larger (the layout loop F3b closed)', () => {
-    let h = nextBand(null, 'k', 166, 384);
-    h = nextBand(h, 'k', 240, 384);
-    h = nextBand(h, 'k', 166, 384);
+    expect(reservedBand(h.band, 3, 327, 544)).toBe(174);
+    h = nextBand(h, 'k', 240);
     expect(h.band).toBe(240);
   });
 });
