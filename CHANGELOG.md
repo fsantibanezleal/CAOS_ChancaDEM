@@ -88,9 +88,10 @@ open industrial data.
 ### Fixed
 
 - The campaign views on a refused case. Where the engine gives no valid P80 at any opening of the drawn range (the control cases CI1,
-  a setting above the feed's top size, and CP1, a pass-through), the view of P80 as the setting drifts open states why and draws no
-  chart, and the "Hours by drift" view draws its chart only when there is a curve; before, both drew an empty interactive frame whose
-  crosshair had no point to step to (G20 of the gate on shell 0.26.0, which starts its keyboard check at Home). SH-010 states the rule.
+  a setting above the feed's top size, CP1, a pass-through, and the flagged survey HP500-03), the view of P80 as the setting drifts
+  open draws no chart and declares the absence with its reason (`data-state="unavailable"`, ADR-0080 decision 3); before, it drew
+  an empty interactive frame whose crosshair had no point to step to (G20 of the gate on shell 0.26.0, which starts its keyboard
+  check at Home). SH-010 states the rule.
 - The App's recommendation in the method comparison names the population it ranks: the lowest held-out error of the methods that refit
   every fitted quantity in each fold (the second reading's N3; the engine at its shipped constants fits nothing to the surveys and is
   not ranked).

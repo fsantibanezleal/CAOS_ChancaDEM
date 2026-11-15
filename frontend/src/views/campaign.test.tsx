@@ -143,10 +143,13 @@ describe('SH-010: the campaign view asserts no wear rate', () => {
     expect(curveHasPoint({ openingMm: [0, 1], hours: null, p80: [null, 12], crossingMm: null, crossingH: null, rangeMm: 1 })).toBe(true);
     expect(curveHasPoint({ openingMm: [0, 1], hours: null, p80: [null, Number.NaN], crossingMm: null, crossingH: null, rangeMm: 1 })).toBe(false);
     for (const l of ['en', 'es'] as const) expect(CAMPAIGN_TEXT.noPoint[l]).toMatch(/P80/);
-    // both campaign views draw a chart only when it has a point: the source gates each UPlotChart on it
+    // the view of P80 against the drift draws no chart without a point and declares the absence with its reason (ADR-0080 decision 3:
+    // the gate's G6 admits an instrument that draws nothing only with a visible data-state="unavailable" reason)
     const src = readFileSync(fileURLToPath(new URL('./campaign.tsx', import.meta.url)), 'utf8');
-    expect(src).toContain("model.kind === 'curve' && (");
-    expect(src).toContain('if (!curveHasPoint(curve)) {');
+    const branch = src.slice(src.indexOf('if (!curveHasPoint(curve)) {'), src.indexOf('if (!curveHasPoint(curve)) {') + 900);
+    expect(branch).toContain('data-state="unavailable"');
+    expect(branch).toContain('CAMPAIGN_TEXT.noPoint[lang]');
+    expect(branch).not.toContain('UPlotChart');
   });
   it('adversarial: no default drift rate exists anywhere the view reads it from', () => {
     const shared = readFileSync(fileURLToPath(new URL('./shared.tsx', import.meta.url)), 'utf8');

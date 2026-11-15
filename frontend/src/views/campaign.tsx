@@ -100,8 +100,8 @@ export function campaignModel(op: Operating, p80TargetMm: number, cssMaxMm: numb
 /** The props of the chart for a curve: hours against the drift rate on log axes, the re-set reference line, the drift that uses the opening in that interval. */
 export function campaignChart(m: CampaignModel) {
   const drift = m.kind === 'curve' ? m.driftMmPerH : logSpace(DRIFT_RANGE[0], DRIFT_RANGE[1], CURVE_POINTS);
-  // no curve (target exceeded, never reached, invalid point): the series is empty, and CampaignView draws no chart for it (a crosshair
-  // over no data has nothing to read; its statement says why)
+  // no curve (target exceeded, never reached, invalid point): the frame and the reference line are drawn, the series is empty, and the
+  // statement above the figure says why
   const hours: (number | null)[] = m.kind === 'curve' ? finAll(m.hours) : drift.map(() => null);
   const series: ChartSeries[] = [{ label: { en: 'Hours until the P80 target is exceeded', es: 'Horas hasta superar el P80 objetivo' }, values: hours, color: LIVE_COLOR, width: 2.4 }];
   const yMarks: { y: number; label: Text; tone: 'neutral' }[] = [{ y: REFERENCE_RESET_H, label: REFERENCE_LABEL, tone: 'neutral' }];
@@ -194,19 +194,17 @@ export function CampaignView() {
             {model.kind === 'exceeded' ? t(`${statement.en} Hours remaining: 0.`, `${statement.es} Horas restantes: 0.`) : statement[lang]}
           </p>
         )}
-        {model.kind === 'curve' && (
-          <Fill>
-            <UPlotChart
-              title={{ en: 'Hours until the P80 target is exceeded, against the drift rate of the setting', es: 'Horas hasta superar el P80 objetivo, contra la velocidad de desplazamiento de la abertura' }}
-              height="fill"
-              x={chart.x}
-              y={chart.y}
-              series={chart.series}
-              marks={chart.marks}
-              yMarks={chart.yMarks}
-            />
-          </Fill>
-        )}
+        <Fill>
+          <UPlotChart
+            title={{ en: 'Hours until the P80 target is exceeded, against the drift rate of the setting', es: 'Horas hasta superar el P80 objetivo, contra la velocidad de desplazamiento de la abertura' }}
+            height="fill"
+            x={chart.x}
+            y={chart.y}
+            series={chart.series}
+            marks={chart.marks}
+            yMarks={chart.yMarks}
+          />
+        </Fill>
       </Stack>
     </PlotCard>
   );
@@ -435,7 +433,9 @@ export function HoursView({ part }: { part?: 'stage' | 'controls' } = {}) {
       <PlotCard fill title={{ en: 'P80 as the setting drifts open', es: 'P80 a medida que la abertura se abre' }} lane="live" provenance={provenanceOf(sel)} dataKey={stateKey}>
         <div className="cdem-stack" data-caos-flow="" data-drift={drift ?? ''} data-hours="">
           {part !== 'stage' && controls}
-          <p className="caos-pending" data-state="empty" data-no-curve="">
+          {/* a declared absence (ADR-0080 decision 3): the instrument draws nothing and says why, so no crosshair is offered over no
+              data (G20) and no empty frame stands in for a drawing (G6) */}
+          <p className="caos-pending" data-state="unavailable" data-no-curve="">
             {CAMPAIGN_TEXT.noPoint[lang]}
           </p>
         </div>
