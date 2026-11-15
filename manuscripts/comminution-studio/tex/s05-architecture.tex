@@ -162,9 +162,10 @@ together, on at least $80\%$, which the shell's layout check measures.
 
 Table~\ref{tab:resources} gives what each stage of the pipeline needs on the development workstation (Windows 11, Python
 $\resPython$ in the pipeline environment, Node $24$, a processor with $\resThreads$ threads), measured on \resDate{} with a
-process-tree monitor that polls the peak memory of the command and of every process it starts every $20$~ms. The three pipeline
-stages that write artifacts (the bake, the HP500 step and the training) were run into a sandbox output root, so the committed artifacts were not rewritten; the disk column of a
-sandbox run is the bytes it wrote there, without the released model bundles that the committed tree also holds. No stage needs a
+process-tree monitor that polls the peak memory of the command and of every process it starts every $20$~ms. The stages ran in
+order on a copy of the release commit taken with \texttt{git archive} (the training, then the bake, the HP500 step alone, the web
+install, build and unit tests, and the Python suite last), so the committed artifacts were not rewritten; the disk column is the bytes
+of the stage's output folder in that copy, the bake's including the trained models. No stage needs a
 graphics processor or a network after the installation. The bake takes about $\resBakeMin$~minutes, of which the HP500 step takes about
 $\resHpMin$: the CrusherBayes sampler fixes the work at $20\times7000=140{,}000$ log-probability evaluations per posterior, each of which
 evaluates the engine on the nine or ten training surveys of its fold, for eleven posteriors, which the step spreads over the processor's
