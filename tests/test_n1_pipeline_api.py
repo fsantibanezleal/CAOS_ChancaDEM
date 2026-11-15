@@ -191,6 +191,17 @@ def test_build_equals_the_fold_by_fold_composition_of_the_public_functions(doc: 
     assert doc["loo"]["tph"]["strict"]["uq"]["nested_covered"] == nested["covered"]
 
 
+def test_tph_parity_note_names_the_shipped_backbone_as_fitting_nothing_to_the_surveys(doc: dict) -> None:
+    """The t/h parity row is the engine with the base-case capacity of 647 t/h of a Bruno simulation: no constant of it is
+    set on the ten surveys, so its note never calls it in sample (the in-sample figure is the leaky row, the capacity base
+    fitted on all ten surveys) and says that it fits nothing to them."""
+    note = " ".join(doc["tph_parity"]["note"].lower().split())
+    assert "in-sample" not in note and "in sample" not in note
+    assert "fits nothing to the surveys" in note
+    assert "647 t/h" in note and "bruno" in note
+    assert "leaky" in note
+
+
 def test_build_equals_the_committed_document(doc: dict) -> None:
     committed = json.loads((ROOT / "data" / "derived" / "hp500" / "loo.json").read_text(encoding="utf-8"))
     assert doc == committed
@@ -297,9 +308,12 @@ def test_sdd_crushercal_quotes_the_committed_numbers_and_claims_no_band_of_the_p
     bs1 = " ".join(sdd[start:sdd.index("## Deploy driver", start)].split())
     doc = json.loads((ROOT / "data" / "derived" / "hp500" / "loo.json").read_text(encoding="utf-8"))
     tph, kw = doc["loo"]["tph"]["strict"], doc["loo"]["kW"]["strict"]
+    tph_leaky = doc["loo"]["tph"]["leaky"]
     quoted = {
         "strict MAPE": f"{tph['M0_backbone']['mape_pct']:.2f} percent",
-        "in-sample MAPE of the same backbone": f"{doc['tph_parity']['backbone']['mape_pct']:.2f} percent",
+        "in-sample MAPE of the same backbone": f"{tph_leaky['M0_backbone']['mape_pct']:.2f} percent in sample",
+        "the engine at its shipped constants": f"{doc['tph_parity']['backbone']['mape_pct']:.2f} percent for the engine at "
+                                               "its shipped constants",
         "constant mean": f"{tph['constant_mean']['mape_pct']:.2f} percent",
         "label shuffle": f"{tph['M1_label_shuffle']['mape_pct']:.2f} percent",
         "bounded residual": f"{tph['M1_residual']['mape_pct']:.2f} percent",
@@ -310,3 +324,4 @@ def test_sdd_crushercal_quotes_the_committed_numbers_and_claims_no_band_of_the_p
     for what, text in quoted.items():
         assert text in bs1, (what, text)
     assert "inside the paper's own band" not in bs1
+    assert f"{doc['tph_parity']['backbone']['mape_pct']:.2f} percent in sample" not in bs1

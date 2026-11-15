@@ -50,8 +50,10 @@ same resampled surveys serve every predictor, so a difference is paired: a surve
 together. A ranking of two predictors is stated only when the interval of their difference excludes zero; otherwise the two are reported as
 not distinguishable on these surveys. The rule applies to every two predictors, not only to a predictor and the line or the backbone, so the
 interval of every pair is computed on the same resamples (Table~\ref{tab:pairs}). The predictions are those of the committed documents (the strict CrusherCal predictions and the
-CrusherBayes predictive means), and the computation is the report's script \texttt{figures/\allowbreak{}heldout\_uq.py}, which recomputes every
-committed MAPE from them before it resamples.
+CrusherBayes predictive means), except two that no document stores per survey: the constant mean of each fold, computed from the
+measured values of its training surveys, and the label-shuffle control, recomputed with the product's own functions and seed on the
+calibrated backbone of each fold at full precision. The computation is the report's script
+\texttt{figures/\allowbreak{}heldout\_uq.py}, which recomputes every committed MAPE from these predictions before it resamples.
 
 \subsection{Baselines and controls}\label{sec:protocol-baselines}
 
@@ -84,7 +86,7 @@ and the leaky folds); CrusherBayes spawns one seed per
 posterior from a seed sequence started at $42$, uses that seed plus one for the predictive draws of the posterior, and its document is byte-identical whatever the number of worker
 processes. The learned models use the training seed $12345$ and the held-out seed $67890$, with torch single-threaded. The
 particle-replacement check of Section~\ref{sec:validation} uses five seeds per parcel count. Each posterior is one chain of twenty walkers;
-its repetition is the eleven posteriors of the folds, whose convergence diagnostics are reported. The bootstrap of the held-out errors uses the seed $\uqSeed$. The measured run times, recorded on $\resDate$ on a
+its repetition is the eleven posteriors of the folds, whose convergence diagnostics are reported. The bootstrap of the held-out errors uses the seed $\uqSeed$. The measured run times, recorded on \resDate{} on a
 Windows 11 workstation with Python $\resPython$ and Node $24$, are in Table~\ref{tab:resources}: about $\resBakeMin$~minutes for the whole bake,
 of which about $\resHpMin$ are the HP500 step with the CrusherBayes sampler ($140{,}000$ log-probability evaluations per posterior, eleven
 posteriors), $\resModelsS$~s to train and evaluate both learned models on the processor, and a median of $\resEngineMed$~ms per engine

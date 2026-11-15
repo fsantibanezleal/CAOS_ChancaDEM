@@ -358,11 +358,14 @@ def build(backbone: dict, version: str, seed: int = SEED) -> dict:
                         "refit_pc": round(float(refit_pc[i]), 1)} for i in range(len(surveys))],
     }
 
-    # ---- t/h parity (the guaranteed real result): measured vs calibrated backbone, in-sample ----
+    # ---- t/h parity: measured vs the engine at its shipped constants (QT = 647 t/h of a Bruno simulation, nothing fitted
+    # to the surveys); the in-sample figure of the backbone is the leaky M0 row ----
     tph_parity = {
-        "note": "In-sample t/h parity: the calibrated Evertsson capacity backbone vs the 10 MEASURED t/h. This is "
-                "the concrete, real at-bar result; the held-out (strict LOO) M0 t/h number above confirms it is "
-                "not an in-sample artifact.",
+        "note": "t/h parity of the engine at its shipped constants: the Evertsson capacity backbone with the base-case "
+                "capacity QT = 647 t/h, which Rocha et al. 2024 (p. 5) take from a Bruno simulation, vs the 10 MEASURED "
+                "t/h. It fits nothing to the surveys: no constant of it was set on them. The strict LOO M0 t/h number "
+                "above refits the capacity base without the held-out survey; the leaky M0 row, the capacity base fitted "
+                "on the same ten surveys it is scored on, is the figure an optimistic fit gives.",
         "backbone": stats(meas_tph, bb_tph),
         "per_survey": [{"n": surveys[i]["n"], "css": float(css[i]), "measured": float(meas_tph[i]),
                         "backbone": round(float(bb_tph[i]), 1)} for i in range(len(surveys))],

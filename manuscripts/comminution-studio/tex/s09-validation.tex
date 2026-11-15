@@ -85,9 +85,10 @@ a cross-field rule must be refused, and a guard of the test suite fails any test
 
 The calibrated lane is reconciled with the published calibration in three ways. The classification, $t_{10}$ and power constants of the engine
 were checked against Table 5 of the paper, and the survey table against its Table A1, row for row. The engine with these constants and the
-capacity base of $647$~t/h reproduces the measured feed rates of the ten surveys with an in-sample MAPE of $11.55\%$; refit per fold, the capacity
-base ranges from $\qtFoldLo$ to $\qtFoldHi$~t/h ($\qtAll$~t/h on all ten surveys), above the published number because the measured feed rates
-lie above the backbone computed with $647$~t/h on average, so the scalar that minimises the squared error rises; that the engine uses the number in
+capacity base of $\qtShip$~t/h, taken from a simulation by Bruno and fitted to none of the surveys, reproduces the measured feed rates of the ten
+surveys with a MAPE of $\bbShipMape\%$; refit per fold, the capacity base ranges from $\qtFoldLo$ to $\qtFoldHi$~t/h ($\qtAll$~t/h on all
+ten surveys, with an in-sample MAPE of $\bbLeakyMape\%$), above the published number because the measured feed rates
+lie above the backbone computed with $\qtShip$~t/h on average, so the scalar that minimises the squared error rises; that the engine uses the number in
 another capacity form (Section~\ref{sec:m-hp500}) explains why it is not the vendor's capacity, not why the refit lies above it. The posterior mean of $646.3$~t/h of CrusherBayes is no evidence for the published value: it
 sits at its prior centre while the discrepancy constant absorbs the level of the throughput (Section~\ref{sec:results-cb}). The published power
 constants do not reconcile with the Bond draw ($47.58\%$ in sample), because in the paper they multiply the paper's size-specific net power and

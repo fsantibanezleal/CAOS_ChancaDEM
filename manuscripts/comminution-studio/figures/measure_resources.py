@@ -5,7 +5,8 @@ Two kinds of measurement, both of the release in the working tree:
 
 * the stage runs, measured outside this script by a process-tree monitor that polls the peak memory of the command and every
   descendant (CAOS_MANAGE ``tools/audit/measure_command.py --json``, one JSON object per stage, on the last line of its output),
-  each pointed at a sandbox output root so the committed artifacts are not rewritten; pass them as ``--stage FILE``;
+  each run on a copy that leaves the committed artifacts untouched (CAOS_MANAGE ``tools/audit/measure_stages.py --json`` runs
+  every stage on a ``git archive`` copy of the release commit; one stage record per file); pass them as ``--stage FILE``;
 * the canonical engine time per case, measured here: after one warm-up run, the median of seven runs of ``evaluate`` at the
   committed parameters of each of the baked cases, and the median and the largest of those medians.
 

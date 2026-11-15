@@ -38,8 +38,9 @@ MARKERS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("the placeholder product name", re.compile(r'"name"\s*:\s*"CAOS Product"|\bcaos-product(?:-frontend)?(?![\w-])')),
     ("an example contract schema id", re.compile(r"\bexample\.(?:trace|manifest|index)/v\d+\b")),
     ("an example reference", re.compile(r"\b(?:Kermack|McKendrick|Hethcote)\b")),
-    # the example's constant, never a hyphenated id that contains the word (CAOS_Contraste's finding F-SCALED-COVERAGE)
-    ("the example immunisation variants", re.compile(r"(?<![\w-])COVERAGE(?![\w-])|herd threshold")),
+    # "coverage" is a domain term in many products. Detect the example's distinctive immunisation prose, not an
+    # uppercase identifier that scientific products may use for acquisition or model support.
+    ("the example immunisation variants", re.compile(r"herd threshold")),
     ("prose about the example engine", re.compile(r"\bEXAMPLE engine\b|\bteaching engine\b")),
     # the example's executive view (content/executive.json): a product writes its own, never keeps the example's
     ("the example executive view", re.compile(r"Hospital capacity in respiratory seasons|Capacidad hospitalaria en las temporadas respiratorias|Managing-the-flow-of-patients-through-hospital")),
@@ -91,11 +92,13 @@ def main() -> int:
         return 1
     allow = allowlist()
     hits: list[str] = []
+    affected_paths: set[str] = set()
     for rel in files:
         if rel in SELF or any(a in rel for a in allow):
             continue
         if any(rel == f or rel.startswith(f) for f in FORBIDDEN_FILES):
             hits.append(f"{rel}: a template blueprint file; delete it")
+            affected_paths.add(rel)
             continue
         if Path(rel).suffix.lower() not in TEXT_SUFFIXES:
             continue
@@ -107,6 +110,7 @@ def main() -> int:
             for name, pat in MARKERS:
                 if pat.search(line):
                     hits.append(f"{rel}:{n}: {name}")
+                    affected_paths.add(rel)
                     break
     if not hits:
         print(f"check_template_residue: OK, no example content in {len(files)} tracked files.")
@@ -116,6 +120,9 @@ def main() -> int:
         print(f"  {h}")
     if len(hits) > 200:
         print(f"  ... and {len(hits) - 200} more")
+        print(f"Affected paths ({len(affected_paths)}; detail limited to 200 hits):")
+        for rel in sorted(affected_paths):
+            print(f"  {rel}")
     return 1
 
 

@@ -114,7 +114,7 @@ export interface components {
     schemas: {
         /**
          * ParamsRecord
-         * @description Contract 1 (ingestion), catalog row params-record 1.0.0: one crusher operating point as accepted by data-pipeline/pipeline/io/contract.py validate_rows from the table data/examples/params.csv (columns case_id, machine, css_mm, throw_mm, speed_rpm, feed_x63_mm, feed_m, ore_axb, ore_wi). Values arrive as text and are parsed, never coerced: a row that fails a rule below is rejected with a reason. A physically meaningful but unusual row is accepted and flagged with the engine's own codes: a closed-side setting at or above the feed's 80 percent passing size (pass-through), or at or above the feed top size of 256 mm (invalid control); the bounds below are wide on purpose so the negative and invalid control cases are accepted, flagged and baked, never dropped. Sizes in millimetres, speed in revolutions per minute, the Bond work index in kWh per tonne.
+         * @description Contract 1 (ingestion), catalog row params-record 1.0.1: one crusher operating point as accepted by data-pipeline/pipeline/io/contract.py validate_rows from the table data/examples/params.csv (columns case_id, machine, css_mm, throw_mm, speed_rpm, feed_x63_mm, feed_m, ore_axb, ore_wi). Values arrive as text and are parsed, never coerced: a row that fails a rule below is rejected with a reason. A physically meaningful but unusual row is accepted and flagged with the engine's own codes: a closed-side setting at or above the feed's 80 percent passing size (pass-through), or at or above the feed top size of 256 mm (invalid control); the bounds below are wide on purpose so the negative and invalid control cases are accepted, flagged and baked, never dropped. Sizes in millimetres, speed in revolutions per minute, the Bond work index in kWh per tonne.
          */
         ParamsRecord: {
             /** @description The case identifier, for example S01 or HP500-01. */
@@ -124,41 +124,51 @@ export interface components {
              * @enum {unknown}
              */
             machine: "cone-sec" | "cone-tert" | "cone-short-head" | "gyratory" | "jaw";
-            /** @description Closed-side setting, the narrowest gap between the mantle and the concave (or the jaws), mm. */
+            /** @description Closed-side setting, the narrowest gap between the mantle and the concave (or the jaws) [mm]. */
             css_mm: number;
-            /** @description Eccentric throw, the open-side setting minus the closed-side setting, mm. */
+            /** @description Eccentric throw, the open-side setting minus the closed-side setting [mm]. */
             throw_mm: number;
-            /** @description Eccentric (gyration) speed, revolutions per minute. */
+            /** @description Eccentric (gyration) speed [rpm]. */
             speed_rpm: number;
-            /** @description Rosin-Rammler characteristic size of the feed (63.2 percent passing), mm. */
+            /** @description Rosin-Rammler characteristic size of the feed (63.2 percent passing) [mm]. */
             feed_x63_mm: number;
             /** @description Rosin-Rammler uniformity exponent of the feed, dimensionless. */
             feed_m: number;
             /** @description JKMRC drop-weight ore competence A times b, dimensionless; lower is harder. */
             ore_axb: number;
-            /** @description Bond work index of the ore, kWh per tonne. */
+            /** @description Bond work index of the ore [kWh/t]. */
             ore_wi: number;
         };
         /**
          * CaseIndex
-         * @description Contract 2 (artifact), catalog row case-index 1.0.0: the flat inventory of every baked case, written by data-pipeline/pipeline/core/manifest.py build_index to data/derived/manifests/index.json. Rules the schema cannot state, checked by the producer and consumer tests: n_cases equals the number of entries, default_case is one of their case_id values, the entries are sorted by case_id, and every path in files exists under data/derived.
+         * @description Contract 2 (artifact), catalog row case-index 1.0.1: the flat inventory of every baked case, written by data-pipeline/pipeline/core/manifest.py build_index to data/derived/manifests/index.json. Rules the schema cannot state, checked by the producer and consumer tests: n_cases equals the number of entries, default_case is one of their case_id values, the entries are sorted by case_id, and every path in files exists under data/derived.
          */
         CaseIndex: {
-            /** @constant */
+            /**
+             * @description The document schema identifier, chancadem.index/v1.
+             * @constant
+             */
             schema: "chancadem.index/v1";
             /** @description The product version that baked the index; older than VERSION means the bake is stale. */
             engine_version: components["schemas"]["version"];
+            /** @description The number of baked cases, the length of cases. */
             n_cases: number;
+            /** @description The case the App opens on, one of the case_id values. */
             default_case: string;
+            /** @description One entry per baked case, sorted by case_id. */
             cases: {
+                /** @description The case identifier, for example S01 or HP500-01. */
                 case_id: string;
+                /** @description The case title in English and Spanish. */
                 title: components["schemas"]["text"];
+                /** @description The case category in English and Spanish. */
                 category: components["schemas"]["text"];
                 /**
                  * @description real: one of the measured HP500 surveys; synthetic: a circuit case of the engine.
                  * @enum {unknown}
                  */
                 real_or_synthetic: "real" | "synthetic";
+                /** @description The case's manifest, relative to data/derived. */
                 manifest_path: string;
             }[];
             /** @description The further committed files the site serves (the model files, the HP500 validation documents, the model metrics), relative to data/derived; frontend/scripts/declared.mjs copies them with the cases. */
@@ -166,13 +176,19 @@ export interface components {
         };
         /**
          * CaseManifest
-         * @description Contract 2 (artifact), catalog row case-manifest 1.0.0: the authoritative record of one baked crushing case, written by data-pipeline/pipeline/core/manifest.py build_case_manifest to data/derived/manifests/<case>.json. A pure function of (params, seed): no wall-clock time. Rules the schema cannot state, checked by scripts/check_artifacts.py and the producer test: artifact.bytes equals the size of the file at artifact.path; lane equals gate.lane; measured is present exactly when real_or_synthetic is real; every metric named in expect is a key of metrics and lies inside its range.
+         * @description Contract 2 (artifact), catalog row case-manifest 1.1.1: the authoritative record of one baked crushing case, written by data-pipeline/pipeline/core/manifest.py build_case_manifest to data/derived/manifests/<case>.json. A pure function of (params, seed): no wall-clock time. Rules the schema cannot state, checked by scripts/check_artifacts.py and the producer test: artifact.bytes equals the size of the file at artifact.path; lane equals gate.lane; measured is present exactly when real_or_synthetic is real; every metric named in expect is a key of metrics and lies inside its range.
          */
         CaseManifest: {
-            /** @constant */
+            /**
+             * @description The document schema identifier, chancadem.manifest/v1.
+             * @constant
+             */
             schema: "chancadem.manifest/v1";
+            /** @description The case identifier, for example S01 or HP500-01. */
             case_id: string;
+            /** @description The case title in English and Spanish. */
             title: components["schemas"]["text"];
+            /** @description The case category in English and Spanish. */
             category: components["schemas"]["text"];
             /**
              * @description The circuit stage the case belongs to.
@@ -184,71 +200,120 @@ export interface components {
              * @enum {unknown}
              */
             control: null | "negative" | "invalid" | "calibration";
-            /** @enum {unknown} */
+            /**
+             * @description real: one of the measured HP500 surveys; synthetic: a circuit case of the engine.
+             * @enum {unknown}
+             */
             real_or_synthetic: "real" | "synthetic";
             /** @description What a crushing engineer should see, in words; expect states the same in numbers. */
             expected_band: components["schemas"]["text"];
             /** @description The case write-up shown in the workbench Context: the question, the variables that matter and how to read the views. */
             context: {
+                /** @description The question the case answers. */
                 problem: components["schemas"]["text"];
+                /** @description The variables that matter for it. */
                 variables: components["schemas"]["text"];
+                /** @description How to read the views on it. */
                 reading: components["schemas"]["text"];
             };
+            /** @description The engine that baked the case. */
             engine: {
-                /** @constant */
+                /**
+                 * @description The Python package of the canonical engine.
+                 * @constant
+                 */
                 package: "pipeline.model.crusher";
+                /** @description The product version of the engine. */
                 version: components["schemas"]["version"];
+                /** @description The models the engine chains, in words, with the HP500 calibration named on a calibrated case. */
                 model: string;
             };
             /** @description The operating point the case was baked at (contract 1 accepted it); calibrated is true only on the HP500 surveys. */
             params: {
-                /** @enum {unknown} */
+                /**
+                 * @description The crusher kind; the engine's per-machine constants follow it.
+                 * @enum {unknown}
+                 */
                 machine: "cone-sec" | "cone-tert" | "cone-short-head" | "gyratory" | "jaw";
+                /** @description Closed-side setting, the narrowest gap between the mantle and the concave (or the jaws) [mm]. */
                 css_mm: number;
+                /** @description Eccentric throw, the open-side setting minus the closed-side setting [mm]. */
                 throw_mm: number;
+                /** @description Eccentric (gyration) speed [rpm]. */
                 speed_rpm: number;
+                /** @description Rosin-Rammler characteristic size of the feed (63.2 percent passing) [mm]. */
                 feed_x63_mm: number;
+                /** @description Rosin-Rammler uniformity exponent of the feed, dimensionless. */
                 feed_m: number;
+                /** @description JKMRC drop-weight ore competence A times b, dimensionless; lower is harder. */
                 ore_axb: number;
+                /** @description Bond work index of the ore [kWh/t]. */
                 ore_wi: number;
+                /** @description True only on the HP500 surveys, whose engine runs with the calibration of Rocha et al. 2024. */
                 calibrated: boolean;
             };
             /** @description Only on a real case: the survey row exactly as contract hp500-survey accepted it. */
             measured?: {
+                /** @description The survey number as published. */
                 survey: number;
+                /** @description Measured feed 80 percent passing size [mm]. */
                 f80_mm: number;
+                /** @description Measured closed-side setting [mm]. */
                 css_mm: number;
+                /** @description Measured solid feed rate [t/h]. */
                 feed_tph: number;
+                /** @description Crusher power estimated from the measured current [kW]. */
                 power_kw: number;
             };
+            /** @description The seed the case was baked with; the manifest is a pure function of the operating point and this seed. */
             seed: number;
+            /** @description The case's trace file. */
             artifact: {
                 /** @description Relative to data/derived; no leading slash, no '..', no backslash. */
                 path: string;
-                /** @constant */
+                /**
+                 * @description The file format, json.
+                 * @constant
+                 */
                 format: "json";
-                /** @constant */
+                /**
+                 * @description The schema identifier of the trace, chancadem.trace/v1.
+                 * @constant
+                 */
                 trace_schema: "chancadem.trace/v1";
+                /** @description The size of the trace file as committed [bytes]. */
                 bytes: number;
                 /** @description SHA-256 of the trace file bytes as committed. */
                 sha256: string;
             };
-            /** @enum {unknown} */
+            /**
+             * @description How the App serves the case: live (the engine may run it in the browser) or precompute (the App replays the committed trace).
+             * @enum {unknown}
+             */
             lane: "live" | "precompute";
             /** @description The measured lane verdict of data-pipeline/pipeline/core/gate.py classify_lane: the engine run is timed in the bake (the median of several warmed runs) and judged against run_ms_budget, but the measured time is not stored, so the manifest stays a pure function of (params, seed). */
             gate: {
-                /** @enum {unknown} */
+                /**
+                 * @description The lane the measurement assigns, the same as lane.
+                 * @enum {unknown}
+                 */
                 lane: "live" | "precompute";
+                /** @description Whether the engine is pure Python. */
                 pure_python: boolean;
+                /** @description The compiled packages the engine depends on; a live case may use only numpy. */
                 wheels: string[];
+                /** @description The size of the trace [bytes]. */
                 trace_bytes: number;
+                /** @description The time one engine run may take for a live case, 1500 ms [ms]. */
                 run_ms_budget: number;
+                /** @description The largest trace a live case may have, 262,144 bytes [bytes]. */
                 trace_bytes_budget: number;
+                /** @description Why the case is not live; empty for a live case. */
                 reasons: string[];
             };
             /** @description Stable codes of the engine's flags and envelope codes for this case, in the engine's order: css_ge_feed_top (nothing is gripped), pass_through (CSS at or above F80), negligible_reduction (reduction ratio near 1), ill_conditioned (the solve's conditioning guard), the envelope codes css_nonpositive, feed_nonpositive, f80_lt_css, css_outside_calibrated, f80_outside_calibrated, and two sourced warnings that never make a case invalid: css_below_vendor_minimum (the setting is below the vendor minimum of the machine type) and reduction_ratio_above_typical (F80/P80 is above the typical ceiling of one stage). The web maps each code to its bilingual text. */
             flags: ("css_ge_feed_top" | "pass_through" | "negligible_reduction" | "ill_conditioned" | "css_nonpositive" | "feed_nonpositive" | "f80_lt_css" | "css_outside_calibrated" | "f80_outside_calibrated" | "css_below_vendor_minimum" | "reduction_ratio_above_typical")[];
-            /** @description The case's result scalars (p80_mm, p50_mm, p20_mm, f80_mm, reduction_ratio, throughput_tph, power_kw, specific_energy_kwh_t) and, on a real case, the model error against the survey (throughput_err_pct, power_err_pct). */
+            /** @description The case's result scalars (p80_mm, p50_mm, p20_mm and f80_mm in mm, reduction_ratio, throughput_tph in t/h, power_kw in kW, specific_energy_kwh_t in kWh/t) and, on a real case, the model error against the survey (throughput_err_pct and power_err_pct, in percent). */
             metrics: {
                 [key: string]: number;
             };
@@ -265,91 +330,134 @@ export interface components {
             };
             /** @description Where the case comes from: the authored circuit matrix, or the publication of a measured survey. */
             source: {
-                /** @constant */
+                /**
+                 * @description authored: a case of the circuit matrix.
+                 * @constant
+                 */
                 kind: "authored";
             } | {
-                /** @constant */
+                /**
+                 * @description publication: a measured survey.
+                 * @constant
+                 */
                 kind: "publication";
+                /** @description The publication the survey is transcribed from. */
                 citation: string;
+                /** @description Its DOI. */
                 doi: string;
-                /** @constant */
+                /**
+                 * @description The licence of the published data.
+                 * @constant
+                 */
                 license: "CC BY 4.0";
             };
         };
         /**
          * Trace
-         * @description Contract 2 (artifact), catalog row trace 1.0.0: the replay artifact of one crushing case, written by data-pipeline/pipeline/core/trace.py to data/derived/<case>/trace.json. It holds what the Python engine computed at the case's operating point: the feed and product gradations on the engine's sieve grid, the result scalars, two one-dimensional sweeps around the point (the capacity against eccentric speed, and the product size and capacity against the closed-side setting) and the classification and appearance curves. The web replays it and holds the live TypeScript engine to it. Rules the schema cannot state, checked by the producer test: sieve_mm is strictly descending and has one more value than mid_mm; feed_passing and product_passing have the length of sieve_mm, lie in [0, 1] and do not increase along the grid; each sweep's arrays have the same length; summary equals the case manifest's metrics.
+         * @description Contract 2 (artifact), catalog row trace 1.0.2: the replay artifact of one crushing case, written by data-pipeline/pipeline/core/trace.py to data/derived/<case>/trace.json. It holds what the Python engine computed at the case's operating point: the feed and product gradations on the engine's sieve grid, the result scalars, two one-dimensional sweeps around the point (the capacity against eccentric speed, and the product size and capacity against the closed-side setting) and the classification and appearance curves. The web replays it and holds the live TypeScript engine to it. Rules the schema cannot state, checked by the producer test: sieve_mm is strictly descending and has one more value than mid_mm; feed_passing and product_passing have the length of sieve_mm, lie in [0, 1] and do not increase along the grid; each sweep's arrays have the same length; summary equals the case manifest's metrics.
          */
         Trace: {
-            /** @constant */
+            /**
+             * @description The document schema identifier, chancadem.trace/v1.
+             * @constant
+             */
             schema: "chancadem.trace/v1";
+            /** @description The case identifier, the same as its manifest's. */
             case_id: string;
-            /** @description Sieve aperture edges, coarse to fine, mm (the engine grid: 256 mm, square-root-of-two series, 29 edges). */
+            /** @description Sieve aperture edges, coarse to fine (the engine grid: 256 mm, square-root-of-two series, 29 edges) [mm]. */
             sieve_mm: components["schemas"]["series"];
-            /** @description Geometric mid-size of each size class, mm. */
+            /** @description Geometric mid-size of each size class [mm]. */
             mid_mm: components["schemas"]["series"];
-            /** @description Feed cumulative fraction passing at each edge. */
+            /** @description Feed cumulative fraction passing at each edge [fraction]. */
             feed_passing: components["schemas"]["fractions"];
-            /** @description Product cumulative fraction passing at each edge. */
+            /** @description Product cumulative fraction passing at each edge [fraction]. */
             product_passing: components["schemas"]["fractions"];
-            /** @description Feed mass fraction in each class (sums to 1). */
+            /** @description Feed mass fraction in each class (sums to 1) [fraction]. */
             feed_mass: components["schemas"]["fractions"];
-            /** @description Product mass fraction in each class (sums to 1 within the mass-closure tolerance). */
+            /** @description Product mass fraction in each class (sums to 1 within the mass-closure tolerance) [fraction]. */
             product_mass: components["schemas"]["fractions"];
-            /** @description Whiten classification function C(d) at each class mid-size: the probability a particle of that size is selected for breakage. */
+            /** @description Whiten classification function C(d) at each class mid-size: the probability a particle of that size is selected for breakage [fraction]. */
             classification: components["schemas"]["fractions"];
-            /** @description The t10 of the breakage appearance function used: the fraction of the progeny passing one tenth of the parent size, in [0, 0.44] (the engine caps it at 0.44). */
+            /** @description The t10 of the breakage appearance function used: the fraction of the progeny passing one tenth of the parent size, in [0, 0.44] (the engine caps it at 0.44) [fraction]. */
             appearance_t10: number;
+            /** @description The result scalars of the engine at the case's operating point. */
             summary: {
+                /** @description Feed 80 percent passing size on the engine grid [mm]. */
                 f80_mm: number;
+                /** @description Product 80 percent passing size [mm]. */
                 p80_mm: number;
+                /** @description Product 50 percent passing size [mm]. */
                 p50_mm: number;
+                /** @description Product 20 percent passing size [mm]. */
                 p20_mm: number;
                 /** @description F80 over P80. */
                 reduction_ratio: number;
-                /** @description Product fraction passing at 1, 4, 8, 16 and 32 mm. */
+                /** @description Product fraction passing at 1, 4, 8, 16 and 32 mm, keyed by the size [fraction]. */
                 pct_passing: {
                     [key: string]: number;
                 };
+                /** @description Capacity of the machine at the operating point [t/h]. */
                 throughput_tph: number;
+                /** @description Power draw [kW]. */
                 power_kw: number;
+                /** @description Specific comminution energy effectively applied [kWh/t]. */
                 specific_energy_kwh_t: number;
-                /** @description Open-side setting, the closed-side setting plus the throw, mm. */
+                /** @description Open-side setting, the closed-side setting plus the throw [mm]. */
                 oss_mm: number;
+                /** @description Nip angle between the mantle and the concave (or the jaws) at the setting [deg]. */
                 nip_angle_deg: number;
+                /** @description Grip limit 2 arctan(mu) of the nip angle [deg]. */
                 nip_limit_deg: number;
-                /** @enum {unknown} */
+                /**
+                 * @description The operating regime the engine assigns: choke (the default, a choke-fed chamber), pass-through (setting at or above F80, or a reduction ratio near one) or invalid (setting at or above the top size of the feed grid). The enum also admits trickle, a state of the type that the engine never assigns.
+                 * @enum {unknown}
+                 */
                 regime: "choke" | "trickle" | "pass-through" | "invalid";
+                /** @description False when the point is not valid: nothing gripped, an ill-conditioned breakage matrix or a physically implausible input. */
                 valid: boolean;
+                /** @description True when any envelope check tripped (an implausible or an extrapolating input). */
                 out_of_envelope: boolean;
+                /** @description True for a physically nonsensical input, worse than an extrapolation. */
                 implausible: boolean;
+                /** @description The absolute difference between the summed product and feed mass fractions, about 0 [fraction]. */
                 mass_closure: number;
                 /** @description Conditioning proxy of (I - B C); the string Infinity when the solve is singular. */
                 cond_estimate: number | string;
             };
             /** @description The capacity hump: the engine at the case's point with only the eccentric speed varied over the machine's range. */
             speed_sweep: {
+                /** @description The eccentric speeds of the sweep [rpm]. */
                 speed_rpm: components["schemas"]["series"];
+                /** @description The throughput at each speed; 0 where the engine cannot evaluate the point [t/h]. */
                 throughput_tph: components["schemas"]["series"];
+                /** @description The power at each speed; 0 where the engine cannot evaluate the point [kW]. */
                 power_kw: components["schemas"]["series"];
             };
             /** @description The setting trade-off: the engine at the case's point with only the closed-side setting varied. */
             css_sweep: {
+                /** @description The closed-side settings of the sweep [mm]. */
                 css_mm: components["schemas"]["series"];
+                /** @description The product P80 at each setting; 0 where the engine cannot evaluate the point [mm]. */
                 p80_mm: components["schemas"]["series"];
+                /** @description The throughput at each setting; 0 where the engine cannot evaluate the point [t/h]. */
                 throughput_tph: components["schemas"]["series"];
+                /** @description The power at each setting; 0 where the engine cannot evaluate the point [kW]. */
                 power_kw: components["schemas"]["series"];
             };
         };
         /**
          * SurrogateModel
-         * @description Model slot, catalog row surrogate-model 1.0.0: the inference contract of the surrogate MLP that emulates the crusher engine, written by data-pipeline/pipeline/stages/train.py to data/derived/models/surrogate.json beside the ONNX graphs data/derived/models/surrogate.onnx (float32) and data/derived/models/surrogate.int8.onnx (dynamically quantised). The input is 11 values: a one-hot of the machine in machine_order, then the continuous inputs in input_order standardised as (value - in_mean) / in_std. The graph's input is named x with shape [1, 11]; its output y has shape [1, 10], standardised: value = y * out_std + out_mean, then 10 ** value where out_log is true, in output_order. Trained on an LHS sweep of the canonical Python engine (pipeline.model.crusher); the held-out metrics are the model-metrics row. The engine itself is the slot's baseline: it answers every query exactly, at a cost the surrogate avoids. Applicability: training.input_ranges is the model's domain; it answers only a point that is not calibrated and inside those ranges, else the engine answers with the reason. Rules the schema cannot state, checked by the producer test: in_mean and in_std have the length of input_order, the out arrays the length of output_order, every std is positive, and the ONNX files named in graphs exist with the sha256 given.
+         * @description Model slot, catalog row surrogate-model 1.0.1: the inference contract of the surrogate MLP that emulates the crusher engine, written by data-pipeline/pipeline/stages/train.py to data/derived/models/surrogate.json beside the ONNX graphs data/derived/models/surrogate.onnx (float32) and data/derived/models/surrogate.int8.onnx (dynamically quantised). The input is 11 values: a one-hot of the machine in machine_order, then the continuous inputs in input_order standardised as (value - in_mean) / in_std. The graph's input is named x with shape [1, 11]; its output y has shape [1, 10], standardised: value = y * out_std + out_mean, then 10 ** value where out_log is true, in output_order. Trained on an LHS sweep of the canonical Python engine (pipeline.model.crusher); the held-out metrics are the model-metrics row. The engine itself is the slot's baseline: it answers every query exactly, at a cost the surrogate avoids. Applicability: training.input_ranges is the model's domain; it answers only a point that is not calibrated and inside those ranges, else the engine answers with the reason. Rules the schema cannot state, checked by the producer test: in_mean and in_std have the length of input_order, the out arrays the length of output_order, every std is positive, and the ONNX files named in graphs exist with the sha256 given.
          */
         SurrogateModel: {
-            /** @constant */
+            /**
+             * @description The contract schema identifier, chancadem.surrogate/v1.
+             * @constant
+             */
             schema: "chancadem.surrogate/v1";
             /** @description The product version whose engine produced the training labels. */
             engine_version: string;
+            /** @description The machines in the order of the one-hot that opens the input vector. */
             machine_order: [
                 "cone-sec",
                 "cone-tert",
@@ -357,6 +465,7 @@ export interface components {
                 "cone-short-head",
                 "gyratory"
             ];
+            /** @description The continuous inputs in the order they follow the one-hot. */
             input_order: [
                 "css_mm",
                 "throw_mm",
@@ -365,8 +474,11 @@ export interface components {
                 "feed_m",
                 "ore_axb"
             ];
+            /** @description The mean of each continuous input on the training draw, in input_order (the input is standardised as (value - in_mean) / in_std). */
             in_mean: number[];
+            /** @description The standard deviation of each continuous input on the training draw, in input_order. */
             in_std: number[];
+            /** @description The outputs in the order of the graph's output vector. */
             output_order: [
                 "p80_mm",
                 "p50_mm",
@@ -379,37 +491,54 @@ export interface components {
                 "throughput_tph",
                 "power_kw"
             ];
+            /** @description Per output: true when the network predicts its log10 (P80, P50 and P20). */
             out_log: boolean[];
+            /** @description The mean of each output on the training draw (of its log10 where out_log is true), in output_order (the output is decoded as y * out_std + out_mean). */
             out_mean: number[];
+            /** @description The standard deviation of each output on the training draw (of the log10 where out_log is true), in output_order. */
             out_std: number[];
+            /** @description The two exported graphs of the network. */
             graphs: {
+                /** @description The float32 graph, surrogate.onnx, the one the App runs. */
                 float32: components["schemas"]["graph"];
+                /** @description The dynamically quantised graph, surrogate.int8.onnx. */
                 int8: components["schemas"]["graph"];
             };
             /** @description The layer sizes and activations, for example 11-64-64-32-10, SiLU. */
             architecture: string;
+            /** @description How the network was trained. */
             training: {
+                /** @description The seed of the training draw and of torch. */
                 seed: number;
+                /** @description The number of operating points the network was trained on. */
                 n_train: number;
+                /** @description The number of points of the independent held-out draw. */
                 n_test: number;
                 /** @description How the operating points were drawn, with the bounds per input; the test draw is independent of the training draw. */
                 sampler: string;
+                /** @description The model's domain: the training range of every continuous input per machine. */
                 input_ranges: components["schemas"]["inputRanges"];
+                /** @description The torch release the network was trained with. */
                 torch_version: string;
-                /** @description The maximum absolute difference between the trained torch module and the exported float32 graph (run through onnxruntime) on the held-out draw, in standardised outputs, measured by train.py right after export; evidence the export preserved the trained module. */
+                /** @description The maximum absolute difference between the trained torch module and the exported float32 graph (run through onnxruntime) on the held-out draw, in standardised output units. */
                 export_parity_max_abs?: number;
             };
         };
         /**
          * Readiness
-         * @description Catalog row readiness 1.0.0 (ADR-0080 decision 4): what is real in this build, per catalog row except readiness itself, written by data-pipeline/pipeline/core/readiness.py to data/derived/readiness.json from docs/contracts/catalog.md and the repository state, and read by the frontend and the dormant API. Deterministic: the product version and the catalog's SHA-256 identify it, no wall-clock time. The states and what each surface does with them: docs/contracts/catalog.md, section Missing-data states.
+         * @description Catalog row readiness 1.0.1 (ADR-0080 decision 4): what is real in this build, per catalog row except readiness itself, written by data-pipeline/pipeline/core/readiness.py to data/derived/readiness.json from docs/contracts/catalog.md and the repository state, and read by the frontend and the dormant API. Deterministic: the product version and the catalog's SHA-256 identify it, no wall-clock time. The states and what each surface does with them: docs/contracts/catalog.md, section Missing-data states.
          */
         Readiness: {
-            /** @constant */
+            /**
+             * @description The document schema identifier, chancadem.readiness/v1.
+             * @constant
+             */
             schema: "chancadem.readiness/v1";
+            /** @description The product version the document was computed for. */
             product_version: components["schemas"]["version"];
             /** @description SHA-256 of docs/contracts/catalog.md (its UTF-8 bytes with CRLF normalised to LF) the document was computed from. */
             catalog_sha256: string;
+            /** @description One entry per catalog row except readiness, in catalog order. */
             contracts: components["schemas"]["entry"][];
         };
         Health: {
@@ -431,7 +560,9 @@ export interface components {
         };
         /** @description Every reader-facing string is bilingual at the source. */
         text: {
+            /** @description The English text. */
             en: string;
+            /** @description The Spanish text. */
             es: string;
         };
         /** @description The product version format X.XX.XXX. */
@@ -440,33 +571,56 @@ export interface components {
         fractions: number[];
         /** @description The training range of every continuous input, per machine: [low, high] of the training draw, inclusive, written by train.py from sweep.RANGES with no rounding. The applicability rule of both sides reads it: a model answers an operating point only when the point is not calibrated and every continuous input lies inside its machine's range; otherwise the slot's baseline answers, labelled with the reason (calibrated_case, or outside_training_range:<input>). */
         inputRanges: {
+            /** @description The training ranges of the secondary cone. */
             "cone-sec": components["schemas"]["machineRanges"];
+            /** @description The training ranges of the tertiary cone. */
             "cone-tert": components["schemas"]["machineRanges"];
+            /** @description The training ranges of the jaw crusher. */
             jaw: components["schemas"]["machineRanges"];
+            /** @description The training ranges of the short-head cone. */
             "cone-short-head": components["schemas"]["machineRanges"];
+            /** @description The training ranges of the gyratory crusher. */
             gyratory: components["schemas"]["machineRanges"];
         };
+        /** @description [low, high] of every continuous input for one machine. */
         machineRanges: {
+            /** @description Closed-side setting range [mm]. */
             css_mm: components["schemas"]["range"];
+            /** @description Eccentric throw range [mm]. */
             throw_mm: components["schemas"]["range"];
+            /** @description Eccentric speed range [rpm]. */
             speed_rpm: components["schemas"]["range"];
+            /** @description Rosin-Rammler characteristic feed size range [mm]. */
             feed_x63_mm: components["schemas"]["range"];
+            /** @description Rosin-Rammler uniformity exponent range. */
             feed_m: components["schemas"]["range"];
+            /** @description Ore competence A times b range. */
             ore_axb: components["schemas"]["range"];
         };
         /** @description [low, high], low below high. */
         range: number[];
+        /** @description One ONNX graph: its file, size, digest, opset and tensor names. */
         graph: {
             /** @description Relative to data/derived. */
             path: string;
+            /** @description The size of the graph file [bytes]. */
             bytes: number;
+            /** @description SHA-256 of the graph file bytes. */
             sha256: string;
+            /** @description The ONNX operator set the graph is exported with. */
             opset: number;
-            /** @constant */
+            /**
+             * @description The name of the graph's input tensor, x.
+             * @constant
+             */
             input: "x";
-            /** @constant */
+            /**
+             * @description The name of the graph's output tensor, y.
+             * @constant
+             */
             output: "y";
         };
+        /** @description The state of one catalog row in this build. */
         entry: {
             /** @description The catalog row id. */
             id: string;
@@ -482,6 +636,7 @@ export interface components {
              * @enum {unknown}
              */
             provenance: "real" | "stub" | "simulator" | "fixture" | "baseline" | null;
+            /** @description The row's state: available, partial, stale, provider, training or missing. */
             state: components["schemas"]["state"];
             /** @description Why the state is not available; null only when it is. */
             reason: components["schemas"]["text"] | null;

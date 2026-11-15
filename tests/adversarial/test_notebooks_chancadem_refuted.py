@@ -24,8 +24,9 @@ MAIN.loader.exec_module(GATES)
 @pytest.fixture(scope="module")
 def base(tmp_path_factory: pytest.TempPathFactory) -> Path:
     dest = tmp_path_factory.mktemp("nbc-base")
-    # the notebooks read what the release gate copies (scripts/run_notebooks.py): data, docs, content and models in full
-    make_tree(dest, "notebooks", "docs", "content", "models", ".github", "data", "README.md", "data-pipeline",
+    # the notebooks read what the release gate copies (scripts/run_notebooks.py): data, docs, content and models in full; the
+    # gate finds the declared external notebook runtime through scripts/local (workflow.json and its helper), never a local alias
+    make_tree(dest, "scripts/local/workflow.json", "scripts/local/workflow.py", "notebooks", "docs", "content", "models", ".github", "data", "README.md", "data-pipeline",
               "scripts/check_notebooks.py", "scripts/notebook_bar.json", "product.json", "scripts/check_template_residue.py", "scripts/run_notebooks.py", "scripts/check_readme_areas.py",
               "scripts/check_tech_matrix.py", "VERSION", "requirements*.txt", "frontend/package.json", "frontend/package-lock.json", "pyproject.toml")
     return dest

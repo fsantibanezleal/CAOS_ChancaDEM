@@ -1,15 +1,18 @@
 // The six routes on the shared shell (ADR-0016, ADR-0057 as amended 2026-10-04): the App route (/app) is the workbench,
-// the five documentation routes are DocPages. The old /focus/<machine> route forwards to /app?case=<id>&focus=1. The product lands on the Introduction's executive view (shell 0.13.1,
+// the five documentation routes are DocPages. The guided story (ADR-0082) is /story/<step>, an immersive route (no page chrome), over
+// the same state as the App: the shell's linked-view store (the selection and the pass cursor) and a second one for the hours
+// cursor wrap every route, so a selection made in the story is the App's when the reader exits. The old /focus/<machine> route forwards to /app?case=<id>&focus=1. The product lands on the Introduction's executive view (shell 0.13.1,
 // docs/06_executive-view.md): the root and every unknown path render <Landing />, which opens /introduction and forwards
 // an old App link such as /?case=B2 to /app?case=B2. The header order is the shell's STANDARD_ROUTES: App, Introduction,
 // Methodology, Implementation, Experiments, Benchmark; the landing never moves the tabs. Identity, licence and visibility come from product.json (one source,
 // written by scripts/instantiate.py); the version is VERSION, injected at build.
 import { lazy, Suspense } from 'react';
-import { AppShell, CitationsProvider, Landing, STANDARD_ROUTES, type ShellConfig } from '@fasl-work/caos-app-shell';
+import { AppShell, CitationsProvider, Landing, LinkedViewProvider, STANDARD_ROUTES, type ShellConfig } from '@fasl-work/caos-app-shell';
 import { Route, Routes } from 'react-router';
 import product from '../../product.json';
 import { architecture } from './architecture';
 import { CITATIONS } from './content/citations';
+import { HoursProvider } from './views/linked';
 
 // Keep the shared shell as the small route-independent entry; the five research pages and
 // the operations workbench have different dependencies and are fetched only when opened.
@@ -19,6 +22,7 @@ const Implementation = lazy(() => import('./pages/Implementation').then((module)
 const Introduction = lazy(() => import('./pages/Introduction').then((module) => ({ default: module.Introduction })));
 const Methodology = lazy(() => import('./pages/Methodology').then((module) => ({ default: module.Methodology })));
 const Workbench = lazy(() => import('./workbench/Workbench').then((module) => ({ default: module.Workbench })));
+const Story = lazy(() => import('./pages/Story').then((module) => ({ default: module.Story })));
 const FocusForward = lazy(() => import('./workbench/FocusForward').then((module) => ({ default: module.FocusForward })));
 
 const config: ShellConfig = {
@@ -30,6 +34,7 @@ const config: ShellConfig = {
   license: { en: `${product.license} licence`, es: `Licencia ${product.license}` },
   visibility: product.visibility === 'private' ? 'private' : 'public',
   contain: true,
+  immersiveRoutes: ['/story'],
   architecture,
 };
 
@@ -37,10 +42,13 @@ export function App() {
   return (
     <CitationsProvider items={CITATIONS}>
       <AppShell config={config}>
+        <LinkedViewProvider>
+        <HoursProvider>
         <Suspense fallback={<p className="caos-pending" data-state="loading" role="status" aria-label="Loading / Cargando">…</p>}>
           <Routes>
             <Route path="/" element={<Landing />} />
             <Route path="/app" element={<Workbench />} />
+            <Route path="/story/:step" element={<Story />} />
             {/* the Focus page of release 0.09.003, one per machine: forwards to the App in Focus mode (ADR-0070) */}
             <Route path="/focus/:machine" element={<FocusForward />} />
             <Route path="/introduction" element={<Introduction />} />
@@ -51,6 +59,8 @@ export function App() {
             <Route path="*" element={<Landing />} />
           </Routes>
         </Suspense>
+        </HoursProvider>
+        </LinkedViewProvider>
       </AppShell>
     </CitationsProvider>
   );

@@ -1,4 +1,5 @@
 // The build copies what the index declares: one artifact or several per manifest, and the index's further files.
+// A product takes this file verbatim: it tests the base script scripts/declared.mjs (0.15.003).
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
@@ -50,6 +51,39 @@ describe('the declared files of the site', () => {
     const { declared, missing } = declaredFiles(bare);
     expect(declared).toEqual(['manifests/index.json', 'readiness.json']);
     expect(missing).toEqual(['readiness.json']);
+  });
+  it('reads an index that names its manifest path', () => {
+    const named = join(root, 'named');
+    mkdirSync(join(named, 'manifests'), { recursive: true });
+    writeFileSync(join(named, 'manifests/index.json'), JSON.stringify({ cases: [{ case_id: 'A', path: 'manifests/A.json' }] }));
+    writeFileSync(join(named, 'manifests/A.json'), JSON.stringify({ artifact: { path: 'A/trace.json' } }));
+    const { declared, missing, problems } = declaredFiles(named);
+    expect(declared).toEqual(['manifests/index.json', 'readiness.json', 'manifests/A.json', 'A/trace.json']);
+    expect(missing).toEqual(['readiness.json', 'A/trace.json']);
+    expect(problems).toEqual([]);
+  });
+  it('adversarial: declares nothing for a refused case, and does not report it missing', () => {
+    const refused = join(root, 'refused');
+    mkdirSync(join(refused, 'manifests'), { recursive: true });
+    writeFileSync(
+      join(refused, 'manifests/index.json'),
+      JSON.stringify({ cases: [{ case_id: 'R', status: 'refused', path: null, reason: 'out of the declared envelope' }, { case_id: 'S', status: 'refused', manifest_path: 'manifests/S.json' }] }),
+    );
+    const { declared, missing, problems } = declaredFiles(refused);
+    expect(declared).toEqual(['manifests/index.json', 'readiness.json']);
+    expect(missing).toEqual(['readiness.json']);
+    expect(problems).toEqual([]);
+  });
+  it('adversarial: still reports an available case with no manifest file as missing, and an entry with no path as a problem', () => {
+    const open = join(root, 'open');
+    mkdirSync(join(open, 'manifests'), { recursive: true });
+    writeFileSync(
+      join(open, 'manifests/index.json'),
+      JSON.stringify({ cases: [{ case_id: 'A', status: 'available', manifest_path: 'manifests/A.json' }, { case_id: 'B', status: 'available' }] }),
+    );
+    const { missing, problems } = declaredFiles(open);
+    expect(missing).toEqual(['readiness.json', 'manifests/A.json']);
+    expect(problems).toEqual(['B: names neither manifest_path nor path']);
   });
 });
 

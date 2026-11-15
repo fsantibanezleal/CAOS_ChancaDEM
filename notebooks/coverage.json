@@ -37,6 +37,7 @@
                   "06-crushercal/04-held-out-validation-of-the-calibrated-model.ipynb"],
     "hp500-crusherbayes": ["08-crusherbayes/02-sampling-the-posterior-one-fold-live.ipynb",
                            "08-crusherbayes/03-crusherbayes-held-out-on-the-ten-surveys.ipynb"],
+    "hp500-comparison": ["08-crusherbayes/03-crusherbayes-held-out-on-the-ten-surveys.ipynb"],
     "surrogate-model": ["07-learned-models/01-the-surrogate-against-the-engine.ipynb"],
     "anomaly-model": ["07-learned-models/02-held-out-draw-and-the-anomaly-guard.ipynb"],
     "model-metrics": ["07-learned-models/02-held-out-draw-and-the-anomaly-guard.ipynb"],

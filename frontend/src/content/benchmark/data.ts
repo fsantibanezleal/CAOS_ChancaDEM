@@ -12,18 +12,18 @@ export const MODELS = ['M0_backbone', 'M1_residual', 'M2_freeform', 'constant_me
 export type ModelKey = (typeof MODELS)[number];
 
 export const MODEL_LABEL: Record<ModelKey, Text> = {
-  M0_backbone: { en: 'M0 calibrated backbone', es: 'M0 esqueleto calibrado' },
-  M1_residual: { en: 'M1 backbone plus bounded residual', es: 'M1 esqueleto más residuo acotado' },
-  M2_freeform: { en: 'M2 free-form', es: 'M2 de forma libre' },
+  M0_backbone: { en: 'Calibrated backbone', es: 'Esqueleto calibrado' },
+  M1_residual: { en: 'Backbone plus bounded residual', es: 'Esqueleto más residuo acotado' },
+  M2_freeform: { en: 'Free-form fit', es: 'Ajuste de forma libre' },
   constant_mean: { en: 'Constant mean', es: 'Media constante' },
   M1_label_shuffle: { en: 'Label shuffle', es: 'Etiquetas barajadas' },
 };
 
 /** Short labels for the bars of a chart. */
 export const MODEL_SHORT: Record<ModelKey, Text> = {
-  M0_backbone: { en: 'M0', es: 'M0' },
-  M1_residual: { en: 'M1', es: 'M1' },
-  M2_freeform: { en: 'M2', es: 'M2' },
+  M0_backbone: { en: 'Backbone', es: 'Esqueleto' },
+  M1_residual: { en: 'Residual', es: 'Residuo' },
+  M2_freeform: { en: 'Free-form', es: 'Forma libre' },
   constant_mean: { en: 'Mean', es: 'Media' },
   M1_label_shuffle: { en: 'Shuffle', es: 'Barajada' },
 };
@@ -43,12 +43,12 @@ export type ExtraKey = (typeof EXTRA_MODELS)[number];
 export type RowKey = ModelKey | ExtraKey;
 
 export const EXTRA_LABEL: Record<ExtraKey, Text> = {
-  B_lin: { en: 'B-lin setting-only line', es: 'B-lin línea solo de la abertura' },
+  B_lin: { en: 'Setting-only line', es: 'Línea solo de la abertura' },
   Morrell: { en: 'Morrell size-specific energy', es: 'Morrell energía específica por tamaño' },
   Morrell_noload: { en: 'Morrell with a no-load term (descriptive line)', es: 'Morrell con término en vacío (línea descriptiva)' },
 };
 export const EXTRA_SHORT: Record<ExtraKey, Text> = {
-  B_lin: { en: 'B-lin', es: 'B-lin' },
+  B_lin: { en: 'Setting-only', es: 'Solo abertura' },
   Morrell: { en: 'Morrell', es: 'Morrell' },
   Morrell_noload: { en: 'Morrell + no-load', es: 'Morrell + vacío' },
 };

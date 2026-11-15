@@ -4,6 +4,216 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [0.13.000] · 2026-11-08
+
+### Added
+
+- The showcase of ADR-0082 (requirements SH-001 to SH-010). The circuit view: the three-stage crushing circuit as a flowsheet, each
+  stage named by its machine, the selected case's streams labelled with throughput, F80, P80, power and setting from its manifest and
+  committed trace, the flow moving at a speed proportional to the throughput and still under reduced motion; selecting another stage
+  loads its first case. The population-balance view: the Whiten solve as its Neumann series, computed from the live engine's B, C and
+  f, drawn pass by pass on the size-distribution axes against the closed form (equal to 1e-9 after as many passes as size classes),
+  with the residual and the mass sent back per class. The campaign view: P80 against operating hours at the reader's drift rate,
+  the target crossed, the 45 h reference line and the now line; no drift rate is set or asserted by the product. The comparison
+  view: the held-out MAPE of every method of the HP500 validation and of CrusherBayes for throughput and power, the ten per-survey
+  errors beside each method, the predictive bands, and the method with the lowest held-out error marked as recommended with its
+  reason.
+- The guided story at `/story/measure`, `/story/inside`, `/story/solve`, `/story/compare` and `/story/operate`, on the shell's story
+  frame: each headline a number read from the committed documents or computed by the live engine from them, the missing state with
+  its reason when a document is absent, three anchored callouts with value, unit and source on every stage, deep links, the keys,
+  play and pause, and an exit to the App on the step's case and group.
+- Linked selection on the shell's linked-view store: a size class, a stream, a stage, a method, the pass count and the hours cursor
+  shown by every view of the catalog row that reads them, both ways.
+- `src/pages/story.browser.mjs`, run by `npm run check:story` after the base's story check: the product's own browser checks of the
+  story (callouts, exits, the pause on a key press, the two-way selection, the survey scrubber, reduced motion).
+- Contract `hp500-comparison` 1.0.0 (`data/derived/hp500/comparison.json`, written by `data-pipeline/pipeline/hp500/comparison.py`,
+  `python data-pipeline/run.py comparison` or within `hp500` and `all`): per target, the recommended method, the runner-up and the paired
+  difference of every method against the recommended one over the ten surveys, with its 95 percent bootstrap interval (the CrusherBayes
+  manuscript's resampling: its power row against the setting-only line equals the manuscript's 1.54 points, -1.11 to 4.10), its wins
+  and p_better; readiness says missing when it is absent and stale when its engine version differs; schema, fixture, catalog row,
+  producer tests and the web's descriptor test (CT-043, CT-044).
+- The comparison view and the Compare step open on the runner-up, draw its paired gap to the recommended method as an interval mark,
+  make that gap the third callout and say in the takeaway how sure the ranking is with ten surveys (on power, the setting-only line
+  is 1.26 points below the free-form fit, interval -1.91 to 5.27, lower on 5 of 10 surveys: ten surveys do not settle the ranking)
+  (SH-009, SH-011).
+- The Measure step draws the ten surveys' feed rates on its stage, linked to the survey scrubber, so 813 to 1,639 t/h is readable at
+  its opening state (SH-013).
+
+### Changed
+
+- The App's groups are System (the circuit, then the chamber: the 3D cutaway beside the section with its callouts), Product (the size
+  distribution with its callouts and the classification curve, then the population balance), Performance (the campaign first),
+  Learned and Validation (the methods compared first), with the Context tab: six tabs, each group opening on one stage; the rail is
+  184 px and the tab rows compact so the stage keeps 60 percent of the screen.
+- Every reader-facing name of a method is its name, in both languages (the calibrated backbone, the bounded residual, the free-form
+  fit, the setting-only line), never its ladder id; the documents' keys are unchanged.
+- The Implementation and Methodology pages describe the App's views and the story; the App's architecture figure names the System
+  group and the story.
+- The base: CAOS_PRODUCT_TEMPLATE 0.15.005 (from 0.14.001) and `@fasl-work/caos-app-shell` 0.25.0 (from 0.19.9), each pinned exactly.
+  The story steps are declared in `product.json` (`showcase.story_routes`) and the base's gate, story check and route pages read
+  them; the local workflow keeps its environments outside the repository; the internal-names guard fails a method's ladder id
+  anywhere a reader sees it and passes the keys of the committed documents; the base tests under `frontend/src` are taken verbatim; a stage is validated without the documents of a contract the
+  product declares missing or in training, and the build reads a case's manifest from `manifest_path` or `path`. The shell shows
+  every callout's state as a word with a glyph, measures the story's callout geometry at every size, theme and language, lays out
+  header callouts on their measured heights in the order of their anchors (0.24.0), and keeps a chart's readout still when the page
+  scrolls under a resting pointer (0.25.0).
+  The shell brings the story frame, the anchored callouts, the linked-view store and gates G6, G18 and G21, and keeps the story's
+  step row at its height under a tall panel.
+- The base moved on to CAOS_PRODUCT_TEMPLATE 0.15.012 and `@fasl-work/caos-app-shell` 0.26.0, each pinned exactly. Taken from the
+  template: the local workflow refuses a version-stamped stage input before the generation (the two source tables pass), checks
+  each staged `engine_version` and `product_version` against `VERSION` (`stage_engine_versions` empty: every derived document stamps
+  0.13.000) and admits the shipped checkout and a stage through the declared readiness provider (0.15.010); the manuscript gate
+  measures the abstract (0.15.011: the report's is 299 words, the CrusherBayes manuscript's within 150 to 250); the readiness
+  admission tests judge a product with a provider (0.15.012, found here: five tests of 0.15.010 failed verbatim on this product's
+  provider) and the story check launches its browser without a proxy. Taken from the shell: the callout
+  band reported only for a settled layout, the callout value on its own row, the natural PlotCard header, a fitted CardDeck as a
+  row and one number formatter per locale. Removed: the product's hold of the band (`nextBand` kept the larger band of an A, B, A
+  swing of reports, 5d28228); every callout host now reads the band the shell settles, still bounded so the drawing keeps 160 px.
+  Measured without the hold on the 0.26.0 build: 144 three-second windows (the five App views and the five story steps at 390 x 844
+  and 1280 x 800, en and es, dark and light, each opened and each chart zoomed by keyboard and wheel) with no band swing, no band
+  still moving in its last 1.5 s and no React update-limit warning. The Spanish NIP ANGLE eyebrow reads ÁNGULO DE NIP again (it was
+  cut to NIP when the value shared its row). The vertical flowsheet sets the active stage's CSS beside its box: under the taller
+  cards the phone drawing keeps about 200 px, and the gate's wide-font pass at 390 x 844 in Spanish found the CSS label pushed out of
+  its 46 px box onto the product stream's P80 label (G10, 4 findings).
+- The release generation (`scripts/local/02_generate-data --release`) trains the learned models (`data-pipeline/run.py models`)
+  before the bake, so every stamped document of a release carries its version; the models and their metrics are no longer
+  carried into the stage as inputs (the 0.13.000 bake refused a carried `model-metrics.json` of 0.12.001 as mixed).
+- The technical report covers the paired comparison contract, the paired differences against the recommended method, the
+  drift response as the secant over the drawn range with the cause of its bend, and the App's six views and guided story;
+  its tables, macros and figures are regenerated from the 0.13.000 bake.
+- Every field of the thirteen JSON schemas carries a description that ends with its unit in brackets, transcribed from its producer;
+  a patch version each, with its History row and the lock (params-record, hp500-survey, case-index, hp500-backbone,
+  hp500-crusherbayes, hp500-comparison, surrogate-model, anomaly-model, model-metrics and readiness 1.0.1, case-manifest 1.1.1,
+  trace 1.0.2, hp500-loo 1.2.1); no field, type, bound or requirement changed, and the readiness document is recomputed from the
+  catalog. The technical report's appendix tables list every field down to its leaves (through `$ref`, `$defs`, `allOf`, `items`
+  and maps, a shared structure once), with its unit and its meaning.
+
+### Fixed
+
+- The campaign views on a refused case. Where the engine gives no valid P80 at any opening of the drawn range (the control cases CI1,
+  a setting above the feed's top size, CP1, a pass-through, and the flagged survey HP500-03), the view of P80 as the setting drifts
+  open draws no chart and declares the absence with its reason (`data-state="unavailable"`, ADR-0080 decision 3); before, it drew
+  an empty interactive frame whose crosshair had no point to step to (G20 of the gate on shell 0.26.0, which starts its keyboard
+  check at Home). SH-010 states the rule.
+- The App's recommendation in the method comparison names the population it ranks: the lowest held-out error of the methods that refit
+  every fitted quantity in each fold (the second reading's N3; the engine at its shipped constants fits nothing to the surveys and is
+  not ranked).
+- The implementation page's contract table and the generated contract types follow the catalog's patch versions and field
+  descriptions (`contract-rows.ts`; `contract.gen.ts`, doc comments only).
+- The third reading's fixes. Notebook 05-real-surveys/02 (en, es) no longer calls its throughput error in sample: the power numbers
+  are, and the 11.55 percent fits nothing to the surveys without being a held-out test; notebooks 05-real-surveys/01 and
+  06-crushercal/04 say the same without a contradiction. The ranked population is the methods of the comparison document, all of
+  which refit in each fold (the per-fold refit of Rocha et al. is scored by the report's script); the CrusherBayes manuscript names
+  the bare Bond draw among the rows whose constants were fitted on the surveys, does not call every row of its comparison figure and
+  paired table held out, and defines the comparison it cites.
+- On a phone the App's chart hosts keep their callout band plus 18rem for the drawing: with shell 0.26.0's taller cards the
+  comparison's plot was 43 px tall with one tick, so its anchors had no scale to land on (`check:story`).
+- The product's browser checks launch Chromium without a proxy: they talk only to a loopback server, and on a machine that
+  auto-detects its proxy the first request of each new browser context waited about 21 s, past the 30 s navigation limit under load.
+- The technical report after its second reading. The view of P80 against operating hours is named by what it draws and where it
+  sits (the first view of the Performance group), and the figure of hours against the drift rate is the App's "Hours by drift" view; the room R (the training range
+  of the setting above the current setting, the reference of the margin's state) and the drawn range min(2 Delta s, R) are kept
+  apart; the agreement of the report's bootstrap with the comparison document is stated by its measured bounds (0.35 points at an
+  interval end, 0.009 in a point difference) and the details that differ are the two that do; the surveys at which an interval
+  would exclude zero are derived in the text and given as a range (64 to 82 for the free-form fit, 29 to 30 for CrusherBayes); the
+  K2 crossing is described in the direction the setting opens; the slope panel of Figure 12 marks the K1 crossing and the local
+  slope; section 7 says which predictions the bootstrap recomputes; the System group names its third view, the nip angle; the
+  Resources table names the four HP500 documents and the paired comparison; the measurement date is set in text.
+
+- The shell pin test reads 0.25.0, the version the product pins.
+- The 0.13.000 visualization review's findings on numbers and words. The Operate headline stated the local slope over the first
+  0.5 mm (0.267 mm per mm) as the drift response; it now states the drift drawn on the stage ("P80 reaches the 35.8 mm target after
+  22 mm of setting drift" on survey 1), and the P80-per-mm callout is the secant of the drawn curve (0.148). The Methodology names the
+  cause of the bend: the escape size K1 of the calibrated classification crosses the 38.05 mm mid-size of a class at a setting of
+  54.77 mm. The Compare headline stated a mean error as a bound; it now says "on average" ("en promedio") (SH-010, SH-011).
+- The exits keep the step's state: Look inside opens the chamber, Solve the population balance and Operate the campaign with the
+  story's target; the App and the story open the target by one rule, the case's P80 plus 10 percent, where the App rounded the
+  P80 (SH-006, SH-010).
+- The measured and the model F80 are told apart: a real survey's F80 is labelled measured in the Measure step, the case tables and the
+  rail, and the engine's F80 in the size distribution and the Look inside panel is labelled the model's, reconstructed from the
+  measured feed (SH-012).
+- Solve and the population-balance view open at the pass the Solve headline names (6 on survey 1) instead of pass 1 and pass 28;
+  one pass is singular; the second quantity beside the residual is the mass sent back at the pass; a round-off residual reads below
+  machine precision; the Spanish drift axis reads "Desplazamiento de la abertura" (SH-013, SH-014).
+- The 0.13.000 visualization review's findings on geometry, motion and visuals. The chart callouts' leaders end on the points they
+  name at every size and with the reduced-motion preference: each anchor is the point on the scale uPlot rendered, measured in the
+  callout layer's own pixels and re-measured after every render, where the band that moved the chart without resizing it left the
+  anchors 46 px off at 390 px (SH-015). A story step change is staged: the subject changes first (Solve plays its passes up to the
+  headline's pass, Compare grows the methods' dots one by one, Operate draws the drift curve out to the crossing, Measure and Look
+  inside move their drawing in), then the subject is highlighted, the callouts enter one at a time and the panel builds with its
+  numbers counting; under reduced motion the first frame is the final one (SH-016). No callout eyebrow or value is cut at 390 or
+  1280 px in either language: shorter eyebrows and units, with the speed, the interval and the machine-precision note in the source
+  (SH-017). The chamber section draws the nip angle at the engine's value with the grip limit as a second wedge, and the NIP ANGLE
+  callout is anchored inside it (SH-018). The 3D chamber names its mantle, concave, gap and feed, each selectable by its label or a
+  click, linked both ways to the section and its callouts, on a ground with soft shadows lit by the shell's scene environment of the
+  theme (SH-019). The population balance and the comparison open on one chart, their secondary charts a second view; the comparison
+  numbers its methods below 640 px and its method buttons wrap; the chamber's table header is whole; a story panel that scrolls shows
+  a "more below" cue; the Spanish Compare headline keeps "reservado" (SH-020, SH-011).
+- The views reserve the callout band the shell measures
+  (`onLayout({ bandHeight })`) instead of the nominal card sizes, so no two callout cards overlap and no two leaders cross at 390
+  and 1280 px in either language (M1, M3; SH-021). The story's staged entry keeps its state in a provider of its own, so a step of
+  the entry re-renders only what reads it. On a phone the story stage is 800 px tall and a story chart keeps 34rem, so the
+  taller cards of 0.24.0 leave the plot its room; the comparison's reason and certainty open the docked panel's note.
+- `src/views/showcase.browser.mjs`, run by `npm run check:story`: the drawings measured in a browser (each chart leader within 4 px of
+  the drawn ink at 390 and 1280 px with and without reduced motion, the frame sequence of every step change, cut eyebrows and values,
+  touching method labels, one chart per view, the table header, the panel's scroll cue, the 3D parts selected both ways).
+- The findings of the 0.13.000 visualization re-check (N1 to N9, the rest of B3 and M7, M9's browser check). The drift margin's
+  state follows its meaning: alarm only at or past the target, warning under a quarter of the setting's remaining training range,
+  normal otherwise (HP500 survey 1, 22 mm of 36 mm: normal; S01, 3.21 mm of 58 mm: warning; SH-010). The story's Compare stage opens
+  its note with the certainty sentence of the App's takeaway (the interval includes zero, so ten surveys do not settle the ranking),
+  and the paired gap's 95 percent interval is a bracket in a colour of its own beside the selected method's dot with its end values
+  (SH-009). A callout band never takes more than its host's height less 160 px, and a swing through a band reported while the layer
+  had collapsed (a full-page capture, a viewport resize) holds the band that leaves the chart its room, so a chart at 390 px is never
+  left without its canvas. The phone story stage is the viewport less the header above it, its chart's host fitted to the free
+  height, and the Operate controls and the Compare target switch moved to the docked panel, so no lane pill covers the target and
+  the plot keeps its height. The staged entry is hidden from the render that mounts the step: no frame shows the final card before
+  the entry. SENT BACK is the mass sent back over the passes so far (45.4 percent of the feed at HP500 survey 1's opening pass, never
+  a vacuous 0), every MAPE has one decimal (the Compare headline 12.8%, SELECTED 14.0), and the chamber table gives the grip limit
+  with two decimals (38.58). The browser checks measure each chart leader against the point it names on the scales uPlot rendered
+  (its axes' tick labels), never against any drawn pixel, and catch a planted 16 px miss; they add 20 fresh loads per language of
+  App V4 and the story's Compare at 390 px each with a full-page capture, the pills over a card's controls, the certainty clause on
+  the stage, every frame of a step change before its entry, and the 3D parts and their callouts selected both ways at 1280 and
+  390 px.
+- The full Python suite passes on the release head. The `hp500-comparison` contract has its lesson in notebook 03 of topic 08
+  (en and es): the paired difference against the recommended method with its equations, one 95 percent interval recomputed from
+  the held-out predictions and tied to the document, how far ten surveys back the recommendation (dropping one survey changes the
+  throughput recommendation in 8 of 10 cases), the readiness reason when the document is absent, and `notebooks/coverage.json`
+  maps the contract to it. The readiness-provider tests build their stage as `scripts/local/workflow.py` `generate()` does (VERSION,
+  the contract catalog, the source tables), with a new plant that a stage stamped with another version is refused. The provider
+  tree is regenerated by `data-pipeline/run.py fixtures` (version stamps only). The gate-runner plant expects the base runner's
+  current refusal and still proves that no gate runs, naming every story step product.json declares.
+- The CrusherBayes manuscript, version 0.02 (`product.json`), after the second reader's review. The published throughput
+  model of Rocha et al. 2024 is run on the ten surveys (`manuscripts/crusherbayes/figures/rocha_published.py`, importing the
+  technical report's implementation; its test reproduces the fit the paper prints, 0.228 against 0.23), as published
+  (10.62 percent, its one fitted number set on survey 10) and with its fitting parameter refit in each fold (14.65 percent),
+  in the comparison and paired tables: a tie with CrusherBayes on throughput (1.38 points, interval -5.81 to 7.93). Their power
+  model is not run: the paper prints neither the size distribution of each survey nor the drop-weight energy above t10 = 30
+  percent, which nine of the ten surveys exceed. The text states what Duarte et al. 2021 validated held out and what the
+  method adds, cites the calibration-identifiability works (Arendt, Apley and Chen 2012; Tuo and Wu 2015; Plumlee 2017;
+  Bhonsale, Stokbroekx and Van Impe 2020), restates the engine-based power models as no better than the constant mean with
+  their paired intervals, says on throughput that the engine at its shipped constants fits nothing to the surveys, and prints
+  the SHA-256 of the 0.13.000 `crusherbayes.json`; the SDD's CrusherBayes entry names the same closest work.
+- The throughput backbone's 11.55 percent is no longer called in sample. It is the engine at its shipped constants, whose
+  base-case capacity of 647 t/h Rocha et al. take from a Bruno simulation, so nothing of it is fitted to the surveys; the
+  in-sample figure is the capacity base fitted on all ten surveys, 10.95 percent (the leaky fold). The technical report says so
+  in its six places and compares the held-out 12.09 percent with 10.95; the producer's `tph_parity` note, the `hp500-loo`
+  descriptions (version 1.2.2: `tph_parity`, each row of `power_parity` with what was fitted where, `scores.rmse` in the unit
+  of the target it scores), the SDD's CrusherCal paragraph with its test, and notebook 04 of topic 06 (en and es, re-executed:
+  the ledger prints 10.95 in sample and 11.55 at the shipped constants) carry the same labels. The `trace` description of
+  `summary.regime` (version 1.0.3) names the values the engine assigns and says trickle is never assigned. The same label
+  is corrected in the framework cards 08 and 16, in notebooks 05-real-surveys/01 (markdown), 06-crushercal/03 and
+  08-crusherbayes/02 (en and es; the last two re-executed, the shipped engine's printed line now says nothing is fitted to
+  the surveys), in the comment above `tph_parity` in `loo.py`, and in the provider tree (`data-pipeline/run.py fixtures`:
+  the `tph_parity` note, and the readiness fixture's catalog digest and contract versions).
+- The ranking of the paired comparison is stated with its population: it ranks the methods that refit every fitted quantity
+  in each fold (the strict rows of `hp500-loo` and CrusherBayes); the engine at its shipped constants (11.55 percent) and
+  the published model of Rocha et al. (10.62 percent) fit nothing in the folds, are not ranked, and both tie with CrusherBayes
+  (CrusherBayes minus each, +0.45 points, -3.44 to 4.49, and +1.38, -5.81 to 7.93), in the report's data section, its
+  results and notebook 03 of topic 08 (en and es). The CrusherBayes manuscript names the engine at its shipped constants
+  among the throughput ties (Introduction, Results, Conclusions), qualifies the two caption headings whose rows include the
+  published model of Rocha et al., says Plumlee's orthogonal prior is built to mitigate the confounding, and derives that the
+  printed lambda of 0.84 reproduces survey 10 exactly at a work index of 7.8 kWh/t (0.858 at the blend's 9.0).
+
 ## [0.12.001] · 2026-11-02
 
 ### Fixed

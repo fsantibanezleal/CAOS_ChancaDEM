@@ -28,6 +28,7 @@
     "hp500-backbone": "sec:data-backbone",
     "hp500-loo": "sec:data-loo",
     "hp500-crusherbayes": "sec:data-cb",
+    "hp500-comparison": "sec:data-comparison",
     "surrogate-model": "sec:data-surrogate",
     "anomaly-model": "sec:data-anomaly",
     "model-metrics": "sec:data-metrics",

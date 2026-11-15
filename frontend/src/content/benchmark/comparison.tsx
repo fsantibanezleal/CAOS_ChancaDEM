@@ -1,5 +1,5 @@
 // Comparison: a learned model beside a classical baseline on the same real data. First the calibrated backbone against the learned
-// bounded residual (M1) on the ten surveys, strict against leaky folds; then the surrogate against the engine at the surveys' own
+// bounded residual on the ten surveys, strict against leaky folds; then the surrogate against the engine at the surveys' own
 // operating points, computed in this browser.
 import { BarChart, Cite, DocSection, PlotCard, ViewsRow, useFormat, useShellLang, type BarDatum } from '@fasl-work/caos-app-shell';
 import { useEffect, useState } from 'react';
@@ -22,8 +22,8 @@ function OptimismTables({ loo }: { loo: Hp500Loo }) {
   const bars = (target: Target): BarDatum[] => [
     { id: 'm0s', label: { en: 'M0 strict', es: 'M0 estricto' }, value: scoresOf(loo, target, 'strict', 'M0_backbone').mape_pct, tone: 'accent' },
     { id: 'm0l', label: { en: 'M0 leaky', es: 'M0 con fuga' }, value: scoresOf(loo, target, 'leaky', 'M0_backbone').mape_pct, tone: 'warn' },
-    { id: 'm1s', label: { en: 'M1 strict', es: 'M1 estricto' }, value: scoresOf(loo, target, 'strict', 'M1_residual').mape_pct, tone: 'accent' },
-    { id: 'm1l', label: { en: 'M1 leaky', es: 'M1 con fuga' }, value: scoresOf(loo, target, 'leaky', 'M1_residual').mape_pct, tone: 'warn' },
+    { id: 'm1s', label: { en: 'Bounded residual, strict', es: 'Residuo acotado, estricto' }, value: scoresOf(loo, target, 'strict', 'M1_residual').mape_pct, tone: 'accent' },
+    { id: 'm1l', label: { en: 'Bounded residual, leaky', es: 'Residuo acotado, con fuga' }, value: scoresOf(loo, target, 'leaky', 'M1_residual').mape_pct, tone: 'warn' },
   ];
   const meas = loo.loo.tph.measured.length;
   return (
@@ -50,7 +50,7 @@ function OptimismTables({ loo }: { loo: Hp500Loo }) {
               (['M0_backbone', 'M1_residual'] as const).map((m) => (
                 <tr key={`${target}-${m}`}>
                   <td className="caos-col-text">{TARGET_LABEL[target][lang]}</td>
-                  <td className="caos-col-text">{m === 'M0_backbone' ? t('M0 calibrated backbone (phenomenological)', 'M0 esqueleto calibrado (fenomenológico)') : t('M1 bounded residual (learned)', 'M1 residuo acotado (aprendido)')}</td>
+                  <td className="caos-col-text">{m === 'M0_backbone' ? t('Calibrated backbone (phenomenological)', 'Esqueleto calibrado (fenomenológico)') : t('Bounded residual (learned)', 'Residuo acotado (aprendido)')}</td>
                   <td>{f(scoresOf(loo, target, 'strict', m).mape_pct, { decimals: 1 })}</td>
                   <td>{f(scoresOf(loo, target, 'leaky', m).mape_pct, { decimals: 1 })}</td>
                   <td>{f(optimismGap(loo, target, m), { decimals: 1 })}</td>
@@ -89,11 +89,11 @@ function OptimismTables({ loo }: { loo: Hp500Loo }) {
             <tr>
               <th className="caos-col-text">{t('Survey', 'Muestreo')}</th>
               <th>{t('Measured (t/h)', 'Medido (t/h)')}</th>
-              <th>{t('M0 error (%)', 'Error de M0 (%)')}</th>
-              <th>{t('M1 error (%)', 'Error de M1 (%)')}</th>
+              <th>{t('Backbone error (%)', 'Error del esqueleto (%)')}</th>
+              <th>{t('Residual error (%)', 'Error del residuo (%)')}</th>
               <th>{t('Measured (kW)', 'Medido (kW)')}</th>
-              <th>{t('M0 error (%)', 'Error de M0 (%)')}</th>
-              <th>{t('M1 error (%)', 'Error de M1 (%)')}</th>
+              <th>{t('Backbone error (%)', 'Error del esqueleto (%)')}</th>
+              <th>{t('Residual error (%)', 'Error del residuo (%)')}</th>
             </tr>
           </thead>
           <tbody>
@@ -214,12 +214,12 @@ export function Comparison() {
       <P
         en={
           <>
-            The baseline here is the calibrated backbone, the Whiten and Evertsson engine with the HP500 constants fitted by the source paper <Cite id="rocha2024" />; the learned model is M1, a ridge residual on the setting and the feed f80, clipped to a fraction of the backbone, added on top. Both are scored on the same ten surveys and the same folds. The comparison that matters is the strict one; the leaky column is there to show how much of a learned model&apos;s apparent skill comes from having seen the survey it is asked about.
+            The baseline here is the calibrated backbone, the Whiten and Evertsson engine with the HP500 constants fitted by the source paper <Cite id="rocha2024" />; the learned model is the bounded residual, a ridge residual on the setting and the feed f80, clipped to a fraction of the backbone, added on top. Both are scored on the same ten surveys and the same folds. The comparison that matters is the strict one; the leaky column is there to show how much of a learned model&apos;s apparent skill comes from having seen the survey it is asked about.
           </>
         }
         es={
           <>
-            La línea base es aquí el esqueleto calibrado, el motor de Whiten y Evertsson con las constantes HP500 ajustadas por el artículo fuente <Cite id="rocha2024" />; el modelo aprendido es M1, un residuo de regresión ridge sobre la abertura y el f80 de la alimentación, acotado a una fracción del esqueleto y sumado encima. Ambos se califican sobre los mismos diez muestreos y los mismos pliegues. La comparación que importa es la estricta; la columna con fuga está para mostrar cuánto de la habilidad aparente de un modelo aprendido viene de haber visto el muestreo por el que se le pregunta.
+            La línea base es aquí el esqueleto calibrado, el motor de Whiten y Evertsson con las constantes HP500 ajustadas por el artículo fuente <Cite id="rocha2024" />; el modelo aprendido es el residuo acotado, un residuo de regresión ridge sobre la abertura y el f80 de la alimentación, acotado a una fracción del esqueleto y sumado encima. Ambos se califican sobre los mismos diez muestreos y los mismos pliegues. La comparación que importa es la estricta; la columna con fuga está para mostrar cuánto de la habilidad aparente de un modelo aprendido viene de haber visto el muestreo por el que se le pregunta.
           </>
         }
       />
