@@ -359,5 +359,5 @@ The target is written in `deploy/TARGET` and checked by `scripts/check_deploy_pl
 | ADR-0071 | the page is the viewport; one tab row; the instrument at least half the App route | the shell's `CaseWorkbench`; the gate (G5, G6) |
 | ADR-0074 | CI runs cheap checks only; training and the bake are local | `.github/workflows/ci.yml`, `scripts/check_ci_budget.py` |
 | ADR-0075 | every requirement names its gate | `docs/design/features/`, `scripts/check_sdd.py` |
-| ADR-0078 | rules live in the base | shell 0.26.0 (pinned exactly) over template 0.15.010 (`.template-version`); no product re-implements them, and on adopting 0.26.0 the product dropped its hold of the callout band (known defect 65 fixed in the shell) |
+| ADR-0078 | rules live in the base | shell 0.26.0 (pinned exactly) over template 0.15.012 (`.template-version`); no product re-implements them, and on adopting 0.26.0 the product dropped its hold of the callout band (known defect 65 fixed in the shell) |
 | ADR-0080 | contract-first parallel delivery | `docs/contracts/`, `tests/contracts/`, `frontend/src/readiness/`, `scripts/check_contracts.py`, `scripts/check_readiness.py` |

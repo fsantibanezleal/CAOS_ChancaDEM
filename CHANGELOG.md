@@ -59,10 +59,13 @@ open industrial data.
   scrolls under a resting pointer (0.25.0).
   The shell brings the story frame, the anchored callouts, the linked-view store and gates G6, G18 and G21, and keeps the story's
   step row at its height under a tall panel.
-- The base moved on to CAOS_PRODUCT_TEMPLATE 0.15.010 and `@fasl-work/caos-app-shell` 0.26.0, each pinned exactly. Taken from the
+- The base moved on to CAOS_PRODUCT_TEMPLATE 0.15.012 and `@fasl-work/caos-app-shell` 0.26.0, each pinned exactly. Taken from the
   template: the local workflow refuses a version-stamped stage input before the generation (the two source tables pass), checks
   each staged `engine_version` and `product_version` against `VERSION` (`stage_engine_versions` empty: every derived document stamps
-  0.13.000) and admits the shipped checkout and a stage through the declared readiness provider. Taken from the shell: the callout
+  0.13.000) and admits the shipped checkout and a stage through the declared readiness provider (0.15.010); the manuscript gate
+  measures the abstract (0.15.011: the report's is 299 words, the CrusherBayes manuscript's within 150 to 250); the readiness
+  admission tests judge a product with a provider (0.15.012, found here: five tests of 0.15.010 failed verbatim on this product's
+  provider) and the story check launches its browser without a proxy. Taken from the shell: the callout
   band reported only for a settled layout, the callout value on its own row, the natural PlotCard header, a fitted CardDeck as a
   row and one number formatter per locale. Removed: the product's hold of the band (`nextBand` kept the larger band of an A, B, A
   swing of reports, 5d28228); every callout host now reads the band the shell settles, still bounded so the drawing keeps 160 px.
