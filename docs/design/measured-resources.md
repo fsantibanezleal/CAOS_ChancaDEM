@@ -5,8 +5,11 @@ development workstation (Windows 11, Python 3.12.15, Node 24.14.1, 32 processor 
 `tools/audit/measure_stages.py` of CAOS_MANAGE on a `git archive` copy of the release commit `d836e9dc96c9f1e1a6f8ae65eeb1d474130f0dde`, committed as one snapshot in a
 fresh repository (the tests that read the repository through git run), so the working tree was never touched. Each stage ran under
 `tools/audit/measure_command.py`, which reports the wall time, the peak memory of the command's whole process tree (polled every
-20 ms) and the bytes of content under named folders. The training ran first, then the bake (which trains nothing and reads the
-trained models), then the HP500 step alone, the web install, build and unit tests, and the Python suite last.
+20 ms) and the bytes of content under named folders. Two runs, each on its own fresh copy of the same commit: the first ran the
+training, then the bake (which trains nothing and reads the trained models), then the HP500 step alone; the second ran the web
+install, build and unit tests and the Python suite. A first attempt at the second group failed on the measuring environment, not on
+the product (an unset `CAOS_TEMP_ROOT`, a `CAOS_DATA_ROOT` that redirected the site's data copy, and a copy without a git
+repository), and was rerun once those were fixed; its records are not used.
 
 ## The stages
 
@@ -44,7 +47,8 @@ TypeScript engine, held to the Python engine by the shared reference.
 
 ## The site
 
-`npm run build` writes 17,222,593 bytes in 174 files, of which 13,479,978 bytes are the ONNX Runtime
+`npm run build` of the release tree writes 17,222,593 bytes in 174 files (the measured build in the copy wrote 17,222,309: the
+284 bytes between them are the commit and time stamps of `build.json`), of which 13,479,978 bytes are the ONNX Runtime
 WebAssembly binary, served by the site rather than a CDN so its version is the npm package's. The five largest JavaScript chunks:
 `chamber3d-BvVGqlXm.js` 586 KB; `math-vendor-BZ_bdw18.js` 259 KB; `react-vendor-CNP3Vp4U.js` 219 KB; `index-BRDYGVRr.js` 214 KB; `Methodology-CuZaGm2j.js` 135 KB. The committed artifacts under `data/derived/` hold 308,364
 bytes in 66 files.
