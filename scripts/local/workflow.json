@@ -1,0 +1,123 @@
+{
+  "external_environments_required": true,
+  "environment_namespace": "chancadem",
+  "product_admission": true,
+  "readiness_provider": "scripts/local/readiness_provider.py",
+  "readiness_excludes": ["readiness"],
+  "stage_inputs": [
+    "data/examples/params.csv",
+    "data/examples/hp500-surveys.csv"
+  ],
+  "stage_engine_versions": {},
+  "readiness_exceptions": {"api": "missing"},
+  "readiness_check": "scripts/check_readiness.py",
+  "primary_environment": ".venv-pipeline",
+  "generation_environments": [
+    ".venv-pipeline"
+  ],
+  "environments": [
+    {
+      "path": ".venv-pipeline",
+      "requirements": [
+        "requirements-precompute.txt",
+        "requirements-dev.txt"
+      ]
+    },
+    {
+      "path": ".venv",
+      "when": "api",
+      "requirements": [
+        "requirements-api.txt"
+      ]
+    },
+    {
+      "path": ".venv-notebooks",
+      "when": "notebooks",
+      "requirements": [
+        "notebooks/requirements.txt"
+      ]
+    }
+  ],
+  "node_stamp": ".caos-package-lock.sha256",
+  "required": [
+    "data/derived/manifests/index.json",
+    "data/derived/readiness.json",
+    "data/derived/models/surrogate.json",
+    "data/derived/models/psd-ae.json",
+    "data/derived/model-metrics.json"
+  ],
+  "promote": [
+    "data/derived"
+  ],
+  "api": {
+    "environment": ".venv",
+    "active": false,
+    "port": 8000,
+    "health": "/health",
+    "command": [
+      "{python}",
+      "-m",
+      "uvicorn",
+      "app.main:app",
+      "--host",
+      "127.0.0.1",
+      "--port",
+      "{port}"
+    ]
+  },
+  "web_port": 5173,
+  "frontend_environment": {"CAOS_DATA_ROOT": "{root}/data/derived"},
+  "frontend_prepare": [
+    [
+      "{npm}",
+      "run",
+      "predev"
+    ]
+  ],
+  "frontend_command": [
+    "node",
+    "node_modules/vite/bin/vite.js",
+    "--host",
+    "127.0.0.1",
+    "--port",
+    "{web_port}",
+    "--strictPort"
+  ],
+  "generation": [
+    {
+      "script": "data-pipeline/run.py",
+      "args": [
+        "models",
+        "--output",
+        "{derived}"
+      ]
+    },
+    {
+      "script": "data-pipeline/run.py",
+      "args": [
+        "all",
+        "--output",
+        "{derived}"
+      ]
+    }
+  ],
+  "validators": [
+    {
+      "script": "scripts/check_artifacts.py",
+      "args": [
+        "{stage}"
+      ]
+    },
+    {
+      "script": "scripts/check_documents.py",
+      "args": [
+        "{stage}"
+      ]
+    }
+  ],
+  "generation_modules": [
+    "numpy",
+    "jsonschema",
+    "emcee"
+  ]
+}

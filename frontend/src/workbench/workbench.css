@@ -44,3 +44,372 @@
   padding-left: 1.1rem;
   font-size: var(--text-sm);
 }
+
+/* The host of a view with anchored callouts (views/callouts.tsx): the shell's callout layer covers it, the drawing sits under the
+   layer's header band. */
+.cdem-callout-host {
+  /* the band the host reserves, set inline from views/callouts.tsx; 0 until it is measured */
+  --cdem-band: 0px;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.cdem-callout-fill {
+  flex: 1 1 0;
+  min-height: 11rem;
+}
+
+.cdem-callout-drawing {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.cdem-callout-drawing > * {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+/* A row of view controls above a drawing: a scrubber, a play button, a toggle. */
+.cdem-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+  font-size: var(--text-sm);
+}
+
+.cdem-controls input[type='range'] {
+  flex: 1 1 10rem;
+  min-width: 8rem;
+}
+
+.cdem-controls button[aria-pressed='true'] {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* The circuit (catalog row V1): the flow along a stream is a dash pattern moving at a speed bound to the case's throughput; under
+   reduced motion it stops and the arrowheads show the direction. */
+.cdem-stream-flow {
+  animation-name: cdem-flow;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+.cdem-stage-node {
+  cursor: pointer;
+}
+
+.cdem-stage-node:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@keyframes cdem-flow {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cdem-stream-flow {
+    animation: none;
+  }
+}
+
+/* The value a linked cursor stands at, beside its scrubber (the marker the linked views share). */
+.cdem-cursor-chip {
+  flex: none;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.cdem-linkbtn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-accent);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cdem-linkbtn[aria-pressed='true'] {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* The story (pages/Story.tsx): the stage fills the shell's story stage; the panel is the evidence. */
+.cdem-story {
+  min-width: 0;
+}
+
+.cdem-story-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.cdem-story-stage > * {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.cdem-story-chart {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.cdem-story-chart > * {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.cdem-story-marker {
+  position: absolute;
+  right: var(--space-2);
+  bottom: var(--space-2);
+  flex: none;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.cdem-story-evidence {
+  display: grid;
+  align-content: start;
+  gap: 0.55rem;
+}
+
+.cdem-story-evidence h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.cdem-story-evidence p {
+  margin: 0;
+  color: var(--color-fg-subtle);
+}
+
+.cdem-story-evidence small {
+  color: var(--color-fg-faint);
+}
+
+.cdem-story-state {
+  max-width: 70rem;
+  margin-inline: auto;
+  padding: 1rem;
+}
+
+/* Below the two-column layout a stack takes the height its parts need: a view with a callout band keeps room for its drawing. */
+@media (max-width: 899px) {
+  .cdem-callout-fill,
+  .cdem-fill-tall {
+    min-height: 26rem;
+  }
+  /* A host with a callout band keeps the band plus 18rem for its drawing: the axis title, the plot, its axes, a key of two rows and
+     the readout (measured at 390 px on the comparison: 187 px of chart chrome, so a plot of about 100 px, three or more ticks). With
+     shell 0.26.0 the callout value sits on its own row, the band of three cards at 390 px is 186 px, and the fixed 26rem left the
+     comparison a plot 43 px tall with a single tick. The band is width-driven, so the floor never feeds back into it. */
+  .cdem-callout-host.cdem-callout-fill {
+    min-height: max(26rem, calc(var(--cdem-band, 0px) + 18rem));
+  }
+}
+
+/* A story chart on a phone: the stage is the viewport less the header (N7), and Story.tsx fits the callout host to the stage's free
+   height (at least 20rem, the band and the drawing's minimum), so the card never exceeds the stage and its header is never squeezed
+   onto its controls (N2). The card keeps its content's height: a stage too short for it clips its foot, never overlaps its header. */
+@media (max-width: 760px) {
+  .cdem-story-chart .cdem-callout-fill {
+    min-height: 20rem;
+  }
+  .cdem-story-stage.cdem-story-chart > * {
+    min-height: auto;
+    flex-shrink: 0;
+  }
+}
+
+/* A drawing of the product's own over a chart (callouts.tsx overlay: the comparison's interval bracket, N6), in the callout layer's
+   pixels, under the cards and their leaders. */
+.cdem-callout-overlay {
+  position: absolute;
+  left: 0;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* The story's docked panel content: bounded to the layout's height, so its natural height never shrinks the stepper above it. */
+.cdem-story-dock {
+  max-height: calc(100dvh - 15rem);
+  min-height: 0;
+  overflow-y: auto;
+}
+
+@media (max-width: 760px) {
+  .cdem-story-dock {
+    max-height: none;
+    overflow: visible;
+  }
+}
+
+/* The staged entry of a story step (views/staging.tsx, Story.tsx StagedStage; ADR-0082 rule 4). The drawing moves in on one CSS
+   transition of opacity and transform from the entry's first state (data-reveal="start"), which the compositor runs without a style
+   pass per frame; the step's subject pulses once when it is highlighted, then the callouts enter one at a time in the order the shell
+   lays them out (their anchors' x, reading order). Under reduced motion the entry is final at its first frame, so none of this shows. */
+.cdem-staged {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.cdem-staged > * {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.cdem-staged[data-reveal='start'] .cdem-callout-drawing,
+.cdem-staged[data-reveal='start'] [data-feed-strip] {
+  opacity: 0.15;
+  transform: translateY(14px) scale(0.97);
+}
+
+.cdem-staged .cdem-callout-drawing,
+.cdem-staged [data-feed-strip] {
+  transform-origin: 50% 60%;
+  transition: opacity 600ms cubic-bezier(0.2, 0.72, 0.26, 1), transform 600ms cubic-bezier(0.2, 0.72, 0.26, 1);
+}
+
+.cdem-staged[data-entry='on'][data-highlight='on'] [data-subject] {
+  animation: cdem-subject-pulse 520ms ease-in-out 1;
+}
+
+@keyframes cdem-subject-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.cdem-staged [data-caos-callout],
+.cdem-staged [data-caos-callout-leader] {
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.cdem-staged[data-callouts-shown='0'] [data-caos-callout],
+.cdem-staged[data-callouts-shown='0'] [data-caos-callout-leader],
+.cdem-staged[data-callouts-shown='1'] [data-caos-callout]:nth-of-type(n + 2),
+.cdem-staged[data-callouts-shown='1'] [data-caos-callout-leader]:nth-of-type(n + 2),
+.cdem-staged[data-callouts-shown='2'] [data-caos-callout]:nth-of-type(n + 3),
+.cdem-staged[data-callouts-shown='2'] [data-caos-callout-leader]:nth-of-type(n + 3),
+.cdem-staged[data-callouts-shown='3'] [data-caos-callout]:nth-of-type(n + 4),
+.cdem-staged[data-callouts-shown='3'] [data-caos-callout-leader]:nth-of-type(n + 4) {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+/* The docked panel builds in once the callouts are in (data-build="wait" until then, one transition after), while its numbers count; a
+   panel that scrolls shows it (m8): a "more below" cue under it, in the flow so it covers nothing, gone at the end. Below 760 px the
+   panel takes the height its content needs. */
+.cdem-dock-frame {
+  position: relative;
+  min-height: 0;
+}
+
+.cdem-story-dock {
+  transition: opacity 420ms ease, transform 420ms ease;
+}
+
+.cdem-story-dock[data-build='wait'] {
+  opacity: 0.2;
+  transform: translateY(8px);
+}
+
+.cdem-dock-frame[data-more='true'] .cdem-story-dock {
+  max-height: calc(100dvh - 17rem);
+}
+
+.cdem-scroll-cue {
+  display: block;
+  margin: 0.3rem auto 0;
+  padding: 0.1rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-fg);
+  font-size: var(--text-xs);
+  cursor: pointer;
+}
+
+/* The comparison's methods and surveys as wrapping lists of buttons (views/compare.tsx; M8): every name is whole at any width. */
+.cdem-pickers {
+  display: grid;
+  flex: none;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.cdem-pick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.2rem 0.75rem;
+  min-width: 0;
+}
+
+.cdem-pick-label {
+  color: var(--color-fg-subtle);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.cdem-pick .cdem-linkbtn {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.cdem-pick-n {
+  color: var(--color-fg-subtle);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A table's reading as its caption (the chamber's numbers, views/chamber.tsx). */
+.cdem-caption {
+  caption-side: bottom;
+  padding-top: 0.25rem;
+  color: var(--color-fg-subtle);
+  font-size: var(--text-sm);
+  text-align: left;
+}
+
+/* The ten surveys' feed rates under the Measure step's circuit (Story.tsx FeedStrip): the strip keeps its own height. */
+.cdem-story-stage > .cdem-feed-strip {
+  flex: none;
+  margin: 0;
+  padding: 0 var(--space-2) var(--space-2);
+}

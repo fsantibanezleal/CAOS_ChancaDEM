@@ -26,6 +26,9 @@ figure needs a curve no artifact stores, from the product's own engine code (nam
                        Reads data/derived/model-metrics.json.
   fig-drift.pdf        hours until the P80 of case S01 reaches a target, against the drift rate of the setting, for the
                        three targets of the shared reference table. Reads tests/fixtures/campaign-reference.json.
+  fig-drift-response.pdf  (a) P80 of survey 1 (HP500-01) against the setting over the drawn range, the target of the App's
+                       rule, the secant to its crossing, the local slope and the K1 class crossing; (b) the slope of P80 by
+                       finite differences. Calls pipeline.model.crusher.evaluate, .campaign and .classification.
   fig-replacement.pdf  the particle-replacement walk on the chamber of case S01 against the Whiten product, by number of
                        parcels (five seeds each). Calls pipeline.model.crusher.whiten.replacement_walk and evaluate.
 
@@ -121,14 +124,15 @@ def fig_dataflow() -> None:
     ax.text(75, 57.5, "Readers", fontsize=7.6, fontweight="bold")
     box(1, 44, 19, 9, "params.csv\n(params-record,\n17 circuit cases)", "#eef3f8")
     box(1, 31, 19, 9, "hp500-surveys.csv\n(hp500-survey,\nten surveys)", "#eef3f8")
-    box(1, 14, 19, 11, "docs/contracts/\ncatalog.md and\n12 schema files", "#eef3f8")
+    n_schemas = len(list((ROOT / "docs" / "contracts" / "schemas").glob("*.schema.json")))
+    box(1, 14, 19, 11, f"docs/contracts/\ncatalog.md and\n{n_schemas} schema files", "#eef3f8")
     box(26, 44, 20, 9, "preprocess:\nvalidate the rows", "#f4f4f6")
     box(26, 31, 20, 9, "infer: the engine\n(Whiten, capacity,\npower, envelope)", "#f4f4f6", bold=True)
-    box(26, 18, 20, 9, "hp500: backbone,\nleave-one-out,\nCrusherBayes", "#f4f4f6")
+    box(26, 18, 20, 9, "hp500: backbone,\nleave-one-out,\nCrusherBayes, comparison", "#f4f4f6")
     box(26, 5, 20, 9, "models (torch, local):\ntrain, export ONNX,\nevaluate held out", "#f4f4f6")
     box(51, 44, 19, 9, "export: trace.json\nand manifest per case,\nindex.json", "#fdf3ea")
     box(51, 31, 19, 9, "readiness.json\n(state per\ncontract)", "#fdf3ea")
-    box(51, 18, 19, 9, "backbone.json, loo.json,\ncrusherbayes.json", "#fdf3ea")
+    box(51, 18, 19, 9, "backbone.json, loo.json,\ncrusherbayes.json,\ncomparison.json", "#fdf3ea")
     box(51, 5, 19, 9, "surrogate, psd-ae\n(.json + .onnx),\nmodel-metrics.json", "#fdf3ea")
     box(76, 40, 22, 13, "Web (static site):\nreplay of the documents,\nlive TypeScript engine,\nonnxruntime-web", "#eef6ee")
     box(76, 22, 22, 12, "Dormant API (app/):\nGET only, 503 with the\nstate when a document\nis absent", "#eef6ee")
@@ -286,7 +290,8 @@ def fig_power_parity() -> None:
     ax.set_xticklabels([f"{int(k)}\n{p['css']:.0f} mm" for k, p in zip(n, ps)], fontsize=6.6)
     ax.set_xlabel("survey and its closed-side setting")
     ax.set_ylabel("power (kW)")
-    ax.legend(fontsize=6.4, ncol=2, frameon=True, facecolor="white", edgecolor=GRID, loc="upper left")
+    # the legend above the axes, so it covers none of the bars
+    ax.legend(fontsize=6.4, ncol=4, frameon=False, loc="lower center", bbox_to_anchor=(0.5, 1.0))
     _clean(ax)
     _save(fig, "fig-power-parity.pdf")
 
@@ -295,11 +300,12 @@ def fig_loo() -> None:
     loo = _json(HP / "loo.json")["loo"]
     cb = _json(HP / "crusherbayes.json")["loo"]
     fig, axes = plt.subplots(1, 2, figsize=(7.0, 3.2))
-    spec = [("tph", "throughput (t/h)", ["M0", "B_lin", "M2"], "(a) throughput"),
-            ("kW", "power (kW)", ["M0", "B_lin", "M2", "Morrell_noload"], "(b) power")]
+    # keys of the held-out documents, in the order the legend shows them; the power panel adds the last one
     style = {"M0": (GREY, "o", "calibrated backbone"), "B_lin": (ORANGE, "s", "setting-only line"),
              "M2": (GREEN, "^", "free-form fit"), "Morrell_noload": (PURPLE, "v", "Morrell with no-load term")}
-    for ax, (key, lab, methods, title) in zip(axes, spec):
+    spec = [("tph", "throughput (t/h)", False, "(a) throughput"), ("kW", "power (kW)", True, "(b) power")]
+    for ax, (key, lab, with_noload, title) in zip(axes, spec):
+        methods = [m for m in style if with_noload or m != "Morrell_noload"]
         meas = np.array(loo[key]["measured"])
         lo, hi = np.array(cb[key]["lo80"]), np.array(cb[key]["hi80"])
         mean = np.array(cb[key]["pred_mean"])
@@ -316,8 +322,10 @@ def fig_loo() -> None:
         ax.set_xlabel(f"measured {lab}")
         ax.set_ylabel(f"held-out prediction, {lab}")
         ax.set_title(title, fontsize=8.6)
-        ax.legend(fontsize=6.2, frameon=True, facecolor="white", edgecolor=GRID, loc="upper left")
         _clean(ax)
+    # one legend below both panels, so no marker or interval of a survey is hidden behind it
+    handles, labels = axes[1].get_legend_handles_labels()
+    fig.legend(handles, labels, fontsize=6.4, frameon=False, loc="upper center", bbox_to_anchor=(0.5, 0.02), ncol=5)
     _save(fig, "fig-loo.pdf")
 
 
@@ -387,13 +395,13 @@ def fig_contraction() -> None:
     order = np.argsort(vals)
     fig, ax = plt.subplots(figsize=(6.6, 3.9))
     y = np.arange(len(rows))
-    cols = [BLUE if vals[i] < 0.5 else RED if vals[i] > 0.85 else ORANGE for i in order]
-    hatches = ["" if vals[i] < 0.5 else "//" if vals[i] > 0.85 else ".." for i in order]
+    cols = [BLUE if vals[i] < 0.5 else RED if vals[i] > 0.9 else ORANGE for i in order]
+    hatches = ["" if vals[i] < 0.5 else "//" if vals[i] > 0.9 else ".." for i in order]
     bars = ax.barh(y, vals[order], color=cols, edgecolor=INK, linewidth=0.4, zorder=3)
     for b, h in zip(bars, hatches):
         b.set_hatch(h)
     ax.axvline(0.5, color=INK, lw=0.8, ls="--")
-    ax.axvline(1.0, color=INK, lw=0.8, ls=":")
+    ax.axvline(0.9, color=INK, lw=0.8, ls=":")   # the thresholds of the CrusherBayes manuscript: 0.5 and 0.9
     ax.set_yticks(y)
     ax.set_yticklabels([names[i] for i in order], fontsize=7.2)
     ax.set_xlabel("posterior standard deviation over prior standard deviation")
@@ -442,6 +450,66 @@ def fig_drift() -> None:
     ax.legend(fontsize=6.3, frameon=True, facecolor="white", edgecolor=GRID, loc="upper right")
     _clean(ax)
     _save(fig, "fig-drift.pdf")
+
+
+def fig_drift_response() -> None:
+    """(a) P80 of survey 1 (HP500-01, calibrated lane) against the setting over the drawn range, with the target by the App's
+    rule (P80 plus 10 percent), the secant to its crossing, the tangent of the local slope at the current setting and the
+    setting where K1 crosses the next class mid-size; (b) the slope of P80 in the setting by finite differences of 0.02 mm."""
+    from pipeline.model.crusher.campaign import css_at_p80_target
+    from pipeline.model.crusher.classification import hp500_params
+    from pipeline.model.sweep import RANGES
+
+    op = Operating(**_json(DER / "manifests" / "HP500-01.json")["params"])
+    ceil = RANGES[op.machine]["css_mm"][1]
+
+    def p80(css: float) -> float:
+        return evaluate(Operating(**{**op.__dict__, "css_mm": css})).p80
+
+    r0 = evaluate(op)
+    s0, p0 = op.css_mm, r0.p80
+    target = 1.1 * p0
+    s_star = css_at_p80_target(op, target, ceil)
+    secant = (p80(s_star) - p0) / (s_star - s0)
+    h = max(0.25, 0.01 * s0)
+    local = (p80(s0 + h) - p80(s0 - h)) / (2 * h)
+    k0 = hp500_params(s0, r0.f80)
+    m1 = min(m for m in r0.feed.mid_mm if m > k0.k1)
+    s1 = (m1 - 0.3 * r0.f80) / 0.23
+    css = np.linspace(s0, ceil, 361)
+    p = np.array([p80(c) for c in css])
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(7.0, 2.9))
+    a1.plot(css, p, color=BLUE, lw=1.5, label="engine $P_{80}$ (survey 1, calibrated)")
+    a1.axhline(target, color=RED, lw=0.9, ls="--", label=f"target {target:.2f} mm ($P_{{80}}$ plus 10%)")
+    a1.plot([s0, s_star], [p0, target], color=GREEN, lw=1.2, ls="-", marker="o", ms=3,
+            label=f"secant to the crossing, {secant:.3f} mm/mm")
+    tx = np.array([s0, s0 + 12.0])
+    a1.plot(tx, p0 + local * (tx - s0), color=ORANGE, lw=1.2, ls=":", label=f"local slope at {s0:.0f} mm, {local:.3f} mm/mm")
+    a1.axvline(s1, color=GREY, lw=0.8, ls="-.", label=f"$K_1$ reaches the {m1:.2f} mm class at {s1:.2f} mm")
+    a1.set_xlabel("closed-side setting (mm)")
+    a1.set_ylabel("product $P_{80}$ (mm)")
+    a1.set_title("(a) the drawn range and its secant", fontsize=8.6)
+    a1.legend(fontsize=5.9, frameon=True, facecolor="white", edgecolor=GRID, loc="upper left")
+    _clean(a1)
+    step = 0.02
+    xs = np.arange(s0, ceil - step, step)
+    slope = np.array([(p80(x + step) - p80(x)) / step for x in xs])
+    a2.plot(xs + step / 2, slope, color=BLUE, lw=0.9, label="finite difference over 0.02 mm")
+    a2.axhline(secant, color=GREEN, lw=1.0, ls="-", label="secant over the opening to the target")
+    # the local slope at the current setting and the K1 crossing, so the short segment before the break (s0 to s1) reads
+    a2.axhline(local, color=ORANGE, lw=1.0, ls=":", label=f"local slope at {s0:.0f} mm, {local:.3f} mm/mm")
+    a2.plot([s0], [local], color=ORANGE, marker="o", ms=3.5, ls="none")
+    a2.axvline(s1, color=GREY, lw=0.8, ls="-.", label=f"$K_1$ reaches the {m1:.2f} mm class at {s1:.2f} mm")
+    a2.axvline(s_star, color=RED, lw=0.8, ls="--", label=f"target reached at {s_star:.2f} mm")
+    a2.set_ylim(0.0, 1.55 * float(np.max(slope)))
+    a2.set_xlabel("closed-side setting (mm)")
+    a2.set_ylabel("slope of $P_{80}$ (mm per mm)")
+    a2.set_title("(b) the slope is piecewise in the setting", fontsize=8.6)
+    a2.legend(fontsize=5.6, frameon=True, facecolor="white", edgecolor=GRID, loc="upper right")
+    _clean(a2)
+    _save(fig, "fig-drift-response.pdf")
+    print(f"drift response: P80 {p0:.3f} mm, target {target:.3f} mm at {s_star:.3f} mm, secant {secant:.4f}, local {local:.4f}, "
+          f"K1 crossing {s1:.3f} mm")
 
 
 def fig_replacement() -> None:
@@ -503,5 +571,6 @@ if __name__ == "__main__":
     fig_contraction()
     fig_surrogate()
     fig_drift()
+    fig_drift_response()
     fig_replacement()
     print("figures written to", HERE)

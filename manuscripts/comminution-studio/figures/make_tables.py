@@ -10,6 +10,9 @@ Sources read (nothing else):
   data/examples/hp500-surveys.csv, data/examples/params.csv           the two source tables
   data/derived/manifests/*.json, data/derived/*/trace.json            the 27 baked cases
   data/derived/hp500/backbone.json, loo.json, crusherbayes.json       the HP500 documents
+  data/derived/hp500/comparison.json                                  the paired comparison (tab-comparison)
+  data/derived/readiness.json                                         the readiness rows (the counts the text states)
+  data-pipeline/pipeline/model/crusher/ (evaluate, campaign)          the drift response of survey 1 (numbers-drift)
   data/derived/model-metrics.json, data/derived/models/*.json         the learned models
   docs/contracts/catalog.md, docs/contracts/schemas/*.schema.json     the data contracts
   data-pipeline/pipeline/model/crusher/ (KMODEL, CAP, REF_THROW_MM), data-pipeline/pipeline/model/sweep.py (RANGES)
@@ -156,17 +159,21 @@ def tab_power_parity() -> None:
                                                        "Max. dev. (\\%)"], rows))
 
 
-BENCH = [("constant_mean", None, "Constant mean"), ("M1_label_shuffle", None, "Label-shuffle control"),
-         ("M0_backbone", "M0", "Calibrated backbone"), ("M1_residual", None, "Backbone with bounded residual"),
-         ("M2_freeform", "M2", "Free-form fit on CSS and $f_{80}$"), ("B_lin", "B_lin", "Setting-only line"),
-         ("Morrell", None, "Morrell, through the origin"), ("Morrell_noload", None, "Morrell with a no-load term")]
+BENCH = [("constant_mean", "Constant mean"), ("M1_label_shuffle", "Label-shuffle control"),
+         ("M0_backbone", "Calibrated backbone"), ("M1_residual", "Backbone with bounded residual"),
+         ("M2_freeform", "Free-form fit on CSS and $f_{80}$"), ("B_lin", "Setting-only line"),
+         ("Morrell", "Morrell, through the origin"), ("Morrell_noload", "Morrell with a no-load term")]
+# the three BENCH rows that crusherbayes.json also scores: its comparator key (the key) and the loo.json row (the value)
+BENCH_COMPARATOR_ROW = {"M0": "M0_backbone", "M2": "M2_freeform", "B_lin": "B_lin"}
+BENCH_ROW_COMPARATOR = {row: comp for comp, row in BENCH_COMPARATOR_ROW.items()}
 
 
 def tab_bench() -> None:
     loo = _json(HP / "loo.json")["loo"]
     cb = _json(HP / "crusherbayes.json")
     rows = []
-    for key, comp, name in BENCH:
+    for key, name in BENCH:
+        comp = BENCH_ROW_COMPARATOR.get(key)
         row = [name]
         for t in ("tph", "kW"):
             s = loo[t]["strict"].get(key)
@@ -191,7 +198,7 @@ def tab_bench() -> None:
 def tab_lpd() -> None:
     cb = _json(HP / "crusherbayes.json")
     rows = []
-    for comp, name in (("B_lin", "Setting-only line"), ("M0", "Calibrated backbone"), ("M2", "Free-form fit")):
+    for comp, name in {"B_lin": "Setting-only line", "M0": "Calibrated backbone", "M2": "Free-form fit"}.items():
         rows.append([name] + [num(cb["comparators"][t][comp]["lpd_mean"], 3) for t in ("tph", "kW")])
     rows.append(["CrusherBayes"] + [num(cb["loo"][t]["scores"]["lpd_mean"], 3) for t in ("tph", "kW")])
     write("tab-lpd", tabular("@{}l rr@{}", ["Method", "Throughput", "Power"], rows))
@@ -200,7 +207,7 @@ def tab_lpd() -> None:
 def tab_leaky() -> None:
     loo = _json(HP / "loo.json")["loo"]
     rows = []
-    for key, _comp, name in BENCH:
+    for key, name in BENCH:
         row = [name]
         for t in ("tph", "kW"):
             s, lk = loo[t]["strict"].get(key), loo[t]["leaky"].get(key)
@@ -215,11 +222,12 @@ def tab_leaky() -> None:
     write("tab-leaky", tabular("@{}l rrr rrr@{}", head, rows, groups))
 
 
-UQ_ROWS = [("constant_mean", "Constant mean"), ("label_shuffle", "Label-shuffle control"), ("M0", "Calibrated backbone"),
-           ("M1", "Backbone with bounded residual"), ("M2", "Free-form fit on CSS and $f_{80}$"), ("B_lin", "Setting-only line"),
-           ("Morrell", "Morrell, through the origin"), ("Morrell_noload", "Morrell with a no-load term"),
-           ("CrusherBayes", "CrusherBayes (predictive mean)"), ("Rocha_published", r"Rocha et al.\ throughput model, $\lambda=0.84$"),
-           ("Rocha_refit", r"Rocha et al.\ throughput model, $\lambda$ refit per fold")]
+UQ_ROWS = {"constant_mean": "Constant mean", "label_shuffle": "Label-shuffle control", "M0": "Calibrated backbone",
+           "M1": "Backbone with bounded residual", "M2": "Free-form fit on CSS and $f_{80}$", "B_lin": "Setting-only line",
+           "Morrell": "Morrell, through the origin", "Morrell_noload": "Morrell with a no-load term",
+           "CrusherBayes": "CrusherBayes (predictive mean)",
+           "Rocha_published": r"Rocha et al.\ throughput model, $\lambda_{\mathrm R}=0.84$",
+           "Rocha_refit": r"Rocha et al.\ throughput model, $\lambda_{\mathrm R}$ refit per fold"}
 UQ_MACRO = {"constant_mean": "Mean", "label_shuffle": "Shuf", "M0": "Bb", "M1": "Res", "M2": "Free", "B_lin": "Line",
             "Morrell": "Mor", "Morrell_noload": "Mornl", "CrusherBayes": "Cb", "Rocha_published": "Rocha",
             "Rocha_refit": "Rocharef"}
@@ -240,7 +248,7 @@ def tab_uncertainty() -> None:
     errs = uq.heldout_errors()
     res = uq.bootstrap(errs)
     rows = []
-    for key, name in UQ_ROWS:
+    for key, name in UQ_ROWS.items():
         row = [name]
         q = res["tph"].get(key)
         row += ([_ci(q["mape"], q["lo"], q["hi"]),
@@ -285,8 +293,219 @@ def tab_uncertainty() -> None:
     write("numbers-uq", "\n".join(macros))
 
 
-RESOURCE_ROWS = [("bake", r"Bake (\texttt{run.py all}: 27 cases, the three HP500 documents, index, readiness)", "workstation"),
-                 ("hp500", r"HP500 step alone (\texttt{run.py hp500}: backbone, CrusherCal, the CrusherBayes sampler)", "workstation"),
+def tab_pairs() -> None:
+    """The paired difference of every two predictors on each target (figures/heldout_uq.py ``pairwise``), drawn on the
+    resamples of tab-uncertainty: one lower-triangular matrix per target, each cell the 95 % interval of the row's MAPE minus
+    the column's, in bold where it excludes zero; with a macro per ordered pair (\\uq<Q|P>p<row><column>, lo, hi)."""
+    import heldout_uq as uq
+
+    pairs = uq.pairwise(uq.heldout_errors())
+    macros = []
+
+    def get(t: str, a: str, b: str) -> dict:
+        if (a, b) in pairs[t]:
+            return pairs[t][(a, b)]
+        r = pairs[t][(b, a)]
+        return {"d": -r["d"], "lo": -r["hi"], "hi": -r["lo"]}
+
+    blocks = []
+    for t, tl, title in (("tph", "Q", "Throughput"), ("kW", "P", "Power")):
+        keys = [k for k in UQ_ROWS if any(k in p for p in pairs[t])]
+        names = UQ_ROWS
+        for a in keys:
+            for b in keys:
+                if a != b:
+                    r = get(t, a, b)
+                    m = "uq" + tl + "p" + UQ_MACRO[a] + UQ_MACRO[b]
+                    macros += [f"\\newcommand{{\\{m}}}{{{r['d']:+.2f}}}", f"\\newcommand{{\\{m}lo}}{{{r['lo']:+.1f}}}",
+                               f"\\newcommand{{\\{m}hi}}{{{r['hi']:+.1f}}}"]
+        n = len(keys)
+        lines = [r"\multicolumn{1}{@{}l}{\textit{" + title + ": row minus column}}" + "".join(
+            f" & {j + 1}" for j in range(n - 1)) + r" \\", r"\midrule"]
+        for i in range(n):
+            row = [f"{i + 1}~{names[keys[i]]}"]
+            for j in range(n - 1):
+                if j >= i:
+                    row.append("")
+                    continue
+                r = get(t, keys[i], keys[j])
+                cell = f"[${r['lo']:+.1f}$, ${r['hi']:+.1f}$]"
+                if r["lo"] > 0 or r["hi"] < 0:
+                    cell = f"[$\\mathbf{{{r['lo']:+.1f}}}$, $\\mathbf{{{r['hi']:+.1f}}}$]"
+                row.append(cell)
+            lines.append(" & ".join(row) + r" \\")
+        blocks.append((n, lines))
+    ncol = max(n for n, _ in blocks) - 1
+    body = [r"\begin{tabular}{@{}l " + "c" * ncol + "@{}}", r"\toprule"]
+    for k, (_, lines) in enumerate(blocks):
+        if k:
+            body.append(r"\midrule")
+        body += lines
+    body += [r"\bottomrule", r"\end{tabular}"]
+    write("tab-pairs", "\n".join(body))
+    write("numbers-pairs", "\n".join(macros))
+
+
+# the methods of hp500-comparison by their names in the report, and the macro stem of each (the document's ids are data keys)
+CMP_NAME = {"M0_backbone": "Calibrated backbone", "M1_residual": "Backbone with bounded residual",
+            "M2_freeform": "Free-form fit on CSS and $f_{80}$", "B_lin": "Setting-only line",
+            "Morrell": "Morrell, through the origin", "Morrell_noload": "Morrell with a no-load term",
+            "constant_mean": "Constant mean", "M1_label_shuffle": "Label-shuffle control",
+            "crusherbayes": "CrusherBayes (predictive mean)"}
+CMP_MACRO = {"M0_backbone": "Bb", "M1_residual": "Res", "M2_freeform": "Free", "B_lin": "Line", "Morrell": "Mor",
+             "Morrell_noload": "Mornl", "constant_mean": "Mean", "M1_label_shuffle": "Shuf", "crusherbayes": "Cb"}
+
+
+def tab_comparison() -> None:
+    """The paired comparison of the held-out methods against the recommended one (data/derived/hp500/comparison.json,
+    contract hp500-comparison): per target the recommended method, then every method with per-survey predictions by its
+    mean paired difference, with the 95 % interval (bold where it excludes zero), the wins and p_better; with the macros the
+    text cites (\\cmp<Q|P><method>, Mape, Lo, Hi, Wins, Pb; \\cmp<Q|P>Rec and Run, the names of the recommended method and of
+    the runner-up)."""
+    doc = _json(HP / "comparison.json")
+    boot = doc["bootstrap"]
+    macros = [f"\\newcommand{{\\cmpB}}{{{boot['resamples']:,}}}".replace(",", "{,}"),
+              f"\\newcommand{{\\cmpSeed}}{{{boot['seed']}}}", f"\\newcommand{{\\cmpN}}{{{doc['n']}}}",
+              f"\\newcommand{{\\cmpQlo}}{{{boot['quantiles'][0]}}}", f"\\newcommand{{\\cmpQhi}}{{{boot['quantiles'][1]}}}",
+              f"\\newcommand{{\\cmpCbIncluded}}{{{'yes' if doc['crusherbayes']['included'] else 'no'}}}"]
+    lines = []
+    for t, tl, title in (("tph", "Q", "Throughput"), ("kW", "P", "Power")):
+        block = doc["targets"][t]
+        mape = {m["id"]: m["mape_pct"] for m in block["methods"]}
+        rec, run = block["recommended"], block["runner_up"]
+        bare = lambda k: CMP_NAME[k].replace(" (predictive mean)", "")  # noqa: E731
+        macros += [f"\\newcommand{{\\cmp{tl}Rec}}{{{bare(rec)}}}", f"\\newcommand{{\\cmp{tl}Run}}{{{bare(run)}}}"]
+        for m in block["methods"]:
+            macros.append(f"\\newcommand{{\\cmp{tl}{CMP_MACRO[m['id']]}Mape}}{{{m['mape_pct']:.2f}}}")
+        if lines:
+            lines.append(r"\midrule")
+        lines.append(r"\multicolumn{6}{@{}l}{\textit{" + title + ": every method minus " + bare(rec).lower().replace(
+            "crusherbayes", "CrusherBayes") + r", the recommended method}} \\")
+        lines.append(r"\midrule")
+        lines.append(" & ".join([CMP_NAME[rec] + " (recommended)", num(mape[rec]), DASH, DASH, DASH, DASH]) + r" \\")
+        for p in sorted(block["paired"], key=lambda r: r["mean_diff_pts"]):
+            k = p["method"]
+            lo, hi = p["ci95"]
+            cell = f"[${lo:+.2f}$, ${hi:+.2f}$]"
+            if lo > 0 or hi < 0:
+                cell = f"[$\\mathbf{{{lo:+.2f}}}$, $\\mathbf{{{hi:+.2f}}}$]"
+            name = CMP_NAME[k] + (" (runner-up)" if k == run else "")
+            lines.append(" & ".join([name, num(mape[k]), f"${p['mean_diff_pts']:+.2f}$", cell,
+                                     f"{p['wins']} of {doc['n']}", num(p["p_better"])]) + r" \\")
+            m = f"cmp{tl}{CMP_MACRO[k]}"
+            macros += [f"\\newcommand{{\\{m}}}{{{p['mean_diff_pts']:.2f}}}", f"\\newcommand{{\\{m}Lo}}{{{lo:.2f}}}",
+                       f"\\newcommand{{\\{m}Hi}}{{{hi:.2f}}}", f"\\newcommand{{\\{m}Wins}}{{{p['wins']}}}",
+                       f"\\newcommand{{\\{m}Pb}}{{{p['p_better']:.2f}}}"]
+        paired_ids = {p["method"] for p in block["paired"]}
+        for m in block["methods"]:
+            if m["id"] != rec and m["id"] not in paired_ids:
+                lines.append(" & ".join([CMP_NAME[m["id"]] + " (no per-survey predictions)", num(m["mape_pct"]), DASH, DASH,
+                                         DASH, DASH]) + r" \\")
+    # the document against the report's own bootstrap (figures/heldout_uq.py, another seed): the largest difference of an
+    # interval end and of a point difference over every paired row, and the surveys a halved interval would need
+    import heldout_uq as uq
+
+    pairs = uq.pairwise(uq.heldout_errors())
+    # heldout_uq's prediction keys (data keys of hp500-loo's strict block) against the comparison document's method ids
+    from_uq = {"M0": "M0_backbone", "M1": "M1_residual", "M2": "M2_freeform", "B_lin": "B_lin", "Morrell": "Morrell",
+               "Morrell_noload": "Morrell_noload", "constant_mean": "constant_mean", "CrusherBayes": "crusherbayes"}
+    to_uq = {doc_id: uq_key for uq_key, doc_id in from_uq.items()}
+    worst_end, worst_point = 0.0, 0.0
+    for t in ("tph", "kW"):
+        block = doc["targets"][t]
+        for p in block["paired"]:
+            a, b = to_uq[p["method"]], to_uq[block["recommended"]]
+            r = pairs[t][(a, b)] if (a, b) in pairs[t] else {"d": -pairs[t][(b, a)]["d"], "lo": -pairs[t][(b, a)]["hi"],
+                                                               "hi": -pairs[t][(b, a)]["lo"]}
+            worst_end = max(worst_end, abs(p["ci95"][0] - r["lo"]), abs(p["ci95"][1] - r["hi"]))
+            worst_point = max(worst_point, abs(p["mean_diff_pts"] - r["d"]))
+    macros += [f"\\newcommand{{\\cmpAgreeEnd}}{{{worst_end:.2f}}}", f"\\newcommand{{\\cmpAgreePoint}}{{{worst_point:.3f}}}"]
+    # surveys at which the interval on power of the runner-up and of CrusherBayes would exclude zero if the per-survey
+    # differences kept their spread: a distance from the point difference to an interval end shrinks as sqrt(N_s / N), so the
+    # end that must cross zero, the lower one, reaches it at N = N_s ((d - lo) / d)^2; the symmetric half-width (hi - lo) / 2
+    # in place of d - lo gives N = N_s ((hi - lo) / 2d)^2. The text gives the two as a range (lower to upper).
+    for t, tl in (("kW", "P"),):
+        block = doc["targets"][t]
+        for p in block["paired"]:
+            if p["method"] in ("M2_freeform", "crusherbayes"):
+                d, lo, hi = p["mean_diff_pts"], p["ci95"][0], p["ci95"][1]
+                by_lower = doc["n"] * ((d - lo) / d) ** 2
+                by_half = doc["n"] * ((hi - lo) / 2 / d) ** 2
+                name = CMP_MACRO[p["method"]]
+                macros += [f"\\newcommand{{\\cmp{tl}{name}NeedLower}}{{{by_lower:.0f}}}",
+                           f"\\newcommand{{\\cmp{tl}{name}NeedHalf}}{{{by_half:.0f}}}",
+                           f"\\newcommand{{\\cmp{tl}{name}NeedLo}}{{{min(by_lower, by_half):.0f}}}",
+                           f"\\newcommand{{\\cmp{tl}{name}NeedHi}}{{{max(by_lower, by_half):.0f}}}"]
+    head = ["Method", r"MAPE (\%)", "Mean $\\bar d$ (points)", r"95\% interval", "Wins", "$p_{\\mathrm{better}}$"]
+    body = [r"\begin{tabular}{@{}l r r c r r@{}}", r"\toprule", " & ".join(head) + r" \\", r"\midrule"] + lines + [
+        r"\bottomrule", r"\end{tabular}"]
+    write("tab-comparison", "\n".join(body))
+    write("numbers-comparison", "\n".join(macros))
+
+
+def numbers_drift() -> None:
+    """The drift response of survey 1 (case HP500-01, calibrated lane) from the canonical engine, as the App draws it: the
+    target by the one rule of the App and the story (the case's P80 plus 10 percent), the opening at which P80 reaches it
+    (css_at_p80_target, ceiling at the top of the class's training range), the secant over that opening, the local slope at
+    the current setting (the central difference of p80PerMm, h = max(0.25, 0.01 CSS)), and the cause of the bend: the setting
+    at which the escape size K1 = 0.23 CSS + 0.30 F80 of the calibrated classification crosses the mid-size of the next class
+    (and K2 the next one), with the finite-difference slopes on either side."""
+    from pipeline.model.crusher import evaluate
+    from pipeline.model.crusher.campaign import css_at_p80_target
+    from pipeline.model.crusher.classification import hp500_params
+    from pipeline.model.crusher.types import Operating
+
+    op = Operating(**_json(DER / "manifests" / "HP500-01.json")["params"])
+    ceil = RANGES[op.machine]["css_mm"][1]
+    r0 = evaluate(op)
+
+    def p80(css: float) -> float:
+        return evaluate(Operating(**{**op.__dict__, "css_mm": css})).p80
+
+    target = 1.1 * r0.p80
+    s_star = css_at_p80_target(op, target, ceil)
+    opening = s_star - op.css_mm
+    secant = (p80(s_star) - r0.p80) / opening
+    h = max(0.25, 0.01 * op.css_mm)
+    local = (p80(op.css_mm + h) - p80(op.css_mm - h)) / (2 * h)
+    f80 = r0.f80
+    mids = list(r0.feed.mid_mm)
+    k0 = hp500_params(op.css_mm, f80)
+    m1 = min(m for m in mids if m > k0.k1)          # the class mid-size K1 reaches first as the setting opens
+    m2 = min(m for m in mids if m > k0.k2)          # and K2
+    s1 = (m1 - 0.3 * f80) / 0.23
+    s2 = (m2 - 12.0 - 0.4 * f80) / 0.55
+
+    def fd(a: float, b: float) -> float:
+        return (p80(b) - p80(a)) / (b - a)
+
+    below, above = fd(s1 - 0.026, s1 - 0.006), fd(s1 + 0.006, s1 + 0.026)
+    k2_below, k2_above = fd(s2 - 0.026, s2 - 0.006), fd(s2 + 0.006, s2 + 0.026)
+    room = ceil - op.css_mm
+    j = mids.index(m1)
+    edge_hi, edge_lo = r0.feed.edges_mm[j], r0.feed.edges_mm[j + 1]   # the sieves that bound the class (coarse to fine)
+    write("numbers-drift", "\n".join([
+        f"\\newcommand{{\\drEdgeHi}}{{{edge_hi:.2f}}}", f"\\newcommand{{\\drEdgeLo}}{{{edge_lo:.2f}}}",
+        f"\\newcommand{{\\drSoneGap}}{{{s1 - op.css_mm:.2f}}}",
+        f"\\newcommand{{\\drCss}}{{{op.css_mm:.0f}}}", f"\\newcommand{{\\drPnow}}{{{r0.p80:.3f}}}",
+        f"\\newcommand{{\\drFeighty}}{{{f80:.2f}}}", f"\\newcommand{{\\drTarget}}{{{target:.2f}}}",
+        f"\\newcommand{{\\drTargetHead}}{{{target:.3g}}}", f"\\newcommand{{\\drSstar}}{{{s_star:.3f}}}",
+        f"\\newcommand{{\\drOpen}}{{{opening:.3f}}}", f"\\newcommand{{\\drOpenHead}}{{{opening:.3g}}}",
+        f"\\newcommand{{\\drCeil}}{{{ceil:.0f}}}", f"\\newcommand{{\\drRoom}}{{{room:.0f}}}",
+        f"\\newcommand{{\\drShare}}{{{opening / room:.2f}}}", f"\\newcommand{{\\drRise}}{{{target - r0.p80:.3f}}}",
+        f"\\newcommand{{\\drSecant}}{{{secant:.3f}}}", f"\\newcommand{{\\drLocal}}{{{local:.3f}}}",
+        f"\\newcommand{{\\drH}}{{{h:.2f}}}", f"\\newcommand{{\\drRatio}}{{{local / secant:.2f}}}",
+        f"\\newcommand{{\\drLinOpen}}{{{(target - r0.p80) / local:.2f}}}",
+        f"\\newcommand{{\\drKoneNow}}{{{k0.k1:.3f}}}", f"\\newcommand{{\\drMidOne}}{{{m1:.3f}}}",
+        f"\\newcommand{{\\drSone}}{{{s1:.3f}}}", f"\\newcommand{{\\drBelow}}{{{below:.3f}}}",
+        f"\\newcommand{{\\drAbove}}{{{above:.3f}}}", f"\\newcommand{{\\drKtwoNow}}{{{k0.k2:.3f}}}",
+        f"\\newcommand{{\\drMidTwo}}{{{m2:.3f}}}", f"\\newcommand{{\\drStwo}}{{{s2:.3f}}}",
+        f"\\newcommand{{\\drKtwoBelow}}{{{k2_below:.4f}}}", f"\\newcommand{{\\drKtwoAbove}}{{{k2_above:.4f}}}",
+    ]))
+
+
+RESOURCE_ROWS = [("bake", r"Bake (\texttt{run.py all}: 27 cases, the four HP500 documents, index, readiness)", "workstation"),
+                 ("hp500", r"HP500 step alone (\texttt{run.py hp500}: backbone, CrusherCal, the CrusherBayes sampler, the paired comparison)", "workstation"),
                  ("models", r"Training (\texttt{run.py models}: sweeps, two networks, export, evaluation)", "workstation, CPU"),
                  ("tests", "Python tests, the whole suite", "workstation"),
                  ("install", r"Web install (\texttt{npm ci})", "workstation, CI"),
@@ -311,7 +530,9 @@ def tab_resources() -> None:
         s = st[label]
         sizes = s.get("sizes", {})
         disk = next(iter(sizes.values()))["bytes"] if sizes else None
-        rows.append([name + (f" ({tex(s['note'])})" if s.get("note") else ""), f"{s['peak_mb']:.0f} MB",
+        notes = ([tex(s["note"])] if s.get("note") else []) + (
+            [f"exit status {s['exit']}: the run had failing tests and is a time measurement only"] if s.get("exit") else [])
+        rows.append([name + (f" ({'; '.join(notes)})" if notes else ""), f"{s['peak_mb']:.0f} MB",
                      _bytes(disk) if disk is not None else "none", _secs(s["seconds"]), where])
     write("tab-resources", tabular("@{}p{0.47\\textwidth} r r r l@{}", ["Stage", "Peak memory", "Disk", "Time", "Where it runs"],
                                    rows))
@@ -359,6 +580,64 @@ def numbers_fits() -> None:
     ]))
 
 
+def numbers_ranking() -> None:
+    """The throughput backbone's figures by what was fitted where, and the two throughput predictors that the paired
+    comparison does not rank. The engine at its shipped constants (``tph_parity``: the base-case capacity HP500_QREF of a
+    Bruno simulation, nothing fitted to the surveys) and the capacity base fitted on all ten surveys (the leaky fold, the
+    in-sample figure) are kept apart. The engine at its shipped constants and the published model of Rocha et al. are paired
+    with CrusherBayes (CrusherBayes minus the predictor) on the resamples of ``hp500-comparison``, which are those of the
+    CrusherBayes manuscript (its seed, its number of resamples, its quantiles)."""
+    import heldout_uq as uq
+    import numpy as np
+
+    lo = _json(HP / "loo.json")
+    cmp_ = _json(HP / "comparison.json")
+    cb = _json(HP / "crusherbayes.json")
+    bb = _json(HP / "backbone.json")["surveys"]
+    ship = lo["tph_parity"]["backbone"]
+    leaky = lo["loo"]["tph"]["leaky"]["M0_backbone"]
+    strict = lo["loo"]["tph"]["strict"]
+    per = lo["tph_parity"]["per_survey"]
+    meas = np.array([r["measured"] for r in per], float)
+    pred_ship = np.array([r["backbone"] for r in per], float)
+    k = int(np.argmax(np.abs(pred_ship - meas) / meas))
+    css = np.array([s["measured"]["css_mm"] for s in bb], float)
+    f80 = np.array([s["measured"]["f80_mm"] for s in bb], float)
+    assert np.array_equal(meas, np.array(lo["loo"]["tph"]["measured"], float))
+    slope = float(np.polyfit(css, meas, 1)[0])
+    boot = cmp_["bootstrap"]
+    n = meas.size
+    idx = np.random.default_rng(boot["seed"]).integers(0, n, size=(boot["resamples"], n))
+    a_cb = uq.ape(meas, np.array(cb["loo"]["tph"]["pred_mean"], float))
+    pairs = {}
+    for name, pred in (("Ship", pred_ship), ("Rocha", uq.rocha_throughput(css, f80, meas)["published"])):
+        d = a_cb - uq.ape(meas, pred)
+        s = d[idx].mean(axis=1)
+        q_lo, q_hi = np.percentile(s, boot["quantiles"])
+        pairs[name] = (float(d.mean()), float(q_lo), float(q_hi))
+    ranked = {m["id"] for m in cmp_["targets"]["tph"]["methods"] if not m["control"]}
+    assert "crusherbayes" in ranked and cmp_["targets"]["tph"]["recommended"] == "crusherbayes"
+    lines = [
+        f"\\newcommand{{\\qtShip}}{{{HP500_QREF:.0f}}}",
+        f"\\newcommand{{\\bbShipMape}}{{{ship['mape_pct']:.2f}}}",
+        f"\\newcommand{{\\bbShipRsq}}{{{ship['r2']:.3f}}}",
+        f"\\newcommand{{\\bbShipMaxdev}}{{{ship['maxdev_pct']:.2f}}}",
+        f"\\newcommand{{\\bbShipMaxdevSurvey}}{{{per[k]['n']}}}",
+        f"\\newcommand{{\\bbShipMaxdevMeas}}{{{meas[k]:.0f}}}",
+        f"\\newcommand{{\\bbLeakyMape}}{{{leaky['mape_pct']:.2f}}}",
+        f"\\newcommand{{\\bbLeakyGap}}{{{strict['M0_backbone']['mape_pct'] - leaky['mape_pct']:.2f}}}",
+        f"\\newcommand{{\\bbNestedCovN}}{{{int(sum(strict['uq']['nested_covered']))}}}",
+        f"\\newcommand{{\\bbBandPct}}{{{100 * strict['uq']['nominal_coverage']:.0f}}}",
+        f"\\newcommand{{\\uqLevelPct}}{{{100 * uq.LEVEL:.0f}}}",
+        f"\\newcommand{{\\lineSlopeQ}}{{{slope:.0f}}}",
+        f"\\newcommand{{\\rankN}}{{{len(ranked)}}}",
+    ]
+    for name, (d, q_lo, q_hi) in pairs.items():
+        lines += [f"\\newcommand{{\\rank{name}D}}{{{d:+.2f}}}", f"\\newcommand{{\\rank{name}Lo}}{{{q_lo:+.2f}}}",
+                  f"\\newcommand{{\\rank{name}Hi}}{{{q_hi:+.2f}}}"]
+    write("numbers-ranking", "\n".join(lines))
+
+
 def tab_band() -> None:
     loo = _json(HP / "loo.json")["loo"]
     rows = []
@@ -376,6 +655,14 @@ def tab_band() -> None:
     head = ["Survey", "Residual", "$\\sigma_{-i}$", "Half-width", "Inside", "Residual", "$\\sigma_{-i}$", "Half-width",
             "Inside"]
     write("tab-band", tabular("@{}r rrrl rrrl@{}", head, rows, groups))
+    # the range of the nested half-width of the throughput band, in t/h and in percent of the mean measured throughput
+    q = loo["tph"]
+    half = [1.2816 * s for s in q["strict"]["uq"]["nested_sigma"]]
+    mean_q = sum(q["measured"]) / len(q["measured"])
+    write("numbers-band", "\n".join([
+        f"\\newcommand{{\\bandQlo}}{{{min(half):.1f}}}", f"\\newcommand{{\\bandQhi}}{{{max(half):.1f}}}",
+        f"\\newcommand{{\\bandQrelLo}}{{{100 * min(half) / mean_q:.1f}}}",
+        f"\\newcommand{{\\bandQrelHi}}{{{100 * max(half) / mean_q:.1f}}}"]))
 
 
 def tab_morrell() -> None:
@@ -512,14 +799,44 @@ def tab_contracts() -> None:
         rows.append([r"\texttt{" + tex(r["id"]) + "}", tex(r["version"]), r"\texttt{" + tex(owner) + "}",
                      r"\texttt{" + tex(schema) + "}", tex(r["status"])])
     head = ["Contract", "Version", "Producer (owner)", "Schema file", "Status"]
-    write("tab-contracts", tabular("@{}l l p{0.32\\textwidth} p{0.27\\textwidth} l@{}", head, rows))
+    write("tab-contracts", tabular("@{}l l p{0.29\\textwidth} p{0.30\\textwidth} l@{}", head, rows))
+    # the version of every contract as the catalog states it, so the text never types one: \cver{<id>}
+    macros = [r"\expandafter\def\csname cv@" + r["id"] + r"\endcsname{" + r["version"] + "}" for r in catalog_rows()]
+    macros.append(r"\newcommand{\cver}[1]{\ifcsname cv@#1\endcsname\csname cv@#1\endcsname\else"
+                  r"\errmessage{no contract #1 in the catalog}\fi}")
+    # the counts the text states in words: contracts in the catalog, readiness rows and the rows available in the build
+    words = {10: "ten", 11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen", 15: "fifteen", 16: "sixteen"}
+    ready = _json(DER / "readiness.json")["contracts"]
+    avail = sum(1 for c in ready if c["state"] == "available")
+    macros += [f"\\newcommand{{\\ncontracts}}{{{words[len(catalog_rows())]}}}",
+               f"\\newcommand{{\\nreadyrows}}{{{words[len(ready)]}}}",
+               f"\\newcommand{{\\nreadyavail}}{{{words[avail]}}}"]
+    write("numbers-contracts", "\n".join(macros))
+
+
+def _def_of(v: dict, defs: dict) -> dict | None:
+    """The definition a local ``$ref`` names, or None."""
+    return defs.get(v["$ref"].split("/")[-1]) if "$ref" in v else None
+
+
+def _alternatives(v: dict) -> list[dict]:
+    """The alternatives of a ``oneOf`` or ``anyOf``, the null one last."""
+    alts = [a for a in (v.get("oneOf") or v.get("anyOf") or []) if isinstance(a, dict)]
+    return sorted(alts, key=lambda a: a.get("type") == "null")
 
 
 def _type_of(v: dict, defs: dict) -> str:
+    d = _def_of(v, defs)
+    if d is not None:
+        return _type_of(d, defs)
     if "$ref" in v:
-        ref = v["$ref"].split("/")[-1]
-        d = defs.get(ref, {})
-        return _type_of(d, defs) if d else ref
+        return v["$ref"].split("/")[-1]
+    alts = _alternatives(v)
+    if alts:
+        return " or ".join(dict.fromkeys(_type_of(a, defs) for a in alts))
+    for m in v.get("allOf", []):
+        if isinstance(m, dict) and ("$ref" in m or "type" in m):
+            return _type_of(m, defs)
     if "const" in v:
         return "const"
     if "enum" in v:
@@ -528,17 +845,20 @@ def _type_of(v: dict, defs: dict) -> str:
     if isinstance(t, list):
         t = " or ".join(t)
     if t == "array" and isinstance(v.get("items"), dict):
-        it = v["items"]
-        inner = _type_of(it, defs)
+        return f"array of {_type_of(v['items'], defs)}"
+    if t == "array" and isinstance(v.get("prefixItems"), list) and v["prefixItems"]:
+        inner = " or ".join(dict.fromkeys(_type_of(p, defs) for p in v["prefixItems"]))
         return f"array of {inner}"
     return t
 
 
 def _range_of(v: dict, defs: dict) -> str:
-    if "$ref" in v:
-        d = defs.get(v["$ref"].split("/")[-1], {})
-        if d:
-            return _range_of(d, defs)
+    d = _def_of(v, defs)
+    if d is not None:
+        return _range_of(d, defs)
+    alts = _alternatives(v)
+    if alts:
+        return " or ".join(r for r in (_range_of(a, defs) for a in alts) if r)
     parts = []
     if "const" in v:
         parts.append(chr(0) + str(v["const"]) + chr(1))
@@ -549,7 +869,16 @@ def _range_of(v: dict, defs: dict) -> str:
             parts.append(f"{sym} {v[key]}")
     if "minItems" in v or "maxItems" in v:
         lo, hi = v.get("minItems"), v.get("maxItems")
-        parts.append(f"{lo if lo is not None else 0} to {hi if hi is not None else 'n'} items")
+        if hi is None and v.get("items") is False and isinstance(v.get("prefixItems"), list):
+            hi = len(v["prefixItems"])   # no item past the prefix: the prefix length is the maximum
+        if lo is not None and hi is not None and lo == hi:
+            parts.append(f"exactly {lo} items")
+        elif hi is None:
+            parts.append(f"at least {lo} items")
+        elif lo is None:
+            parts.append(f"at most {hi} items")
+        else:
+            parts.append(f"{lo} to {hi} items")
     if "pattern" in v:
         parts.append("pattern " + chr(0) + v["pattern"] + chr(1))
     items = v.get("items")
@@ -568,44 +897,135 @@ def breakable(text: str) -> str:
     return re.sub(chr(0) + "(.*?)" + chr(1), split, text)
 
 
-def schema_longtable(cid: str, schema_path: Path) -> None:
+def _record(v: dict, defs: dict, chain: tuple[str, ...]) -> tuple[dict, set, str, tuple[str, ...]] | None:
+    """The fields of a record schema ``v``, their required set and the separator of the path to them: ``.`` for an object
+    with properties, ``[].`` for an array whose items are one, ``.<key>.`` for a map (additionalProperties or
+    patternProperties) whose values are one. A ``$ref``, the ``allOf`` members that name fields and a single non-null
+    ``oneOf``/``anyOf`` alternative are followed; None for a leaf. ``chain`` holds the definitions already entered, so a
+    recursive schema stops."""
+    if "$ref" in v:
+        name = v["$ref"].split("/")[-1]
+        d = defs.get(name)
+        if d is None or name in chain:
+            return None
+        return _record(d, defs, chain + (name,))
+    alts = [a for a in _alternatives(v) if a.get("type") != "null"]
+    if len(alts) == 1:
+        return _record(alts[0], defs, chain)
+    if len(alts) > 1:   # several record alternatives: the union of their fields, required where every alternative requires
+        subs = [_record(a, defs, chain) for a in alts]
+        if all(sub is not None and sub[2] == "." for sub in subs):
+            merged: dict = {}
+            for sub in subs:
+                for k, f in sub[0].items():
+                    if k not in merged:
+                        merged[k] = f
+                    elif f != merged[k]:   # a field in several alternatives with different schemas: one of them
+                        prev = merged[k]["oneOf"] if "oneOf" in merged[k] and "type" not in merged[k] else [merged[k]]
+                        desc = next((g["description"] for g in [*prev, f] if g.get("description")), None)
+                        merged[k] = {"oneOf": [*prev, f], **({"description": desc} if desc else {})}
+            return merged, set.intersection(*(sub[1] for sub in subs)), ".", chain
+    props: dict = dict(v.get("properties") or {})
+    req = set(v.get("required", []))
+    entered = chain
+    for m in v.get("allOf", []):
+        if isinstance(m, dict) and ("$ref" in m or "properties" in m) and "if" not in m:
+            sub = _record(m, defs, chain)
+            if sub is not None and sub[2] == ".":
+                props = {**sub[0], **props}
+                req |= sub[1]
+                entered = sub[3] if not v.get("properties") else entered   # a bare allOf of one definition is that definition
+    if props:
+        return props, req, ".", entered
+    if v.get("type") == "array" and isinstance(v.get("items"), dict):
+        sub = _record(v["items"], defs, chain)
+        if sub is not None and sub[2] == ".":
+            return sub[0], sub[1], "[].", sub[3]
+    maps = [v["additionalProperties"]] if isinstance(v.get("additionalProperties"), dict) else []
+    maps += [p for p in (v.get("patternProperties") or {}).values() if isinstance(p, dict)]
+    for mv in maps:
+        sub = _record(mv, defs, chain)
+        if sub is not None and sub[2] == ".":
+            return sub[0], sub[1], ".<key>.", sub[3]
+    return None
+
+
+UNIT_BRACKET = re.compile(r"\s*\[([^\[\]]+)\]\.?\s*$")
+
+
+def _meaning(v: dict, defs: dict) -> tuple[str, str]:
+    """The field's description (its own, else the one of the definition it names) and its unit: the bracket that ends the
+    description (``... [t/h].``), the schemas' notation for the unit of a field."""
+    desc = v.get("description")
+    if not desc:
+        d = _def_of(v, defs)
+        desc = d.get("description") if d else None
+    desc = re.sub(r"\s+", " ", (desc or "").strip())
+    m = UNIT_BRACKET.search(desc)
+    unit = ""
+    if m:
+        unit, desc = m.group(1).strip(), desc[:m.start()].rstrip()
+        desc = desc if not desc or desc.endswith((".", ":", ")")) else desc + "."
+    desc = desc.replace("verdict", "decision")   # the report's vocabulary; the field names stay verbatim
+    return desc, unit
+
+
+def schema_longtable(cid: str, version: str, schema_path: Path) -> None:
+    """The appendix table of one contract: every field down to its leaves (through ``$ref``, ``$defs``, ``allOf``, ``items``
+    and maps), with its type, range, requirement, unit and meaning as the schema states them."""
     s = _json(schema_path)
     defs = s.get("$defs", {})
-    req = set(s.get("required", []))
     rows = []
+    first: dict[str, str] = {}
 
-    def walk(props: dict, prefix: str, required: set, depth: int) -> None:
+    def field(path: str) -> str:
+        """A dotted path in typewriter type that may break after a dot or an underscore (a long path fits its column)."""
+        return r"\texttt{" + tex(path).replace(".", r".\allowbreak{}").replace(r"\_", r"\_\allowbreak{}") + "}"
+
+    def walk(props: dict, prefix: str, required: set, chain: tuple[str, ...]) -> None:
         for k, v in props.items():
             if not isinstance(v, dict):
                 continue
             name = prefix + k
             rng = _range_of(v, defs)
-            desc = (v.get("description") or "").strip()
-            desc = re.sub(r"\s+", " ", desc)
-            if len(desc) > 150:
-                desc = desc[:147].rsplit(" ", 1)[0] + " ..."
-            desc = desc.replace("verdict", "decision")   # the report's vocabulary; the field names stay verbatim
-            rows.append([r"\texttt{" + tex(name) + "}", tex(_type_of(v, defs)), breakable(tex(rng)) if rng else DASH,
-                         "yes" if k in required else "no", tex(desc) if desc else DASH])
-            sub = v
-            if "$ref" in v:
-                sub = defs.get(v["$ref"].split("/")[-1], v)
-            if depth < 1 and sub.get("type") == "object" and "properties" in sub:
-                walk(sub["properties"], name + ".", set(sub.get("required", [])), depth + 1)
-            elif depth < 1 and sub.get("type") == "array" and isinstance(sub.get("items"), dict):
-                it = sub["items"]
-                if "$ref" in it:
-                    it = defs.get(it["$ref"].split("/")[-1], it)
-                if "properties" in it:
-                    walk(it["properties"], name + "[].", set(it.get("required", [])), depth + 1)
+            desc, unit = _meaning(v, defs)
+            sub = _record(v, defs, chain)
+            # a definition's fields are listed once, under the first path that reaches it; a later path refers to it
+            entered = sub[3][-1] if sub is not None and sub[3] != chain else None
+            meaning = tex(desc) if desc else ""
+            if entered in first:
+                meaning = (meaning + " " if meaning else "") + "Its fields are those of " + field(first[entered]) + "."
+            rows.append([field(name), tex(_type_of(v, defs)), breakable(tex(rng)) if rng else DASH,
+                         "yes" if k in required else "no", tex(unit) if unit else DASH, meaning or DASH])
+            if sub is not None and entered not in first:
+                fields, req, sep, sub_chain = sub
+                if entered is not None:
+                    first[entered] = name
+                walk(fields, name + sep, req, sub_chain)
 
-    walk(s.get("properties", {}), "", req, 0)
+    walk(s.get("properties", {}), "", set(s.get("required", [])), ())
+    caption = (r"Fields of the \texttt{" + tex(cid) + "} contract, version $" + tex(version) + "$"
+               + r", generated from its schema file \texttt{" + tex(schema_path.name) + "}: the dotted path of each field "
+               r"down to its leaves (\texttt{[]} an element of a list, \texttt{<key>} any key of a map; a structure met "
+               "again is listed once, where it first appears), its type, its range or allowed values as the schema states "
+               "them, whether it is required at its level, its unit and its meaning.")
+    head = r"Field & Type & Range or values & Req. & Unit & Meaning \\"
     lines = [r"\begingroup\scriptsize",
-             r"\begin{longtable}{@{}p{0.21\textwidth} p{0.10\textwidth} p{0.19\textwidth} p{0.05\textwidth} p{0.33\textwidth}@{}}",
-             r"\toprule", r"Field & Type & Range or values & Req. & Meaning \\", r"\midrule", r"\endhead",
-             r"\bottomrule", r"\endfoot"]
-    # a schema field named verdict is quoted verbatim: the voice check is told so on that line
-    lines += [" & ".join(r) + r" \\" + (" % voice-ok: schema field name" if "verdict" in r[0] else "") for r in rows]
+             r"\begin{longtable}{@{}p{0.20\textwidth} p{0.09\textwidth} p{0.16\textwidth} p{0.04\textwidth} "
+             r"p{0.07\textwidth} p{0.30\textwidth}@{}}",
+             r"\caption{" + caption + r"}\label{tab:schema-" + cid + r"}\\",
+             r"\toprule", head, r"\midrule", r"\endfirsthead",
+             r"\multicolumn{6}{@{}l}{\footnotesize Table~\thetable{} (continued)}\\", r"\toprule", head, r"\midrule",
+             r"\endhead", r"\bottomrule", r"\endfoot"]
+    # a schema field is quoted verbatim, so its key may be a word the checks refuse in prose: a field named verdict (the voice
+    # check) and a key that is a method's ladder id (M1_residual, pred.M2: the internal-names check). The marker names it on
+    # that line only, and only in the Field column: the Meaning column names every method by its name.
+    def marker(r: list[str]) -> str:
+        notes = [n for n, hit in (("voice-ok", "verdict" in r[0]), ("internal-name-ok", re.search(r"(?<![A-Za-z0-9])M\d", r[0])))
+                 if hit]
+        return (" % " + " ".join(notes) + ": schema field name") if notes else ""
+
+    lines += [" & ".join(r) + r" \\" + marker(r) for r in rows]
     lines += [r"\end{longtable}", r"\endgroup"]
     write(f"schema-{cid}", "\n".join(lines))
 
@@ -614,7 +1034,7 @@ def schemas() -> None:
     for r in catalog_rows():
         path = ROOT / r["schema file"]
         if path.name.endswith(".schema.json"):
-            schema_longtable(r["id"], path)
+            schema_longtable(r["id"], r["version"], path)
     api = _json(ROOT / "docs" / "contracts" / "api.openapi.json")
     rows = []
     for p, ops in api["paths"].items():
@@ -624,9 +1044,15 @@ def schemas() -> None:
                 summ = summ[:117].rsplit(" ", 1)[0] + " ..."
             rows.append([r"\texttt{" + tex(verb.upper() + " " + p) + "}", tex(", ".join(op.get("responses", {}).keys())),
                          tex(summ) if summ else DASH])
+    version = next(r["version"] for r in catalog_rows() if r["id"] == "api")
+    caption = (r"Routes of the \texttt{api} contract, version $" + tex(version) + r"$, generated from the OpenAPI document "
+               r"\texttt{api.openapi.json}: each route with its method, the response codes it declares and its summary.")
+    head = r"Route & Responses & Meaning \\"
     lines = [r"\begingroup\scriptsize",
-             r"\begin{longtable}{@{}p{0.32\textwidth} p{0.12\textwidth} p{0.48\textwidth}@{}}", r"\toprule",
-             r"Route & Responses & Meaning \\", r"\midrule", r"\endhead", r"\bottomrule", r"\endfoot"]
+             r"\begin{longtable}{@{}p{0.32\textwidth} p{0.12\textwidth} p{0.48\textwidth}@{}}",
+             r"\caption{" + caption + r"}\label{tab:schema-api}\\", r"\toprule", head, r"\midrule", r"\endfirsthead",
+             r"\multicolumn{3}{@{}l}{\footnotesize Table~\thetable{} (continued)}\\", r"\toprule", head, r"\midrule",
+             r"\endhead", r"\bottomrule", r"\endfoot"]
     lines += [" & ".join(r) + r" \\" for r in rows]
     lines += [r"\end{longtable}", r"\endgroup"]
     write("schema-api", "\n".join(lines))
@@ -636,7 +1062,8 @@ def schemas() -> None:
 # provenance
 # ------------------------------------------------------------------------------------------------------------------------
 HASHED = ["data/examples/hp500-surveys.csv", "data/examples/params.csv", "data/derived/hp500/backbone.json",
-          "data/derived/hp500/loo.json", "data/derived/hp500/crusherbayes.json", "data/derived/model-metrics.json",
+          "data/derived/hp500/loo.json", "data/derived/hp500/crusherbayes.json", "data/derived/hp500/comparison.json",
+          "data/derived/model-metrics.json",
           "data/derived/models/surrogate.onnx", "data/derived/models/psd-ae.onnx", "data/derived/manifests/index.json"]
 
 
@@ -699,7 +1126,11 @@ if __name__ == "__main__":
     tab_lpd()
     tab_leaky()
     tab_uncertainty()
+    tab_pairs()
+    tab_comparison()
+    numbers_drift()
     numbers_fits()
+    numbers_ranking()
     tab_resources()
     tab_band()
     tab_morrell()

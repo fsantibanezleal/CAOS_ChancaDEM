@@ -130,8 +130,8 @@ function citations(): Array<{ source: string; tab: number }> {
 }
 
 describe('the example executive view', () => {
-  it('the shell is pinned exactly at 0.19.9 (0.14.0 brought flip cards, carousels, animated illustrations and Focus mode; 0.15.0 added the G19 value check; 0.16.0 gave SurfacePage Focus; 0.19.0 added Tier A chart interaction and accessible data tables; 0.19.1 improves narrow table flow and Spanish time-axis labels; 0.19.2 tells the sticky site header from a static content header in G5; 0.19.3 reads its own labels in Spanish on a Spanish page; 0.19.4 to 0.19.9 need no product-side change here)', () => {
-    expect(pkg.dependencies['@fasl-work/caos-app-shell']).toBe('0.19.9');
+  it('the shell is pinned exactly at 0.26.0 (0.14.0 brought flip cards, carousels, animated illustrations and Focus mode; 0.15.0 added the G19 value check; 0.16.0 gave SurfacePage Focus; 0.19.0 added Tier A chart interaction and accessible data tables; 0.20.0 added the showcase primitives and G21; 0.21.0 added immersiveRoutes and railWidth; 0.22.0 compact tab density; 0.23.0 the mobile story stage floor; 0.23.1 the document-walk fix; 0.23.2 the story step row that keeps its height under a tall panel; 0.24.0 the callout state as a word, the header band on measured cards in anchor order with --caos-callout-band and onLayout, and the G21 callout checks at every size; 0.25.0 a chart readout that stays still when the page scrolls under a resting pointer; 0.26.0 the callout band reported only for a settled layout, the callout value on its own row, the natural PlotCard header, a moving mark that redraws, a fitted CardDeck as a row and one number formatter per locale)', () => {
+    expect(pkg.dependencies['@fasl-work/caos-app-shell']).toBe('0.26.0');
     expect(EXECUTIVE_SCHEMA_VERSION).toBe('2.0.0');
   });
 

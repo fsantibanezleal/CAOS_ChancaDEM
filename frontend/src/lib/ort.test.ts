@@ -238,7 +238,7 @@ describe('F1: the learned models answer only where they apply', () => {
   });
 });
 
-const DEFAULT_CTX: ViewCtx = { sel: null, unavailable: null, index: null, loo: null, target: 12, setTarget: () => undefined, canApplyCss: false, applyCss: () => undefined };
+const DEFAULT_CTX: ViewCtx = { sel: null, unavailable: null, index: null, loo: null, target: 12, setTarget: () => undefined, canApplyCss: false, applyCss: () => undefined, drift: null, setDrift: () => undefined, pickCase: () => undefined };
 afterEach(() => {
   Object.assign(useLangStore.getInitialState(), { lang: 'en' });
   useLangStore.setState({ lang: 'en' });

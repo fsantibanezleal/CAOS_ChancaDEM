@@ -140,7 +140,14 @@ def test_the_runner_refuses_arguments_that_make_the_focus_check_measure_nothing(
 
 
 @pytest.mark.skipif(NODE is None, reason="needs node")
-def test_the_runner_still_accepts_a_route_list_that_keeps_the_app_route(tmp_path: Path) -> None:
+def test_the_runner_refuses_a_route_list_that_omits_declared_story_routes(tmp_path: Path) -> None:
     repo = make_tree(tmp_path / "repo", *GATE_INPUTS)
     r, args = run_gate(repo, "--routes", "/,/app", "--sizes", "1280x800")
-    assert r.returncode == 0 and args and "--require-focus" in args, (r.stderr, args)
+    assert r.returncode != 0 and args is None, (r.stderr, args)
+    # the base runner (template 0.15.005) names the refusal and that no gate runs, then each omitted route; the omitted story
+    # steps are the ones product.json declares (showcase.story_routes), never a fixed example step
+    steps = json.loads((repo / "product.json").read_text(encoding="utf-8"))["showcase"]["story_routes"]
+    assert steps, "product.json declares no story steps, so this plant would prove nothing"
+    assert "an argument redirects what the Focus check measures, so no gate runs" in r.stderr, r.stderr
+    omitted = next((line for line in r.stderr.splitlines() if "leaves out showcase routes" in line), "")
+    assert "ADR-0082" in omitted and all(step in omitted for step in steps), r.stderr

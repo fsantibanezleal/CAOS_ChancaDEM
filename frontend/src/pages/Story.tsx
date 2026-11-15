@@ -1,0 +1,678 @@
+// The guided story at /story/<step> (ADR-0082 section 3; SDD Visualization catalog; SH-005 to SH-007, SH-010), on the shell's StoryFrame
+// (the stepper, the deep links, the keys, play and pause, the pause on any reader input) and the same state as the App: the case is the
+// URL's (?case=, a real survey by default), the selection and the cursors are the shell's linked-view stores. Each step's stage is a view
+// of the catalog with its callouts, its panel the evidence and the controls linked to it:
+//   1 Measure (V1, the circuit on a real survey), 2 Look inside (V2, the chamber section), 3 Solve (V5 on the V3 axes),
+//   4 Compare (V6), 5 Operate (V4).
+// The headlines are storyHeadlines() (story.ts), every number read from the committed documents or the live engine. The exit lands on the
+// App with the step's case, group and view, and the Operate target (exitHref).
+// A step change is staged (views/staging.tsx, B4 of the 0.13.000 review): the subject changes first (Solve plays its passes from 1 to
+// the headline's pass, Compare grows the methods' dots one by one, Operate draws the drift curve out to the crossing, Measure and Look
+// inside move their drawing in), then the subject is highlighted, then the callouts enter one at a time in reading order, then the panel
+// builds and its numbers count; under reduced motion the first frame is the final one.
+import { StoryFrame, useLinkedCursor, useLinkedItem, useLinkedView, useShellLang, formatNumber, type StoryStep } from '@fasl-work/caos-app-shell';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
+import { loadCase, loadHp500Backbone, loadHp500Comparison, loadHp500CrusherBayes, loadHp500Loo, loadIndex, useArtifact, type CaseData, type Loaded } from '../api/artifacts';
+import type { CaseIndex, Hp500Backbone, Hp500Comparison, Hp500CrusherBayes, Hp500Loo, Text } from '../lib/contract.types';
+import { caseAbsent } from '../readiness/readiness';
+import { useReadiness } from '../readiness/useReadiness';
+import { CAMPAIGN_TEXT, defaultP80Target, HoursView, p80PerMm } from '../views/campaign';
+import { SectionDrawing } from '../views/chamber';
+import { CircuitDrawing, StreamTable, caseForStage, circuitValues, STAGES, useStagedCases, type StageId } from '../views/circuit';
+import { CompareBody, surveyOfCase, caseOfSurvey, type CompareTarget } from '../views/compare';
+import { linkedId } from '../views/linked';
+import { MACHINE_FLOOR, openingPass, PassControls, PassesChart, passesWord, passSeriesOf, usePassCount } from '../views/passes';
+import { ViewContext, type ViewCtx } from '../views/shared';
+import { MIN_DRAWING_PX } from '../views/callouts';
+import { counted, EntryProvider, useEntry } from '../views/staging';
+import { operatingOf, railOf, selectionOf, type Selection } from '../workbench/model';
+import type { Machine } from '../engine/types';
+import { exitHref, feedStrip, isStep, operatePoint, STORY_STEPS, stepHref, storyHeadlines, type StoryStepId } from './storyModel';
+import '../workbench/workbench.css';
+
+const ready = <T,>(l: Loaded<T>): T | null => (l.state === 'ready' ? l.data : null);
+const reasonOf = <T,>(l: Loaded<T>): Text | null => (l.state === 'unavailable' ? l.reason : l.state === 'error' ? { en: l.error, es: l.error } : null);
+const never = <T,>() => new Promise<T>(() => undefined);
+
+/** The last value a loader gave, kept while the next one loads, so a scrub that changes the case never blanks the story. */
+function useLastReady<T>(l: Loaded<T>): T | null {
+  const last = useRef<T | null>(null);
+  if (l.state === 'ready') last.current = l.data;
+  return last.current;
+}
+
+/** The survey scrubber of the Measure step: the shell's linked cursor holds the survey number, and moving it opens that survey. */
+function SurveyScrubber({ n, current, onPick }: { n: number; current: number | null; onPick: (survey: number) => void }) {
+  const lang = useShellLang();
+  const { cursor, scrub, inputProps, markerProps } = useLinkedCursor();
+  const at = cursor ?? current ?? 1;
+  return (
+    <div className="cdem-controls">
+      <span {...markerProps} data-linked-cursor-position={at} className="cdem-cursor-chip">
+        {lang === 'es' ? `Muestreo ${at} de ${n}` : `Survey ${at} of ${n}`}
+      </span>
+      <input
+        type="range"
+        min={1}
+        max={n}
+        step={1}
+        {...inputProps}
+        value={at}
+        aria-label={lang === 'es' ? 'Muestreo medido' : 'Measured survey'}
+        onChange={(e) => {
+          const k = Number(e.target.value);
+          scrub(k);
+          onPick(k);
+        }}
+      />
+    </div>
+  );
+}
+
+/** The ten surveys' feed rates on the Measure stage, linked to the survey scrubber: the mark of the survey the cursor stands on is
+ * selected, a mark opens its survey, and the lowest and the highest rate are written at the ends (the headline's evidence, M10). */
+function FeedStrip({ backbone, fallback, onPick }: { backbone: Hp500Backbone; fallback: number | null; onPick: (survey: number) => void }) {
+  const lang = useShellLang();
+  const cursor = useLinkedView((st) => st.cursor);
+  const at = cursor ?? fallback;
+  const marks = feedStrip(backbone);
+  const tph = marks.map((m) => m.tph);
+  const fmt = (v: number) => formatNumber(v, lang, { digits: 4 });
+  const W = 600;
+  const pad = 70;
+  const x = (share: number) => pad + share * (W - 2 * pad);
+  return (
+    <figure className="cdem-feed-strip" data-feed-strip="" data-feed-min={Math.min(...tph)} data-feed-max={Math.max(...tph)}>
+      <svg viewBox={`0 0 ${W} 44`} width="100%" height="44" role="img" aria-label={lang === 'es' ? 'Alimentación medida de los diez muestreos (t/h)' : 'Measured feed of the ten surveys (t/h)'}>
+        <line x1={x(0)} x2={x(1)} y1={22} y2={22} stroke="var(--color-border)" strokeWidth={2} />
+        <text x={x(0) - 8} y={26} textAnchor="end" fontSize={12} fill="var(--color-fg)">{`${fmt(Math.min(...tph))} t/h`}</text>
+        <text x={x(1) + 8} y={26} textAnchor="start" fontSize={12} fill="var(--color-fg)">{`${fmt(Math.max(...tph))} t/h`}</text>
+        {marks.map((m) => (
+          <g key={m.survey} data-feed-mark={m.survey} data-feed-tph={m.tph} data-linked-selected={at === m.survey ? 'true' : 'false'} style={{ cursor: 'pointer' }} onClick={() => onPick(m.survey)}>
+            <title>{lang === 'es' ? `Muestreo ${m.survey}: ${fmt(m.tph)} t/h` : `Survey ${m.survey}: ${fmt(m.tph)} t/h`}</title>
+            <circle cx={x(m.at)} cy={22} r={at === m.survey ? 8 : 5} fill={at === m.survey ? 'var(--color-accent)' : 'var(--color-fg-subtle)'} stroke="var(--color-bg)" strokeWidth={1.5} />
+          </g>
+        ))}
+      </svg>
+      <figcaption className="caos-plot-note">{lang === 'es' ? 'Alimentación medida de los diez muestreos; el punto grande es el mostrado.' : 'Measured feed of the ten surveys; the large dot is the one shown.'}</figcaption>
+    </figure>
+  );
+}
+
+/** The survey marker on the stage: it stands where the shared cursor stands, so the stage and the panel scrub together. */
+function StageMarker({ fallback }: { fallback: number | null }) {
+  const lang = useShellLang();
+  const cursor = useLinkedView((st) => st.cursor);
+  const at = cursor ?? fallback;
+  return (
+    <span className="cdem-story-marker" data-linked-cursor-marker="" data-linked-cursor-position={at ?? ''}>
+      {at === null ? '' : lang === 'es' ? `Muestreo ${at}` : `Survey ${at}`}
+    </span>
+  );
+}
+
+function StageLink({ stage, label }: { stage: StageId; label: string }) {
+  const item = useLinkedItem(linkedId('stage', stage), 'panel');
+  return (
+    <button type="button" className="cdem-linkbtn" {...item}>
+      {label}
+    </button>
+  );
+}
+
+function Evidence({ title, children, source }: { title: string; children: ReactNode; source: ReactNode }) {
+  return (
+    <section className="cdem-story-evidence">
+      <h2>{title}</h2>
+      {children}
+      <small>{source}</small>
+    </section>
+  );
+}
+
+export function Story() {
+  const lang = useShellLang();
+  const es = lang === 'es';
+  const t = (en: string, s: string) => (es ? s : en);
+  const num = (v: number, o: { digits?: number; decimals?: number }) => formatNumber(v, lang, o);
+  const { step } = useParams();
+  const [query, setQuery] = useSearchParams();
+  const navigate = useNavigate();
+  const readiness = useReadiness();
+  const scrub = useLinkedView((s) => s.scrub);
+  const index = useArtifact((signal) => loadIndex(signal), []);
+  const idx: CaseIndex | null = ready(index);
+  const firstReal = idx ? (idx.cases.find((c) => c.real_or_synthetic === 'real')?.case_id ?? idx.default_case) : null;
+  const caseId = query.get('case') ?? firstReal;
+  const loaded = useArtifact<CaseData>((signal) => (caseId ? loadCase(caseId, signal) : never<CaseData>()), [caseId]);
+  const data = useLastReady(loaded);
+  const backbone = useArtifact<Hp500Backbone>((signal) => (idx ? loadHp500Backbone(idx, signal) : never<Hp500Backbone>()), [idx]);
+  const loo = useArtifact<Hp500Loo>((signal) => (idx ? loadHp500Loo(idx, signal) : never<Hp500Loo>()), [idx]);
+  const cb = useArtifact<Hp500CrusherBayes>((signal) => (idx ? loadHp500CrusherBayes(idx, signal) : never<Hp500CrusherBayes>()), [idx]);
+  const cmp = useArtifact<Hp500Comparison>((signal) => (idx ? loadHp500Comparison(idx, signal) : never<Hp500Comparison>()), [idx]);
+  const staged = useStagedCases(idx);
+  const [target, setTarget] = useState(0);
+  const [drift, setDrift] = useState<number | null>(null);
+  const [compareTarget, setCompareTarget] = useState<CompareTarget>('kW');
+  const active: StoryStepId = isStep(step) ? step : 'measure';
+  const phoneStage = usePhoneStageHeight(active);
+
+  const sel: Selection | null = useMemo(() => (data ? selectionOf(data, railOf(data.manifest.params), 'canonical') : null), [data]);
+  const survey = surveyOfCase(data?.manifest.case_id);
+
+  // each step starts its shared cursor where its view reads it: the survey shown (Measure), the pass the Solve headline names (the first
+  // within a millionth of the closed form), so the stage opens on the headline's evidence
+  const solveStart = sel ? openingPass(passSeriesOf(sel.op)) : 1;
+  useEffect(() => {
+    if (active === 'measure') scrub(survey ?? 1);
+    else if (active !== 'solve') scrub(null);
+  }, [active, survey, scrub]);
+  // the staged entry of the step; Solve's subject is its passes, scrubbed from 1 to the headline's pass. A stage that has no data to show
+  // (the comparison without its document, a case still loading or absent) keeps its state, and nothing plays over it.
+  // The entry's state lives in EntryProvider, not here: a step of the entry re-renders only what reads it (the stage wrapper, the panel,
+  // the counting numbers, the growing comparison and the drawn curve), never the whole story, so the frame rate holds (G21, 30 fps).
+  const stageReady = Boolean(sel) && !(active === 'compare' && loo.state !== 'ready');
+  const entryKey = active === 'solve' ? `solve:${solveStart}` : active;
+  const entrySubject = active === 'solve' ? (t: number) => scrub(Math.max(1, Math.round(1 + t * (solveStart - 1)))) : undefined;
+  const shownCase = data?.manifest.case_id ?? caseId ?? '';
+  const withCase = (id: string) => {
+    const next = new URLSearchParams(query);
+    next.set('case', id);
+    setQuery(next, { replace: true });
+  };
+
+  const unavailable = index.state === 'unavailable' ? index.reason : index.state === 'error' ? { en: index.error, es: index.error } : loaded.state === 'unavailable' ? loaded.reason : null;
+  const absent = data && idx ? caseAbsent(readiness ?? null, data.manifest.case_id, idx.cases.find((c) => c.case_id === data.manifest.case_id)?.manifest_path ?? '') : false;
+  if (!sel || !data || absent) {
+    return (
+      <section className="cdem-story-state" data-state={absent || unavailable ? 'unavailable' : 'loading'}>
+        <h1>{t('The crushing story', 'El recorrido del chancado')}</h1>
+        <p>
+          {unavailable
+            ? unavailable[lang]
+            : absent
+              ? t('This case is listed as not available in the release evidence.', 'Este caso figura como no disponible en la evidencia de la versión.')
+              : t('Loading the case and its documents.', 'Cargando el caso y sus documentos.')}
+        </p>
+        <a href={exitHref(active, caseId ?? '')}>{t('Open the App', 'Abrir la App')}</a>
+      </section>
+    );
+  }
+
+  const op = operatingOf(data.manifest.params);
+  const heads = storyHeadlines(
+    {
+      caseId: shownCase,
+      op,
+      backbone: ready(backbone),
+      backboneReason: reasonOf(backbone),
+      loo: ready(loo),
+      looReason: reasonOf(loo),
+      cb: ready(cb),
+      cbReason: reasonOf(cb),
+      comparison: ready(cmp),
+      comparisonReason: reasonOf(cmp),
+    },
+    lang,
+  );
+  const ctx: ViewCtx = {
+    sel,
+    unavailable: null,
+    index: idx,
+    loo: null,
+    target: target > 0 ? target : defaultP80Target(sel.result.p80),
+    setTarget,
+    canApplyCss: false,
+    applyCss: () => undefined,
+    drift,
+    setDrift,
+    pickCase: withCase,
+  };
+
+  // Step 1, Measure: the circuit on the survey, the survey scrubber and the streams as the panel side of the selection
+  const values = circuitValues(data.manifest, data.trace, data.traceReason);
+  const cases = staged.state === 'ready' ? staged.data : [];
+  const stageMachines: Partial<Record<StageId, Machine>> = {};
+  for (const s of STAGES) {
+    const id = caseForStage(s, cases);
+    const hit = cases.find((c) => c.caseId === id);
+    if (hit) stageMachines[s] = hit.machine;
+  }
+  const nSurveys = ready(backbone)?.n ?? 10;
+  const measureStage = (
+    <div className="cdem-story-stage">
+      <CircuitDrawing
+        values={values}
+        stageMachines={stageMachines}
+        label={{ en: 'Flowsheet of the three-stage crushing circuit', es: 'Diagrama de flujo del circuito de chancado de tres etapas' }}
+        onPickStage={(stage) => {
+          const id = caseForStage(stage, cases);
+          if (id) withCase(id);
+        }}
+      />
+      {ready(backbone) && <FeedStrip backbone={ready(backbone)!} fallback={survey} onPick={(k) => withCase(caseOfSurvey(k))} />}
+      <StageMarker fallback={survey} />
+    </div>
+  );
+  const bb = ready(backbone);
+  const measurePanel = (
+    <Evidence
+      title={t('What the plant measured', 'Lo que midió la planta')}
+      source={
+        <>
+          {t('Source: case manifest (Rocha et al. 2024, ', 'Fuente: manifiesto del caso (Rocha et al. 2024, ')}
+          <span translate="no">CC BY 4.0</span>
+          {t(') and the committed trace.', ') y la traza comprometida.')}
+        </>
+      }
+    >
+      <SurveyScrubber n={nSurveys} current={survey} onPick={(k) => withCase(caseOfSurvey(k))} />
+      <StreamTable values={values} />
+      <p>
+        {t('Stages: ', 'Etapas: ')}
+        {STAGES.map((s) => (
+          <span key={s} style={{ marginRight: '0.5rem' }}>
+            <StageLink stage={s} label={s === 'primary' ? t('primary', 'primaria') : s === 'secondary' ? t('secondary', 'secundaria') : t('tertiary', 'terciaria')} />
+          </span>
+        ))}
+      </p>
+      {bb ? (
+        <p>
+          {t('The ten surveys: ', 'Los diez muestreos: ')}
+          {bb.surveys.map((s) => `${num(s.measured.feed_tph, { digits: 4 })}`).join(' · ')} t/h
+        </p>
+      ) : (
+        <p>{heads.measure.summary}</p>
+      )}
+    </Evidence>
+  );
+
+  // Step 2, Look inside: the section with its callouts
+  const insideStage = (
+    <div className="cdem-story-stage">
+      <SectionDrawing op={op} hours={null} caseId={shownCase} />
+    </div>
+  );
+  const r = sel.result;
+  const measuredF80 = data.manifest.measured?.f80_mm ?? null;
+  const insidePanel = (
+    <Evidence
+      title={t('The chamber at this setting', 'La cámara con esta abertura')}
+      source={t(
+        'Source: the live TypeScript engine at the case’s manifest values; the 3D chamber of the App is a kinematic view, not a simulation.',
+        'Fuente: el motor TypeScript en vivo con los valores del manifiesto del caso; la cámara 3D de la App es una vista cinemática, no una simulación.',
+      )}
+    >
+      <p>
+        {t('Closed-side setting', 'Abertura de descarga')} <strong><Cnt v={op.cssMm} o={{ digits: 3 }} /> mm</strong>, {t('open-side setting', 'abertura del lado abierto')}{' '}
+        <strong><Cnt v={r.ossMm} o={{ digits: 3 }} /> mm</strong>.
+      </p>
+      <p>
+        {t('Nip angle', 'Ángulo de nip')} <strong><Cnt v={r.nipAngleDeg} o={{ decimals: 1 }} />°</strong> {t('against the grip limit', 'contra el límite de agarre')}{' '}
+        <strong><Cnt v={r.nipLimitDeg} o={{ decimals: 2 }} />°</strong>:{' '}
+        {r.nipAngleDeg <= r.nipLimitDeg
+          ? t('the particle is gripped and crushed.', 'la partícula se agarra y se tritura.')
+          : t('the particle is squeezed upward.', 'la partícula es escupida hacia arriba.')}
+      </p>
+      <p>
+        {t('Product P80', 'P80 del producto')} <strong><Cnt v={r.p80} o={{ digits: 3 }} /> mm</strong> {t('from the model’s feed F80 of', 'desde el F80 de alimentación del modelo,')}{' '}
+        <strong><Cnt v={r.f80} o={{ digits: 3 }} /> mm</strong>
+        {measuredF80 !== null
+          ? t(`, reconstructed from the measured ${num(measuredF80, { digits: 3 })} mm.`, `, reconstruido desde los ${num(measuredF80, { digits: 3 })} mm medidos.`)
+          : '.'}
+      </p>
+    </Evidence>
+  );
+
+  // Step 3, Solve: the population balance pass by pass on the gradation's axes
+  const series = passSeriesOf(sel.op);
+  const solveStage = (
+    <div className="cdem-story-stage cdem-story-chart">
+      <SolveStage sel={sel} />
+    </div>
+  );
+  const solvePanel = (
+    <Evidence
+      title={t('The solve, pass by pass', 'La solución, pasada a pasada')}
+      source={t(
+        'Source: the live engine’s breakage matrix B, classification C and feed f; the closed form is its LU solve.',
+        'Fuente: la matriz de fractura B, la clasificación C y la alimentación f del motor en vivo; la forma cerrada es su solución LU.',
+      )}
+    >
+      <PassControls n={series.n} start={solveStart} />
+      <SolveReadout sel={sel} start={solveStart} />
+    </Evidence>
+  );
+
+  // Step 4, Compare: the held-out errors (stage) and the selected method on each survey (panel)
+  const looData = ready(loo);
+  const cbData = ready(cb);
+  const compareStage = looData ? (
+    <div className="cdem-story-stage cdem-story-chart">
+      <CompareBody
+        loo={looData}
+        cb={cbData}
+        cbReason={reasonOf(cb)}
+        comparison={ready(cmp)}
+        comparisonReason={reasonOf(cmp)}
+        target={compareTarget}
+        setTarget={setCompareTarget}
+        caseId={shownCase}
+        onPickCase={withCase}
+        part="stage"
+      />
+    </div>
+  ) : (
+    <p className="caos-pending" data-state="unavailable">
+      {heads.compare.summary}
+    </p>
+  );
+  const comparePanel = looData ? (
+    <div>
+      <CompareBody
+        loo={looData}
+        cb={cbData}
+        cbReason={reasonOf(cb)}
+        comparison={ready(cmp)}
+        comparisonReason={reasonOf(cmp)}
+        target={compareTarget}
+        setTarget={setCompareTarget}
+        caseId={shownCase}
+        onPickCase={withCase}
+        part="panel"
+      />
+    </div>
+  ) : (
+    <p>{heads.compare.summary}</p>
+  );
+
+  // Step 5, Operate: P80 as the setting drifts, at the reader's drift rate
+  const slope = p80PerMm(op);
+  const drawn = operatePoint(op);
+  const operateStage = (
+    <div className="cdem-story-stage cdem-story-chart">
+      <HoursView part="stage" />
+    </div>
+  );
+  const operatePanel = (
+    <Evidence
+      title={t('Operating the setting', 'Operar la abertura')}
+      source={t(
+        'Source: the live engine’s P80 against the setting; the 45 h line is the re-set interval of one plant (Ma, Fan and He 2016).',
+        'Fuente: el P80 del motor en vivo contra la abertura; la línea de 45 h es el intervalo de reajuste de una planta (Ma, Fan y He 2016).',
+      )}
+    >
+      <p data-drift-secant={drawn?.secant ?? ''}>
+        {drawn && drawn.secant !== null && drawn.crossingMm !== null ? (
+          <>
+            {t('Over the drawn range, P80 rises from', 'En el rango dibujado, el P80 sube de')} <strong><Cnt v={r.p80} o={{ digits: 3 }} /> mm</strong>{' '}
+            {t('to the', 'al objetivo de')} <strong><Cnt v={drawn.targetMm} o={{ digits: 3 }} /> mm</strong> {t('target in', 'en')}{' '}
+            <strong><Cnt v={drawn.crossingMm} o={{ digits: 3 }} /> mm</strong> {t('of drift:', 'de desplazamiento:')}{' '}
+            <strong><Cnt v={drawn.secant} o={{ digits: 3 }} /> mm</strong> {t('of P80 per mm of setting.', 'de P80 por mm de abertura.')}
+          </>
+        ) : (
+          t('The target is not reached on the drawn range.', 'El objetivo no se alcanza en el rango dibujado.')
+        )}
+      </p>
+      <p>
+        {t('The local slope at the current setting is', 'La pendiente local en la abertura actual es')}{' '}
+        <strong>{slope === null ? t('not available', 'no disponible') : `${num(slope, { digits: 3 })} mm/mm`}</strong>
+        {t(
+          ': the engine’s P80 is piecewise in the setting, so the slope at one setting is not the response over a drift (Methodology, the campaign view).',
+          ': el P80 del motor es por tramos en la abertura, así que la pendiente en una abertura no es la respuesta a un desplazamiento (Metodología, la vista de campaña).',
+        )}
+      </p>
+      <HoursView part="controls" />
+      <p>{CAMPAIGN_TEXT.measure[lang]}</p>
+      <p>
+        {t(
+          'Enter your drift rate above to read operating hours: the product asserts no wear rate.',
+          'Ingrese su velocidad de desplazamiento arriba para leer horas de operación: el producto no afirma ninguna tasa de desgaste.',
+        )}
+      </p>
+    </Evidence>
+  );
+
+  const content: Record<StoryStepId, { stage: ReactNode; panel: ReactNode }> = {
+    measure: { stage: measureStage, panel: measurePanel },
+    inside: { stage: insideStage, panel: insidePanel },
+    solve: { stage: solveStage, panel: solvePanel },
+    compare: { stage: compareStage, panel: comparePanel },
+    operate: { stage: operateStage, panel: operatePanel },
+  };
+  const steps: StoryStep[] = STORY_STEPS.map((s) => ({
+    id: s.id,
+    number: s.number,
+    verb: s.verb,
+    headline: { en: heads[s.id].headline, es: heads[s.id].headline },
+    // the header holds one line of subline: a longer summary keeps its first sentence there, and its rest is on the stage (Compare's
+    // certainty sentence is the comparison card's note), so the stage and the panel keep their share of the viewport (G21, 80 percent)
+    summary: { en: heads[s.id].missing ? heads[s.id].summary : headerSummary(heads[s.id].summary), es: heads[s.id].missing ? heads[s.id].summary : headerSummary(heads[s.id].summary) },
+    href: stepHref(s.id, shownCase),
+    accent: s.accent,
+    stage: s.id === active ? <StagedStage step={s.id}>{content[s.id].stage}</StagedStage> : content[s.id].stage,
+    // the docked panel keeps the height the layout gives it and scrolls inside, so a long panel never squeezes the stepper
+    panel: <Dock active={s.id === active}>{content[s.id].panel}</Dock>,
+  }));
+  return (
+    <ViewContext.Provider value={ctx}>
+      <EntryProvider entryKey={entryKey} callouts={3} animate={stageReady} subject={entrySubject}>
+      <StoryFrame
+        className="cdem-story"
+        steps={steps}
+        activeId={active}
+        // the phone stage is the viewport less the header above it (N7 of the 0.13.000 re-check), so its foot is on the screen; the chart
+        // inside takes the free height (StagedStage fits it)
+        mobileStageMinHeight={phoneStage}
+        onStepChange={(next) => navigate(stepHref(next as StoryStepId, shownCase))}
+        onExit={() => navigate(exitHref(active, shownCase, { targetMm: ctx.target }))}
+        labels={{
+          steps: { en: 'The crushing story', es: 'El recorrido del chancado' },
+          previous: { en: 'Previous', es: 'Anterior' },
+          next: { en: 'Next', es: 'Siguiente' },
+          play: { en: 'Play', es: 'Reproducir' },
+          pause: { en: 'Pause', es: 'Pausar' },
+          exit: { en: 'Explore in the App', es: 'Explorar en la App' },
+        }}
+      />
+      </EntryProvider>
+    </ViewContext.Provider>
+  );
+}
+
+function SolveStage({ sel }: { sel: Selection }) {
+  const series = passSeriesOf(sel.op);
+  const count = usePassCount(series.n, openingPass(series));
+  return <PassesChart sel={sel} series={series} count={count} />;
+}
+
+function SolveReadout({ sel, start }: { sel: Selection; start: number }) {
+  const lang = useShellLang();
+  const series = passSeriesOf(sel.op);
+  const count = usePassCount(series.n, start);
+  const k = Math.min(series.residual.length - 1, count);
+  const f = (v: number, o: { digits?: number }) => formatNumber(v, lang, o);
+  const res = series.residual[k] < MACHINE_FLOOR ? (lang === 'es' ? 'bajo 1e-15 (precisión de máquina)' : 'below 1e-15 (machine precision)') : f(series.residual[k], { digits: 2 });
+  return (
+    <p data-pass-count={count}>
+      {lang === 'es'
+        ? `Tras ${count} ${passesWord(count, 'es')} el residuo es ${res} de la masa alimentada y ${f(series.inChamber[k] * 100, { digits: 3 })} % de la alimentación sigue en la cámara.`
+        : `After ${count} ${passesWord(count, 'en')} the residual is ${res} of the feed mass and ${f(series.inChamber[k] * 100, { digits: 3 })} % of the feed is still in the chamber.`}
+    </p>
+  );
+}
+
+/** The step's stage with its entry: the drawing moves in with the subject's progress, the subject is highlighted, and the callouts are
+ * shown one at a time in reading order (their cards and leaders in the order the shell lays them out, left to right). */
+function StagedStage({ step, children }: { step: StoryStepId; children: ReactNode }) {
+  const entry = useEntry();
+  const ref = useRef<HTMLDivElement | null>(null);
+  usePhoneFit(ref);
+  return (
+    <div
+      ref={ref}
+      className="cdem-staged"
+      data-staged-step={step}
+      data-entry={entry.running ? 'on' : 'off'}
+      // while the entry runs the stage is not settled: the shell's gate waits for it, as for any loading state
+      data-state={entry.running ? 'loading' : undefined}
+      data-highlight={entry.highlight ? 'on' : 'off'}
+      data-callouts-shown={entry.shown === null ? undefined : entry.shown}
+      data-reveal={entry.running && entry.reveal === 0 ? 'start' : 'done'}
+    >
+      {children}
+    </div>
+  );
+}
+
+/** The phone width below which the story stacks its stage over its panel (the shell's story layout, 900 px; the product's phone rules
+ * apply below 760 px). */
+const PHONE_PX = 760;
+
+/** The phone stage's height: the viewport less the header above the stage (the site header, the story's headline and its stepper),
+ * whole CSS pixels within the shell's 300 to 900 (N7). Measured after each step change (a headline of another length) and on resize. */
+export function phoneStageHeight(viewportHeight: number, stageTop: number): number {
+  const h = Math.round(viewportHeight - stageTop);
+  return Math.max(300, Math.min(900, Number.isFinite(h) ? h : 800));
+}
+
+function usePhoneStageHeight(step: string): number {
+  const [h, setH] = useState(800);
+  useEffect(() => {
+    const measure = () => {
+      const stage = document.querySelector('[data-story] .caos-story-stage');
+      if (!stage) return;
+      const next = phoneStageHeight(window.innerHeight, stage.getBoundingClientRect().top + window.scrollY);
+      setH((prev) => (prev === next ? prev : next));
+    };
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [step]);
+  // and after every render: the stage appears once the case has loaded, and a new headline moves it
+  useEffect(() => {
+    const stage = document.querySelector('[data-story] .caos-story-stage');
+    if (!stage) return;
+    const next = phoneStageHeight(window.innerHeight, stage.getBoundingClientRect().top + window.scrollY);
+    if (next !== h) setH(next);
+  });
+  return h;
+}
+
+/** The least height of a story chart's callout host on a phone: the band and the drawing's minimum, never less than 20rem. */
+const PHONE_HOST_FLOOR = 320;
+
+/**
+ * On a phone the card's body takes the height of its content (the shell's flowing body below 900 px), so the chart's host would keep
+ * its fixed minimum and leave the stage's free height empty under the note (N7), or overflow the stage and squeeze the card's header
+ * onto its controls (N2: the lane pills over the P80 target). The fit sets the host's least height to what the stage has left once the
+ * header, the controls and the note are laid out: the plot takes the free height, and the card never exceeds the stage.
+ */
+function usePhoneFit(ref: { current: HTMLDivElement | null }) {
+  useEffect(() => {
+    const root = ref.current;
+    if (!root || typeof ResizeObserver === 'undefined') return;
+    let frame = 0;
+    const fit = () => {
+      frame = 0;
+      const host = root.querySelector<HTMLElement>('.cdem-callout-fill');
+      const stage = root.closest<HTMLElement>('.caos-story-stage');
+      const card = host?.closest<HTMLElement>('figure');
+      if (!host || !stage || !card) return;
+      if (window.innerWidth >= PHONE_PX) {
+        if (host.style.minHeight) host.style.minHeight = '';
+        return;
+      }
+      const band = Number(host.getAttribute('data-callout-band')) || 0;
+      const floor = Math.max(PHONE_HOST_FLOOR, band + MIN_DRAWING_PX);
+      // the stage's height to fit is the phone stage the story asked for (the viewport less the header), never the stage's current
+      // height, which the host itself can grow
+      const story = stage.closest<HTMLElement>('[data-story]');
+      const wanted = parseFloat(story ? getComputedStyle(story).getPropertyValue('--caos-story-stage-minimum') : '') || stage.clientHeight;
+      // the card's own height is stretched by the stage: its chrome is what its parts take (the header, the body's controls, the note,
+      // its padding and border) less the host
+      const cs = getComputedStyle(card);
+      let parts = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom) + parseFloat(cs.borderTopWidth) + parseFloat(cs.borderBottomWidth);
+      for (const child of Array.from(card.children) as HTMLElement[]) {
+        const c = getComputedStyle(child);
+        parts += child.offsetHeight + parseFloat(c.marginTop) + parseFloat(c.marginBottom);
+      }
+      const chrome = parts - host.offsetHeight;
+      const next = Math.max(floor, Math.floor(wanted - 2 - chrome - 2));
+      if (Math.abs(next - host.offsetHeight) >= 2) host.style.minHeight = `${next}px`;
+    };
+    // one fit per burst of observations, in the next task (never an animation loop: the web baseline allows none outside the shell's)
+    const later = () => {
+      if (!frame) frame = window.setTimeout(fit, 0);
+    };
+    const ro = new ResizeObserver(later);
+    ro.observe(root);
+    const stage = root.closest('.caos-story-stage');
+    if (stage) ro.observe(stage);
+    const mo = new MutationObserver(later);
+    mo.observe(root, { subtree: true, attributes: true, attributeFilter: ['data-callout-band'], childList: true });
+    later();
+    return () => {
+      if (frame) window.clearTimeout(frame);
+      ro.disconnect();
+      mo.disconnect();
+    };
+  }, [ref]);
+}
+
+/** The docked panel: it builds top-down with the entry's panel progress, and says so when its content scrolls (m8: a "more below" cue
+ * under it that scrolls it, gone once the reader is at the end). */
+function Dock({ active, children }: { active: boolean; children: ReactNode }) {
+  const current = useEntry();
+  const entry = active ? current : null;
+  const lang = useShellLang();
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [more, setMore] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const check = () => setMore(el.scrollHeight > el.clientHeight + 1 && el.scrollTop + el.clientHeight < el.scrollHeight - 4 && getComputedStyle(el).overflowY !== 'visible');
+    check();
+    el.addEventListener('scroll', check, { passive: true });
+    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(check);
+    ro?.observe(el);
+    if (el.firstElementChild) ro?.observe(el.firstElementChild);
+    return () => {
+      el.removeEventListener('scroll', check);
+      ro?.disconnect();
+    };
+  }, []);
+  // the panel waits while the subject and the callouts enter, and builds in when its numbers start to count
+  const waiting = entry !== null && entry.running && entry.shown !== null;
+  return (
+    <div className="cdem-dock-frame" data-more={more ? 'true' : 'false'}>
+      <div ref={ref} className="cdem-story-dock" data-overflow={more ? 'true' : 'false'} data-build={waiting ? 'wait' : 'done'}>
+        {children}
+      </div>
+      {more && (
+        <button
+          type="button"
+          className="cdem-scroll-cue"
+          data-scroll-cue=""
+          onClick={() => ref.current?.scrollBy({ top: Math.max(80, (ref.current?.clientHeight ?? 200) * 0.8), behavior: 'smooth' })}
+        >
+          {lang === 'es' ? 'más abajo' : 'more below'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** The subline of the story's header: the summary, or its first sentence when the whole would take more than two lines at 1280 px. */
+export function headerSummary(summary: string, max = 170): string {
+  if (summary.length <= max) return summary;
+  const end = summary.search(/\.\s/);
+  return end > 0 ? summary.slice(0, end + 1) : summary;
+}
+
+/** A number of the panel: it counts up to its value as the panel builds, and its final text is the value's own. */
+function Cnt({ v, o }: { v: number; o: { digits?: number; decimals?: number } }) {
+  const lang = useShellLang();
+  const { panel } = useEntry();
+  return <>{formatNumber(counted(v, panel), lang, o)}</>;
+}

@@ -1,7 +1,9 @@
 """Helpers of the adversarial tests: run a guard as a subprocess and plant one defect in a copy."""
 from __future__ import annotations
 
+import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -128,6 +130,44 @@ def unlink_node_modules(frontend: Path) -> None:
         target.unlink()  # a symlink: os.rmdir raises NotADirectoryError on it (Linux CI)
 
 
+def copy_node_modules(frontend: Path) -> None:
+    """Give a generator plant disposable local dependency bytes, never a borrowed writable store."""
+    frontend = frontend.resolve(strict=True)
+    assert frontend != ROOT and ROOT not in frontend.parents, "dependency copies belong outside the real checkout"
+    target = frontend / "node_modules"
+    assert not target.is_symlink() and not target.is_junction(), "refuse a borrowed fixture dependency tree"
+    assert target.resolve().is_relative_to(frontend), "fixture dependencies escape the fixture"
+    assert NODE_MODULES.is_dir(), "installed frontend/node_modules is required; no install is performed by the test"
+    install_is_the_locks(NODE_MODULES)
+    # The budget is the product's own install (0.15.001, issue #102): the template's is about 156 MB, a product with
+    # onnxruntime-web about 337 MB, and a fixed number refused the second. What bounds the copy is the drive it lands on.
+    skipped = {".bin", "__tests__"}
+    size = sum(p.stat().st_size for p in NODE_MODULES.rglob("*")
+               if p.is_file() and not skipped.intersection(p.relative_to(NODE_MODULES).parts))
+    free = shutil.disk_usage(frontend).free
+    assert free - size >= COPY_FREE_FLOOR, (f"dependency fixture exceeded its copy budget: {size} bytes would leave "
+                                           f"{max(free - size, 0)} free, under {COPY_FREE_FLOOR} on the plant's drive")
+    # Vendor test fixtures are not runtime dependencies and can exceed Windows path limits in a nested copy.
+    shutil.copytree(NODE_MODULES, target, dirs_exist_ok=True, ignore=shutil.ignore_patterns(*skipped))
+
+
+# a dependency copy never leaves its drive with less free space than this
+COPY_FREE_FLOOR = 2 * 1024 ** 3
+
+
+def install_is_the_locks(node_modules: Path) -> None:
+    """The copied tree is what ``npm ci`` installed from the product's lock: every package npm recorded as installed
+    (node_modules/.package-lock.json) is a package of package-lock.json at the same version."""
+    hidden = node_modules / ".package-lock.json"
+    lock = node_modules.parent / "package-lock.json"
+    assert hidden.is_file() and lock.is_file(), "node_modules was not installed from a lock: run npm ci in frontend/"
+    installed = json.loads(hidden.read_text(encoding="utf-8")).get("packages", {})
+    locked = json.loads(lock.read_text(encoding="utf-8")).get("packages", {})
+    stray = sorted(name for name, meta in installed.items()
+                   if name and (name not in locked or locked[name].get("version") != meta.get("version")))
+    assert not stray, f"node_modules holds packages its lock does not ({', '.join(stray[:5])}): run npm ci in frontend/"
+
+
 SDD = "docs/design/SDD.md"
 
 
@@ -141,7 +181,23 @@ def sdd_text(repo: Path) -> str:
 
 
 def section(text: str, name: str) -> tuple[int, int]:
-    """The span of the ``## name`` section of the SDD text."""
-    a = text.index(f"## {name}\n")
-    b = text.find("\n## ", a + 1)
-    return a, (len(text) if b == -1 else b + 1)
+    """A real level-2 section, retaining offsets for LF/CRLF text and optional numbered headings."""
+    # Mask comments without changing positions; match the guard's same-character fence rules.
+    visible = re.sub(r"<!--.*?(?:-->|\Z)", lambda m: re.sub(r"[^\r\n]", " ", m[0]), text, flags=re.S)
+    headings = []
+    fence = None
+    offset = 0
+    for line in visible.splitlines(keepends=True):
+        marker = re.match(r"^\s*(```+|~~~+)", line)
+        if fence is None:
+            if marker:
+                fence = marker[1]
+            elif heading := re.match(r"^## (?:\d+[.)]?\s+)?(?P<title>.+?)\s*$", line):
+                headings.append((offset, heading["title"].casefold()))
+        elif marker and marker[1][0] == fence[0] and len(marker[1]) >= len(fence) and not line.strip().lstrip(fence[0]).strip():
+            fence = None
+        offset += len(line)
+    hits = [i for i, (_, title) in enumerate(headings) if title == name.casefold()]
+    assert len(hits) == 1, f"SDD plant needs exactly one visible level-2 section {name!r}; found {len(hits)}"
+    i = hits[0]
+    return headings[i][0], (headings[i + 1][0] if i + 1 < len(headings) else len(text))

@@ -16,10 +16,10 @@ export function Caveat() {
   const nullResult =
     m0 !== null && m1 !== null
       ? t(
-          `The bounded residual M1 does not beat the backbone out of sample: on throughput its strict MAPE is ${f(m1, { decimals: 1 })} percent against ${f(m0, { decimals: 1 })} percent for M0. That was the pre-registered expectation and it is reported as a null, not as a failure to be tuned away.`,
-          `El residuo acotado M1 no supera al esqueleto fuera de muestra: en capacidad su MAPE estricto es ${f(m1, { decimals: 1 })} por ciento contra ${f(m0, { decimals: 1 })} por ciento de M0. Esa era la expectativa preregistrada y se informa como un nulo, no como un fallo que haya que ajustar hasta hacerlo desaparecer.`,
+          `The bounded residual does not beat the backbone out of sample: on throughput its strict MAPE is ${f(m1, { decimals: 1 })} percent against ${f(m0, { decimals: 1 })} percent for the calibrated backbone. That was the pre-registered expectation and it is reported as a null, not as a failure to be tuned away.`,
+          `El residuo acotado no supera al esqueleto fuera de muestra: en capacidad su MAPE estricto es ${f(m1, { decimals: 1 })} por ciento contra ${f(m0, { decimals: 1 })} por ciento del esqueleto calibrado. Esa era la expectativa preregistrada y se informa como un nulo, no como un fallo que haya que ajustar hasta hacerlo desaparecer.`,
         )
-      : t('The bounded residual M1 does not beat the backbone out of sample; that was the pre-registered expectation and it is reported as a null.', 'El residuo acotado M1 no supera al esqueleto fuera de muestra; esa era la expectativa preregistrada y se informa como un nulo.');
+      : t('The bounded residual does not beat the backbone out of sample; that was the pre-registered expectation and it is reported as a null.', 'El residuo acotado no supera al esqueleto fuera de muestra; esa era la expectativa preregistrada y se informa como un nulo.');
   return (
     <DocSection title={{ en: 'What this benchmark does not show', es: 'Lo que este benchmark no muestra' }} area="caveat" noRefsReason={{ en: 'States the limits of this page.', es: 'Declara los límites de esta página.' }}>
       <Callout variant="honest" title={t('Ten surveys, one machine, one ore, and a surrogate of the engine', 'Diez muestreos, una máquina, un mineral, y un sustituto del motor')}>

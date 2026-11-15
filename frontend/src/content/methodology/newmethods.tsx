@@ -80,19 +80,19 @@ function MorrellHeldOut({ loo }: { loo: Hp500Loo }) {
       { id: `s${s.n}-measured`, group, label: { en: 'Measured', es: 'Medida' }, value: s.measured, tone: 'good' as const },
       { id: `s${s.n}-morrell`, group, label: { en: 'Morrell', es: 'Morrell' }, value: s.morrell, tone: 'bad' as const },
       { id: `s${s.n}-noload`, group, label: { en: 'Morrell with no-load', es: 'Morrell con vacío' }, value: s.noload, tone: 'warn' as const },
-      { id: `s${s.n}-blin`, group, label: { en: 'B-lin', es: 'B-lin' }, value: s.blin, tone: 'accent' as const },
+      { id: `s${s.n}-blin`, group, label: { en: 'Setting-only line', es: 'Recta solo de la abertura' }, value: s.blin, tone: 'accent' as const },
     ];
   });
   return (
     <>
       <P
-        en={<>Held out on the same folds, the through-origin variant misses the measured power by {f(e.morrell, d2)} percent on average and the variant with the no-load term by {f(e.noload, d2)} percent, against {f(e.blin, d2)} percent for the setting-only line B-lin and {f(e.m0, d2)} percent for Bond&apos;s draw of the calibrated backbone. Both variants are worse than B-lin, so the size-specific energy adds nothing on these ten surveys: the measured power correlates at {f(m.powerThroughputCorr, d2)} with the measured throughput, it falls as the feed rate rises, while every energy law multiplies a specific energy by that feed rate. The plant&apos;s M_ic from an SMC Test and a no-load reading of the motor would settle the fit; until then Morrell is a held-out comparison.</>}
+        en={<>Held out on the same folds, the through-origin variant misses the measured power by {f(e.morrell, d2)} percent on average and the variant with the no-load term by {f(e.noload, d2)} percent, against {f(e.blin, d2)} percent for the setting-only line and {f(e.m0, d2)} percent for Bond&apos;s draw of the calibrated backbone. Both variants are worse than the setting-only line, so the size-specific energy adds nothing on these ten surveys: the measured power correlates at {f(m.powerThroughputCorr, d2)} with the measured throughput, it falls as the feed rate rises, while every energy law multiplies a specific energy by that feed rate. The plant&apos;s M_ic from an SMC Test and a no-load reading of the motor would settle the fit; until then Morrell is a held-out comparison.</>}
         es={<>Reservadas en los mismos pliegues, la variante por el origen yerra la potencia medida en {f(e.morrell, d2)} por ciento en promedio y la variante con el término en vacío en {f(e.noload, d2)} por ciento, contra {f(e.blin, d2)} por ciento de la recta solo de la abertura B-lin y {f(e.m0, d2)} por ciento de la potencia de Bond del esqueleto calibrado. Ambas variantes son peores que B-lin, así que la energía específica por tamaño no agrega nada en estos diez muestreos: la potencia medida se correlaciona en {f(m.powerThroughputCorr, d2)} con la capacidad medida, baja cuando sube la tasa de alimentación, mientras toda ley de energía multiplica una energía específica por esa tasa. El M_ic de la planta según un ensayo SMC y una lectura en vacío del motor zanjarían el ajuste; hasta entonces Morrell es una comparación reservada.</>}
       />
       <Figure
         caption={t(
-          `The power of each of the ${loo.n} surveys as measured, as predicted held out by the two Morrell variants and by the setting-only line B-lin, in kW, read from the committed leave-one-survey-out document; each prediction comes from a fit that never saw its survey.`,
-          `La potencia de cada uno de los ${loo.n} muestreos medida, y predicha en reserva por las dos variantes de Morrell y por la recta solo de la abertura B-lin, en kW, leída del documento versionado de dejar un muestreo afuera; cada predicción sale de un ajuste que nunca vio su muestreo.`,
+          `The power of each of the ${loo.n} surveys as measured, as predicted held out by the two Morrell variants and by the setting-only line, in kW, read from the committed leave-one-survey-out document; each prediction comes from a fit that never saw its survey.`,
+          `La potencia de cada uno de los ${loo.n} muestreos medida, y predicha en reserva por las dos variantes de Morrell y por la recta solo de la abertura, en kW, leída del documento versionado de dejar un muestreo afuera; cada predicción sale de un ajuste que nunca vio su muestreo.`,
         )}
       >
         <BarChart
@@ -105,7 +105,7 @@ function MorrellHeldOut({ loo }: { loo: Hp500Loo }) {
             { tone: 'good', label: { en: 'Measured', es: 'Medida' } },
             { tone: 'bad', label: { en: 'Morrell through the origin', es: 'Morrell por el origen' } },
             { tone: 'warn', label: { en: 'Morrell with a no-load term', es: 'Morrell con término en vacío' } },
-            { tone: 'accent', label: { en: 'B-lin setting-only line', es: 'B-lin recta solo de la abertura' } },
+            { tone: 'accent', label: { en: 'Setting-only line', es: 'Recta solo de la abertura' } },
           ]}
         />
       </Figure>
@@ -233,7 +233,7 @@ function SpecTables({ cb }: { cb: import('../../lib/contract.types').Hp500Crushe
         es={<>Los coeficientes de discrepancia tienen un a priori gaussiano de desviación estándar {f(m.discrepancy_prior_sd.tph, i0)} t/h y {f(m.discrepancy_prior_sd.kW, i0)} kW; el ruido tiene un a priori lognormal con medianas {f(m.noise_prior.median.tph, i0)} t/h y {f(m.noise_prior.median.kW, i0)} kW. El muestreador es {m.sampler} {m.sampler_version} con {f(m.walkers, i0)} caminantes y {f(m.steps, i0)} pasos, de los cuales {f(m.burn_in_steps, i0)} se descartan, raleados cada {f(m.thin, i0)}, con la semilla fija. Cada pliegue reservado es un posterior ajustado con nueve muestreos; otro más se ajusta con los diez para la tabla de contracción.</>}
       />
       <P
-        en={<>Convergence criterion: a posterior counts as converged when its post-burn chain is at least {f(cb.convergence.tau_factor, i0)} integrated autocorrelation times long, taking the largest time over the parameters; a posterior that fails is recorded as not converged and kept in the document. Kill criterion, written before the run: the method is dropped as a predictor if (a) its power error is not below that of the setting-only line B-lin by at least {f(k.margin_mape_pts, { decimals: 1 })} points and its throughput error does not beat that of the calibrated backbone by at least {f(k.margin_mape_pts, { decimals: 1 })} points, and (b) on either target its coverage lies outside {f(k.coverage_band[0], pct)} to {f(k.coverage_band[1], pct)} or its mean band is wider than the CrusherCal band.</>}
+        en={<>Convergence criterion: a posterior counts as converged when its post-burn chain is at least {f(cb.convergence.tau_factor, i0)} integrated autocorrelation times long, taking the largest time over the parameters; a posterior that fails is recorded as not converged and kept in the document. Kill criterion, written before the run: the method is dropped as a predictor if (a) its power error is not below that of the setting-only line by at least {f(k.margin_mape_pts, { decimals: 1 })} points and its throughput error does not beat that of the calibrated backbone by at least {f(k.margin_mape_pts, { decimals: 1 })} points, and (b) on either target its coverage lies outside {f(k.coverage_band[0], pct)} to {f(k.coverage_band[1], pct)} or its mean band is wider than the CrusherCal band.</>}
         es={<>Criterio de convergencia: un posterior cuenta como convergido cuando su cadena posterior al descarte tiene al menos {f(cb.convergence.tau_factor, i0)} tiempos de autocorrelación integrados, tomando el mayor tiempo entre los parámetros; un posterior que falla se registra como sin converger y se conserva en el documento. Criterio de descarte, escrito antes de correr: el método se descarta como predictor si (a) su error en potencia no es menor que el de la recta solo de la abertura B-lin en al menos {f(k.margin_mape_pts, { decimals: 1 })} puntos y su error en capacidad no supera al del esqueleto calibrado en al menos {f(k.margin_mape_pts, { decimals: 1 })} puntos, y (b) en cualquiera de las dos magnitudes su cobertura queda fuera de {f(k.coverage_band[0], pct)} a {f(k.coverage_band[1], pct)} o su banda media es más ancha que la banda de CrusherCal.</>}
       />
     </>

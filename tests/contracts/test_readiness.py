@@ -23,7 +23,7 @@ VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
 OLDER = VERSION.rsplit(".", 1)[0] + (".002" if VERSION.endswith(".001") else ".001")
 NO_NUMPY = ("import sys, runpy; sys.modules['numpy'] = None; path = sys.argv[1]; sys.argv = sys.argv[1:]; "
             "runpy.run_path(path, run_name='__main__')")
-DERIVED_DOCS = ("hp500/backbone.json", "hp500/loo.json", "hp500/crusherbayes.json", "model-metrics.json")
+DERIVED_DOCS = ("hp500/backbone.json", "hp500/loo.json", "hp500/crusherbayes.json", "hp500/comparison.json", "model-metrics.json")
 
 
 def _table(section: str) -> list[list[str]]:
@@ -93,7 +93,7 @@ def test_committed_readiness_is_current(tmp_path):
 def test_catalog_rows_in_order_without_readiness():
     rows = readiness.parse_catalog(CATALOG.read_text(encoding="utf-8"))
     assert [r["id"] for r in rows] == ["params-record", "hp500-survey", "case-index", "case-manifest", "trace", "hp500-backbone",
-                                        "hp500-loo", "hp500-crusherbayes", "surrogate-model", "anomaly-model", "model-metrics", "readiness", "api"]
+                                        "hp500-loo", "hp500-crusherbayes", "hp500-comparison", "surrogate-model", "anomaly-model", "model-metrics", "readiness", "api"]
     assert {"id", "version", "status", "provider"} <= set(rows[0])
     doc = readiness.compute(repo_root=ROOT, derived_root=ROOT / "data" / "derived", models_dir=ROOT / "data" / "derived" / "models")
     assert [e["id"] for e in doc["contracts"]] == [r["id"] for r in rows if r["id"] != "readiness"]
@@ -167,7 +167,8 @@ def test_adversarial_state_stale(repo):
 
 
 @pytest.mark.parametrize("row,rel", [("hp500-backbone", "hp500/backbone.json"), ("hp500-loo", "hp500/loo.json"),
-                                     ("hp500-crusherbayes", "hp500/crusherbayes.json"), ("model-metrics", "model-metrics.json")])
+                                     ("hp500-crusherbayes", "hp500/crusherbayes.json"), ("hp500-comparison", "hp500/comparison.json"),
+                                     ("model-metrics", "model-metrics.json")])
 def test_adversarial_state_stale_documents(repo, row, rel):
     path = derived(repo, rel)
     doc = json.loads(path.read_text(encoding="utf-8"))
@@ -261,8 +262,9 @@ def test_state_missing_hp500_documents(repo):
     derived(repo, "hp500/backbone.json").unlink()
     derived(repo, "hp500/loo.json").unlink()
     derived(repo, "hp500/crusherbayes.json").unlink()
+    derived(repo, "hp500/comparison.json").unlink()
     doc = run(repo)
-    for row in ("hp500-backbone", "hp500-loo", "hp500-crusherbayes"):
+    for row in ("hp500-backbone", "hp500-loo", "hp500-crusherbayes", "hp500-comparison"):
         e = entry(doc, row)
         assert (e["state"], e["provenance"], e["missing"]) == ("missing", None, []), row
         assert e["reason"] == fill(template("the document is absent"))      # the first row with that condition: the HP500 one
@@ -342,13 +344,27 @@ def test_run_all_writes_a_valid_readiness(tmp_path):
     doc = json.loads((out / "readiness.json").read_text(encoding="utf-8"))
     assert errors("readiness", doc) == []
     for row in ("params-record", "hp500-survey", "case-index", "case-manifest", "trace", "hp500-backbone", "hp500-loo",
-                "hp500-crusherbayes", "surrogate-model", "anomaly-model"):
+                "hp500-crusherbayes", "hp500-comparison", "surrogate-model", "anomaly-model"):
         assert entry(doc, row)["state"] == "available", row
     assert entry(doc, "model-metrics")["state"] == "missing"       # run.py models writes it; the bake never trains
 
 
+def _as_product(root: Path) -> None:
+    """Since template 0.15.000 ``check_readiness.py <root>`` judges ``root`` with the readiness provider ``root`` declares in
+    its own ``scripts/local/workflow.json``, and that provider rules with the pipeline of the checkout it sits in. A copy is
+    judged as a checkout: it carries the product's pipeline, the schemas the model slots are judged by, the workflow
+    declaration and the provider."""
+    shutil.copytree(ROOT / "data-pipeline", root / "data-pipeline", ignore=shutil.ignore_patterns("__pycache__"))
+    shutil.copytree(ROOT / "docs" / "contracts" / "schemas", root / "docs" / "contracts" / "schemas", dirs_exist_ok=True)
+    (root / "scripts" / "local").mkdir(parents=True, exist_ok=True)
+    for name in ("workflow.json", "readiness_provider.py"):
+        shutil.copy(ROOT / "scripts" / "local" / name, root / "scripts" / "local" / name)
+
+
 def _check(root: Path | None = None, *, no_numpy: bool = False) -> subprocess.CompletedProcess:
     script = str(ROOT / "scripts" / "check_readiness.py")
+    if root:
+        _as_product(root)
     args = [str(root)] if root else []
     cmd = [sys.executable, "-c", NO_NUMPY, script, *args] if no_numpy else [sys.executable, script, *args]
     return subprocess.run(cmd, capture_output=True, text=True, cwd=ROOT)

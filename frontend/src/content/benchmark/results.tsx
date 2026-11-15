@@ -136,8 +136,8 @@ function AddedModelsNote({ loo }: { loo: Hp500Loo }) {
     <>
       {lin.kw && lin.tph ? (
         <P
-          en={<>B-lin is the bar every other method meets: a straight line on the closed-side setting alone, refit on each fold, with no physics. Held out it reaches {f(lin.tph.mape_pct, d)} percent on throughput and {f(lin.kw.mape_pct, d)} percent on power. A method that claims more than a line on the setting claims it over that margin.</>}
-          es={<>B-lin es la vara que todo otro método debe alcanzar: una recta sobre la abertura de lado cerrado solamente, reajustada en cada pliegue, sin física. Reservada alcanza {f(lin.tph.mape_pct, d)} por ciento en capacidad y {f(lin.kw.mape_pct, d)} por ciento en potencia. Un método que afirma más que una recta sobre la abertura lo afirma sobre ese margen.</>}
+          en={<>The setting-only line is the bar every other method meets: a straight line on the closed-side setting alone, refit on each fold, with no physics. Held out it reaches {f(lin.tph.mape_pct, d)} percent on throughput and {f(lin.kw.mape_pct, d)} percent on power. A method that claims more than a line on the setting claims it over that margin.</>}
+          es={<>La recta solo de la abertura es la vara que todo otro método debe alcanzar: una recta sobre la abertura de lado cerrado solamente, reajustada en cada pliegue, sin física. Reservada alcanza {f(lin.tph.mape_pct, d)} por ciento en capacidad y {f(lin.kw.mape_pct, d)} por ciento en potencia. Un método que afirma más que una recta sobre la abertura lo afirma sobre ese margen.</>}
         />
       ) : null}
       {m && mn && fit ? (
@@ -216,8 +216,8 @@ function CoarseNote({ loo }: { loo: Hp500Loo }) {
   return (
     <p>
       {t(
-        `With ${loo.n} surveys the coverage is a coarse estimate: one survey moves it by ${f(100 / loo.n, { decimals: 0 })} percentage points. P80 is the backbone's own output, so its strict MAPE is ${f(m0, { decimals: 1 })} percent for M0 and ${f(m1, { decimals: 1 })} percent for M1: the row is a self-consistency check and says nothing about accuracy.`,
-        `Con ${loo.n} muestreos la cobertura es una estimación gruesa: un muestreo la mueve ${f(100 / loo.n, { decimals: 0 })} puntos porcentuales. El P80 es la salida propia del esqueleto, así que su MAPE estricto es ${f(m0, { decimals: 1 })} por ciento para M0 y ${f(m1, { decimals: 1 })} por ciento para M1: la fila es una verificación de autoconsistencia y no dice nada sobre exactitud.`,
+        `With ${loo.n} surveys the coverage is a coarse estimate: one survey moves it by ${f(100 / loo.n, { decimals: 0 })} percentage points. P80 is the backbone's own output, so its strict MAPE is ${f(m0, { decimals: 1 })} percent for the calibrated backbone and ${f(m1, { decimals: 1 })} percent for the bounded residual: the row is a self-consistency check and says nothing about accuracy.`,
+        `Con ${loo.n} muestreos la cobertura es una estimación gruesa: un muestreo la mueve ${f(100 / loo.n, { decimals: 0 })} puntos porcentuales. El P80 es la salida propia del esqueleto, así que su MAPE estricto es ${f(m0, { decimals: 1 })} por ciento para el esqueleto calibrado y ${f(m1, { decimals: 1 })} por ciento para el residuo acotado: la fila es una verificación de autoconsistencia y no dice nada sobre exactitud.`,
       )}
     </p>
   );

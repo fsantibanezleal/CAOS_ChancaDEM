@@ -59,6 +59,13 @@ of 2026-06-20 to 2026-07-11, the problem-context dossier of 2026-10-26). The dec
 | A learned surrogate of a phenomenological comminution model is the state of the art for fast what-ifs; it emulates the model, not the plant | A deep network surrogate of a comminution circuit's phenomenological models | Koh et al. 2021, https://doi.org/10.1016/j.mineng.2021.107026 |
 | The executive view's sector figures: concentrators took 55.7 percent of Chilean copper-mining electricity in 2024, and electricity per tonne of fine copper rose 46.2 percent from 2010 while the ore grade fell from 0.75 to 0.62 percent | Cochilco's energy-consumption report for 2024 | Cochilco 2025, https://www.cochilco.cl/web/download/991/2025/15151/consumo-de-energia-en-la-mineria-del-cobre-actualizacion-ano-2024.pdf |
 | Requirements are written in EARS form, each with its gate | The five EARS patterns | Mavin et al. 2009, https://doi.org/10.1109/RE.2009.9 |
+| The held-out errors are reported as the mean absolute percentage error, with its known asymmetry stated | The definitions and the failure modes of the scale-free accuracy measures | Hyndman and Koehler 2006, https://doi.org/10.1016/j.ijforecast.2006.03.001 |
+| CrusherCal's bounded residual is a ridge fit | Ridge regression as biased estimation for correlated predictors | Hoerl and Kennard 1970, https://doi.org/10.1080/00401706.1970.10488634 |
+| The label-shuffle control is read as a permutation test: how many randomly drawn permutations fit at least as well as the real labels | For randomly drawn permutations the exact p-value is (1 + b) / (1 + B), never zero, with b the permutations at least as extreme among B | Phipson and Smyth 2010, https://doi.org/10.2202/1544-6115.1585 |
+| The in-sample error understates the held-out error; the gap is the optimism CrusherCal exposes | The bias of the apparent error rate of a prediction rule | Efron 1986, https://doi.org/10.1080/01621459.1986.10478291 |
+| The surrogate's training points are a Latin-hypercube sweep of the engine | Latin hypercube sampling against random and stratified sampling for computer-code inputs | McKay, Beckman and Conover 1979, https://doi.org/10.1080/00401706.1979.10489755 |
+| The extrapolation score is a denoising autoencoder | Robust features learned by reconstructing corrupted inputs | Vincent et al. 2008, https://doi.org/10.1145/1390156.1390294 |
+| The networks use the GELU activation | The Gaussian error linear unit | Hendrycks and Gimpel 2016, https://arxiv.org/abs/1606.08415 |
 
 UNVERIFIED: the global shares of world electricity attributed to comminution (figures of 1.8, 3 or 4 percent circulate)
 could not be traced to a study opened during the problem-context research and are not used anywhere in the product; two
@@ -91,6 +98,32 @@ one schema file, an example, a test on each side, its missing-data behavior, a p
 - Readiness: what is real in this build, row by row, in one of six declared states, shown on every view.
 - The dormant API (api): GET only; 503 with the declared state when a document is absent.
 
+## Visualization catalog
+
+The six view purposes of ADR-0082, each answering one question of the crushing problem from a contract of the catalog. Every
+number a view or a story step shows is read from the release's artifacts or computed by the live engine from them; the
+3D chamber is a kinematic view of the chamber geometry, never a particle simulation, and says so. The story mode
+(`/story/<step>`) has five steps: Measure (V1), Look inside (V2), Solve (V5 with V3), Compare (V6) and Operate (V4); each
+headline states a number from the artifacts, and its exit lands on the App with the step's case and view.
+
+The story's composition is the shell's StoryFrame: one stage and one docked panel per step. ADR-0082 rule 2 sets the 60 percent
+floor of the primary drawing for the App route and 80 percent in focus; a story step is measured as its composition, the stage and
+the docked panel together at least 80 percent of the viewport, which the shell's gate G21 checks (decided by the coordinator on
+2026-11-08, M12 of the 0.13.000 review: the stage alone was 56 percent at 1280 px, and splitting the panel off the measure would
+judge the story by a layout it does not have; the story's layout is not changed for M12). On a phone the stage is the viewport less
+the header above it (the site header, the headline and the stepper), so its foot is on the screen, and a chart on the stage takes
+the free height under its callout band; the controls a chart does not need to be read (the Operate target, drift rate and hours;
+the Compare target switch) are in the docked panel (N7 of the re-check).
+
+| id | question | data contract | kind | interactions | linked views | placement |
+|---|---|---|---|---|---|---|
+| V1 | Where does the selected crusher sit in the crushing circuit, and what enters and leaves it? | `case-index` (the case's stage and machine), `case-manifest` (feed t/h, F80, closed-side setting, power, and a real survey's measured values), `trace` (product P80) | The system: a 2D flowsheet of the three-stage crushing circuit (primary gyratory or jaw, secondary cone, tertiary cone or short-head), each stage named by its machine, the selected case's stage active with its feed and product streams labelled (t/h, F80, P80, kW, closed-side setting) and the flow animated at a speed bound to the throughput; static arrows under reduced motion | Select a stage to load a case of that stage; select a stream to read its values and source; hover for details | V2 (the active machine's chamber), V3 (the feed and product streams' distributions), V6 (a survey selected there is the case shown here) | App, System group (first view); story step 1, Measure |
+| V2 | How does the chamber's geometry set the product: the gap down the chamber, the closed-side setting and the nip angle against the grip limit? | `case-manifest` (machine, closed-side setting, throw, speed), the live engine's chamber geometry and nip angle (`frontend/src/engine/chamber.ts`) | The key component: the 3D chamber cutaway (mantle, concave, the gap at the closed side, the feed, the rocks sized by the feed) with its four parts named on the canvas, standing on a ground with soft shadows, its materials and lights the shell's scene environment of the theme, and the 2D section beside it where 3D adds nothing, which draws the nip angle between the mantle and the concave at the engine's value with the grip limit as a second, dashed wedge; callouts on the closed-side setting, the nip angle (anchored inside its wedge) against 2 arctan 0.35 = 38.58 degrees, and the throw (its speed in the source) | Orbit and zoom; select a part (mantle, concave, gap, feed) by its label or by a click on it in 3D, or on the section: the shell's linked-view store selects it in both drawings, both ways, and its callout (gap: CSS, mantle: throw, concave: nip angle) shows selected; the hours cursor of V4 widens the setting in the drawing | V1 (the active stage), V3 (the product the gap gives), V4 (the setting drifting with the hours) | App, System group (second view); story step 2, Look inside |
+| V3 | What size distribution does the crusher make from its feed, and where do F80 and P80 sit? | `trace` (feed and product gradations on the square-root-of-two sieve grid, the classification curve), `case-manifest` (a real survey's measured values) | The domain's diagram: the cumulative passing against size on a logarithmic size axis, feed and product, F80 and P80 marked, the classification curve on the same size axis | Hover a size class for its passing and retained mass; select a size class (it is selected in V5); the pass cursor of V5 draws the product after n passes | V5 (the series converging onto this product), V1 (the streams), V4 (the product at the hours cursor) | App, Product group (first view); story step 3, Solve |
+| V4 | How does the product drift as the liners wear, and when does P80 leave its target? | `trace` (P80 against the closed-side setting from the setting sweep), the live engine's campaign (`frontend/src/engine/campaign.ts`); the drift rate is the reader's, never asserted | State and dynamics: P80 against operating hours at the reader's drift rate (until one is set, against the millimetres of setting drift), the target P80 as the threshold, opened by the one target rule of the App and the story, `defaultP80Target` (the case's P80 plus 10 percent, SH-010), the hour or millimetre it is crossed marked, the margin's state by its meaning (alarm when the margin m to the target is at or below 0, warning when 0 < m < 0.25 R of the drawn range R, the setting's training range above the current setting, normal otherwise; no state, the reason, when the target is not reached in range: HP500 survey 1, 22 mm of 36 mm, normal; S01, 3.21 mm of 58 mm, warning), the drift response as the secant of the drawn curve from its start to that crossing (never the local slope: the engine's P80 is piecewise in the setting, and the Methodology paragraph names the classification crossing that bends it), the 45 h re-set practice of Ma, Fan and He 2016 as a reference line, the cursor as the now line | Set the drift rate and the target; scrub the hours (the setting in V2 and the product in V3 follow); the story's Operate exit opens this view with the story's target | V2 (the setting at the cursor), V3 (the product at the cursor) | App, Performance group (campaign view); story step 5, Operate |
+| V5 | How does the population balance compute the product? | `trace` and the live engine's breakage matrix B, classification C and feed f (`frontend/src/engine/whiten.ts`, `breakage.ts`, `classification.ts`) | The method at work: the Neumann series of the Whiten solve, p_n = (I - C) sum_{k<n} (B C)^k f, drawn on the V3 axes against the closed form p = (I - C)(I - B C)^-1 f (B is strictly lower triangular, so B C is nilpotent and the series is exact after at most as many passes as size classes), with the residual against the pass count n and the mass sent back for breakage per size class at pass n; its third callout is the mass sent back over passes 1 to n in all (at the opening pass the mass sent back at that pass is 0) | Scrub or play the pass count (the story's Solve plays it from 1 to its headline's pass on entry); switch between the primary chart and its second view, Convergence (the residual against n and the mass sent back), so the view opens on one chart; select a size class to follow its mass through the passes | V3 (the product after n passes on the same axes), V2 (the chamber the passes stand for) | App, Product group (population-balance view); story step 3, Solve |
+| V6 | Which method should a forecast of throughput and power trust, measured on surveys it never saw? | `hp500-loo` (CrusherCal: the backbone, the ridge and free fits, the setting-only line, Morrell, the controls, the 80 percent bands), `hp500-crusherbayes` (CrusherBayes held out, its predictive bands), `hp500-comparison` (the paired difference of every method against the recommended one over the ten surveys, its 95 percent bootstrap interval with the CrusherBayes manuscript's resampling, its wins), `hp500-backbone` | Comparison and decision: the held-out MAPE of throughput and of power per method on shared axes, the ten per-survey errors drawn as points beside each bar, the predictive bands where the artifact has them; the recommended method per target marked, the view opening on the runner-up so the recommended and the selected method differ, the paired gap of the runner-up (or of the selected method) to the recommended one drawn as its mean and its 95 percent interval as a bracket beside the selected method's dot, in a colour of its own, with its end values, and stated as the third callout, every MAPE with one decimal, and the takeaway saying how sure the ranking is with ten surveys (the interval and the wins), which the story's Compare stage states first in its note; with `hp500-comparison` absent the gap and the certainty sentence give the readiness reason (SH-009, SH-011) | Select a method to read its errors and band, in a list of buttons that wraps (numbered as the axis numbers them below 640 px, where the axis shows numbers and the hover readout the name); select a survey (it is the case of V1 and V3); switch the target between throughput and power; the App opens on the dot plot alone and shows the per-survey predictions as its second view, Each survey; the story's Compare grows the methods' dots one by one on entry | V1 and V3 (the selected survey), V5 (the engine the methods calibrate) | App, Validation group (first view); story step 4, Compare |
+
 ## Technology and versions
 
 Every pinned dependency of `requirements-precompute.txt` (through `data-pipeline/requirements.txt`), `requirements-dev.txt`,
@@ -116,7 +149,7 @@ versions were read at the package registries on 2026-10-26 (the sizing record li
 | contracts | openapi-spec-validator | 0.9.0 | validates `docs/contracts/api.openapi.json` | none: the maintained validator for OpenAPI 3.1 |
 | API | fastapi | 0.143.0 | the dormant `app/`, run by the API contract tests | flask, rejected: no response models to compare with the OpenAPI document |
 | API | httpx | 0.28.1 | the test client of the dormant `app/` | requests, rejected: FastAPI's test client needs httpx |
-| shell | @fasl-work/caos-app-shell | 0.19.9 | the shared app shell, its workbench, charts, gate (pinned exactly, ADR-0078) | a hand-rolled shell, forbidden by ADR-0078 |
+| shell | @fasl-work/caos-app-shell | 0.26.0 | the shared app shell, its workbench, charts, story frame, gate (pinned exactly, ADR-0078) | a hand-rolled shell, forbidden by ADR-0078 |
 | web | react | 19.3.0 | the UI | none: the shell requires it |
 | web | react-dom | 19.3.0 | the UI renderer | none: the shell requires it |
 | web | react-router | 8.4.0 | the routes and the forward of the old focus links | none: the shell requires it |
@@ -130,6 +163,7 @@ versions were read at the package registries on 2026-10-26 (the sizing record li
 | build | @vitejs/plugin-react | 6.1.1 | the React transform for vite | none |
 | build | typescript | 5.9.3 | type check of the web and the generated contract types | none |
 | build | openapi-typescript | 7.13.0 | generates `contract.gen.ts` from the OpenAPI document | hand-written types, rejected: they drift (the build checks them) |
+| build | minimatch | 11.0.1 | scoped patched glob dependency of the contract generator (the `overrides` of `frontend/package.json`); the guarded adapter `frontend/scripts/codegen-compatibility.mjs` preserves its legacy consumer, @redocly/openapi-core 1.34.22 | Redocly 2.x override, rejected: incompatible private imports |
 | build | @types/node | 24.19.1 | types of the build scripts and the reference writer | none |
 | build | @types/react | 19.3.0 | types of React | none |
 | build | @types/react-dom | 19.3.0 | types of React DOM | none |
@@ -139,20 +173,18 @@ versions were read at the package registries on 2026-10-26 (the sizing record li
 
 ## Resources
 
-What each stage needs on the development workstation (Windows 11, Python 3.13, Node 24.14.1; measured 2026-10-27 with
-`tools/audit/measure_command.py` of CAOS_MANAGE on a `git archive` copy of the release branch: the wall time, the peak memory
-of the whole process tree polled every 20 ms, and the bytes left). The commands and the raw output are in
-[`measured-resources.md`](measured-resources.md). No stage needs a GPU or a network after the install.
+What each stage needs on the development workstation (Windows 11, Python 3.12.15, Node 24.14.1; measured 2026-11-15 with `tools/audit/measure_stages.py` of CAOS_MANAGE on `git archive` copies of the release commit `d836e9d` (two runs, each on a fresh copy), each committed as one snapshot so the tests that read the repository through git run: the wall time, the peak memory of the whole process tree polled every 20 ms, and the bytes left). The commands and the raw output are in [`measured-resources.md`](measured-resources.md). No stage needs a GPU or a network after the install.
 
 | stage | memory | disk | time | where it runs |
 |---|---|---|---|---|
-| bake (`data-pipeline/run.py all`: 27 cases, the HP500 backbone and CrusherCal, the index, readiness) | 67 MB peak | 286 KB of artifacts in `data/derived/` (285,678 bytes, 65 files) | 7.3 s | workstation, never CI |
-| training (`data-pipeline/run.py models`: the LHS sweeps of the engine, the surrogate and the autoencoder, ONNX export, held-out evaluation) | 453 MB peak | 58 KB of graphs and contracts in `data/derived/models/` (58,120 bytes, 5 files) | 48 s on the CPU | workstation, never CI |
-| tests (pytest, the whole suite) | 268 MB peak | temporary trees under the temp root (`--basetemp`), removed after | 962 s | workstation; the planted-defect suite `tests/adversarial` also runs in CI |
-| install (`npm ci`) | 644 MB peak | 328 MB in `node_modules` (11,422 files) | 25 s | workstation and CI web job |
-| build (`npm run build`) | 567 MB peak | 16.8 MB in `frontend/dist` (16,820,928 bytes, 159 files), of which 13.5 MB is the ONNX Runtime WASM | 12 s | workstation and CI web job |
-| web unit tests (`npm test`, 309 tests) | 1951 MB peak (vitest's worker pool) | none | 10 s | workstation and CI web job |
-| deploy payload (GitHub Pages) | none | 16.8 MB uploaded | one Pages deploy | CI after main |
+| bake (`data-pipeline/run.py all`: 27 cases, the four HP500 documents, the index, readiness) | 1525 MB peak | 308 KB in `data/derived/` (308,364 bytes, 67 files), the trained models included | 39.1 min | workstation, never CI |
+| HP500 step alone (`data-pipeline/run.py hp500`: the backbone, CrusherCal, the CrusherBayes sampler, the paired comparison) | 1549 MB peak | 31 KB in `data/derived/hp500/` (30,568 bytes, 4 files) | 36.0 min | workstation, never CI |
+| training (`data-pipeline/run.py models`: the LHS sweeps of the engine, the surrogate and the autoencoder, ONNX export, held-out evaluation) | 444 MB peak | 59 KB in `data/derived/models/` (59,480 bytes, 5 files) | 41.8 s on the CPU | workstation, never CI |
+| tests (pytest, the whole suite: 1707 passed, 27 skipped) | 452 MB peak (the process tree, notebook kernels included) | temporary trees under the temp root (`--basetemp`), removed after | 13.9 min | workstation; the planted-defect suite `tests/adversarial` also runs in CI |
+| install (`npm ci`) | 708 MB peak | 329.0 MB in `node_modules` (329,009,652 bytes, 11508 files) | 12.4 s | workstation and CI web job |
+| build (`npm run build`) | 648 MB peak | 17.2 MB in `frontend/dist` (17,222,309 bytes, 174 files), of which 13.5 MB is the ONNX Runtime WASM | 9.1 s | workstation and CI web job |
+| web unit tests (`npm test`, 562 tests) | 3214 MB peak (vitest's worker pool) | none | 6.9 s | workstation and CI web job |
+| deploy payload (GitHub Pages) | none | 17.2 MB uploaded | one Pages deploy | CI after main |
 
 ## Lanes
 
@@ -167,7 +199,7 @@ of the whole process tree polled every 20 ms, and the bytes left). The commands 
   2.3e-12) and to the baked traces by `frontend/src/engine/crusher.parity.test.ts`; the two ONNX models run in the
   browser through onnxruntime-web 1.27.0 with its WASM served by the site. The basis for the live lane is measured: the
   lane gate (`data-pipeline/pipeline/core/gate.py`) judges each case's engine time against 1500 ms and its trace against
-  256 KiB, and every case is live-eligible (the canonical engine evaluates a case in 1.34 ms, the median over the 27 cases of the median of seven warmed runs, at most 2.03 ms; the largest trace is 4,127 bytes; [`measured-resources.md`](measured-resources.md)).
+  256 KiB, and every case is live-eligible (the canonical engine evaluates a case in 1.46 ms, the median over the 27 cases of the median of seven warmed runs, at most 1.61 ms; the largest trace is 4,127 bytes; [`measured-resources.md`](measured-resources.md)).
 
 ## Method ladder
 
@@ -244,9 +276,19 @@ None of these is a model judging a model.
   on the measured throughput and power with a noise per target; a low-order discrepancy on the setting variables in the form
   of Kennedy and O'Hagan 2001 (https://doi.org/10.1111/1467-9868.00294), sampled with the moves of ter Braak 2006 (https://doi.org/10.1007/s11222-006-8769-1) and ter Braak and Vrugt 2008 (https://doi.org/10.1007/s11222-008-9104-9), in emcee (Foreman-Mackey et al. 2013, https://doi.org/10.1086/670067), whose stretch move (Goodman and Weare 2010, https://doi.org/10.2140/camcos.2010.5.65) was tried first and did not converge; weakly informative priors from the literature
   ranges; a differential-evolution ensemble sampler (gradient-free; ter Braak 2006, ter Braak and Vrugt 2008); posterior predictive intervals per held-out survey. Closest
-  work and difference: general Bayesian calibration with discrepancy is Kennedy and O'Hagan 2001; the searches of 2026-10-28
-  found no Bayesian calibration with discrepancy of a cone-crusher population-balance model, evaluated held out (not exhaustive:
-  Scopus and Web of Science were not searched; CAOS_MANAGE `wip/chancadem/beyond-sota-research-2026-10-28.md` section 3).
+  work and difference: general Bayesian calibration with discrepancy is Kennedy and O'Hagan 2001, and the confounding of
+  calibration parameters with the discrepancy is treated by Arendt, Apley and Chen 2012 (https://doi.org/10.1115/1.4007390),
+  Tuo and Wu 2015 (https://doi.org/10.1214/15-AOS1314) and Plumlee 2017, whose orthogonal discrepancy prior removes it
+  (https://doi.org/10.1080/01621459.2016.1211016); the identifiability of a mill population balance is assessed by profile
+  likelihood in Bhonsale, Stokbroekx and Van Impe 2020 (https://doi.org/10.1016/j.compchemeng.2020.107056). Duarte et al. 2021
+  (https://doi.org/10.3390/min11111256) validate a least-squares cone-crusher calibration of the product size distribution on
+  an industrial data set left out of the fit, with point estimates; Rocha et al. 2024 fit their model on the same ten surveys.
+  The searches of 2026-10-28 and 2026-11-11 found no posterior of the fitted scalars of a crusher model, no predictive
+  interval and no survey-by-survey held-out evaluation of crusher throughput and power (not exhaustive: Scopus and Web of
+  Science were not searched; CAOS_MANAGE `wip/chancadem/beyond-sota-research-2026-10-28.md` section 3 and
+  `wip/chancadem/r6-crusherbayes-ms-2026-11-10.md` section D1). What CrusherBayes adds: a Bayesian posterior with a
+  structural discrepancy, a predictive distribution per held-out survey, strict leave-one-survey-out against eleven methods
+  (the published throughput model of Rocha et al. among them), and the exact form of the confounding in this engine.
   Evaluation, stated before the run: strict leave-one-survey-out with the posterior refit without the held-out survey;
   scores the LOO MAPE of the posterior mean, the log predictive density, the nested 80 percent coverage and the mean band width,
   against B-lin, the backbone M0 and the free-form M2 of CrusherCal and the CrusherCal band; and a prior-against-posterior
@@ -263,7 +305,9 @@ CrusherCal (M10) is the evaluation protocol every method above is held to, not a
   (https://doi.org/10.3390/min14090919), and the learned surrogates of comminution models (Koh et al. 2021,
   https://doi.org/10.1016/j.mineng.2021.107026) report no held-out industrial parity and no uncertainty. Evidence, from the
   committed `data/derived/hp500/loo.json`: the calibrated capacity backbone reproduces the measured throughput with a strict
-  leave-one-survey-out MAPE of 12.09 percent, against 11.55 percent in sample for the same backbone (`tph_parity`) and
+  leave-one-survey-out MAPE of 12.09 percent, against 10.95 percent in sample for the same backbone (its capacity base
+  fitted on all ten surveys, `loo.tph.leaky`), 11.55 percent for the engine at its shipped constants (`tph_parity`: the
+  base-case capacity of 647 t/h comes from a Bruno simulation, so it fits nothing to the surveys) and
   18.29 percent for the constant-mean baseline; the label-shuffle control (25.04 percent) does not beat it; the 80 percent
   band's coverage is reported twice, in sample (0.90 on throughput, sigma taken from the same ten residuals) and nested out
   of sample (0.80 on throughput and 0.90 on power, sigma of each survey taken from the other nine only); and the bounded
@@ -279,7 +323,7 @@ CrusherCal (M10) is the evaluation protocol every method above is held to, not a
 ## Deploy driver
 
 GitHub Pages at chancadem.fasl-work.com: a static site with every artifact committed, no secret and no server, for a public
-repository. The measurement behind it is the lane gate (every case is live-eligible) and the site size (16.8 MB of site files, 13.5 MB of it the self-hosted ONNX Runtime WASM, and 286 KB of artifacts, [`measured-resources.md`](measured-resources.md)).
+repository. The measurement behind it is the lane gate (every case is live-eligible) and the site size (17.2 MB of site files, 13.5 MB of it the self-hosted ONNX Runtime WASM, and 308 KB of artifacts, [`measured-resources.md`](measured-resources.md)).
 The target is written in `deploy/TARGET` and checked by `scripts/check_deploy_place.py`.
 
 ## Risks and kill criteria
@@ -313,5 +357,5 @@ The target is written in `deploy/TARGET` and checked by `scripts/check_deploy_pl
 | ADR-0071 | the page is the viewport; one tab row; the instrument at least half the App route | the shell's `CaseWorkbench`; the gate (G5, G6) |
 | ADR-0074 | CI runs cheap checks only; training and the bake are local | `.github/workflows/ci.yml`, `scripts/check_ci_budget.py` |
 | ADR-0075 | every requirement names its gate | `docs/design/features/`, `scripts/check_sdd.py` |
-| ADR-0078 | rules live in the base | shell 0.19.9 (pinned exactly) over template 0.14.000; no product re-implements them |
+| ADR-0078 | rules live in the base | shell 0.26.0 (pinned exactly) over template 0.15.012 (`.template-version`); no product re-implements them, and on adopting 0.26.0 the product dropped its hold of the callout band (known defect 65 fixed in the shell) |
 | ADR-0080 | contract-first parallel delivery | `docs/contracts/`, `tests/contracts/`, `frontend/src/readiness/`, `scripts/check_contracts.py`, `scripts/check_readiness.py` |

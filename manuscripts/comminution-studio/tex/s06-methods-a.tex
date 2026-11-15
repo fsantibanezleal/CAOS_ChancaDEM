@@ -9,7 +9,7 @@ leave-one-survey-out protocol CrusherCal (\ref{sec:m-crushercal}), the envelope 
 (\ref{sec:m-surrogate}), the denoising autoencoder (\ref{sec:m-ae}), the drift projection (\ref{sec:m-drift}) and CrusherBayes
 (\ref{sec:m-crusherbayes}). Every subsection states the theory and its source, the equations as the code evaluates them, the
 assumptions, the parameters with their values and how they were set, the cost, and the implementation. All modules named are in
-\texttt{data-pipeline/\allowbreak{}pipeline/\allowbreak{}} of the product at release 0.12.001, whose artifacts every number of the report is read from; the
+\texttt{data-pipeline/\allowbreak{}pipeline/\allowbreak{}} of the product at release \docrelease, whose artifacts every number of the report is read from; the
 TypeScript counterparts of the engine modules live in \texttt{frontend/\allowbreak{}src/\allowbreak{}engine/\allowbreak{}} under the same names.
 
 \subsection{Rosin-Rammler feed on a square-root-of-two sieve grid}\label{sec:m-feed}
@@ -337,9 +337,10 @@ CrusherBayes samples it, so the engine's throughput on the surveys does not rest
 \emph{Assumptions and limits.} No cavity-level material balance, no feed segregation, no choke-level dynamics: the reduced form is the
 hump and the gap dependence. It is not a vendor capacity table. The throughput of a survey is set by the plant together with the
 setting, so the capacity model is a prediction of the feed rate only under the assumption that the machine runs at its capacity. On the ten
-surveys that assumption holds to first order: the measured feed rate rises with the setting at about $32$~t/h per millimetre
+surveys that assumption holds to first order: the measured feed rate rises with the setting at about $\lineSlopeQ$~t/h per millimetre
 (Figure~\ref{fig:surveys}), and the capacity factor of the calibrated engine, with no other information than the setting, reproduces the
-measured feed rates to $11.55\%$ in sample (Section~\ref{sec:m-hp500}). A plant that runs a crusher below its capacity, for example when the
+measured feed rates to $\bbShipMape\%$ with the base-case capacity of $\qtShip$~t/h, which is fitted to none of the surveys, and to
+$\bbLeakyMape\%$ in sample, with its capacity base fitted on all ten (Section~\ref{sec:m-hp500}). A plant that runs a crusher below its capacity, for example when the
 feed is restricted upstream, breaks the assumption, and the capacity is then an upper bound of the throughput rather than a prediction of it.
 
 \emph{Implementation and tests.} \texttt{model/\allowbreak{}crusher/\allowbreak{}capacity.py} (\texttt{CAP}, \texttt{HP500\_QREF}, \texttt{throughput},

@@ -2,29 +2,30 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "surrogate-model.schema.json",
   "title": "SurrogateModel",
-  "description": "Model slot, catalog row surrogate-model 1.0.0: the inference contract of the surrogate MLP that emulates the crusher engine, written by data-pipeline/pipeline/stages/train.py to data/derived/models/surrogate.json beside the ONNX graphs data/derived/models/surrogate.onnx (float32) and data/derived/models/surrogate.int8.onnx (dynamically quantised). The input is 11 values: a one-hot of the machine in machine_order, then the continuous inputs in input_order standardised as (value - in_mean) / in_std. The graph's input is named x with shape [1, 11]; its output y has shape [1, 10], standardised: value = y * out_std + out_mean, then 10 ** value where out_log is true, in output_order. Trained on an LHS sweep of the canonical Python engine (pipeline.model.crusher); the held-out metrics are the model-metrics row. The engine itself is the slot's baseline: it answers every query exactly, at a cost the surrogate avoids. Applicability: training.input_ranges is the model's domain; it answers only a point that is not calibrated and inside those ranges, else the engine answers with the reason. Rules the schema cannot state, checked by the producer test: in_mean and in_std have the length of input_order, the out arrays the length of output_order, every std is positive, and the ONNX files named in graphs exist with the sha256 given.",
+  "description": "Model slot, catalog row surrogate-model 1.0.1: the inference contract of the surrogate MLP that emulates the crusher engine, written by data-pipeline/pipeline/stages/train.py to data/derived/models/surrogate.json beside the ONNX graphs data/derived/models/surrogate.onnx (float32) and data/derived/models/surrogate.int8.onnx (dynamically quantised). The input is 11 values: a one-hot of the machine in machine_order, then the continuous inputs in input_order standardised as (value - in_mean) / in_std. The graph's input is named x with shape [1, 11]; its output y has shape [1, 10], standardised: value = y * out_std + out_mean, then 10 ** value where out_log is true, in output_order. Trained on an LHS sweep of the canonical Python engine (pipeline.model.crusher); the held-out metrics are the model-metrics row. The engine itself is the slot's baseline: it answers every query exactly, at a cost the surrogate avoids. Applicability: training.input_ranges is the model's domain; it answers only a point that is not calibrated and inside those ranges, else the engine answers with the reason. Rules the schema cannot state, checked by the producer test: in_mean and in_std have the length of input_order, the out arrays the length of output_order, every std is positive, and the ONNX files named in graphs exist with the sha256 given.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "engine_version", "machine_order", "input_order", "in_mean", "in_std", "output_order", "out_log", "out_mean", "out_std", "graphs", "architecture", "training"],
   "properties": {
-    "schema": {"const": "chancadem.surrogate/v1"},
+    "schema": {"const": "chancadem.surrogate/v1", "description": "The contract schema identifier, chancadem.surrogate/v1."},
     "engine_version": {"type": "string", "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$", "description": "The product version whose engine produced the training labels."},
-    "machine_order": {"type": "array", "prefixItems": [{"const": "cone-sec"}, {"const": "cone-tert"}, {"const": "jaw"}, {"const": "cone-short-head"}, {"const": "gyratory"}], "minItems": 5, "maxItems": 5},
-    "input_order": {"type": "array", "prefixItems": [{"const": "css_mm"}, {"const": "throw_mm"}, {"const": "speed_rpm"}, {"const": "feed_x63_mm"}, {"const": "feed_m"}, {"const": "ore_axb"}], "minItems": 6, "maxItems": 6},
-    "in_mean": {"type": "array", "items": {"type": "number"}, "minItems": 6, "maxItems": 6},
-    "in_std": {"type": "array", "items": {"type": "number", "exclusiveMinimum": 0}, "minItems": 6, "maxItems": 6},
-    "output_order": {"type": "array", "prefixItems": [{"const": "p80_mm"}, {"const": "p50_mm"}, {"const": "p20_mm"}, {"const": "pass_1"}, {"const": "pass_4"}, {"const": "pass_8"}, {"const": "pass_16"}, {"const": "pass_32"}, {"const": "throughput_tph"}, {"const": "power_kw"}], "minItems": 10, "maxItems": 10},
-    "out_log": {"type": "array", "items": {"type": "boolean"}, "minItems": 10, "maxItems": 10},
-    "out_mean": {"type": "array", "items": {"type": "number"}, "minItems": 10, "maxItems": 10},
-    "out_std": {"type": "array", "items": {"type": "number", "exclusiveMinimum": 0}, "minItems": 10, "maxItems": 10},
+    "machine_order": {"type": "array", "prefixItems": [{"const": "cone-sec"}, {"const": "cone-tert"}, {"const": "jaw"}, {"const": "cone-short-head"}, {"const": "gyratory"}], "minItems": 5, "maxItems": 5, "description": "The machines in the order of the one-hot that opens the input vector."},
+    "input_order": {"type": "array", "prefixItems": [{"const": "css_mm"}, {"const": "throw_mm"}, {"const": "speed_rpm"}, {"const": "feed_x63_mm"}, {"const": "feed_m"}, {"const": "ore_axb"}], "minItems": 6, "maxItems": 6, "description": "The continuous inputs in the order they follow the one-hot."},
+    "in_mean": {"type": "array", "items": {"type": "number"}, "minItems": 6, "maxItems": 6, "description": "The mean of each continuous input on the training draw, in input_order (the input is standardised as (value - in_mean) / in_std)."},
+    "in_std": {"type": "array", "items": {"type": "number", "exclusiveMinimum": 0}, "minItems": 6, "maxItems": 6, "description": "The standard deviation of each continuous input on the training draw, in input_order."},
+    "output_order": {"type": "array", "prefixItems": [{"const": "p80_mm"}, {"const": "p50_mm"}, {"const": "p20_mm"}, {"const": "pass_1"}, {"const": "pass_4"}, {"const": "pass_8"}, {"const": "pass_16"}, {"const": "pass_32"}, {"const": "throughput_tph"}, {"const": "power_kw"}], "minItems": 10, "maxItems": 10, "description": "The outputs in the order of the graph's output vector."},
+    "out_log": {"type": "array", "items": {"type": "boolean"}, "minItems": 10, "maxItems": 10, "description": "Per output: true when the network predicts its log10 (P80, P50 and P20)."},
+    "out_mean": {"type": "array", "items": {"type": "number"}, "minItems": 10, "maxItems": 10, "description": "The mean of each output on the training draw (of its log10 where out_log is true), in output_order (the output is decoded as y * out_std + out_mean)."},
+    "out_std": {"type": "array", "items": {"type": "number", "exclusiveMinimum": 0}, "minItems": 10, "maxItems": 10, "description": "The standard deviation of each output on the training draw (of the log10 where out_log is true), in output_order."},
     "graphs": {
       "type": "object",
       "additionalProperties": false,
       "required": ["float32", "int8"],
       "properties": {
-        "float32": {"$ref": "#/$defs/graph"},
-        "int8": {"$ref": "#/$defs/graph"}
-      }
+        "float32": {"$ref": "#/$defs/graph", "description": "The float32 graph, surrogate.onnx, the one the App runs."},
+        "int8": {"$ref": "#/$defs/graph", "description": "The dynamically quantised graph, surrogate.int8.onnx."}
+      },
+      "description": "The two exported graphs of the network."
     },
     "architecture": {"type": "string", "minLength": 1, "description": "The layer sizes and activations, for example 11-64-64-32-10, SiLU."},
     "training": {
@@ -32,14 +33,15 @@
       "additionalProperties": false,
       "required": ["seed", "n_train", "n_test", "sampler", "input_ranges", "torch_version"],
       "properties": {
-        "seed": {"type": "integer"},
-        "n_train": {"type": "integer", "minimum": 1},
-        "n_test": {"type": "integer", "minimum": 1},
+        "seed": {"type": "integer", "description": "The seed of the training draw and of torch."},
+        "n_train": {"type": "integer", "minimum": 1, "description": "The number of operating points the network was trained on."},
+        "n_test": {"type": "integer", "minimum": 1, "description": "The number of points of the independent held-out draw."},
         "sampler": {"type": "string", "minLength": 1, "description": "How the operating points were drawn, with the bounds per input; the test draw is independent of the training draw."},
-        "input_ranges": {"$ref": "#/$defs/inputRanges"},
-        "torch_version": {"type": "string", "minLength": 1},
-        "export_parity_max_abs": {"type": "number", "minimum": 0, "description": "The maximum absolute difference between the trained torch module and the exported float32 graph (run through onnxruntime) on the held-out draw, in standardised outputs, measured by train.py right after export; evidence the export preserved the trained module."}
-      }
+        "input_ranges": {"$ref": "#/$defs/inputRanges", "description": "The model's domain: the training range of every continuous input per machine."},
+        "torch_version": {"type": "string", "minLength": 1, "description": "The torch release the network was trained with."},
+        "export_parity_max_abs": {"type": "number", "minimum": 0, "description": "The maximum absolute difference between the trained torch module and the exported float32 graph (run through onnxruntime) on the held-out draw, in standardised output units."}
+      },
+      "description": "How the network was trained."
     }
   },
   "$defs": {
@@ -49,11 +51,11 @@
       "additionalProperties": false,
       "required": ["cone-sec", "cone-tert", "jaw", "cone-short-head", "gyratory"],
       "properties": {
-        "cone-sec": {"$ref": "#/$defs/machineRanges"},
-        "cone-tert": {"$ref": "#/$defs/machineRanges"},
-        "jaw": {"$ref": "#/$defs/machineRanges"},
-        "cone-short-head": {"$ref": "#/$defs/machineRanges"},
-        "gyratory": {"$ref": "#/$defs/machineRanges"}
+        "cone-sec": {"$ref": "#/$defs/machineRanges", "description": "The training ranges of the secondary cone."},
+        "cone-tert": {"$ref": "#/$defs/machineRanges", "description": "The training ranges of the tertiary cone."},
+        "jaw": {"$ref": "#/$defs/machineRanges", "description": "The training ranges of the jaw crusher."},
+        "cone-short-head": {"$ref": "#/$defs/machineRanges", "description": "The training ranges of the short-head cone."},
+        "gyratory": {"$ref": "#/$defs/machineRanges", "description": "The training ranges of the gyratory crusher."}
       }
     },
     "machineRanges": {
@@ -61,13 +63,14 @@
       "additionalProperties": false,
       "required": ["css_mm", "throw_mm", "speed_rpm", "feed_x63_mm", "feed_m", "ore_axb"],
       "properties": {
-        "css_mm": {"$ref": "#/$defs/range"},
-        "throw_mm": {"$ref": "#/$defs/range"},
-        "speed_rpm": {"$ref": "#/$defs/range"},
-        "feed_x63_mm": {"$ref": "#/$defs/range"},
-        "feed_m": {"$ref": "#/$defs/range"},
-        "ore_axb": {"$ref": "#/$defs/range"}
-      }
+        "css_mm": {"$ref": "#/$defs/range", "description": "Closed-side setting range [mm]."},
+        "throw_mm": {"$ref": "#/$defs/range", "description": "Eccentric throw range [mm]."},
+        "speed_rpm": {"$ref": "#/$defs/range", "description": "Eccentric speed range [rpm]."},
+        "feed_x63_mm": {"$ref": "#/$defs/range", "description": "Rosin-Rammler characteristic feed size range [mm]."},
+        "feed_m": {"$ref": "#/$defs/range", "description": "Rosin-Rammler uniformity exponent range."},
+        "ore_axb": {"$ref": "#/$defs/range", "description": "Ore competence A times b range."}
+      },
+      "description": "[low, high] of every continuous input for one machine."
     },
     "range": {"type": "array", "items": {"type": "number"}, "minItems": 2, "maxItems": 2, "description": "[low, high], low below high."},
     "graph": {
@@ -76,12 +79,13 @@
       "required": ["path", "bytes", "sha256", "opset", "input", "output"],
       "properties": {
         "path": {"type": "string", "pattern": "^models/[a-z0-9.-]+\\.onnx$", "description": "Relative to data/derived."},
-        "bytes": {"type": "integer", "minimum": 1, "maximum": 5242880},
-        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
-        "opset": {"type": "integer", "minimum": 13},
-        "input": {"const": "x"},
-        "output": {"const": "y"}
-      }
+        "bytes": {"type": "integer", "minimum": 1, "maximum": 5242880, "description": "The size of the graph file [bytes]."},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$", "description": "SHA-256 of the graph file bytes."},
+        "opset": {"type": "integer", "minimum": 13, "description": "The ONNX operator set the graph is exported with."},
+        "input": {"const": "x", "description": "The name of the graph's input tensor, x."},
+        "output": {"const": "y", "description": "The name of the graph's output tensor, y."}
+      },
+      "description": "One ONNX graph: its file, size, digest, opset and tensor names."
     }
   }
 }

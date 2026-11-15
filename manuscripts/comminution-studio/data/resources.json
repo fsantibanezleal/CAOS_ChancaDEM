@@ -1,7 +1,7 @@
 {
  "schema": "chancadem.report.resources/v1",
- "product_version": "0.12.001",
- "measured_on": "2026-11-05",
+ "product_version": "0.13.000",
+ "measured_on": "2026-11-15",
  "host": {
   "os": "Windows 11",
   "python": "3.12.15",
@@ -13,17 +13,16 @@
    "command": [
     "python.exe",
     "data-pipeline/run.py",
-    "all",
-    "--output",
-    "<sandbox>"
+    "all"
    ],
    "exit": 0,
-   "seconds": 4172.72,
-   "peak_bytes": 1460043776,
-   "peak_mb": 1460.0,
+   "seconds": 2343.68,
+   "peak_bytes": 1525321728,
+   "peak_mb": 1525.3,
    "sizes": {
-    "output": {
-     "bytes": 240715
+    "data/derived": {
+     "bytes": 308364,
+     "files": 67
     }
    },
    "label": "bake"
@@ -32,17 +31,16 @@
    "command": [
     "python.exe",
     "data-pipeline/run.py",
-    "hp500",
-    "--output",
-    "<sandbox>"
+    "hp500"
    ],
    "exit": 0,
-   "seconds": 3505.04,
-   "peak_bytes": 1455882240,
-   "peak_mb": 1455.9,
+   "seconds": 2157.86,
+   "peak_bytes": 1549037568,
+   "peak_mb": 1549.0,
    "sizes": {
-    "output": {
-     "bytes": 27728
+    "data/derived/hp500": {
+     "bytes": 30568,
+     "files": 4
     }
    },
    "label": "hp500"
@@ -51,17 +49,16 @@
    "command": [
     "python.exe",
     "data-pipeline/run.py",
-    "models",
-    "--output",
-    "<sandbox>"
+    "models"
    ],
    "exit": 0,
-   "seconds": 108.42,
-   "peak_bytes": 462143488,
-   "peak_mb": 462.1,
+   "seconds": 41.82,
+   "peak_bytes": 443744256,
+   "peak_mb": 443.7,
    "sizes": {
-    "output": {
-     "bytes": 59480
+    "data/derived/models": {
+     "bytes": 59480,
+     "files": 5
     }
    },
    "label": "models"
@@ -75,16 +72,15 @@
     "-p",
     "no:cacheprovider",
     "--basetemp",
-    "<sandbox>",
-    "tests"
+    "<sandbox>"
    ],
-   "exit": 1,
-   "seconds": 1743.04,
-   "peak_bytes": 306221056,
-   "peak_mb": 306.2,
+   "exit": 0,
+   "seconds": 832.54,
+   "peak_bytes": 452259840,
+   "peak_mb": 452.3,
    "sizes": {},
    "label": "tests",
-   "note": "while other jobs used the workstation"
+   "note": "1707 passed, 27 skipped"
   },
   {
    "command": [
@@ -92,13 +88,13 @@
     "ci"
    ],
    "exit": 0,
-   "seconds": 32.4,
-   "peak_bytes": 640962560,
-   "peak_mb": 641.0,
+   "seconds": 12.43,
+   "peak_bytes": 708104192,
+   "peak_mb": 708.1,
    "sizes": {
     "node_modules": {
-     "bytes": 327986259,
-     "files": 11424
+     "bytes": 329009652,
+     "files": 11508
     }
    },
    "label": "install"
@@ -110,13 +106,13 @@
     "build"
    ],
    "exit": 0,
-   "seconds": 8.06,
-   "peak_bytes": 617631744,
-   "peak_mb": 617.6,
+   "seconds": 9.14,
+   "peak_bytes": 648368128,
+   "peak_mb": 648.4,
    "sizes": {
     "dist": {
-     "bytes": 17062469,
-     "files": 165
+     "bytes": 17222309,
+     "files": 174
     }
    },
    "label": "build"
@@ -127,52 +123,52 @@
     "test"
    ],
    "exit": 0,
-   "seconds": 6.83,
-   "peak_bytes": 2650939392,
-   "peak_mb": 2650.9,
+   "seconds": 6.88,
+   "peak_bytes": 3213959168,
+   "peak_mb": 3214.0,
    "sizes": {},
    "label": "webtests",
-   "note": "409 tests"
+   "note": "562 tests in 38 files"
   }
  ],
  "engine": {
   "cases": 27,
   "runs_per_case": 7,
-  "median_of_medians_ms": 2.842,
-  "max_median_ms": 9.096,
+  "median_of_medians_ms": 1.458,
+  "max_median_ms": 1.606,
   "per_case_median_ms": {
-   "CI1": 2.849,
-   "CK1": 2.842,
-   "CP1": 2.632,
-   "G01": 2.477,
-   "G02": 3.218,
-   "H01": 2.639,
-   "H02": 3.126,
-   "HP500-01": 6.643,
-   "HP500-02": 3.49,
-   "HP500-03": 9.096,
-   "HP500-04": 3.33,
-   "HP500-05": 3.091,
-   "HP500-06": 3.23,
-   "HP500-07": 2.842,
-   "HP500-08": 2.5,
-   "HP500-09": 2.558,
-   "HP500-10": 3.08,
-   "J01": 2.384,
-   "J02": 2.545,
-   "S01": 2.884,
-   "S02": 2.759,
-   "S03": 1.722,
-   "S04": 2.69,
-   "S05": 3.009,
-   "S06": 1.88,
-   "T01": 2.795,
-   "T02": 2.7
+   "CI1": 1.58,
+   "CK1": 1.509,
+   "CP1": 1.536,
+   "G01": 1.606,
+   "G02": 1.576,
+   "H01": 1.545,
+   "H02": 1.566,
+   "HP500-01": 1.534,
+   "HP500-02": 1.604,
+   "HP500-03": 1.555,
+   "HP500-04": 1.513,
+   "HP500-05": 1.546,
+   "HP500-06": 1.493,
+   "HP500-07": 1.449,
+   "HP500-08": 1.452,
+   "HP500-09": 1.422,
+   "HP500-10": 1.453,
+   "J01": 1.438,
+   "J02": 1.425,
+   "S01": 1.449,
+   "S02": 1.434,
+   "S03": 1.424,
+   "S04": 1.426,
+   "S05": 1.458,
+   "S06": 1.425,
+   "T01": 1.418,
+   "T02": 1.423
   }
  },
  "site": {
-  "bytes": 17062469,
-  "files": 165,
+  "bytes": 17222593,
+  "files": 174,
   "wasm_bytes": 13479978
  }
 }

@@ -1,7 +1,8 @@
 // The 3D crusher chamber as a shell view: one filling PlotCard whose stage is the three.js canvas and whose controls
 // row sits under it. It starts paused (the first frame is drawn static), moves only through the shell's usePausedViz,
 // takes its size from the shell's Stage (a ResizeObserver on the stage box, never the viewport) and its colours from
-// the shell's tokens.
+// the shell's tokens. Its four parts carry labels on the canvas and are selectable there (a label, or a click on the part itself through
+// the scene's raycast), on the shell's linked-view store: the section beside it (views/chamber.tsx) selects the same part, both ways.
 import {
   PlotCard,
   Stage,
@@ -9,16 +10,20 @@ import {
   pick,
   useShellLang,
   useThemeStore,
+  useLinkedItem,
   usePausedViz,
   type BiText,
   type Provenance,
 } from '@fasl-work/caos-app-shell';
 import { useEffect, useRef, useState } from 'react';
+import { linkedId, selectedOf, useLinkedSelection } from '../linked';
+import { machineGeom } from '../../engine/chamber';
+import { PART_IDS, type PartId } from './geometry';
 import type { Operating } from '../../engine/types';
 import './chamber3d.css';
 import { webglDeps } from './deps';
 import { readPalette } from './palette';
-import { createChamberScene, type ChamberScene, type Pose, type SceneParams } from './scene';
+import { createChamberScene, type ChamberScene, type PartPoint, type Pose, type SceneParams } from './scene';
 import * as T from './text';
 
 export interface ChamberViewProps {
@@ -57,6 +62,37 @@ interface CanvasProps {
   onUnavailable: () => void;
 }
 
+/** The name of a part on the canvas: a revolution's concave and mantle, a jaw's fixed and swing plates. */
+export function partName(part: PartId, revolution: boolean): BiText {
+  switch (part) {
+    case 'concave':
+      return revolution ? { en: 'concave', es: 'cóncavo' } : { en: 'fixed jaw', es: 'placa fija' };
+    case 'mantle':
+      return revolution ? { en: 'mantle', es: 'manto' } : { en: 'swing jaw', es: 'placa móvil' };
+    case 'gap':
+      return { en: 'closed-side gap', es: 'abertura de descarga' };
+    case 'feed':
+      return { en: 'feed', es: 'alimentación' };
+  }
+}
+
+/** A part's label on the canvas: a dot on the part and its name beside it, a button on the shell's linked-view store. */
+function PartLabel({ part, at, revolution }: { part: PartId; at: PartPoint; revolution: boolean }) {
+  const lang = useShellLang();
+  const item = useLinkedItem(linkedId('part', part), 'scene');
+  return (
+    <>
+      <span className="chamber3d-dot" aria-hidden="true" style={{ left: at.x, top: at.y }} />
+      <button type="button" className="chamber3d-part" data-part-label={part} data-part-at={`${Math.round(at.x)},${Math.round(at.y)}`} style={{ left: at.x + 8, top: at.y - 11 }} {...item}>
+        {pick(partName(part, revolution), lang)}
+      </button>
+    </>
+  );
+}
+
+const samePoints = (a: Record<PartId, PartPoint> | null, b: Record<PartId, PartPoint>) =>
+  !!a && PART_IDS.every((id) => Math.abs(a[id].x - b[id].x) < 0.5 && Math.abs(a[id].y - b[id].y) < 0.5 && a[id].visible === b[id].visible);
+
 /** The canvas, mounted by Stage only once the stage has a real size. */
 function ChamberCanvas(p: CanvasProps) {
   const lang = useShellLang();
@@ -64,6 +100,12 @@ function ChamberCanvas(p: CanvasProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const latest = useRef(p);
   latest.current = p;
+  const [points, setPoints] = useState<Record<PartId, PartPoint> | null>(null);
+  const pending = useRef(false);
+  const { selectedId, select } = useLinkedSelection();
+  const part = selectedOf(selectedId, 'part');
+  const selectedPart = part && (PART_IDS as readonly string[]).includes(part) ? (part as PartId) : null;
+  const revolution = machineGeom(p.op.machine).isRevolution;
   const applied = useRef({ op: p.op, p80Mm: p.p80Mm, f80Mm: p.f80Mm });
 
   // build once per mount; the chamber, the palette, the size and the controls follow through the effects below
@@ -89,6 +131,19 @@ function ChamberCanvas(p: CanvasProps) {
         onRefit: () => {
           latest.current.poseRef.current = null;
         },
+        // the labels follow the camera: the parts' points are re-read once after the frames drawn in one task (the frames come from the
+        // shell's usePausedViz loop or a camera move; this schedules no frame of its own)
+        onRendered: () => {
+          if (pending.current) return;
+          pending.current = true;
+          queueMicrotask(() => {
+            pending.current = false;
+            const sc = latest.current.sceneRef.current;
+            if (!sc) return;
+            const next = sc.partPoints();
+            setPoints((prev) => (samePoints(prev, next) ? prev : next));
+          });
+        },
       });
     } catch {
       latest.current.onUnavailable();
@@ -96,11 +151,26 @@ function ChamberCanvas(p: CanvasProps) {
     }
     scene.setParams(l.params);
     scene.setPlaying(l.playing);
-    host.appendChild(scene.domElement);
+    host.prepend(scene.domElement);
+    // a click on a part selects it (a drag that orbits the camera is not a click)
+    let down: [number, number] | null = null;
+    const onDown = (e: PointerEvent) => {
+      down = [e.clientX, e.clientY];
+    };
+    const onClick = (e: MouseEvent) => {
+      if (down && Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) return;
+      const r = scene.domElement.getBoundingClientRect();
+      const hit = scene.pick(((e.clientX - r.left) / r.width) * 2 - 1, -(((e.clientY - r.top) / r.height) * 2 - 1));
+      if (hit) select(linkedId('part', hit), 'scene');
+    };
+    scene.domElement.addEventListener('pointerdown', onDown);
+    scene.domElement.addEventListener('click', onClick);
     l.sceneRef.current = scene;
     applied.current = { op: l.op, p80Mm: l.p80Mm, f80Mm: l.f80Mm };
     l.onDrawn();
     return () => {
+      scene.domElement.removeEventListener('pointerdown', onDown);
+      scene.domElement.removeEventListener('click', onClick);
       l.sceneRef.current = null;
       scene.domElement.remove();
       scene.dispose();
@@ -135,7 +205,16 @@ function ChamberCanvas(p: CanvasProps) {
     p.sceneRef.current?.domElement.setAttribute('aria-label', pick(T.CANVAS_LABEL, lang));
   }, [lang, p.sceneRef]);
 
-  return <div className="chamber3d-canvas" ref={hostRef} />;
+  // the part selected anywhere (here, in the section) is lit in the scene
+  useEffect(() => {
+    p.sceneRef.current?.setSelected(selectedPart);
+  }, [selectedPart, p.sceneRef]);
+
+  return (
+    <div className="chamber3d-canvas" ref={hostRef} data-selected-part={selectedPart ?? ''}>
+      {points && PART_IDS.filter((id) => points[id].visible).map((id) => <PartLabel key={id} part={id} at={points[id]} revolution={revolution} />)}
+    </div>
+  );
 }
 
 export function ChamberView({ op, p80Mm, f80Mm, provenance, note }: ChamberViewProps) {

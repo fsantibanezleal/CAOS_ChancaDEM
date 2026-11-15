@@ -10,7 +10,7 @@ import { evaluate } from '../engine/engine';
 import type { Operating } from '../engine/types';
 import type { Text } from '../lib/contract.types';
 import { bandHalfWidth, syntheticBand, selectionOf, VARIANTS, type SyntheticBand } from '../workbench/model';
-import { CampaignView } from './campaign';
+import { CampaignView, HoursView } from './campaign';
 import { Fill, Stack } from './draw';
 import { bare, GroupFrame, Pending, provenanceOf, REGIME_TEXT, useNum, useT, useView, type Sub } from './shared';
 import { asc, finAll, LIVE_COLOR, linSpace, REPLAY_COLOR, REPLAY_DASH } from './series';
@@ -368,11 +368,12 @@ function CompareView() {
 
 export function PerformanceGroup() {
   const tabs: Sub[] = [
-    { id: 'result', label: { en: 'Result and capacity', es: 'Resultado y capacidad' }, content: <ResultView /> },
-    { id: 'setting', label: { en: 'Setting trade-off', es: 'Efecto de la abertura' }, content: <SettingView /> },
+    { id: 'campaign', label: { en: 'Campaign', es: 'Campaña' }, content: <HoursView /> },
+    { id: 'drift', label: { en: 'Hours by drift', es: 'Horas por velocidad' }, content: <CampaignView /> },
+    { id: 'result', label: { en: 'Result', es: 'Resultado' }, content: <ResultView /> },
+    { id: 'setting', label: { en: 'Setting', es: 'Abertura' }, content: <SettingView /> },
     { id: 'power', label: { en: 'Power', es: 'Potencia' }, content: <PowerView /> },
-    { id: 'compare', label: { en: 'Compare variants', es: 'Comparar variantes' }, content: <CompareView /> },
-    { id: 'campaign', label: { en: 'Campaign', es: 'Campaña' }, content: <CampaignView /> },
+    { id: 'compare', label: { en: 'Variants', es: 'Variantes' }, content: <CompareView /> },
   ];
   return <GroupFrame group="performance" ariaLabel={{ en: 'Performance views', es: 'Vistas de desempeño' }} tabs={tabs} />;
 }

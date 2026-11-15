@@ -12,6 +12,9 @@ import { evaluate } from '../engine/engine';
 import type { Operating } from '../engine/types';
 import type { Text } from '../lib/contract.types';
 import { Fill, Stack } from './draw';
+import { ChartCallouts, type CalloutSpec, type ChartPoint } from './callouts';
+import { useEntry } from './staging';
+import { useHours } from './linked';
 import { Pending, provenanceOf, useNum, useT, useView } from './shared';
 import { finAll, LIVE_COLOR, logSpace } from './series';
 
@@ -20,11 +23,11 @@ export const REFERENCE_RESET_H = 45;
 /** The x axis: the drift rate, from the lowest to the highest value the axis shows [mm/h]. */
 export const DRIFT_RANGE: [number, number] = [0.01, 1];
 const CURVE_POINTS = 49;
-/** The target the view opens with, as a multiple of the case's own P80: a control value, not a claim. */
+/** The target the views open with, as a multiple of the case's own P80: a control value, not a claim. */
 export const DEFAULT_TARGET_FACTOR = 1.1;
 
-/** The default P80 target: the case's P80 plus 10 percent. */
-export const defaultTarget = (p80Mm: number): number => p80Mm * DEFAULT_TARGET_FACTOR;
+/** The one target rule of the App and the story (SDD catalog row V4, SH-010): the case's P80 plus 10 percent. */
+export const defaultP80Target = (p80Mm: number): number => p80Mm * DEFAULT_TARGET_FACTOR;
 
 export const REFERENCE_LABEL: Text = {
   en: 'the re-set interval of one plant (Ma et al. 2016)',
@@ -60,6 +63,10 @@ export const CAMPAIGN_TEXT = {
     en: 'No curve is drawn for this target: the statement above the figure says why.',
     es: 'No se dibuja curva para este objetivo: el enunciado sobre la figura dice por qué.',
   },
+  noPoint: {
+    en: 'The engine gives no valid P80 for this case at any opening of the setting on the drawn range, so there is no curve to draw and no point to read: the other views say why.',
+    es: 'El motor no entrega un P80 válido para este caso en ningún desplazamiento de la abertura del rango dibujado, así que no hay curva que dibujar ni punto que leer: las otras vistas dicen por qué.',
+  },
   ceiling: {
     en: 'The ceiling of the setting is the upper end of the training range of the machine type, the range the engine was swept over.',
     es: 'El techo de la abertura es el extremo superior del rango de entrenamiento del tipo de máquina, el rango sobre el que se barrió el motor.',
@@ -93,7 +100,8 @@ export function campaignModel(op: Operating, p80TargetMm: number, cssMaxMm: numb
 /** The props of the chart for a curve: hours against the drift rate on log axes, the re-set reference line, the drift that uses the opening in that interval. */
 export function campaignChart(m: CampaignModel) {
   const drift = m.kind === 'curve' ? m.driftMmPerH : logSpace(DRIFT_RANGE[0], DRIFT_RANGE[1], CURVE_POINTS);
-  // no curve (target exceeded, never reached, invalid point): the frame and the reference line are drawn, the series is empty
+  // no curve (target exceeded, never reached, invalid point): the frame and the reference line are drawn, the series is empty, and the
+  // statement above the figure says why
   const hours: (number | null)[] = m.kind === 'curve' ? finAll(m.hours) : drift.map(() => null);
   const series: ChartSeries[] = [{ label: { en: 'Hours until the P80 target is exceeded', es: 'Horas hasta superar el P80 objetivo' }, values: hours, color: LIVE_COLOR, width: 2.4 }];
   const yMarks: { y: number; label: Text; tone: 'neutral' }[] = [{ y: REFERENCE_RESET_H, label: REFERENCE_LABEL, tone: 'neutral' }];
@@ -120,7 +128,7 @@ export function CampaignView() {
   if (!sel) return <Pending />;
   const op = sel.op;
   const p80 = sel.result.p80;
-  const baseTarget = defaultTarget(p80);
+  const baseTarget = defaultP80Target(p80);
   // The target is the workbench's own P80 target (its value is part of the key the views follow, so a change redraws the figure); until the
   // reader sets it here the view opens at the case's P80 plus 10 percent, and a target the workbench reset (a new case) falls back to that.
   const target = chosen && chosen.caseId === caseId && chosen.mm === sharedTarget ? chosen.mm : baseTarget;
@@ -198,6 +206,271 @@ export function CampaignView() {
           />
         </Fill>
       </Stack>
+    </PlotCard>
+  );
+}
+
+// ---- Catalog row V4, state and dynamics: P80 against operating hours at the reader's drift rate (SH-010). The view opens with no drift
+// rate: until the reader sets one, the same curve is drawn against the opening of the setting in millimetres, the one axis the engine
+// answers without a wear rate. Once set, the axis is hours (the opening over the drift), the target P80 is the threshold, the hour it is
+// crossed is marked, the 45 h re-set of Ma et al. 2016 is a reference line and the hours cursor is the now line (V2 and V3 follow it).
+
+/** The engine's local dP80/dCSS at the operating point [mm of P80 per mm of setting], by a central difference; null at an invalid
+ * point. It is the slope at the current setting only: the response over a drift is driftSecant (the engine's P80 is piecewise in the
+ * setting, so the two differ; the view's Methodology paragraph says why). */
+export function p80PerMm(op: Operating): number | null {
+  const h = Math.max(0.25, 0.01 * op.cssMm);
+  const lo = evaluate({ ...op, cssMm: op.cssMm - h });
+  const hi = evaluate({ ...op, cssMm: op.cssMm + h });
+  if (!lo.valid || !hi.valid || !Number.isFinite(lo.p80) || !Number.isFinite(hi.p80)) return null;
+  return (hi.p80 - lo.p80) / (2 * h);
+}
+
+export interface DriftCurve {
+  /** The opening of the setting at each point [mm]. */
+  openingMm: number[];
+  /** The hours at each point at the reader's drift rate, or null while no drift rate is set. */
+  hours: number[] | null;
+  p80: (number | null)[];
+  /** The opening at which P80 reaches the target [mm] (0 when already exceeded), or null when it is never reached. */
+  crossingMm: number | null;
+  crossingH: number | null;
+  /** The drawn range R: the training range of the setting above the current setting, to its ceiling [mm]. */
+  rangeMm: number;
+}
+
+/** The share of the drawn range under which a positive margin is a warning (N1 of the 0.13.000 re-check; SDD row V4, SH-010). */
+export const MARGIN_WARNING_SHARE = 0.25;
+
+/**
+ * The state of the margin m to the target over the drawn range R (N1): alarm when m <= 0 (the product is at or past its target at
+ * the current setting), warning when 0 < m < MARGIN_WARNING_SHARE x R (the target is reached within a quarter of the range the setting
+ * can still open), normal otherwise; null when the margin cannot be computed (no crossing in range), whose callout gives its reason.
+ */
+export function marginState(marginMm: number | null, rangeMm: number | null): 'alarm' | 'warning' | 'normal' | null {
+  if (marginMm === null || !Number.isFinite(marginMm)) return null;
+  if (marginMm <= 0) return 'alarm';
+  return rangeMm !== null && rangeMm > 0 && marginMm < MARGIN_WARNING_SHARE * rangeMm ? 'warning' : 'normal';
+}
+
+const OPENING_SAMPLES = 41;
+
+/** P80 as the setting opens from its current value, to past the target's opening (or to the ceiling), and the hours when a drift is set. */
+export function driftCurve(op: Operating, p80TargetMm: number, cssMaxMm: number, driftMmPerH: number | null): DriftCurve {
+  const cssAt = cssAtP80Target(op, p80TargetMm, cssMaxMm);
+  const crossingMm = cssAt === null ? null : Math.max(0, cssAt - op.cssMm);
+  const room = Math.max(0, cssMaxMm - op.cssMm);
+  const span = crossingMm !== null && crossingMm > 0 ? Math.min(room, crossingMm * 2) : room;
+  const openingMm = Array.from({ length: OPENING_SAMPLES }, (_, i) => (span * i) / (OPENING_SAMPLES - 1));
+  const p80 = openingMm.map((d) => {
+    const r = evaluate({ ...op, cssMm: op.cssMm + d });
+    return r.valid && Number.isFinite(r.p80) ? r.p80 : null;
+  });
+  const rate = driftMmPerH !== null && driftMmPerH > 0 ? driftMmPerH : null;
+  return {
+    openingMm,
+    hours: rate === null ? null : openingMm.map((d) => d / rate),
+    p80,
+    crossingMm,
+    crossingH: rate !== null && crossingMm !== null ? hoursToTarget(crossingMm, rate) : null,
+    rangeMm: room,
+  };
+}
+
+/**
+ * The drift response over the drawn range: P80 at the target's crossing minus P80 now, over the drift that reaches the target
+ * [mm of P80 per mm of setting], the secant of the curve the stage draws from its start to its crossing; null when the target is
+ * never reached, already exceeded, or the point is not valid.
+ */
+export function driftSecant(op: Operating, crossingMm: number | null): number | null {
+  if (crossingMm === null || !(crossingMm > 0)) return null;
+  const now = evaluate(op);
+  const at = evaluate({ ...op, cssMm: op.cssMm + crossingMm });
+  if (!now.valid || !at.valid || !Number.isFinite(now.p80) || !Number.isFinite(at.p80)) return null;
+  return (at.p80 - now.p80) / crossingMm;
+}
+
+export const DRIFT_TEXT = {
+  control: {
+    en: 'Your drift rate: how fast the closed-side setting opens as the liners wear, in millimetres per hour. The product asserts no wear rate and sets none: until you enter yours the curve is drawn against the opening of the setting.',
+    es: 'Su velocidad de desplazamiento: cuán rápido se abre la abertura de descarga con el desgaste de los blindajes, en milímetros por hora. El producto no afirma ni fija ninguna tasa de desgaste: hasta que ingrese la suya, la curva se dibuja contra el desplazamiento de la abertura.',
+  },
+  unset: {
+    en: 'No drift rate is set, so the axis is the opening of the setting in millimetres; enter your measured drift rate to read operating hours.',
+    es: 'No hay velocidad de desplazamiento fijada, así que el eje es el desplazamiento de la abertura en milímetros; ingrese su velocidad medida para leer horas de operación.',
+  },
+} satisfies Record<string, Text>;
+
+/** The three callouts of the campaign view: the target, where it is crossed, and the P80 at the now line (or, before a drift rate is
+ * set, the drift response over the drawn range: the secant from the curve's start to the target's crossing, driftSecant). */
+export function hoursCallouts(
+  caseId: string,
+  target: number,
+  curve: DriftCurve,
+  secant: number | null,
+  atCursorP80: number | null,
+  fmt: (v: number, o: { digits?: number }) => string,
+): CalloutSpec[] {
+  const source: Text = { en: `Live engine, ${caseId}`, es: `Motor en vivo, ${caseId}` };
+  const reader: Text = { en: 'Your target and your drift rate', es: 'Su objetivo y su velocidad de desplazamiento' };
+  const notReached: Text = { en: 'the target is not reached below the ceiling of the setting', es: 'el objetivo no se alcanza bajo el techo de la abertura' };
+  const useHours = curve.hours !== null;
+  // the crossing's state is the margin's, by its meaning (N1): never an alarm while the product is inside its target
+  const marginOf = marginState(curve.crossingMm, curve.rangeMm) ?? 'inactive';
+  return [
+    { id: 'target', eyebrow: { en: 'TARGET P80', es: 'P80 OBJETIVO' }, value: fmt(target, { digits: 3 }), unit: { en: 'mm', es: 'mm' }, state: 'warning', source: reader },
+    useHours
+      ? { id: 'cross', eyebrow: { en: 'CROSSED AT', es: 'CRUZADO EN' }, value: curve.crossingH === null ? null : fmt(curve.crossingH, { digits: 3 }), unit: { en: 'h', es: 'h' }, state: marginOf, source: { en: `${source.en}, at your drift rate`, es: `${source.es}, a su velocidad` }, missing: notReached }
+      : {
+          id: 'cross',
+          eyebrow: { en: 'MARGIN', es: 'MARGEN' },
+          value: curve.crossingMm === null ? null : fmt(curve.crossingMm, { digits: 3 }),
+          unit: { en: 'mm', es: 'mm' },
+          state: marginOf,
+          source: { en: `Drift allowed to the target; ${source.en}`, es: `Desplazamiento hasta el objetivo; ${source.es}` },
+          missing: notReached,
+        },
+    atCursorP80 !== null
+      ? { id: 'now', eyebrow: { en: 'P80 NOW', es: 'P80 AHORA' }, value: fmt(atCursorP80, { digits: 3 }), unit: { en: 'mm', es: 'mm' }, state: 'selected', source: { en: `At the now line; ${source.en}`, es: `En la línea de ahora; ${source.es}` } }
+      : {
+          id: 'now',
+          eyebrow: { en: 'SLOPE', es: 'PENDIENTE' },
+          value: secant === null ? null : fmt(secant, { digits: 3 }),
+          unit: { en: 'mm/mm', es: 'mm/mm' },
+          state: 'selected',
+          source: { en: `Secant to the target over the drawn range, P80 per mm of drift, live engine, ${caseId}`, es: `Secante al objetivo en el rango dibujado, P80 por mm de desplazamiento, motor en vivo, ${caseId}` },
+          missing: { en: 'the target is not reached on the drawn range', es: 'el objetivo no se alcanza en el rango dibujado' },
+        },
+  ];
+}
+
+/** Whether the drift curve has a point to draw and read: false when the engine answers no valid P80 at any opening of the drawn range
+ * (the refused control cases, for example a setting above the feed's top size), where the view states why instead of drawing a chart
+ * whose crosshair has nothing to step to (G20). */
+export const curveHasPoint = (curve: DriftCurve): boolean => curve.p80.some((v) => v !== null && Number.isFinite(v));
+
+/** The curve drawn out to a share `reveal` of the way to the target's crossing (the whole curve at 1): the values past it are gaps. */
+export function drawnTo(values: (number | null)[], xs: readonly number[], crossX: number | null, reveal: number): (number | null)[] {
+  if (reveal >= 1) return values;
+  const end = crossX ?? xs[xs.length - 1] ?? 0;
+  const upTo = xs[0] + Math.max(0, reveal) * (end - xs[0]);
+  return values.map((v, i) => (i === 0 || xs[i] <= upTo ? v : null));
+}
+
+/** The App's V4 and the story's Operate step. The App draws the card with its controls; the story splits it (N7: the phone stage holds
+ * the chart): `part="stage"` is the card without its controls and with the note the chart needs (the axis while no drift rate is set),
+ * and `part="controls"` is the controls alone, in the docked panel with the paragraph on measuring the drift. */
+export function HoursView({ part }: { part?: 'stage' | 'controls' } = {}) {
+  const storyNote = part === 'stage';
+  const { sel, target: sharedTarget, setTarget, drift, setDrift } = useView();
+  const stateKey = useWorkbenchState()?.stateKey;
+  const lang = useShellLang();
+  const num = useNum();
+  const { hours, setHours } = useHours();
+  // the story's entry draws the curve out from the current setting to the target's crossing (views/staging.tsx); the App draws it whole
+  const { reveal } = useEntry();
+  if (!sel) return <Pending />;
+  const op = sel.op;
+  const target = sharedTarget > sel.result.p80 ? sharedTarget : defaultP80Target(sel.result.p80);
+  const curve = driftCurve(op, target, CSS_MAX_MM[op.machine], drift);
+  const secant = driftSecant(op, curve.crossingMm);
+  const useHoursAxis = curve.hours !== null && drift !== null;
+  const xs = useHoursAxis ? curve.hours! : curve.openingMm;
+  const xMax = xs[xs.length - 1] || 1;
+  const cursorX = useHoursAxis && hours !== null ? Math.min(xMax, Math.max(0, hours)) : null;
+  const atCursor = cursorX !== null && drift !== null ? evaluate({ ...op, cssMm: op.cssMm + cursorX * drift }) : null;
+  const callouts = hoursCallouts(sel.data.manifest.case_id, target, curve, secant, atCursor && Number.isFinite(atCursor.p80) ? atCursor.p80 : null, (v, o) => num(v, o));
+  const crossX = useHoursAxis ? curve.crossingH : curve.crossingMm;
+  const p80s = curve.p80.filter((v): v is number => v !== null);
+  const yLo = Math.min(target, ...p80s) * 0.95;
+  const yHi = Math.max(target, ...p80s) * 1.05;
+  const points: ChartPoint[] = [
+    // the target line is dashed from the plot's left edge, where its first dash is drawn: the anchor stands on ink at any width
+    { id: 'target', x: xs[0] ?? 0, y: target },
+    { id: 'cross', x: crossX ?? xMax, y: target },
+    { id: 'now', x: cursorX ?? xs[0], y: atCursor ? atCursor.p80 : (curve.p80[0] ?? target) },
+  ];
+  const marks: { x: number; label: BiText }[] = [];
+  if (crossX !== null && crossX <= xMax) marks.push({ x: crossX, label: { en: 'target crossed', es: 'objetivo cruzado' } });
+  if (useHoursAxis && REFERENCE_RESET_H <= xMax) marks.push({ x: REFERENCE_RESET_H, label: REFERENCE_LABEL });
+  if (cursorX !== null) marks.push({ x: cursorX, label: { en: 'now', es: 'ahora' } });
+  const controls = (
+      <div className="cdem-controls">
+        <label title={CAMPAIGN_TEXT.control[lang]}>
+          {lang === 'es' ? 'P80 objetivo (mm) ' : 'P80 target (mm) '}
+          <input type="number" min={0.1} step={0.1} value={Math.round(target * 10) / 10} onChange={(e) => Number(e.target.value) > 0 && setTarget(Number(e.target.value))} style={{ width: '5.5rem' }} />
+        </label>
+        <label title={DRIFT_TEXT.control[lang]}>
+          {lang === 'es' ? 'Su velocidad (mm/h) ' : 'Your drift rate (mm/h) '}
+          <input
+            type="number"
+            min={0}
+            step={0.01}
+            value={drift ?? ''}
+            placeholder={lang === 'es' ? 'sin fijar' : 'not set'}
+            onChange={(e) => setDrift(e.target.value === '' || !(Number(e.target.value) > 0) ? null : Number(e.target.value))}
+            style={{ width: '5.5rem' }}
+            data-drift-input=""
+          />
+        </label>
+        <input
+          type="range"
+          min={0}
+          max={Math.max(1, Math.ceil(xMax))}
+          step={Math.max(0.1, Math.ceil(xMax) / 200)}
+          value={cursorX ?? 0}
+          disabled={!useHoursAxis}
+          aria-label={lang === 'es' ? 'Horas de operación (línea de ahora)' : 'Operating hours (the now line)'}
+          onChange={(e) => setHours(Number(e.target.value))}
+          data-hours-cursor=""
+        />
+        <span className="cdem-cursor-chip">{cursorX !== null ? `${num(cursorX, { digits: 3 })} h` : lang === 'es' ? 'horas: fije su velocidad' : 'hours: set your drift rate'}</span>
+      </div>
+  );
+  if (part === 'controls') return controls;
+  if (!curveHasPoint(curve)) {
+    return (
+      <PlotCard fill title={{ en: 'P80 as the setting drifts open', es: 'P80 a medida que la abertura se abre' }} lane="live" provenance={provenanceOf(sel)} dataKey={stateKey}>
+        <div className="cdem-stack" data-caos-flow="" data-drift={drift ?? ''} data-hours="">
+          {part !== 'stage' && controls}
+          {/* a declared absence (ADR-0080 decision 3): the instrument draws nothing and says why, so no crosshair is offered over no
+              data (G20) and no empty frame stands in for a drawing (G6) */}
+          <p className="caos-pending" data-state="unavailable" data-no-curve="">
+            {CAMPAIGN_TEXT.noPoint[lang]}
+          </p>
+        </div>
+      </PlotCard>
+    );
+  }
+  return (
+    <PlotCard
+      fill
+      title={{ en: 'P80 as the setting drifts open', es: 'P80 a medida que la abertura se abre' }}
+      lane="live"
+      provenance={provenanceOf(sel)}
+      dataKey={stateKey}
+      note={
+        storyNote
+          ? useHoursAxis
+            ? undefined
+            : DRIFT_TEXT.unset
+          : { en: `${CAMPAIGN_TEXT.measure.en}${useHoursAxis ? '' : ` ${DRIFT_TEXT.unset.en}`}`, es: `${CAMPAIGN_TEXT.measure.es}${useHoursAxis ? '' : ` ${DRIFT_TEXT.unset.es}`}` }
+      }
+    >
+      <div className="cdem-stack" data-caos-flow="" data-drift={drift ?? ''} data-hours={cursorX ?? ''}>
+        {part !== 'stage' && controls}
+        <ChartCallouts callouts={callouts} points={points} frame={{ x: [0, xMax], y: [yLo, yHi] }}>
+          <UPlotChart
+            title={{ en: 'P80 against operating hours', es: 'P80 contra horas de operación' }}
+            height="fill"
+            x={useHoursAxis ? { values: xs, label: { en: 'Operating hours', es: 'Horas de operación' }, unit: 'h' } : { values: xs, label: { en: 'Opening of the setting', es: 'Desplazamiento de la abertura' }, unit: 'mm' }}
+            y={{ label: { en: 'Product P80', es: 'P80 del producto' }, unit: 'mm', range: [yLo, yHi] }}
+            series={[{ id: 'p80', label: { en: 'P80 (live engine)', es: 'P80 (motor en vivo)' }, values: drawnTo(curve.p80, xs, crossX, Math.ceil(reveal * 12) / 12), color: LIVE_COLOR, width: 2.4 }]}
+            yMarks={[{ y: target, label: { en: 'target P80', es: 'P80 objetivo' }, tone: 'neutral' }]}
+            marks={marks}
+          />
+        </ChartCallouts>
+      </div>
     </PlotCard>
   );
 }

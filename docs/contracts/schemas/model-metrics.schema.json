@@ -2,21 +2,21 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "model-metrics.schema.json",
   "title": "ModelMetrics",
-  "description": "Catalog row model-metrics 1.0.0: the held-out evaluation of the two model slots, written by data-pipeline/pipeline/stages/evaluate.py to data/derived/model-metrics.json. The surrogate is scored on an LHS draw independent of its training draw (a different seed), per output, against the canonical engine; the ONNX graphs are scored through onnxruntime, not through torch, and the parity between torch and the float32 and int8 graphs is reported; the monotonicity check is that the surrogate's P80 does not decrease as the closed-side setting opens on every machine's sweep. The autoencoder is scored by its false-alarm rate on the held-out draw and its detection rate on planted off-manifold points, beside the envelope gate's rates on the same points. Every number is computed by the evaluate stage; none is written by hand.",
+  "description": "Catalog row model-metrics 1.0.1: the held-out evaluation of the two model slots, written by data-pipeline/pipeline/stages/evaluate.py to data/derived/model-metrics.json. The surrogate is scored on an LHS draw independent of its training draw (a different seed), per output, against the canonical engine; the ONNX graphs are scored through onnxruntime, not through torch, and the parity between torch and the float32 and int8 graphs is reported; the monotonicity check is that the surrogate's P80 does not decrease as the closed-side setting opens on every machine's sweep. The autoencoder is scored by its false-alarm rate on the held-out draw and its detection rate on planted off-manifold points, beside the envelope gate's rates on the same points. Every number is computed by the evaluate stage; none is written by hand.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "engine_version", "surrogate", "anomaly"],
   "properties": {
-    "schema": {"const": "chancadem.model-metrics/v1"},
-    "engine_version": {"type": "string", "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$"},
+    "schema": {"const": "chancadem.model-metrics/v1", "description": "The document schema identifier, chancadem.model-metrics/v1."},
+    "engine_version": {"type": "string", "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$", "description": "The product version that wrote the document (format X.XX.XXX); a version other than VERSION makes the row stale."},
     "surrogate": {
       "type": "object",
       "additionalProperties": false,
       "required": ["n_train", "n_test", "test_seed", "per_output", "p80_monotone_vs_css", "parity", "note"],
       "properties": {
-        "n_train": {"type": "integer", "minimum": 1},
-        "n_test": {"type": "integer", "minimum": 1},
-        "test_seed": {"type": "integer"},
+        "n_train": {"type": "integer", "minimum": 1, "description": "The number of training points of the evaluated bundle."},
+        "n_test": {"type": "integer", "minimum": 1, "description": "The number of points of the independent held-out draw."},
+        "test_seed": {"type": "integer", "description": "The seed of the held-out Latin-hypercube draw."},
         "per_output": {
           "type": "object",
           "additionalProperties": false,
@@ -27,40 +27,44 @@
               "additionalProperties": false,
               "required": ["r2", "mape_pct", "mape_pct_int8"],
               "properties": {
-                "r2": {"type": "number", "maximum": 1},
-                "mape_pct": {"type": "number", "minimum": 0},
-                "mape_pct_int8": {"type": "number", "minimum": 0}
+                "r2": {"type": "number", "maximum": 1, "description": "Coefficient of determination of the float32 graph against the engine, in original units."},
+                "mape_pct": {"type": "number", "minimum": 0, "description": "MAPE of the float32 graph against the engine, over the points where the engine's value is not zero [%]."},
+                "mape_pct_int8": {"type": "number", "minimum": 0, "description": "The same MAPE for the int8 graph [%]."}
               }
             }
-          }
+          },
+          "description": "The scores of each output, keyed by its name in the bundle's output_order."
         },
-        "p80_monotone_vs_css": {"type": "boolean"},
+        "p80_monotone_vs_css": {"type": "boolean", "description": "True when the surrogate's P80 does not fall as the closed-side setting opens on every checked curve."},
         "parity": {
           "type": "object",
           "additionalProperties": false,
           "required": ["torch_vs_float32_max_abs", "float32_vs_int8_max_abs"],
           "properties": {
-            "torch_vs_float32_max_abs": {"type": "number", "minimum": 0},
-            "float32_vs_int8_max_abs": {"type": "number", "minimum": 0}
-          }
+            "torch_vs_float32_max_abs": {"type": "number", "minimum": 0, "description": "The trained torch module against the float32 graph, measured by the train stage right after export."},
+            "float32_vs_int8_max_abs": {"type": "number", "minimum": 0, "description": "The float32 graph against the int8 graph through onnxruntime on the held-out draw."}
+          },
+          "description": "The largest differences between the trained module and its exported graphs, in standardised output units."
         },
-        "note": {"type": "string", "minLength": 1}
-      }
+        "note": {"type": "string", "minLength": 1, "description": "How the surrogate was evaluated, in words."}
+      },
+      "description": "The held-out evaluation of the surrogate against the canonical engine."
     },
     "anomaly": {
       "type": "object",
       "additionalProperties": false,
       "required": ["n_heldout", "false_alarm_rate", "n_planted", "detection_rate", "envelope_false_alarm_rate", "envelope_detection_rate", "planted", "note"],
       "properties": {
-        "n_heldout": {"type": "integer", "minimum": 1},
-        "false_alarm_rate": {"type": "number", "minimum": 0, "maximum": 1},
-        "n_planted": {"type": "integer", "minimum": 1},
-        "detection_rate": {"type": "number", "minimum": 0, "maximum": 1},
-        "envelope_false_alarm_rate": {"type": "number", "minimum": 0, "maximum": 1},
-        "envelope_detection_rate": {"type": "number", "minimum": 0, "maximum": 1},
+        "n_heldout": {"type": "integer", "minimum": 1, "description": "The number of held-out points."},
+        "false_alarm_rate": {"type": "number", "minimum": 0, "maximum": 1, "description": "The share of held-out points the autoencoder marks anomalous [fraction]."},
+        "n_planted": {"type": "integer", "minimum": 1, "description": "The number of planted off-manifold points with finite features."},
+        "detection_rate": {"type": "number", "minimum": 0, "maximum": 1, "description": "The share of planted points the autoencoder marks anomalous [fraction]."},
+        "envelope_false_alarm_rate": {"type": "number", "minimum": 0, "maximum": 1, "description": "The share of held-out points the envelope check flags [fraction]."},
+        "envelope_detection_rate": {"type": "number", "minimum": 0, "maximum": 1, "description": "The share of planted points the envelope check flags [fraction]."},
         "planted": {"type": "string", "minLength": 1, "description": "How the off-manifold points were planted (which inputs moved outside the training bounds, and by how much)."},
-        "note": {"type": "string", "minLength": 1}
-      }
+        "note": {"type": "string", "minLength": 1, "description": "The alarm threshold and how the envelope check is read, in words."}
+      },
+      "description": "The held-out evaluation of the autoencoder beside the engine's envelope check."
     }
   }
 }
