@@ -297,6 +297,18 @@ None of these is a model judging a model.
   (b) its nested coverage lies outside 0.7 to 0.9 or its band is wider than the CrusherCal band at equal coverage. Even then
   the identifiability table is the result and is reported, with the negative on power, as the rule requires. With n = 10, a
   difference below about 3 MAPE points is noise.
+  Theory and virtual-plant study (0.14.000; CAOS_MANAGE `plans/chancadem/crusherbayes-theory-plan.md`, research
+  `wip/chancadem/cbt-research-2026-11-19.md`): the question the ten surveys cannot answer, when the physics pays against an
+  empirical regression, answered in closed form and on virtual plants with known truths. Given the scalars the predictive mean is
+  least squares on the discrepancy regressors shrunk toward the engine's plane plus the engine's departure from it; its exact risk
+  splits the gain into a shrinkage that fades with the number of surveys and a curvature term that persists and is positive only
+  when the engine's curvature is aligned with the plant's and less than twice as large. Evaluation: 176 cells of 1,900 replicates
+  (four virtual plants, four designs, n = 10 to 160, eleven predictors including the orthogonal prior of Plumlee 2017 and the
+  scaled prior of Gu and Wang 2018, https://doi.org/10.1137/17M1159890), the theory against the simulation in every cell, a
+  design study by expected information gain (Rainforth et al. 2024, https://doi.org/10.1214/23-STS915) and a simulation-based
+  calibration of the sampler (Talts et al. 2018; Modrak et al. 2025, https://doi.org/10.1214/23-BA1404). Harness, analyses and
+  summaries in `manuscripts/crusherbayes-theory/`; notebook `08-crusherbayes/04`; the manuscript is a second record of this
+  method's results (product.json `manuscripts`).
 
 CrusherCal (M10) is the evaluation protocol every method above is held to, not a proposal of its own (CAOS_MANAGE
 `conventions/method-tiers-and-manuscripts.md` section 1): an out-of-sample validation of a calibrated crusher model on open industrial survey data, with a
