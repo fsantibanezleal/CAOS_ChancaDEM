@@ -252,6 +252,14 @@ def fig_ceiling(idf: dict) -> None:
     macro("ceilSharePrec", fmt(100 * (1 / lin ** 2 - 1) / (1 / flo ** 2 - 1), 0))
     meas = ten["measured_ratio_sampled_scale"]["q_ref_tph"]
     macro("ceilShareMeas", fmt(100 * (1 - meas) / (1 - flo), 0))
+    # the linearized model's contraction against the sampler's on the ten surveys, per scalar (the reach of the design study)
+    gaps = {k: abs(ten["linearized_ratio"][k] - ten["measured_ratio_sampled_scale"][k]) for k in ten["linearized_ratio"]}
+    worst = max(gaps, key=gaps.get)
+    macro("linSampWorstName", SCALAR_TEX[worst])
+    macro("linSampWorstLin", fmt(ten["linearized_ratio"][worst], 3))
+    macro("linSampWorstMeas", fmt(ten["measured_ratio_sampled_scale"][worst], 3))
+    macro("linSampMaxOther", fmt(max(v for k, v in gaps.items() if k != worst), 3))
+    macro("linSampOthers", len(gaps) - 1)
 
 
 DESIGN_ROWS = [("D0", None, "ten surveys (throughput, power)"), ("D2", None, "ten surveys, speed 324 to 396 rpm"),
@@ -509,6 +517,22 @@ def sampler_outputs(sbc: dict, ver: dict) -> None:
     macro("sbcConvBelowBonf", sum(1 for v in pc.values() if v < 0.05 / len(pc)))
     macro("sbcNotConverged", N - sbc["converged"])
     macro("sbcRedraws", sbc["redraws_engine_failure"])
+    # the reach of the rank test (analysis/sbc_power.py): its power against a posterior of the wrong width or location
+    pw = json.loads((DATA / "sbc_power.json").read_text(encoding="utf-8"))
+    def pw_at(scale: float, shift: float, level: str) -> str:
+        sc = next(s for s in pw["scenarios"] if math.isclose(s["scale"], scale) and math.isclose(s["shift"], shift))
+        return fmt(sc[level]["power"], 2)
+    macro("sbcPowReps", f"{pw['reps']:,}")
+    macro("sbcPowHalf", pw_at(0.5, 0.0, "bonferroni"))
+    macro("sbcPowSeventy", pw_at(0.7, 0.0, "bonferroni"))
+    macro("sbcPowEighty", pw_at(0.8, 0.0, "bonferroni"))
+    macro("sbcPowEightyNom", pw_at(0.8, 0.0, "nominal"))
+    macro("sbcPowWide", pw_at(1.5, 0.0, "bonferroni"))
+    macro("sbcPowShiftHalf", pw_at(1.0, 0.5, "bonferroni"))
+    macro("sbcPowShiftQuarter", pw_at(1.0, 0.25, "bonferroni"))
+    # the coverage of a Gaussian 80% band whose width is the sampler's mean width ratio times the right one
+    z80 = 1.2815515655446004
+    macro("verWidthOnlyCov", fmt(math.erf(ver["pooled"]["width_ratio_sampler_over_cb_oracle"]["mean"] * z80 / math.sqrt(2)), 2))
     rows = []
     for cell, lab in (("V0-real-n10", "V0, real, $n=10$"), ("V2-real-n10", "V2, real, $n=10$"),
                       ("V0-surveys-n10", "V0, surveys, $n=10$")):
@@ -629,6 +653,15 @@ def write_numbers(fit_doc: dict, timing: dict, pilot: dict) -> None:
     rows = {c["name"]: c for c in fit_doc["contraction"]}
     macro("sigTph", fmt(rows["sigma_tph"]["posterior_mean"], 1))
     macro("sigKw", fmt(rows["sigma_kW"]["posterior_mean"], 1))
+    # the noise prior of the method (ln sigma ~ N(ln median, log sd)) against the plant's noise, in prior standard deviations
+    import sys
+    sys.path.insert(0, str(ROOT / "data-pipeline"))
+    from pipeline.hp500 import crusherbayes as cb
+    macro("noiseMedTph", fmt(cb.NOISE_MEDIAN["tph"], 0))
+    macro("noiseMedKw", fmt(cb.NOISE_MEDIAN["kW"], 0))
+    macro("noiseLogSd", fmt(cb.NOISE_LOG_SD, 1))
+    for t, name in (("tph", "noiseAboveTph"), ("kW", "noiseAboveKw")):
+        macro(name, fmt(math.log(rows[f"sigma_{t}"]["posterior_mean"] / cb.NOISE_MEDIAN[t]) / cb.NOISE_LOG_SD, 2))
     macro("engineMs", fmt(timing["ms_per_evaluation_median"], 2))
     evals = fit_doc["method"]["walkers"] * fit_doc["method"]["steps"] * (fit_doc["n"] - 1)
     macro("cbCpuHours", fmt(evals * timing["ms_per_evaluation_median"] / 1000 / 3600, 1))

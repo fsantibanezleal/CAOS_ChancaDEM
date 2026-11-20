@@ -33,9 +33,13 @@ The calibration finds no error in the sampler. Every rank histogram of Figure~\r
 \sbcQuantities{} $p$ values is \sbcMinP{}, for \sbcMinPName, and \sbcBelowBonf{} fall below \sbcBonfP, the level that keeps the
 chance of any false alarm among the \sbcQuantities{} tests at 5\pct. The ranks of the log likelihood, the test quantity that
 detects a posterior close to the prior or one that ignores part of the data~\cite{modrak}, have $p=\sbcLikP$. The first clause of
-H6 held. The test has the reach of its size: \sbcN{} posteriors in \sbcBins{} wide bins detect a posterior that is clearly too
-narrow, too wide or shifted, the errors that would mislead a band or a mean, and would miss a small distortion in the tails,
-which finer bins and several hundred posteriors would be needed to see.
+H6 held. The test has the reach of its size, which we measured by simulating it (\sbcPowReps{} repetitions per alternative,
+\path{analysis/sbc_power.py}): at the Bonferroni level, \sbcN{} posteriors in \sbcBins{} bins detect a posterior half as wide as
+the true one with probability \sbcPowHalf, one 30\pct{} too narrow with probability \sbcPowSeventy{} and one 20\pct{} too narrow
+with probability \sbcPowEighty{} (\sbcPowEightyNom{} at the 5\pct{} level); one 50\pct{} too wide with probability \sbcPowWide;
+one shifted by half a posterior standard deviation with probability \sbcPowShiftHalf, and by a quarter with \sbcPowShiftQuarter.
+The calibration therefore rules out gross errors of the posterior's width or location, not errors of a few tens of percent, which
+would move an 80\pct{} band by several points and which finer bins and several hundred posteriors would be needed to see.
 
 \sbcConverged{} of the \sbcN{} chains met the criterion of Section~\ref{sec:method}, at least 50 integrated autocorrelation
 times after the burn-in. The largest autocorrelation time of a chain had a median of \sbcTauMedian{} steps, close to the
@@ -52,10 +56,16 @@ zero or lies below it in all \verRiskHeld{}. In \verBelowKO{} of them, power on 
 the sampler does better than the linearized predictor by more than that error, and in \verAtOracle{} of the \verCellOutputs{}
 its risk is within Monte Carlo error of the predictor handed the true scalars. The second clause of H6 held, and with it H6.
 The comparison is fair to the closed forms: they are given the noise scales, which the sampler learns from the same ten surveys
-together with the eight scalars and the six discrepancy coefficients. Where the sampler beats the linearized predictor it does
-so despite learning more, so on power it is the linearized model, built at the prior centre, that costs risk, not the
-posterior; on throughput the two are equal within error. Within the reach of three cells, this licenses the linearized learned
-predictor of the closed-form study and the linearized model of the design study as descriptions of the shipped method. \verConverged{} of the \verPosteriors{} verification chains met
+together with the eight scalars and the six discrepancy coefficients. On power on the ten surveys' own design, two of the three
+power cells, the linearized predictor costs risk against the full posterior although the posterior learns more; the linearized
+model differs from the posterior in its point of expansion, the prior centre, in its Gaussian form in the scalars and in the
+truncation of the priors it drops, and the study does not separate the three. On throughput the two are equal within error.
+Within the reach of three cells, this licenses the predictive risk of the linearized learned predictor of the closed-form study
+as a description of the shipped method's. It does not license the design study's contraction in the same way: on the ten
+surveys the linearized model's ratio of posterior to prior standard deviation is within \linSampMaxOther{} of the sampler's
+of~\cite{cb002} for \linSampOthers{} of the eight scalars, but \linSampWorstLin{} against \linSampWorstMeas{} for
+\linSampWorstName, so the information figures of Section~\ref{sec:results-design} describe the linearized model, close to the
+sampler for most scalars and not for that one. \verConverged{} of the \verPosteriors{} verification chains met
 the convergence criterion.
 
 The bands tell a different story from the means. The sampler's 80\pct{} band covered between \verCovMin{} and \verCovMax{} of
@@ -63,7 +73,12 @@ the test points across the cell outputs, \verCovPooled{} pooled over the \verPos
 the band built with the true scalars and noise scale on the same replicates: a shortfall of \verCovGap{} points, with a 95\pct{}
 Monte Carlo interval of $\pm$\verCovGapCI{} points when the two outputs of a posterior count as one observation. The sampler's
 bands were \verWidthPct\pct{} as wide as the true ones (95\pct{} interval $\pm$\verWidthCI{} points), and its means carry the slightly larger risk
-of Table~\ref{tab:verify}; the study does not separate the two causes. The shortfall does not contradict the calibration.
+of Table~\ref{tab:verify}; the study does not separate the two causes. A Gaussian band \verWidthPct\pct{} as wide as the right
+one covers \verWidthOnlyCov, so the width accounts for part of the shortfall. A candidate cause of the narrower bands is the noise
+prior: its medians, \noiseMedTph~t/h and \noiseMedKw~kW with a log standard deviation of \noiseLogSd, lie \noiseAboveTph{} and
+\noiseAboveKw{} prior standard deviations below the plant's noise scales, and ten surveys leave the learned scales partly pulled
+toward them; the verification did not record the
+learned noise scales, so this is a hypothesis for the next run, not a finding. The shortfall does not contradict the calibration.
 Simulation-based calibration tests the posterior on average over the prior, with a new truth for every posterior, and a correct
 posterior is calibrated in that average; the verification fixes the truth at one point, the posterior mean of the ten surveys,
 where a posterior learned from ten surveys need not cover at its nominal rate. Coverage was not part of H6, so the hypothesis

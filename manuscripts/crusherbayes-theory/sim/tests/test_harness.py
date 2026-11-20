@@ -14,6 +14,7 @@ import pools
 import predictors as pr
 import special
 import theory
+from conftest import SIM as SIM_DIR
 from pipeline.hp500 import crusherbayes as cb
 
 
@@ -224,3 +225,17 @@ def test_k_chi2_survival():
     # tabulated upper quantiles: chi2_{0.05, 9} = 16.919, chi2_{0.01, 99} = 134.642
     assert abs(special.chi2_sf(16.919, 9) - 0.05) < 1e-4
     assert abs(special.chi2_sf(134.642, 99) - 0.01) < 1e-4
+
+
+# ---- the reach of the rank test (analysis/sbc_power.py) ----
+def test_sbc_power_holds_its_level_under_the_null_and_detects_a_posterior_half_as_wide():
+    import importlib.util
+    path = SIM_DIR.parent / "analysis" / "sbc_power.py"
+    spec = importlib.util.spec_from_file_location("sbc_power", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    rng = np.random.default_rng(7)
+    null = mod.power(1.0, 0.0, 96, 99, 4, {"nominal": 0.05}, 4000, rng)["nominal"]["power"]
+    assert abs(null - 0.05) < 4 * math.sqrt(0.05 * 0.95 / 4000)
+    assert mod.power(0.5, 0.0, 96, 99, 4, {"nominal": 0.05}, 2000, rng)["nominal"]["power"] > 0.95
+    assert mod.power(1.0, 1.0, 96, 99, 4, {"nominal": 0.05}, 2000, rng)["nominal"]["power"] > 0.95

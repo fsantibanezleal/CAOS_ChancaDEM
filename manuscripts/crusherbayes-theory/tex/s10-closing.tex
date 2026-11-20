@@ -4,9 +4,10 @@
 
 The theory holds conditionally on the scalars and on the design. The study measures the learning of the scalars in two ways,
 the linearized model and the full sampler, and the second only on three cells with \verReps{} replicates each and at a reduced
-chain length, because one full posterior costs about \cbCpuHours~CPU-hours at the product's size. The closed forms use the plant's noise scale, which the full
-method learns; the verification cells measure what that costs: no risk beyond Monte Carlo error, and \verCovGap{} points of
-coverage of the 80\pct{} band (Section~\ref{sec:results-sampler}). The linearization is taken at the prior centre, which is the
+chain length, because one full posterior took \sbcWallHours{} to \verWallHours~h of wall time on average at that length on a
+shared machine (the engine timing of Section~\ref{sec:method} gives \cbCpuHours~CPU-hours at the product's size on an idle
+core). The closed forms use the plant's noise scale, which the full method learns; the verification cells measure what
+that costs: no risk beyond Monte Carlo error, and \verCovGap{} points of coverage of the 80\pct{} band (Section~\ref{sec:results-sampler}). The linearization is taken at the prior centre, which is the
 shipped engine, and the virtual plants put the truth at the posterior mean of the ten surveys, a distance of up to one prior
 standard deviation on the power scalars; a plant further from the prior centre would make the linearized predictor worse and
 the verification would have to be repeated there. The orthogonal prior is implemented in its empirical form over the training
@@ -69,8 +70,8 @@ the setting, so on throughput only the shrinkage acts; on power the engine's cur
 variance at best. A curved capacity of the plant's form gains a persistent \capRoRmseS{} to \capRoRmseW\pct{} of RMSE inside the
 operating windows (\capRoMseS{} to \capRoMseW\pct{} of the mean squared error) and \capRoRmseX\pct{} under extrapolation, bounded
 inside the training window by the plant's own curvature. The capacity base cannot be narrowed below a floor by more surveys at
-the same speed over the same setting range, and a product-size measurement is the design that teaches the scalars most. The
-shipped sampler passed simulation-based calibration and its risk was not above the linearized predictor's on the verification
-cells, while its 80\pct{} band covered \verCovPooled{} at ten surveys. The next steps are a product-size
+the same speed over the same setting range, and in the linearized model a product-size measurement is the design that teaches
+the scalars most. The shipped sampler, run at a reduced chain length, passed simulation-based calibration within that
+test's reach and its risk was not above the linearized predictor's on the verification cells, while its 80\pct{} band covered \verCovPooled{} at ten surveys. The next steps are a product-size
 measurement on the HP500 surveys, a capacity law curved in the setting inside the engine, and a discrepancy whose prior scale is
 set by~\eqref{eq:taustar} rather than by convention.
