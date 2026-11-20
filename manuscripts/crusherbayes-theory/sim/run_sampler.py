@@ -302,9 +302,9 @@ def summarize(a) -> int:
         ranks = np.array([d["rank_loglik"] if nm == "loglik" else d["ranks"][nm] for d in sbc_docs], int)
         if ranks.size == 0:
             continue
-        chi2, p = theory.rank_uniformity(ranks, L_DRAWS, BINS)
-        params[nm] = {"histogram": theory.rank_histogram(ranks, L_DRAWS, BINS).tolist(), "chi2": chi2, "p_value": p}
-    sbc = {"schema": SCHEMA_SBC, "n_posteriors": len(sbc_docs), "L": L_DRAWS, "bins": BINS,
+        chi2, p = theory.rank_uniformity(ranks, L_DRAWS, a.bins)
+        params[nm] = {"histogram": theory.rank_histogram(ranks, L_DRAWS, a.bins).tolist(), "chi2": chi2, "p_value": p}
+    sbc = {"schema": SCHEMA_SBC, "n_posteriors": len(sbc_docs), "L": L_DRAWS, "bins": a.bins,
            "config": sbc_docs[0]["config"] if sbc_docs else None,
            "converged": int(sum(d["convergence"]["converged"] for d in sbc_docs)),
            "redraws_engine_failure": int(sum(d["redraws_engine_failure"] for d in sbc_docs)),
@@ -364,6 +364,7 @@ def main(argv: list[str] | None = None) -> int:
     s = sub.add_parser("summarize")
     s.add_argument("--out", required=True)
     s.add_argument("--data", required=True)
+    s.add_argument("--bins", type=int, default=BINS, help="rank-histogram bins; must divide L + 1 = 100 (Talts et al.: N/bins of 20 or more)")
     a = ap.parse_args(argv)
     if a.mode == "summarize":
         return summarize(a)
