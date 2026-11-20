@@ -1,0 +1,162 @@
+\section{The calibrated predictor and its closed forms}\label{sec:method}
+
+This section states the method under study, CrusherBayes as released in ChancaDEM~\productrelease{} and reported
+in~\cite{cb002}, in the form the theory needs: the full Bayesian model, its predictive given the scalars, a linearization in
+which the scalars are learned in closed form, and the three discrepancy priors compared in the study. Nothing in the
+calibrated model is changed; the closed forms are exact consequences of it, and the full sampler is run beside them
+(Section~\ref{sec:results-sampler}) to measure what they leave out.
+
+\subsection{The model}
+
+For survey $i$ and output $t\in\{\mathrm{tph},\mathrm{kW}\}$ (throughput in t/h, power in kW),
+\begin{equation}
+y_{t,i}=f_t(\boldsymbol\theta;\mathbf x_i)+\tilde{\mathbf z}_i^{\top}\mathbf d_t+\varepsilon_{t,i},\qquad
+\mathbf d_t\sim N(\mathbf 0,\tau_t^2\mathbf I),\quad \varepsilon_{t,i}\sim N(0,\sigma_t^2),
+\label{eq:model}
+\end{equation}
+where $\mathbf x_i=(c_i,f_{80,i})$ is the operating point (the closed-side setting and the feed size, both in mm), $f_t$ is the
+engine, $\boldsymbol\theta$ are its eight fitted scalars, and the discrepancy regressors are
+\begin{equation}
+\tilde{\mathbf z}_i=\Big(1,\ \frac{c_i-\bar c}{\varsigma_c},\ \frac{f_{80,i}-\bar f}{\varsigma_f}\Big),\qquad \mathbf Z=[\tilde{\mathbf z}_1,\dots,\tilde{\mathbf z}_n]^{\top},
+\label{eq:design}
+\end{equation}
+standardized with the mean and the population standard deviation of the training surveys. The engine is a Whiten
+classification and breakage model~\cite{whiten,napier} of an HP500 secondary cone crusher with the calibration of Rocha et
+al.~\cite{rocha}: the capacity $Q=Q_{\mathrm{ref}}(c+17)/38$ at the machine's fixed speed and throw, the Bond draw $P_d=W Q$
+with the specific energy $W=10\,W_i(P_{80}^{-1/2}-F_{80}^{-1/2})$ in kWh/t~\cite{bond}, and the current-based power
+$P=\zeta P_d+P_n$. The eight scalars are the capacity base $Q_{\mathrm{ref}}$, the work index $W_i$, the power slope $\zeta$,
+the no-load power $P_n$, two multipliers $s_{K_1},s_{K_2}$ of the classification sizes, the classification exponent $K_3$ and a
+shift $\Delta t_{10}$ of the breakage index. Their priors are truncated normals on the natural logarithm of the positive
+scalars and on the value of the others, centred on the engine's shipped values (Table~\ref{tab:scalars}); the noise scales
+have $\ln\sigma_t\sim N(\ln\sigma_{t,0},1)$ with $\sigma_{\mathrm{tph},0}=60$~t/h and $\sigma_{\mathrm{kW},0}=15$~kW; and the
+discrepancy scales are $\tau_{\mathrm{tph}}=140$~t/h and $\tau_{\mathrm{kW}}=36$~kW, about 12\pct{} of the typical level of
+each output. Given $\boldsymbol\theta$ and $\sigma_t$, the discrepancy is integrated out exactly,
+\begin{equation}
+\mathbf y_t\mid\boldsymbol\theta,\sigma_t\sim N\big(\mathbf f_t(\boldsymbol\theta),\ \sigma_t^2\mathbf I+\tau_t^2\mathbf Z\mathbf Z^{\top}\big),
+\label{eq:marginal}
+\end{equation}
+and the ten-dimensional posterior of the eight scalars and the two noise scales is sampled by a differential-evolution
+ensemble sampler~\cite{emcee,tb06,tbv08}. One posterior evaluates the engine about $1.26\times10^6$ times on nine surveys; at
+\engineMs~ms per evaluation it costs about \cbCpuHours~CPU-hours.
+
+\begin{table}[!t]
+\caption{The eight fitted scalars of the engine on the HP500 lane, with their shipped value (the prior centre), the prior
+standard deviation on the sampled scale, and the posterior mean of the fit to all ten surveys, which is the truth of the
+virtual plants of Section~\ref{sec:design}.}
+\label{tab:scalars}
+\centering\footnotesize
+\resizebox{\columnwidth}{!}{\input{generated/tab-scalars}}
+\end{table}
+
+\subsection{The predictive given the scalars}
+
+Given the scalars and the noise scale, the posterior predictive of a held-out survey at $\mathbf x_h$ is Gaussian. By the
+push-through identity $\mathbf Z^{\top}(\sigma^2\mathbf I+\tau^2\mathbf Z\mathbf Z^{\top})^{-1}=(\sigma^2\mathbf I+\tau^2\mathbf
+G)^{-1}\mathbf Z^{\top}$, with $\mathbf G=\mathbf Z^{\top}\mathbf Z$ and $\lambda_t=\sigma_t^2/\tau_t^2$, its mean and variance are
+\begin{align}
+\hat y_{t}(\mathbf x_h)&=f_t(\boldsymbol\theta;\mathbf x_h)+\tilde{\mathbf z}_h^{\top}(\mathbf G+\lambda_t\mathbf I)^{-1}\mathbf Z^{\top}\big(\mathbf y_t-\mathbf f_t(\boldsymbol\theta)\big),\label{eq:cbmean}\\
+s_t^2(\mathbf x_h)&=\sigma_t^2\Big(1+\tilde{\mathbf z}_h^{\top}(\mathbf G+\lambda_t\mathbf I)^{-1}\tilde{\mathbf z}_h\Big).\label{eq:cbvar}
+\end{align}
+The mean~\eqref{eq:cbmean} is the engine corrected by a ridge regression of its residuals on the discrepancy regressors; the
+posterior covariance of the discrepancy coefficients is $\sigma_t^2(\mathbf G+\lambda_t\mathbf I)^{-1}$, which
+gives~\eqref{eq:cbvar}. Proposition~3 of~\cite{cb002} rewrites~\eqref{eq:cbmean} as a ridge regression of the survey on
+$\mathbf Z$ toward the engine's best plane, plus the engine's departure from that plane at $\mathbf x_h$; Section~\ref{sec:theory}
+computes its risk. The full method averages~\eqref{eq:cbmean} and~\eqref{eq:cbvar} over the posterior of
+$(\boldsymbol\theta,\sigma_t)$; the closed form fixes them. Two fixings are used. The oracle fixing sets the scalars to the
+truth of the virtual plant, or to the scalars that bring the engine closest to the plant in the $L_2$ sense of Tuo and
+Wu~\cite{tuowu} when the plant is not an engine, and the noise to the plant's; it is the best the calibrated predictor can do
+when the scalars are perfectly learned. The nominal fixing sets the scalars to their shipped values, the engine as it leaves
+the factory with the discrepancy fitted around it.
+
+\subsection{Learning the scalars in a linearized model}\label{sec:method-linear}
+
+Between the fixed scalars and the full posterior lies a model in which the scalars are learned exactly. Linearize the engine
+at a point $\boldsymbol\theta_c$ on the sampled scale, $\mathbf f_t(\boldsymbol\theta)\approx\mathbf f_{t,c}+\mathbf J_t\mathbf u$ with
+$\mathbf u=\boldsymbol\theta-\boldsymbol\theta_c$ and $\mathbf J_t$ the Jacobian on the training surveys (central differences
+with step $10^{-3}$ on the sampled scale). Then~\eqref{eq:model} becomes a Gaussian linear model in $\mathbf w=(\mathbf u,\mathbf
+d_t)$ with features $\mathbf W_t=[\mathbf J_t,\mathbf Z]$,
+\begin{equation}
+\mathbf y_t-\mathbf f_{t,c}=\mathbf W_t\mathbf w+\boldsymbol\varepsilon_t,\qquad \mathbf w\sim N\big(\mathbf 0,\ \mathrm{blockdiag}(\boldsymbol\Lambda^{-1},\mathbf K_d^{-1})\big),
+\label{eq:linear}
+\end{equation}
+with $\boldsymbol\Lambda$ the diagonal prior precision of the scalars from Table~\ref{tab:scalars} (the truncation dropped) and
+$\mathbf K_d=\tau_t^{-2}\mathbf I$ for the prior of~\eqref{eq:model}. The posterior of $\mathbf w$ is Gaussian with precision
+$\mathbf P_t=\mathbf W_t^{\top}\mathbf W_t/\sigma_t^2+\mathrm{blockdiag}(\boldsymbol\Lambda,\mathbf K_d)$, and with the held-out row
+$\mathbf w_h=(\mathbf j_h,\tilde{\mathbf z}_h)$ the predictive is
+\begin{equation}
+\hat y_t(\mathbf x_h)=f_{t,c}(\mathbf x_h)+\mathbf w_h^{\top}\mathbf P_t^{-1}\mathbf W_t^{\top}(\mathbf y_t-\mathbf f_{t,c})/\sigma_t^2,\qquad
+s_t^2(\mathbf x_h)=\sigma_t^2+\mathbf w_h^{\top}\mathbf P_t^{-1}\mathbf w_h .
+\label{eq:linpred}
+\end{equation}
+The two outputs share $\mathbf u$; each output is fitted separately in~\eqref{eq:linpred}, which keeps the comparison per
+output and leaves the information that one output carries about the other's scalars to the full sampler and to the design
+study, where the joint form~\eqref{eq:eig} is used. The linearization point is the prior centre, the shipped engine, so the
+learned scalars start where the full method starts. This is a Laplace approximation of the posterior of~\cite{cb002} at
+the prior centre, exact when the engine is linear in its scalars; the earlier paper checked a version of it against the
+sampler on the ten surveys and found the contraction of thirteen of fourteen parameters reproduced.
+
+\subsection{Three discrepancy priors}\label{sec:method-priors}
+
+The prior of~\eqref{eq:model} is the one of Kennedy and O'Hagan~\cite{ko} reduced to a plane: the discrepancy may take any
+direction of the regressors, including the directions in which the engine's scalars move the output, and the scalars and
+the discrepancy are told apart only by their priors. Two published alternatives restrict this freedom.
+
+The orthogonal prior of Plumlee~\cite{plumlee} forbids the discrepancy the directions of the engine's sensitivities, so that
+a scalar keeps the meaning of the value that makes the engine closest to the plant. For a Gaussian process discrepancy the
+construction subtracts from the covariance its projection on the model's gradient (Plumlee and Joseph~\cite{plumleejoseph},
+Theorem~1; Tuo~\cite{tuo}, Corollary~3.6). For the plane of~\eqref{eq:model} the construction is finite: with $\mathbf J^{+}$ the
+Moore-Penrose inverse of the training Jacobian, the discrepancy regressors become
+\begin{equation}
+\mathbf Z_\perp=(\mathbf I-\mathbf J\mathbf J^{+})\mathbf Z,\qquad \tilde{\mathbf z}_{h,\perp}=\tilde{\mathbf z}_h-(\mathbf J^{+}\mathbf Z)^{\top}\mathbf j_h,
+\label{eq:orth}
+\end{equation}
+orthogonal to every column of $\mathbf J$ over the training surveys, and the held-out row is mapped by the same linear map,
+which is the empirical form of an orthogonality with respect to the distribution of the operating points.
+
+The scaled prior of Gu and Wang~\cite{guwang} conditions the discrepancy on a small mean square over the input domain, so that
+the calibrated engine alone predicts well. For the plane, the mean square over the training surveys is
+$\frac1n\|\mathbf Z\mathbf d\|^2=\mathbf d^{\top}(\mathbf G/n)\mathbf d$, and the scaled prior has precision
+\begin{equation}
+\mathbf K_d=\tau^{-2}\big(\mathbf I+c\,\mathbf G/n\big),
+\label{eq:scaled}
+\end{equation}
+with $c=1$ in the study. Since the regressors are standardized, $\mathbf G/n$ has a unit diagonal, so for uncorrelated
+setting and feed size the scaled prior halves the prior variance of every coefficient; with a correlation $\varrho$ between
+them it divides the prior variance by $2+\varrho$ along the direction in which the two regressors move together and by
+$2-\varrho$ along the direction in which they move apart. The three priors are thus three choices of $\mathbf K$ and of the features in~\eqref{eq:linear}, and
+Proposition~\ref{prop:priors} states what the choice changes.
+
+\subsection{Cost and the evaluation algorithm}
+
+The closed forms cost a few small matrix operations once the engine and its Jacobian are known at the operating points. The
+study evaluates the engine and its Jacobian once on a pool of 4,000 operating points per window, so that a replicate costs
+$O(n\,p^2+p^3)$ arithmetic with $p\le11$ features, against about $1.26\times10^6$ engine evaluations for one posterior of the
+full method. Algorithm~\ref{alg:replicate} is one replicate of the study: it draws a design and a noise realization, computes
+every predictor on the same data, and records the errors, the band hits and the theoretical risk of Theorem~\ref{thm:risk} for
+that design, so that the simulation checks the theory replicate by replicate. The seeds are derived from the cell and the
+replicate index, so a result does not depend on the order or the number of processes.
+
+\begin{algorithm}[!t]
+\caption{One replicate of a study cell: virtual plant $\mu_t$, noise $\sigma_t$, training window, test window, size $n$}
+\label{alg:replicate}
+\begin{algorithmic}[1]
+\Require pools with the plant's mean, the engine and its Jacobian at $\boldsymbol\theta_c$ and at the oracle scalars; seed $(\text{cell},\text{replicate})$
+\State draw $n$ training points and 200 test points from the pools, without replacement
+\State $y_{t,i}\gets\mu_t(\mathbf x_i)+\sigma_t\xi_i$ with $\xi_i\sim N(0,1)$, for training and test points
+\State standardize on the training points; build $\mathbf Z$, $\mathbf G$ and the test rows by~\eqref{eq:design}
+\If{$\mathrm{cond}(\mathbf G)>10^{10}$} redraw the design and count it \EndIf
+\State oracle and nominal fixings: mean and variance by~\eqref{eq:cbmean} and~\eqref{eq:cbvar}
+\State learned scalars, three priors: features by~\eqref{eq:linear},~\eqref{eq:orth}; $\mathbf K_d$ by~\eqref{eq:scaled}; predictive by~\eqref{eq:linpred}
+\State comparators: least squares on $\mathbf Z$ and on $(1,z_c)$, the engine nominal, oracle and refit, the constant
+\State bands: Gaussian $\pm1.2816\,s$; Student-$t$ prediction intervals for the regressions
+\State record squared and absolute percentage errors, band hits and widths per predictor
+\State record the risk of Theorem~\ref{thm:risk} for this design, averaged over the test points
+\State \Return the replicate's records
+\end{algorithmic}
+\end{algorithm}
+
+The full sampler is run, at a reduced size of 20 walkers and 4,000 steps of which 1,000 are discarded, on two tasks the closed
+forms cannot do: simulation-based calibration, which checks that the sampler returns the posterior of the model, and a
+verification on three cells in which the full posterior replaces the closed forms on the same replicates. The reduced size
+keeps more than 50 integrated autocorrelation times after the burn-in, the convergence criterion of~\cite{cb002}, on the
+posterior of the ten surveys, whose largest autocorrelation time is \tauTen~steps.

@@ -1,0 +1,14 @@
+{
+ "tph": {
+  "plant_departure_sd": 119.65,
+  "engine_departure_sd": 0.016,
+  "corr": 0.376,
+  "engine_key": "backbone"
+ },
+ "kW": {
+  "plant_departure_sd": 33.18,
+  "engine_departure_sd": 5.638,
+  "corr": 0.452,
+  "engine_key": "engine_pc"
+ }
+}

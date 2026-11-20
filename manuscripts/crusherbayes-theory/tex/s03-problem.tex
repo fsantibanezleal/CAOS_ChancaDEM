@@ -1,0 +1,87 @@
+\section{Problem formulation}\label{sec:problem}
+
+\subsection{The prediction problem}
+
+A secondary cone crusher is surveyed at $n$ operating points $\mathbf x_i=(c_i,f_{80,i})$, the closed-side setting $c$ and
+the feed size $f_{80}$ in mm, and each survey records the throughput in t/h and the power in kW. For each output $t$ the plant
+has a mean function $\mu_t(\mathbf x)$ that no one observes, and a survey returns $y_{t,i}=\mu_t(\mathbf x_i)+\varepsilon_{t,i}$,
+with noise of mean zero and variance $\sigma_t^2$, independent between surveys. The noise includes the measurement error of
+the survey and the variation of the ore that the two operating variables do not capture. A predictor is a rule that maps
+the $n$ surveys to a prediction $\hat y_t(\mathbf x_h)$ at a new operating point $\mathbf x_h$, which may lie inside the
+range of the surveys or outside it. Its quality at $\mathbf x_h$ is the expected squared error
+\begin{equation}
+R(\mathbf x_h)=\mathbb E\big[(y_{t,h}-\hat y_t(\mathbf x_h))^2\big],
+\label{eq:risk}
+\end{equation}
+over the noise of the training surveys and of the new survey, with the design held fixed; averaged over a distribution of
+new operating points it is the prediction risk of the predictor on that operating range. A band predictor adds an interval
+$[\hat y_t-q_h,\hat y_t+q_h]$, and its quality is the probability that the interval covers the new survey and its width.
+
+The question of the paper is, for a given plant, operating range and number of surveys, the sign and the size of the
+difference of~\eqref{eq:risk} between the calibrated predictor of Section~\ref{sec:method} and three empirical predictors:
+least squares on the three regressors of the discrepancy (an intercept, the standardized setting and the standardized feed
+size), least squares on the intercept and the setting alone (the setting-only line, the comparator that the ten surveys could
+not separate from the method~\cite{cb002}), and the training mean. It also asks how often the calibrated predictor's 80\pct{}
+band covers a new survey, and which added measurement would teach the method the most about its scalars.
+
+\subsection{Assumptions}
+
+The noise is homoscedastic and, where a statement needs it, Gaussian; Theorem~\ref{thm:risk} needs only its first two
+moments. The design is fixed in each statement and random in the study, where the theory is applied replicate by replicate.
+The regressors are standardized with the training mean and population standard deviation, as the method does, so that the
+discrepancy regressors of the training surveys are always centred; at a new point they are standardized with the same
+training statistics. The design matrix has full column rank, which holds whenever the surveys vary both the setting and the
+feed size not in exact proportion. The plant's mean functions are smooth on the operating range; they are not assumed to be the
+engine at any value of its scalars. The scalars of the engine are either given (Section~\ref{sec:theory}) or learned
+(Sections~\ref{sec:method-linear} and~\ref{sec:results-sampler}).
+
+\subsection{Notation}
+
+Table~\ref{tab:notation} collects the symbols. Bold lower case is a vector over the training surveys, bold upper case a
+matrix, and a subscript $h$ marks a value at the held-out operating point. The output index $t$ is dropped whenever a
+statement concerns one output.
+
+\begin{table}[!t]
+\caption{Notation of the paper: the symbols of the model, of the theory and of the study, with their meaning and their unit
+(t/h for throughput and kW for power where a symbol carries the unit of the output).}
+\label{tab:notation}
+\centering\footnotesize
+\begin{tabular}{@{}>{$}l<{$}p{0.74\columnwidth}@{}}
+\toprule
+\text{Symbol} & Meaning (unit)\\
+\midrule
+\mathbf x=(c,f_{80}) & operating point: closed-side setting and feed size (mm)\\
+\mu_t(\mathbf x) & the plant's mean function of output $t$ (t/h or kW)\\
+\sigma_t & standard deviation of the survey noise (t/h or kW)\\
+f_t(\boldsymbol\theta;\mathbf x) & the engine's output at scalars $\boldsymbol\theta$ (t/h or kW)\\
+\boldsymbol\theta,\ \boldsymbol\theta_c,\ \boldsymbol\theta_0 & the eight scalars on the sampled scale; the linearization point; the virtual plants' truth\\
+\tilde{\mathbf z},\ \mathbf Z,\ \mathbf G & discrepancy regressors $(1,z_c,z_f)$; their training matrix; $\mathbf G=\mathbf Z^{\top}\mathbf Z$\\
+\mathbf d_t,\ \tau_t & discrepancy coefficients and their prior standard deviation (t/h or kW)\\
+\lambda,\ \mathbf A_\lambda & shrinkage $\sigma^2/\tau^2$ (dimensionless); $(\mathbf G+\lambda\mathbf I)^{-1}$\\
+\boldsymbol\beta,\ \mathbf r,\ r_h & the plant's training plane, its departure from it, the departure at $\mathbf x_h$ (t/h or kW)\\
+\mathbf b,\ \mathbf e,\ e_h & the engine's training plane, its departure from it, the departure at $\mathbf x_h$ (t/h or kW)\\
+\boldsymbol\delta,\ \tilde{\boldsymbol\delta} & the difference $\mathbf b-\boldsymbol\beta$ of the two planes; in the eigenbasis of $\mathbf G$\\
+g_k,\ \nu_k & eigenvalues of $\mathbf G$; their limit per survey $g_k/n$\\
+C & curvature gain $\frac1n\sum_ie_i(2r_i-e_i)$ (squared output unit)\\
+\phi^2 & mean square of the plant's feed effect beyond the setting (squared output unit)\\
+\rho,\ \kappa & alignment and relative size of the engine's and the plant's curvature (dimensionless)\\
+\mathbf J_t,\ \mathbf j_h & the engine's Jacobian in the scalars on the training surveys; at $\mathbf x_h$\\
+\boldsymbol\Lambda,\ \mathbf K_d & prior precision of the scalars; of the discrepancy coefficients\\
+R(\mathbf x_h),\ \bar R & expected squared error at $\mathbf x_h$; its fixed-design average (squared output unit)\\
+\alpha,\ \kappa_q & share of the engine's curvature in a virtual plant; size of an added curvature\\
+n,\ n^\star & number of training surveys; the crossing size of Proposition~\ref{prop:line}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Why simulation with a known truth}
+
+Every quantity that decides the comparison, $\mathbf r$, $\mathbf e$ and $\boldsymbol\delta$, is defined by the plant's mean
+function, which the surveys see only through noise. On ten surveys with a power noise of about 39~kW, the plant's departure
+from a plane cannot be separated from the noise: the pilot computation behind this study (Section~\ref{sec:repro}) found the residual of the
+measured power about the plane of the regressors to have a standard deviation of \pilotPlantKw~kW, which contains both, against
+\pilotEngKw~kW for the engine's departure from the same plane. A virtual
+plant fixes $\mu_t$, so that each term of Theorem~\ref{thm:risk} is known, the risk can be computed exactly, and the
+simulation can check the computation. The virtual plants of Section~\ref{sec:design} are built from the engine and from the
+published capacity law of Rocha et al.~\cite{rocha}, so they are crushers of the kind the method is meant for, with
+curvatures of known sign and size.
