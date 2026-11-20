@@ -1,0 +1,64 @@
+\section{Introduction}\label{sec:intro}
+
+\IEEEPARstart{A}{} cone crusher sets how much work the grinding mills downstream of it must do, and the concentrators of
+Chilean copper mining took 55.7\pct{} of the sector's electricity in 2024~\cite{cochilco}. A model that predicts the
+throughput and the power of a crusher from its closed-side setting and its feed size is therefore a planning tool of
+direct economic weight, and the models in use are of two kinds. Population-balance models in the tradition of
+Whiten~\cite{whiten,napier} describe the classification and the breakage of the particles in the chamber and carry a small
+number of fitted scalars; empirical regressions of the outputs on the operating variables describe nothing and fit
+everything~\cite{yamashita}. Industrial surveys of a crusher are few and costly, and a practitioner with ten of them must
+choose between the two.
+
+CrusherBayes~\cite{cb002}, the calibration method of the ChancaDEM studio~\cite{chancadem}, sits between the kinds. It
+calibrates the eight fitted scalars of a Whiten engine of a Metso HP500 cone crusher as a Bayesian posterior on the ten
+surveys of Rocha et al.~\cite{rocha}, with a structural discrepancy in the sense of Kennedy and O'Hagan~\cite{ko} that is a
+plane in the standardized setting and feed size, integrated out exactly. On the ten surveys, held out one at a time, it
+beats the engine's power form refit by least squares by 11.63 points of mean absolute percentage error (paired bootstrap
+interval $-18.25$ to $-4.47$) and its 80\pct{} bands cover eight of the ten held-out surveys on throughput and nine on power, but it ties the
+line in the setting alone: the paired difference, $+1.54$
+points with a bootstrap interval of $-1.11$ to $4.10$, cannot be told from zero. That paper proved that the predictive mean
+is a shrunk ridge regression on the discrepancy regressors plus the engine's departure from their plane. It left open the
+question the data could not answer: under which conditions, with how many surveys and over which operating range, does the
+physics in the method pay for itself against an empirical regression?
+
+This paper answers that question theoretically and in simulation, which ten surveys cannot do because the answer depends on
+the plant's true mean function, and no finite set of surveys reveals it. We treat the method as an estimator and ask for its
+risk. The answer has an exact form. Given the scalars, the expected squared error of the method at any operating point is a
+squared bias in three quantities, the plant's departure from a plane in the regressors, the engine's departure from the same
+plane and the distance between the two planes, plus the variance of a ridge fit and the noise. The comparison with least
+squares then reduces to one inequality: the engine helps only through the part of it that is not a plane, and only when that
+part points the same way as the plant's own curvature and is not more than twice as large. The rest of the paper follows from
+this.
+
+The contributions are:
+\begin{enumerate}
+\item an exact risk decomposition of the calibrated predictor given its scalars (Theorem~\ref{thm:risk}), with the criterion
+for beating an empirical regression in the same regressors (Corollary~\ref{cor:align}), the statement that an engine affine
+in the regressors is only a shrinkage target (Corollary~\ref{cor:affine}), and the exact coverage of its band
+(Corollary~\ref{cor:coverage});
+\item a fixed-design decomposition into a curvature gain that persists and a plane gain that decays with the number of
+surveys, with the risk-optimal scale of the discrepancy prior (Theorem~\ref{thm:fixed}) and the crossing sample size against
+the setting-only line (Proposition~\ref{prop:line});
+\item the relation of the Kennedy and O'Hagan prior to the orthogonal prior of Plumlee~\cite{plumlee} and the scaled prior of
+Gu and Wang~\cite{guwang} in this finite-dimensional case (Proposition~\ref{prop:priors}), and an information ceiling that no
+number of surveys at a fixed speed can break (Proposition~\ref{prop:bound});
+\item a simulation study with known truths, designed and reported by the ADEMP structure of Morris et al.~\cite{morris}, on
+virtual plants built from the engine and from the published capacity law of Rocha et al.~\cite{rocha}, with every
+performance number given with its Monte Carlo standard error and every theoretical risk checked against its simulation;
+\item a design study of the information that added outputs, added factors and added surveys bring to the scalars, and a
+simulation-based calibration~\cite{talts,modrak} of the sampler that the method relies on.
+\end{enumerate}
+
+The main results are stated in the abstract and in Section~\ref{sec:results} with their uncertainty. In brief, the engine
+cannot improve on a regression for throughput at all on this machine, because its capacity law is affine in the setting; it
+can on a plant whose capacity curves, if the engine's capacity curves the same way, and the size of that gain is set by the
+alignment of the two curvatures and not by the number of surveys. The answer to the practitioner's question is therefore a
+property of the engine and of the plant's operating range, which the theory makes computable, rather than of the size of the
+set of surveys.
+
+Section~\ref{sec:related} places the work among the published studies of calibration, of ridge regression under
+misspecification, of design for calibration and of the evaluation of samplers. Section~\ref{sec:problem} states the problem
+and the notation; Section~\ref{sec:method} the method and its closed forms; Section~\ref{sec:theory} the theory;
+Section~\ref{sec:design} the study design and its hypotheses; Section~\ref{sec:results} the results;
+Section~\ref{sec:ablation} the ablation; Sections~\ref{sec:discussion} and~\ref{sec:limitations} the discussion and the
+limitations; and Sections~\ref{sec:repro} and~\ref{sec:conclusions} the reproducibility record and the conclusions.

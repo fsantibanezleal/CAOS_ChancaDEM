@@ -1,7 +1,7 @@
 {
  "schema": "chancadem.report.resources/v1",
- "product_version": "0.13.000",
- "measured_on": "2026-11-15",
+ "product_version": "0.14.000",
+ "measured_on": "2026-11-20",
  "host": {
   "os": "Windows 11",
   "python": "3.12.15",
@@ -16,9 +16,9 @@
     "all"
    ],
    "exit": 0,
-   "seconds": 2343.68,
-   "peak_bytes": 1525321728,
-   "peak_mb": 1525.3,
+   "seconds": 3252.97,
+   "peak_bytes": 1442054144,
+   "peak_mb": 1442.1,
    "sizes": {
     "data/derived": {
      "bytes": 308364,
@@ -34,9 +34,9 @@
     "hp500"
    ],
    "exit": 0,
-   "seconds": 2157.86,
-   "peak_bytes": 1549037568,
-   "peak_mb": 1549.0,
+   "seconds": 3137.48,
+   "peak_bytes": 1592033280,
+   "peak_mb": 1592.0,
    "sizes": {
     "data/derived/hp500": {
      "bytes": 30568,
@@ -52,9 +52,9 @@
     "models"
    ],
    "exit": 0,
-   "seconds": 41.82,
-   "peak_bytes": 443744256,
-   "peak_mb": 443.7,
+   "seconds": 74.28,
+   "peak_bytes": 446283776,
+   "peak_mb": 446.3,
    "sizes": {
     "data/derived/models": {
      "bytes": 59480,
@@ -68,19 +68,18 @@
     "python.exe",
     "-m",
     "pytest",
-    "-q",
     "-p",
     "no:cacheprovider",
     "--basetemp",
     "<sandbox>"
    ],
    "exit": 0,
-   "seconds": 832.54,
-   "peak_bytes": 452259840,
-   "peak_mb": 452.3,
+   "seconds": 938.98,
+   "peak_bytes": 436719616,
+   "peak_mb": 436.7,
    "sizes": {},
    "label": "tests",
-   "note": "1707 passed, 27 skipped"
+   "note": "1714 passed, 27 skipped"
   },
   {
    "command": [
@@ -88,13 +87,13 @@
     "ci"
    ],
    "exit": 0,
-   "seconds": 12.43,
-   "peak_bytes": 708104192,
-   "peak_mb": 708.1,
+   "seconds": 17.31,
+   "peak_bytes": 638693376,
+   "peak_mb": 638.7,
    "sizes": {
     "node_modules": {
-     "bytes": 329009652,
-     "files": 11508
+     "bytes": 329015953,
+     "files": 11509
     }
    },
    "label": "install"
@@ -106,12 +105,12 @@
     "build"
    ],
    "exit": 0,
-   "seconds": 9.14,
-   "peak_bytes": 648368128,
-   "peak_mb": 648.4,
+   "seconds": 11.78,
+   "peak_bytes": 642236416,
+   "peak_mb": 642.2,
    "sizes": {
     "dist": {
-     "bytes": 17222309,
+     "bytes": 17223081,
      "files": 174
     }
    },
@@ -123,9 +122,9 @@
     "test"
    ],
    "exit": 0,
-   "seconds": 6.88,
-   "peak_bytes": 3213959168,
-   "peak_mb": 3214.0,
+   "seconds": 9.1,
+   "peak_bytes": 3090661376,
+   "peak_mb": 3090.7,
    "sizes": {},
    "label": "webtests",
    "note": "562 tests in 38 files"
@@ -134,40 +133,40 @@
  "engine": {
   "cases": 27,
   "runs_per_case": 7,
-  "median_of_medians_ms": 1.458,
-  "max_median_ms": 1.606,
+  "median_of_medians_ms": 1.307,
+  "max_median_ms": 1.463,
   "per_case_median_ms": {
-   "CI1": 1.58,
-   "CK1": 1.509,
-   "CP1": 1.536,
-   "G01": 1.606,
-   "G02": 1.576,
-   "H01": 1.545,
-   "H02": 1.566,
-   "HP500-01": 1.534,
-   "HP500-02": 1.604,
-   "HP500-03": 1.555,
-   "HP500-04": 1.513,
-   "HP500-05": 1.546,
-   "HP500-06": 1.493,
-   "HP500-07": 1.449,
-   "HP500-08": 1.452,
-   "HP500-09": 1.422,
-   "HP500-10": 1.453,
-   "J01": 1.438,
-   "J02": 1.425,
-   "S01": 1.449,
-   "S02": 1.434,
-   "S03": 1.424,
-   "S04": 1.426,
-   "S05": 1.458,
-   "S06": 1.425,
-   "T01": 1.418,
-   "T02": 1.423
+   "CI1": 1.211,
+   "CK1": 1.225,
+   "CP1": 1.279,
+   "G01": 1.314,
+   "G02": 1.286,
+   "H01": 1.312,
+   "H02": 1.305,
+   "HP500-01": 1.302,
+   "HP500-02": 1.308,
+   "HP500-03": 1.309,
+   "HP500-04": 1.302,
+   "HP500-05": 1.307,
+   "HP500-06": 1.309,
+   "HP500-07": 1.308,
+   "HP500-08": 1.305,
+   "HP500-09": 1.301,
+   "HP500-10": 1.268,
+   "J01": 1.294,
+   "J02": 1.298,
+   "S01": 1.253,
+   "S02": 1.463,
+   "S03": 1.401,
+   "S04": 1.366,
+   "S05": 1.377,
+   "S06": 1.384,
+   "T01": 1.374,
+   "T02": 1.394
   }
  },
  "site": {
-  "bytes": 17222593,
+  "bytes": 17223048,
   "files": 174,
   "wasm_bytes": 13479978
  }

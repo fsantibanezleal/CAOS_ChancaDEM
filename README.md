@@ -22,7 +22,7 @@ The repository by area: its folder, whether the area is active or dormant, and w
 
 | Area | Folder | Status | What it holds |
 |---|---|---|---|
-| Web | [`frontend/`](frontend/) | active | The workbench (`/app`) and the five documentation routes, Introduction, Methodology, Implementation, Experiments and Benchmark, on the shared shell `@fasl-work/caos-app-shell` 0.23.0, with the engine ported to TypeScript and onnxruntime-web for the learned models. Build and test: `cd frontend && npm ci && npm run build && npm test && npm run gate`. |
+| Web | [`frontend/`](frontend/) | active | The workbench (`/app`) and the five documentation routes, Introduction, Methodology, Implementation, Experiments and Benchmark, on the shared shell `@fasl-work/caos-app-shell` 0.26.2, with the engine ported to TypeScript and onnxruntime-web for the learned models. Build and test: `cd frontend && npm ci && npm run build && npm test && npm run gate`. |
 | API | [`app/`](app/) | dormant: this solution does not require it at the moment | A FastAPI layer that would serve the committed documents read-only (`/api/cases`, `/api/artifacts/{path}`, `/health`). Activation is [guide 04](docs/guides/04_run-the-api.md). |
 | Core pipelines | [`data-pipeline/`](data-pipeline/) | active | The canonical Python crusher engine (`pipeline/model/crusher/`), the oracles, the HP500 lane with CrusherCal (`pipeline/hp500/`), the model bundles and the stages (`preprocess`, `train`, `evaluate`, `export`, `infer`). Bake: `./scripts/precompute.sh`, about 5 s. See [data-pipeline/README.md](data-pipeline/README.md). |
 | Packages | (PyPI) [numpy](https://pypi.org/project/numpy/) | active: consumes published libraries, publishes none | No package of its own: the methods live in the pipeline folder. It consumes [numpy 2.4.6](https://pypi.org/project/numpy/) ([repository](https://github.com/numpy/numpy)), and for the learned models [torch 2.12.1](https://pypi.org/project/torch/) ([repository](https://github.com/pytorch/pytorch)), [onnx 1.22.0](https://pypi.org/project/onnx/) ([repository](https://github.com/onnx/onnx)) and [onnxruntime 1.27.0](https://pypi.org/project/onnxruntime/) ([repository](https://github.com/microsoft/onnxruntime)); the notebooks and the contract checks add [jsonschema 4.26.0](https://pypi.org/project/jsonschema/) ([repository](https://github.com/python-jsonschema/jsonschema)). |
@@ -35,13 +35,14 @@ The repository by area: its folder, whether the area is active or dormant, and w
 
 ## Records on Zenodo
 
-The app has three records, each under a concept DOI that always resolves to its latest version:
+The app has four records, each under a concept DOI that always resolves to its latest version:
 
 | Record | What it is | Concept DOI |
 |---|---|---|
 | The repository | the software itself, archived from GitHub; each release is a version of this one record | [10.5281/zenodo.23686602](https://doi.org/10.5281/zenodo.23686602) |
 | The technical report | ChancaDEM: A Crusher-Comminution Studio and a Held-Out Evaluation of Cone-Crusher Models on Ten Industrial Surveys, the app and its content, in [`manuscripts/comminution-studio/`](manuscripts/comminution-studio/) | [10.5281/zenodo.21518356](https://doi.org/10.5281/zenodo.21518356) |
-| The manuscript | What Ten Industrial Surveys Identify in a Cone-Crusher Population Balance Model: Bayesian Calibration with Structural Discrepancy Narrows the Engine's Power Band but Gives No Accuracy Gain over a Setting-Only Line, the results of CrusherBayes, in [`manuscripts/crusherbayes/`](manuscripts/crusherbayes/) | [10.5281/zenodo.23843809](https://doi.org/10.5281/zenodo.23843809) |
+| The CrusherBayes manuscript | What Ten Industrial Surveys Identify in a Cone-Crusher Population Balance Model: Bayesian Calibration with Structural Discrepancy Narrows the Engine's Power Band but Gives No Accuracy Gain over a Setting-Only Line, the results of CrusherBayes, in [`manuscripts/crusherbayes/`](manuscripts/crusherbayes/) | [10.5281/zenodo.23843809](https://doi.org/10.5281/zenodo.23843809) |
+| The theory manuscript | Shrinkage That Fades and Curvature That Persists: Exact Prediction Risk, an Identifiability Ceiling and a Virtual-Plant Study of a Bayesian Cone-Crusher Calibration, the theory of CrusherBayes and its study on virtual plants, in [`manuscripts/crusherbayes-theory/`](manuscripts/crusherbayes-theory/) | [10.5281/zenodo.24395171](https://doi.org/10.5281/zenodo.24395171) |
 
 ## Run it
 

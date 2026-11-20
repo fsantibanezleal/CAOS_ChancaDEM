@@ -23,7 +23,8 @@
     "B-lin": ["06-crushercal/03-the-in-sample-fit-of-the-paper.ipynb"],
     "M14": ["04-capacity-and-power/03-morrell-size-specific-energy-against-bond.ipynb"],
     "BS-2": ["08-crusherbayes/02-sampling-the-posterior-one-fold-live.ipynb",
-             "08-crusherbayes/03-crusherbayes-held-out-on-the-ten-surveys.ipynb"]
+             "08-crusherbayes/03-crusherbayes-held-out-on-the-ten-surveys.ipynb",
+             "08-crusherbayes/04-when-the-engine-beats-a-regression.ipynb"]
   },
   "contracts": {
     "params-record": ["01-getting-started/02-case-matrix-and-replay.ipynb"],

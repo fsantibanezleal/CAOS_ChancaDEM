@@ -187,11 +187,41 @@ def words(text: str) -> int:
     return len(WORD.findall(plain(text)))
 
 
+MACRO_DEF = re.compile(r"\\(?:(?:new|renew|provide)command\*?\s*\{?\s*\\([A-Za-z]+)\s*\}?|def\s*\\([A-Za-z]+))\s*(?=\{)")
+
+
+def defined_macros(source: str) -> dict[str, str]:
+    """The zero-argument macros a document defines (``\\newcommand``, ``\\renewcommand``, ``\\providecommand``, ``\\def``), name to
+    body; a definition with arguments (``[n]`` or ``#1``) is left out, its use counts as a command with an argument."""
+    out: dict[str, str] = {}
+    for m in MACRO_DEF.finditer(source):
+        body, _ = braced(source, m.end())
+        if "#" not in body:
+            out[m.group(1) or m.group(2)] = body
+    return out
+
+
+def printed_abstract(text: str, macros: dict[str, str], passes: int = 6) -> str:
+    """The abstract with the document's own zero-argument macros replaced by what they print (``\\name`` or ``\\name{}``, nested
+    definitions included); an integer computed by ``\\the\\numexpr ... \\relax`` prints one number."""
+    if macros:
+        names = sorted(macros, key=len, reverse=True)
+        use = re.compile(r"\\(" + "|".join(re.escape(n) for n in names) + r")(?![A-Za-z])(?:\{\})?")
+        for _ in range(passes):
+            new = use.sub(lambda m: " " + macros[m.group(1)] + " ", text)
+            if new == text:
+                break
+            text = new
+    return re.sub(r"\\the\s*\\numexpr.*?\\relax", " 0 ", text, flags=re.S)
+
+
 def abstract_words(text: str) -> int:
     """The words of an abstract as it prints: every token with a letter or a digit, a number printed by a macro and an inline
-    formula each one word; citations, references and labels print no words of their own."""
+    formula each one word; citations, references and labels print no words of their own. Expand the document's macros first
+    (``printed_abstract``); a macro left, bare or with empty braces (``\\name{}``), prints one value."""
     t = re.sub(r"\\(?:cite[a-z]*|ref|eqref|cref|Cref|autoref|label)\*?(?:\[[^\]]*\])?\{[^}]*\}", " ", text)
     t = re.sub(r"\\\(.*?\\\)|(?<!\\)\$.*?(?<!\\)\$", " X ", t, flags=re.S)
+    t = re.sub(r"\\[A-Za-z]+\*?\{\}", " X ", t)          # a macro with empty braces prints a value, like a bare one
     t = re.sub(r"\\[A-Za-z]+\*?(?=\s*[\[{])", " ", t)   # a command with an argument: its argument is the text
     t = re.sub(r"\\[A-Za-z]+\*?", " X ", t)             # a bare macro prints a value or a word
     t = re.sub(r"\\.", " ", t)                          # escaped symbols and spacing commands
@@ -367,7 +397,7 @@ def check_doc(root: Path, doc: Doc, cov: dict, methods: list[str], claims: set[s
     low, high = ABSTRACT_WORDS[kind]
     if abstract is None:
         out.append(f"{at}: no abstract (\\begin{{abstract}} ... \\end{{abstract}}); the {kind} abstract is {low} to {high} words")
-    elif not low <= (n := abstract_words(abstract)) <= high:
+    elif not low <= (n := abstract_words(printed_abstract(abstract, defined_macros(doc.source)))) <= high:
         out.append(f"{at}: abstract of {n} words, the {kind} abstract is {low} to {high} words")
     for name, needles in REQUIRED[kind]:
         heads = [s.title.lower() for s in doc.sections if not s.appendix]

@@ -1,0 +1,143 @@
+\section{Experimental design}\label{sec:design}
+
+The study follows the ADEMP structure of Morris et al.~\cite{morris}: aims, data-generating mechanisms, estimands, methods
+and performance measures, planned and stated before any run. The hypotheses were written in the study plan of the product
+before the harness existed; they are restated here unchanged, and Section~\ref{sec:results} says for each whether it held.
+
+\subsection{Aims and hypotheses}
+
+The aim is to measure, on plants whose truth is known, when the calibrated predictor beats the empirical ones, and to check
+each theoretical statement of Section~\ref{sec:theory} against simulation. Six hypotheses:
+\begin{itemize}
+\item[H1] (risk decomposition) The simulated mean squared error of the predictor with given scalars equals the risk of
+Theorem~\ref{thm:risk} in every cell, within Monte Carlo error; at small shrinkage it beats least squares on $\mathbf Z$ if and
+only if the curvature term of Corollary~\ref{cor:align} is positive, which on the plants with a scaled engine curvature means
+a share $\alpha$ of that curvature above one half.
+\item[H2] (capacity) On throughput with the engine's affine capacity, the gain over least squares on $\mathbf Z$ is zero up to
+the shrinkage effect, for every design; with a capacity law curved like the plant's it grows with the width of the operating
+window and is largest under extrapolation.
+\item[H3] (setting-only line) Against the line in the setting, the crossing size $n^\star$ of Proposition~\ref{prop:line}
+locates the number of surveys at which the method overtakes the line.
+\item[H4] (priors) The three discrepancy priors change the predictive risk less than they change the meaning of the scalars:
+their mean squared errors differ from one another by less than they differ from least squares.
+\item[H5] (design) The throughput of surveys at a fixed speed cannot narrow the capacity base beyond the ceiling of
+Proposition~\ref{prop:bound}; an added product-size output informs the population-balance scalars, and surveys at varying
+speed inform the capacity base, by more than doubling the number of surveys at a fixed speed does.
+\item[H6] (sampler) The sampler is calibrated: the ranks of simulation-based calibration are uniform for every parameter and for
+the likelihood test quantity; and on the verification cells the full posterior's risk lies between those of the oracle and of
+the linearized learned predictor, or within Monte Carlo error of the latter.
+\end{itemize}
+
+\subsection{Data-generating mechanisms}
+
+Four virtual plants, each a mean function for throughput and power plus Gaussian noise with the standard deviations
+$\sigma_{\mathrm{tph}}=\sigTph$~t/h and $\sigma_{\mathrm{kW}}=\sigKw$~kW, the posterior means of the fit to the ten
+surveys~\cite{cb002}. The scalars $\boldsymbol\theta_0$ and the discrepancy coefficients $\mathbf d_0$ of the plants are the
+posterior means of that fit (Table~\ref{tab:scalars}), and $\tilde{\mathbf z}_{\mathrm{ref}}$ are the regressors standardized
+with the ten surveys' mean and deviation, fixed for the plant whatever the training design.
+\begin{itemize}
+\item V0, the well-specified plant: $\mu_t(\mathbf x)=f_t(\boldsymbol\theta_0;\mathbf x)+\tilde{\mathbf z}_{\mathrm{ref}}(\mathbf
+x)^{\top}\mathbf d_{0,t}$, the model of~\eqref{eq:model} at fixed coefficients.
+\item V1($\alpha$, $\kappa_q$), the plant with a controlled share of the engine's curvature in power: with $\mathbf b_0$ the
+least-squares plane of $f_{\mathrm{kW}}(\boldsymbol\theta_0;\cdot)$ over the training window and $e_0$ the engine's departure
+from it,
+\begin{equation}
+\mu_{\mathrm{kW}}(\mathbf x)=\tilde{\mathbf z}_{\mathrm{ref}}^{\top}(\mathbf b_0+\mathbf d_{0,\mathrm{kW}})+\alpha\,e_0(\mathbf x)+\kappa_q\,\|e_0\|\,q(\mathbf x),
+\label{eq:v1}
+\end{equation}
+with $q$ the square of the standardized setting orthogonalized against $(1,z_c,z_f,e_0)$ over the window and scaled to unit
+root mean square. The study runs $\alpha\in\{-1,0,0.5,1,2\}$ with $\kappa_q=0$, and $(\alpha,\kappa_q)=(1,2)$. V1(1, 0) is V0.
+By Corollary~\ref{cor:align} the curvature gain is $(2\alpha-1)\|e_0\|^2$, positive exactly when $\alpha>1/2$, and the added
+curvature $q$ leaves it unchanged while lowering the alignment.
+\item V2, the plant with the published capacity law: throughput is the capacity of Rocha et al.~\cite{rocha} with their
+published exponents and constant, $0.84\,Q_T(\rho_a/1600)(16/W_i)^{\eta}(100/f_{80})^{\epsilon}(c/38)^{\nu}$ with
+$\nu=1.27$, curved in the setting and in the feed size; power is the engine's specific energy at $\boldsymbol\theta_0$ times
+that throughput, $\zeta_0W_0(\mathbf x)\mu_{\mathrm{tph}}(\mathbf x)+P_{n,0}$, so it curves where the throughput does.
+\item C-cap, the capacity study: the throughput of V2 predicted with three engines whose capacity is $q\,g(\mathbf x)$ with one
+learned scale $q$: the shipped affine form $g=(c+17)/38$; the form of Rocha et al. itself; and the same form with its setting
+and feed exponents halved, a curvature of the right sign and half the size.
+\end{itemize}
+For V2 and C-cap the oracle scalars are the $L_2$ projection of Tuo and Wu~\cite{tuowu}: the scalars that minimize the squared
+distance between the engine and the plant over the training window, weighted by $1/\sigma_t^2$ across the outputs.
+
+\subsection{Operating designs}
+
+Training points are drawn from one of three windows: the surveys window, $c\in[38,55]$~mm and $f_{80}\in[47,140]$~mm, the
+engine's calibrated envelope and the range of the ten surveys; the wide window, $c\in[25,70]$~mm and $f_{80}\in[40,140]$~mm with
+$f_{80}\ge c+10$~mm; and the extrapolation design, trained on the surveys window and tested on the part of the wide window
+outside it. The real design trains on the ten surveys themselves. The number of training surveys is $n\in\{10,20,40,80,160\}$.
+Each window has a pool of 4,000 operating points on which the engine, its Jacobian and the plant are evaluated once; a
+replicate draws its training points and 200 test points from the pools, and its noise. When training and test points come from
+the same pool, the test points are drawn from the points not used for training. A design whose matrix $\mathbf G$ has a
+condition number above $10^{10}$ is redrawn and counted; no design of the study needed it, and no pool point lost its engine
+evaluation. Table~\ref{tab:cells} lists the cells.
+
+\begin{table}[!t]
+\caption{The cells of the study: each virtual plant on each design, with the number of training surveys, the predictors run
+and the number of replicates; every cell uses 200 test points per replicate.}
+\label{tab:cells}
+\centering\footnotesize
+\resizebox{\columnwidth}{!}{\input{generated/tab-cells}}
+\end{table}
+
+\subsection{Estimands, methods and performance measures}
+
+The estimand of a cell is the prediction risk~\eqref{eq:risk} of each predictor averaged over the test distribution of the
+cell, and the coverage and the width of its 80\pct{} band. Eleven predictors run on every replicate: the method with the
+oracle scalars and with the nominal scalars~\eqref{eq:cbmean}; the method with the scalars learned in the linearized model
+under the three priors~\eqref{eq:linpred}; least squares on $\mathbf Z$; the setting-only line; the engine alone at the nominal
+and at the oracle scalars; the engine refit without a discrepancy (the linearized maximum a posteriori of the scalars); and the
+training mean. The regressions carry Student-$t$ prediction intervals with the residual variance; the Gaussian predictors carry
+$\pm1.2816$ predictive standard deviations, with the plant's noise scale for the closed forms. Every performance number is a
+mean over replicates with its Monte Carlo standard error, the standard deviation over replicates divided by the square root of
+their number~\cite{morris}; the comparison of two predictors is the mean of the paired difference of their squared errors on
+the same replicates, with the standard error of that difference. The coverage is the fraction of test points covered,
+averaged over replicates. For the predictors with given scalars, each replicate also yields the risk of
+Theorem~\ref{thm:risk} for its design and test points, and the cell reports the $z$ score of the simulated mean against the
+theoretical one; the coverage of their bands is set beside the exact coverage of Corollary~\ref{cor:coverage}, which separates
+the effect of the bias from that of the width as the bias-eliminated coverage of Morris et al.~\cite{morris} does.
+
+\subsection{Replications and seeds}
+
+Each cell has \repsPerCell{} replicates, the number that gives a Monte Carlo standard error of 0.5 points to a coverage near 95\pct{}
+by Equation~(1) of Morris et al.~\cite{morris}, and below 1 point for an 80\pct{} coverage. The seed of a replicate is derived
+from a fixed root, the cell's index and the replicate's index, so a result is reproducible and independent of the number of
+processes; two runs of the same cell give identical files. The same seed fixes the design, the test points and the noise of a
+replicate for every predictor, so the predictors are compared on identical data and the paired differences of
+Section~\ref{sec:results} remove the variation that the design and the noise share. With \repsPerCell{} replicates of 200 test points the
+Monte Carlo standard error of a mean squared error has a median of \mcseMedian\pct{} of its value over all cells and predictors,
+at most \mcseMainMax\pct{} for the calibrated predictor, least squares and the line, and \mcseMax\pct{} for the heavy-tailed errors
+of the orthogonal prior at ten surveys; that of a paired difference
+is set by the spread of the difference, which is small where two predictors differ only by a shrinkage or a curvature term. The
+full-sampler runs reuse the replicate seeds of the closed-form study, so their data are the same replicates with the same
+indices.
+
+\subsection{The full sampler}
+
+Simulation-based calibration~\cite{talts} draws \sbcN{} parameter sets from the prior of the method (the eight scalars, the two
+noise scales and the six discrepancy coefficients), simulates the ten surveys' design from each, fits the full posterior at
+the reduced size of Section~\ref{sec:method} (\sbcSteps{} steps, the first \sbcBurn{} discarded) and records the rank of each
+true value among 99 evenly spaced posterior draws, for $L+1=100$ possible ranks in \sbcBins{} bins of equal width, so that each
+bin expects \sbcPerBin{} posteriors, above the 20 that Talts et al. advise keeping. The ranks of the marginal log likelihood at
+the true parameters among its values at the draws are the data-dependent test quantity of Modr\'ak et al.~\cite{modrak}, which
+detects a posterior equal to the prior. Uniformity is tested by a chi-square statistic per quantity. The verification runs the
+full posterior on \verReps{} replicates of each of three cells (V0 and V2 on the real design and V0 on the surveys window with
+$n=10$), on exactly the data of the closed-form replicates with the same indices, and predicts 50 test points per replicate from
+200 posterior draws, so the full method and the closed forms are paired replicate by replicate. The sizes of both runs were set
+by the cost of a posterior on the shared machine of the study, \sbcWallHours~h of wall time on average per posterior at
+\sbcSteps{} steps with one process each.
+
+\subsection{The design study}
+
+The design study evaluates, in the linearized model at $\boldsymbol\theta_0$ with both outputs and their discrepancies, the
+expected information gain~\eqref{eq:eig} and the ratio of posterior to prior standard deviation of each scalar for six designs:
+D0 the ten surveys with throughput and power; D1 the same with the product size $P_{80}$ as a third output, with its own plane
+discrepancy of 12\pct{} of its mean and a noise of 2, 5 or 10\pct{} of its mean; D2 the ten surveys with the speed set in turn
+to 324, 360 and 396~rpm; D3 twenty surveys in the surveys window; D4 ten surveys in the wide window; and D5 the union of D1 and
+D2. Random designs are summarized over 200 draws. The product size enters as a third output of the engine, the 80\pct{}
+passing size of the predicted product, with its own plane discrepancy in the setting and the feed size; the three noise
+levels bracket a measurement error that is not known for these surveys, whose product size distributions are printed only as
+figures~\cite{rocha}. The engine and its
+Jacobian at the speeds of D2 are evaluated at the same operating points as D0, so the two designs differ only in the speed.
+Alongside, the identifiability analysis evaluates the ratio of the log capacity base for 10 to 640 surveys drawn from the surveys
+window, at the fixed speed and with the speed varied, over 50 designs per size, and the floor~\eqref{eq:floor}.

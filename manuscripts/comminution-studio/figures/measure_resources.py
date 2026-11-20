@@ -53,9 +53,10 @@ def engine_times(runs: int = 7) -> dict:
             "max_median_ms": round(max(medians.values()), 3), "per_case_median_ms": {k: round(v, 3) for k, v in medians.items()}}
 
 
-def site_sizes() -> dict:
-    """The built site (frontend/dist, after the measured npm run build): its bytes and those of the WebAssembly runtime."""
-    dist = ROOT / "frontend" / "dist"
+def site_sizes(dist: Path) -> dict:
+    """The built site (frontend/dist, after the measured npm run build): its bytes and those of the WebAssembly runtime. A
+    checkout whose frontend/public holds untracked files copies them into its dist; ``--dist`` names the dist of a clean copy
+    of the release (a ``git archive`` built once) so the site is the one the release deploys."""
     files = [f for f in dist.rglob("*") if f.is_file()]
     return {"bytes": sum(f.stat().st_size for f in files), "files": len(files),
             "wasm_bytes": sum(f.stat().st_size for f in files if f.suffix == ".wasm")}
@@ -66,6 +67,8 @@ def main() -> int:
     ap.add_argument("--stage", action="append", type=Path, default=[], help="the --json output of measure_command.py for one stage")
     ap.add_argument("--note", action="append", default=[], help="label=text, a note on one stage (for example its test count)")
     ap.add_argument("--disk", action="append", default=[], help="label=bytes, the bytes a stage wrote to its sandbox root")
+    ap.add_argument("--dist", type=Path, default=ROOT / "frontend" / "dist",
+                    help="the built site to measure (default frontend/dist of this checkout; a clean copy's dist for a release)")
     args = ap.parse_args()
     notes = dict(n.split("=", 1) for n in args.note)
     disk = {k: int(v) for k, v in (d.split("=", 1) for d in args.disk)}
@@ -87,8 +90,8 @@ def main() -> int:
            "host": {"os": f"{platform.system()} {platform.release()}", "python": platform.python_version(),
                     "processor_threads": __import__("os").cpu_count()},
            "monitor": "process-tree peak memory polled every 20 ms (CAOS_MANAGE tools/audit/measure_command.py)",
-           "stages": stages, "engine": engine_times(), "site": site_sizes()}
-    OUT.write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8")
+           "stages": stages, "engine": engine_times(), "site": site_sizes(args.dist)}
+    OUT.write_text(json.dumps(doc, indent=1) + "\n", encoding="utf-8", newline="\n")
     print(f"resources -> {OUT}: {len(stages)} stages, engine median {doc['engine']['median_of_medians_ms']} ms")
     return 0
 

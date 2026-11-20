@@ -1,0 +1,43 @@
+{
+ "schema": "chancadem.cbt.run-times/v1",
+ "runs": {
+  "exact": {
+   "wall_seconds": 1237.0,
+   "workers": 22,
+   "source": "harness report s1-theory-harness-2026-11-19, D3 (the first run, 20 min 37 s)"
+  },
+  "design": {
+   "wall_seconds": 46.0,
+   "workers": 22,
+   "source": "harness report s1-theory-harness-2026-11-19, D4"
+  },
+  "identifiability": {
+   "wall_seconds": 133.0,
+   "workers": 12,
+   "source": "time of analysis/identifiability.py, 2026-11-19 (2 min 13 s)"
+  },
+  "tau_coverage": {
+   "wall_seconds": 76.0,
+   "workers": 8,
+   "source": "time of analysis/tau_coverage.py, 2026-11-19 (1 min 16 s)"
+  },
+  "sampler_sbc": {
+   "wall_seconds": 16754.1,
+   "workers": 24,
+   "source": "run_sampler.py sbc, 2026-11-19 to 2026-11-20 (96 posteriors at 5,000 steps in 16,754.1 s on 24 workers; the machine shared with other jobs)"
+  },
+  "sampler_verify": {
+   "wall_seconds": 12967.6,
+   "workers": 24,
+   "source": "run_sampler.py verify, 2026-11-20 (48 posteriors at 5,000 steps, 3 cells of 16 replicates, in 12,967.6 s on 24 workers; the machine shared with other jobs)"
+  }
+ },
+ "environment": {
+  "cpu_count": 32,
+  "platform": "Windows-11-10.0.26300-SP0",
+  "python": "3.12.15",
+  "numpy": "2.4.6",
+  "emcee": "3.1.6",
+  "interpreter": ".venv-pipeline"
+ }
+}

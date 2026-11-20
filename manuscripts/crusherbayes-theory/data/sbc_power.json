@@ -1,0 +1,160 @@
+{
+ "schema": "chancadem.cbt.sbc-power/v1",
+ "n_posteriors": 96,
+ "L": 99,
+ "bins": 4,
+ "quantities": 17,
+ "levels": {
+  "nominal": 0.05,
+  "bonferroni": 0.0029411764705882353
+ },
+ "reps": 20000,
+ "seed": 20261120,
+ "alternative": "true value ~ N(0, 1); sampler draws ~ N(shift, scale^2); rank ~ Binomial(L, Phi((z - shift) / scale))",
+ "scenarios": [
+  {
+   "scale": 1.0,
+   "shift": 0.0,
+   "nominal": {
+    "power": 0.0481,
+    "se": 0.0015130497348071542
+   },
+   "bonferroni": {
+    "power": 0.0026,
+    "se": 0.0003600861008147912
+   }
+  },
+  {
+   "scale": 0.5,
+   "shift": 0.0,
+   "nominal": {
+    "power": 0.9883,
+    "se": 0.0007603653726992058
+   },
+   "bonferroni": {
+    "power": 0.8865,
+    "se": 0.0022429639988194197
+   }
+  },
+  {
+   "scale": 0.6,
+   "shift": 0.0,
+   "nominal": {
+    "power": 0.8851,
+    "se": 0.002254972172777305
+   },
+   "bonferroni": {
+    "power": 0.56095,
+    "se": 0.003509167262328771
+   }
+  },
+  {
+   "scale": 0.7,
+   "shift": 0.0,
+   "nominal": {
+    "power": 0.58715,
+    "se": 0.003481414062561361
+   },
+   "bonferroni": {
+    "power": 0.21145,
+    "se": 0.002887376815554215
+   }
+  },
+  {
+   "scale": 0.8,
+   "shift": 0.0,
+   "nominal": {
+    "power": 0.26635,
+    "se": 0.003125761327260928
+   },
+   "bonferroni": {
+    "power": 0.04895,
+    "se": 0.0015256784966040519
+   }
+  },
+  {
+   "scale": 0.9,
+   "shift": 0.0,
+   "nominal": {
+    "power": 0.093,
+    "se": 0.0020536674511711967
+   },
+   "bonferroni": {
+    "power": 0.00785,
+    "se": 0.0006240343540222765
+   }
+  },
+  {
+   "scale": 1.25,
+   "shift": 0.0,
+   "nominal": {
+    "power": 0.3305,
+    "se": 0.003326182120690327
+   },
+   "bonferroni": {
+    "power": 0.0699,
+    "se": 0.0018029696336877114
+   }
+  },
+  {
+   "scale": 1.5,
+   "shift": 0.0,
+   "nominal": {
+    "power": 0.87965,
+    "se": 0.0023007159483517297
+   },
+   "bonferroni": {
+    "power": 0.5482,
+    "se": 0.003519067774283411
+   }
+  },
+  {
+   "scale": 2.0,
+   "shift": 0.0,
+   "nominal": {
+    "power": 0.99995,
+    "se": 4.999874998437186e-05
+   },
+   "bonferroni": {
+    "power": 0.9993,
+    "se": 0.00018701737887159497
+   }
+  },
+  {
+   "scale": 1.0,
+   "shift": 0.25,
+   "nominal": {
+    "power": 0.436,
+    "se": 0.003506451197435949
+   },
+   "bonferroni": {
+    "power": 0.1215,
+    "se": 0.002310170448257011
+   }
+  },
+  {
+   "scale": 1.0,
+   "shift": 0.5,
+   "nominal": {
+    "power": 0.9735,
+    "se": 0.001135732142716758
+   },
+   "bonferroni": {
+    "power": 0.8334,
+    "se": 0.0026348096705454834
+   }
+  },
+  {
+   "scale": 1.0,
+   "shift": 1.0,
+   "nominal": {
+    "power": 1.0,
+    "se": 0.0
+   },
+   "bonferroni": {
+    "power": 1.0,
+    "se": 0.0
+   }
+  }
+ ]
+}

@@ -1,0 +1,66 @@
+\section{Ablation}\label{sec:ablation}
+
+The calibrated predictor has four components that the study can switch one at a time: the scalars (given at the truth,
+given at their shipped values, or learned), the discrepancy prior (Kennedy and O'Hagan, orthogonal or scaled), the
+discrepancy itself (kept or dropped), and the form of the engine (affine or curved capacity). Table~\ref{tab:ablation} gives
+the RMSE of each variant on six cells; the capacity form is the subject of Figure~\ref{fig:capacity} and is not repeated.
+
+\begin{table}[!t]
+\caption{Ablation of the calibrated predictor: RMSE (kW for power, t/h for throughput) on six cells with the scalars at the
+truth, at their shipped values and learned under the three discrepancy priors, with the discrepancy dropped (the engine refit
+alone), and least squares on the setting and the feed size for reference; \repsPerCell{} replicates per cell.}
+\label{tab:ablation}
+\centering\footnotesize
+\resizebox{\columnwidth}{!}{\input{generated/tab-ablation}}
+\end{table}
+
+\subsection{The scalars}
+
+Learning the scalars costs little against knowing them. On the power of V0 at ten surveys the predictor with the true scalars
+reaches \rVzeroSTenKwOr~kW, the shipped scalars \rVzeroSTenKwNom{} and the learned ones \rVzeroSTenKwKo; at 160 surveys the
+three are within half a kilowatt of one another and of least squares. On throughput the scalars hardly matter at all, because
+the engine's throughput is affine and its scale is absorbed by the plane: the true and the shipped scalars give the same
+\rVzeroSTenTphOr~t/h. The cost of learning the scalars is largest at ten surveys on the real design (\rVzeroRealKwKo{} against
+\rVzeroRealKwOr~kW), where ten observations per output are shared between eight scalars, three discrepancy coefficients
+and the noise; it is the price of the uncertainty that the band of the method carries and the residual band of a refit does not.
+The learned predictor here is the linearized one, which fixes the noise scale at the plant's and drops the truncation of the
+priors; Section~\ref{sec:results-sampler} measures the full posterior on the same replicates.
+
+\subsection{The discrepancy prior}
+
+The orthogonal prior is the costly change. With the product's proper priors on the scalars it raises the power RMSE on V0 from
+\rVzeroSTenKwKo{} to \rVzeroSTenKwOrth~kW at ten surveys and from \rVzeroSBigKwKo{} to \rVzeroSBigKwOrth{} at 160, and on V1($-1$)
+over the wide window to \rVamWFortyKwOrth~kW, next to the engine without a discrepancy (\rVamWFortyKwRefit). The mechanism is
+Proposition~\ref{prop:priors}(a): the eight sensitivities of power on the training surveys span most of the directions of the
+three discrepancy regressors, so the orthogonal complement leaves the discrepancy little room, and the plane the plant needs
+must be carried by the scalars, whose priors forbid it. In the diffuse limit the two priors predict alike, by part (b); with the
+priors the product uses, they do not, and the orthogonal prior behaves like the engine without a discrepancy. On throughput,
+where only the capacity base has a sensitivity, the two priors are within a tenth of a percent of each other. The scaled prior
+of Gu and Wang changes little on power on the surveys window (it is \scaledWideWorse\pct{} worse than the Kennedy and O'Hagan prior on
+the wide window at ten surveys) and is the best of the three on throughput at ten surveys (\rVzeroSTenTphSc~t/h against
+\rVzeroSTenTphKo{} for the Kennedy and O'Hagan prior), the shrinkage it adds along the well-measured directions being where the
+throughput's plane mismatch is small. H4 as stated, that the priors change the risk less than they change the meaning of the
+scalars, failed for the orthogonal prior: at proper priors it changes the risk most.
+
+\subsection{The discrepancy}
+
+Dropping the discrepancy is the largest change of all, in both directions. On every plant whose form the engine does not share
+the refit engine is the worst predictor of the table except the orthogonal prior on two power rows, up to \rVamWFortyKwRefit~kW on V1($-1$) against \rVamWFortyKwLs{} for
+least squares, and its band covers as little as \covRefitMin{} of the test points. On the capacity study with the engine of the
+plant's own form it is the best of the predictors that learn from the surveys, behind only the same engine at the true scale
+(Section~\ref{sec:results-capacity}). The discrepancy plane therefore
+buys robustness against a wrong form at the price of the variance of three coefficients, and Theorem~\ref{thm:fixed} prices
+it: at most $3\sigma^2/n$ when the form is right, and the whole curvature of the plant when the form is wrong. The second price
+is the larger on every plant of the study whose form the engine does not share, and the first fades with the surveys, so on
+the evidence of this study the discrepancy should be kept unless the engine's form has been validated over the operating range
+by other means; ten surveys of throughput and power cannot validate it.
+
+\subsection{What the ablation says about the method}
+
+Read together, the variants say that CrusherBayes is close to the best predictor available to it in every cell of the study
+except one class: when the engine's form is exactly right, the discrepancy should be dropped, which no set of surveys can
+establish in advance. Its band covers at about the nominal rate, as the Student-$t$ band of least squares does, and is the
+narrower of the two in every cell of Table~\ref{tab:main}; its accuracy is that of least squares within the curvature and plane
+terms of Theorem~\ref{thm:fixed}; and with learned scalars its RMSE is \rVzeroSTenKwKo~kW on ten random surveys against
+\rVzeroSTenKwOr~kW with the true scalars, and \rVzeroRealKwKo{} against \rVzeroRealKwOr~kW on the real design. The choice of prior matters more than the choice of discrepancy scale, and the prior that the calibration literature
+recommends for the meaning of the scalars is the wrong one for prediction with this engine.

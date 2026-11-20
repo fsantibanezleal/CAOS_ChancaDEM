@@ -1,0 +1,85 @@
+\section{Related work}\label{sec:related}
+
+\subsection{Calibration of computer models with a discrepancy}
+
+Kennedy and O'Hagan~\cite{ko} framed the calibration of a computer model as Bayesian inference on its parameters with an
+additive model discrepancy, a Gaussian process in the inputs, so that predictions carry the uncertainty of the parameters and
+of the model's error. Higdon et al.~\cite{higdon} added an emulator for expensive simulators, and Bayarri et al.~\cite{bayarri}
+built a validation framework around the same model, with inferential statements about the predictive error in untested
+conditions. The framework has a known weakness: the parameters and the discrepancy are confounded, so the posterior of a
+parameter depends on the discrepancy prior. Brynjarsd\'ottir and O'Hagan~\cite{brynj} showed that ignoring the discrepancy
+biases the parameters and the predictions, and that with it the parameters are learned only through meaningful priors, while
+predictions inside the range of the data can still be good. Arendt et al.~\cite{arendt} explained when the two can be told
+apart and when they cannot, and in a companion paper~\cite{arendt2} showed that several responses that share a parameter
+improve its identifiability by an amount that depends on the responses. Wong et al.~\cite{wong} gave an identifiable
+frequentist parameterization with a two-step estimator, and Sung and Tuo~\cite{sungtuo} reviewed the framework and the
+experimental designs it calls for. The earlier CrusherBayes paper~\cite{cb002} made the confounding exact for a linear
+discrepancy: the information about a scalar is cut in the directions of the discrepancy, and on the HP500 lane the capacity
+base is confounded with the throughput discrepancy at every value of the scalars.
+
+\subsection{What the calibration parameter should mean}
+
+A second line of work asks which value of the parameter calibration should target when the model is wrong. Tuo and
+Wu~\cite{tuowu} defined it as the value that minimizes the $L_2$ distance between the model and the true process, proved that
+the Kennedy and O'Hagan estimator can miss it, and gave an $L_2$ calibration that is asymptotically normal and semiparametric
+efficient. Tuo~\cite{tuo} showed that the inconsistency is removed by projecting the model's gradient out of the discrepancy's
+kernel; Plumlee~\cite{plumlee} reached the same end with a discrepancy prior orthogonal to the gradient of the computer
+model, which narrows a posterior that the standard prior leaves suboptimally broad; and Plumlee and Joseph~\cite{plumleejoseph}
+gave the orthogonal Gaussian process in closed form. Xie and Xu~\cite{xiexu} proved a Bernstein-von Mises theorem for a
+Bayesian projected calibration. Gu and Wang~\cite{guwang} took a different route with the scaled Gaussian stochastic process,
+which penalizes the mean square of the discrepancy so that the calibrated model alone predicts well. Woody et al.~\cite{woody}
+argued that for extrapolative prediction no inference on the discrepancy is needed and used a Gibbs posterior with a tuned
+loss. These works concern the parameter: its consistency, its efficiency, its meaning. None compares the risk of the
+calibrated predictor with that of an empirical regression in the same inputs, which is the comparison a practitioner with ten
+surveys has to make.
+
+\subsection{Ridge regression, misspecification and model selection}
+
+The predictive mean of a calibration with a linear discrepancy is a ridge regression~\cite{hoerl} toward a target set by the
+model~\cite{cb002}. The risk of ridge regression is classical in the fixed design~\cite{hastie}, and Hsu et al.~\cite{hsu} gave
+random-design bounds for least squares and ridge with an approximation-error term that plays the role of the plant's curvature
+here. The comparison of a regression on two regressors with one on three is Mallows's~\cite{mallows}: a regressor pays when
+its signal exceeds its variance. Proposition~\ref{prop:line} combines these with the engine's offset, which none of them has.
+For comparing two predictors on the same data, Diebold and Mariano~\cite{diebold} gave tests of equal predictive accuracy; in
+a simulation the replicates are independent and the paired difference of errors has a plain Monte Carlo standard error. What
+these results do not cover is a shrinkage target that is itself a fitted physical model with a curvature of its own: ridge
+theory treats the target as a fixed vector, and the misspecification bounds treat the approximation error of the regression as
+a nuisance, not as something a second model can partly predict. Theorem~\ref{thm:risk} adds that term.
+
+\subsection{Physics-informed against data-driven predictors}
+
+The closest empirical study we found is that of Hotvedt et al.~\cite{hotvedt}, who tested by simulation of a virtual flow
+meter whether a grey-box model beats a physics-based one under model mismatch and a data-driven one with little data. They
+gave no risk formula and no calibration prior. In comminution, Yamashita et al.~\cite{yamashita} classified 61 works on cone
+crushers as population-balance, empirical or data-driven; Duarte et al.~\cite{duarte} calibrated a Whiten cone-crusher model
+by least squares and validated it on a data set left out of the fit, and found that the most recent calibrations of that model
+date from the 1990s; Rocha et al.~\cite{rocha} fitted the HP500 model the engine uses, with a capacity that is a power law
+in the setting. A discrete-element simulation could serve as a known truth, but one operating point of a quarter section of a
+secondary cone crusher took 172 to 404 CPU-hours in the thesis of Quist~\cite{quistthesis}, whose quarter-section setting
+Quist and Evertsson~\cite{quist} published, which rules out the hundreds of operating points a risk study needs.
+
+\subsection{Design for calibration and the checking of samplers}
+
+Bayesian experimental design chooses the design that maximizes an expected utility; Chaloner and Verdinelli~\cite{chaloner}
+unified the linear case, Ryan et al.~\cite{ryan} reviewed the computational algorithms, Huan and Marzouk~\cite{huan} gave a
+simulation-based method for nonlinear models, and Rainforth et al.~\cite{rainforth} framed the expected information gain as
+the mutual information between parameters and data. Raue et al.~\cite{raue} separated structural from practical
+non-identifiability with the profile likelihood, the distinction Proposition~\ref{prop:priors} uses. To check that a sampler
+returns the posterior of its model, Talts et al.~\cite{talts} proposed simulation-based calibration, in which the rank of a
+prior draw among posterior draws fitted to data simulated from it must be uniform; Modr\'ak et al.~\cite{modrak} showed that
+ranks of the parameters alone cannot detect a posterior equal to the prior and that the likelihood of the data is a test
+quantity that can. Gelman et al.~\cite{gelman} placed fake-data simulation in the Bayesian workflow, and Morris et
+al.~\cite{morris} set the standard of planning and reporting a simulation study that Section~\ref{sec:design} follows.
+
+\subsection{Where this paper stands}
+
+The search behind this paper (web and bibliographic databases, 2026-11-19) found no derivation of when a calibrated physics
+model beats an empirical regression in the same regressors as a function of the plant's curvature over the operating range,
+no evaluation of a mineral-processing calibration on virtual plants with a known truth, and no Bayesian calibration of a
+Whiten cone-crusher model other than~\cite{cb002}. The closest results, those on the calibration parameter and those on ridge
+risk, each lack the other half: the former do not compare predictors, the latter have no engine. This paper joins them
+for a discrepancy linear in a few regressors, where every quantity is exact. The restriction is the one the released method
+makes, and it is what lets the risk be written without asymptotics: with a Gaussian-process discrepancy the plane would be
+replaced by a kernel smoother, and the curvature gain of Corollary~\ref{cor:align} would compete with the kernel's own ability
+to follow the plant, a comparison that the rates of Tuo~\cite{tuo} and of Xie and Xu~\cite{xiexu} describe only as the number
+of surveys grows.

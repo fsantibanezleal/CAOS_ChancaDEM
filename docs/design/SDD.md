@@ -149,7 +149,7 @@ versions were read at the package registries on 2026-10-26 (the sizing record li
 | contracts | openapi-spec-validator | 0.9.0 | validates `docs/contracts/api.openapi.json` | none: the maintained validator for OpenAPI 3.1 |
 | API | fastapi | 0.143.0 | the dormant `app/`, run by the API contract tests | flask, rejected: no response models to compare with the OpenAPI document |
 | API | httpx | 0.28.1 | the test client of the dormant `app/` | requests, rejected: FastAPI's test client needs httpx |
-| shell | @fasl-work/caos-app-shell | 0.26.0 | the shared app shell, its workbench, charts, story frame, gate (pinned exactly, ADR-0078) | a hand-rolled shell, forbidden by ADR-0078 |
+| shell | @fasl-work/caos-app-shell | 0.26.2 | the shared app shell, its workbench, charts, story frame, gate (pinned exactly, ADR-0078) | a hand-rolled shell, forbidden by ADR-0078 |
 | web | react | 19.3.0 | the UI | none: the shell requires it |
 | web | react-dom | 19.3.0 | the UI renderer | none: the shell requires it |
 | web | react-router | 8.4.0 | the routes and the forward of the old focus links | none: the shell requires it |
@@ -173,17 +173,17 @@ versions were read at the package registries on 2026-10-26 (the sizing record li
 
 ## Resources
 
-What each stage needs on the development workstation (Windows 11, Python 3.12.15, Node 24.14.1; measured 2026-11-15 with `tools/audit/measure_stages.py` of CAOS_MANAGE on `git archive` copies of the release commit `d836e9d` (two runs, each on a fresh copy), each committed as one snapshot so the tests that read the repository through git run: the wall time, the peak memory of the whole process tree polled every 20 ms, and the bytes left). The commands and the raw output are in [`measured-resources.md`](measured-resources.md). No stage needs a GPU or a network after the install.
+What each stage needs on the development workstation (Windows 11, Python 3.12.15, Node 24.14.1; measured 2026-11-20 with `tools/audit/measure_stages.py` of CAOS_MANAGE on `git archive` copies of the release bake commit `958de37` and of the commit after it, `78ee928`, which changes only tests, contract fixtures and the changelog (two runs, each on a fresh copy, on a workstation that ran other jobs at the same time, which lengthens the times), each committed as one snapshot so the tests that read the repository through git run: the wall time, the peak memory of the whole process tree polled every 20 ms, and the bytes left). The commands and the raw output are in [`measured-resources.md`](measured-resources.md). No stage needs a GPU or a network after the install.
 
 | stage | memory | disk | time | where it runs |
 |---|---|---|---|---|
-| bake (`data-pipeline/run.py all`: 27 cases, the four HP500 documents, the index, readiness) | 1525 MB peak | 308 KB in `data/derived/` (308,364 bytes, 67 files), the trained models included | 39.1 min | workstation, never CI |
-| HP500 step alone (`data-pipeline/run.py hp500`: the backbone, CrusherCal, the CrusherBayes sampler, the paired comparison) | 1549 MB peak | 31 KB in `data/derived/hp500/` (30,568 bytes, 4 files) | 36.0 min | workstation, never CI |
-| training (`data-pipeline/run.py models`: the LHS sweeps of the engine, the surrogate and the autoencoder, ONNX export, held-out evaluation) | 444 MB peak | 59 KB in `data/derived/models/` (59,480 bytes, 5 files) | 41.8 s on the CPU | workstation, never CI |
-| tests (pytest, the whole suite: 1707 passed, 27 skipped) | 452 MB peak (the process tree, notebook kernels included) | temporary trees under the temp root (`--basetemp`), removed after | 13.9 min | workstation; the planted-defect suite `tests/adversarial` also runs in CI |
-| install (`npm ci`) | 708 MB peak | 329.0 MB in `node_modules` (329,009,652 bytes, 11508 files) | 12.4 s | workstation and CI web job |
-| build (`npm run build`) | 648 MB peak | 17.2 MB in `frontend/dist` (17,222,309 bytes, 174 files), of which 13.5 MB is the ONNX Runtime WASM | 9.1 s | workstation and CI web job |
-| web unit tests (`npm test`, 562 tests) | 3214 MB peak (vitest's worker pool) | none | 6.9 s | workstation and CI web job |
+| bake (`data-pipeline/run.py all`: 27 cases, the four HP500 documents, the index, readiness) | 1442 MB peak | 308 KB in `data/derived/` (308,364 bytes, 67 files), the trained models included | 54.2 min | workstation, never CI |
+| HP500 step alone (`data-pipeline/run.py hp500`: the backbone, CrusherCal, the CrusherBayes sampler, the paired comparison) | 1592 MB peak | 31 KB in `data/derived/hp500/` (30,568 bytes, 4 files) | 52.3 min | workstation, never CI |
+| training (`data-pipeline/run.py models`: the LHS sweeps of the engine, the surrogate and the autoencoder, ONNX export, held-out evaluation) | 446 MB peak | 59 KB in `data/derived/models/` (59,480 bytes, 5 files) | 74.3 s on the CPU | workstation, never CI |
+| tests (pytest, the whole suite: 1714 passed, 27 skipped) | 437 MB peak (the process tree, notebook kernels included) | temporary trees under the temp root (`--basetemp`), removed after | 15.6 min | workstation; the planted-defect suite `tests/adversarial` also runs in CI |
+| install (`npm ci`) | 639 MB peak | 329.0 MB in `node_modules` (329,015,953 bytes, 11509 files) | 17.3 s | workstation and CI web job |
+| build (`npm run build`) | 642 MB peak | 17.2 MB in `frontend/dist` (17,223,081 bytes, 174 files), of which 13.5 MB is the ONNX Runtime WASM | 11.8 s | workstation and CI web job |
+| web unit tests (`npm test`, 562 tests) | 3091 MB peak (vitest's worker pool) | none | 9.1 s | workstation and CI web job |
 | deploy payload (GitHub Pages) | none | 17.2 MB uploaded | one Pages deploy | CI after main |
 
 ## Lanes
@@ -199,7 +199,7 @@ What each stage needs on the development workstation (Windows 11, Python 3.12.15
   2.3e-12) and to the baked traces by `frontend/src/engine/crusher.parity.test.ts`; the two ONNX models run in the
   browser through onnxruntime-web 1.27.0 with its WASM served by the site. The basis for the live lane is measured: the
   lane gate (`data-pipeline/pipeline/core/gate.py`) judges each case's engine time against 1500 ms and its trace against
-  256 KiB, and every case is live-eligible (the canonical engine evaluates a case in 1.46 ms, the median over the 27 cases of the median of seven warmed runs, at most 1.61 ms; the largest trace is 4,127 bytes; [`measured-resources.md`](measured-resources.md)).
+  256 KiB, and every case is live-eligible (the canonical engine evaluates a case in 1.31 ms, the median over the 27 cases of the median of seven warmed runs, at most 1.46 ms; the largest trace is 4,127 bytes; [`measured-resources.md`](measured-resources.md)).
 
 ## Method ladder
 
@@ -297,6 +297,18 @@ None of these is a model judging a model.
   (b) its nested coverage lies outside 0.7 to 0.9 or its band is wider than the CrusherCal band at equal coverage. Even then
   the identifiability table is the result and is reported, with the negative on power, as the rule requires. With n = 10, a
   difference below about 3 MAPE points is noise.
+  Theory and virtual-plant study (0.14.000; CAOS_MANAGE `plans/chancadem/crusherbayes-theory-plan.md`, research
+  `wip/chancadem/cbt-research-2026-11-19.md`): the question the ten surveys cannot answer, when the physics pays against an
+  empirical regression, answered in closed form and on virtual plants with known truths. Given the scalars the predictive mean is
+  least squares on the discrepancy regressors shrunk toward the engine's plane plus the engine's departure from it; its exact risk
+  splits the gain into a shrinkage that fades with the number of surveys and a curvature term that persists and is positive only
+  when the engine's curvature is aligned with the plant's and less than twice as large. Evaluation: 176 cells of 1,900 replicates
+  (four virtual plants, four designs, n = 10 to 160, eleven predictors including the orthogonal prior of Plumlee 2017 and the
+  scaled prior of Gu and Wang 2018, https://doi.org/10.1137/17M1159890), the theory against the simulation in every cell, a
+  design study by expected information gain (Rainforth et al. 2024, https://doi.org/10.1214/23-STS915) and a simulation-based
+  calibration of the sampler (Talts et al. 2018; Modrak et al. 2025, https://doi.org/10.1214/23-BA1404). Harness, analyses and
+  summaries in `manuscripts/crusherbayes-theory/`; notebook `08-crusherbayes/04`; the manuscript is a second record of this
+  method's results (product.json `manuscripts`).
 
 CrusherCal (M10) is the evaluation protocol every method above is held to, not a proposal of its own (CAOS_MANAGE
 `conventions/method-tiers-and-manuscripts.md` section 1): an out-of-sample validation of a calibrated crusher model on open industrial survey data, with a
@@ -357,5 +369,5 @@ The target is written in `deploy/TARGET` and checked by `scripts/check_deploy_pl
 | ADR-0071 | the page is the viewport; one tab row; the instrument at least half the App route | the shell's `CaseWorkbench`; the gate (G5, G6) |
 | ADR-0074 | CI runs cheap checks only; training and the bake are local | `.github/workflows/ci.yml`, `scripts/check_ci_budget.py` |
 | ADR-0075 | every requirement names its gate | `docs/design/features/`, `scripts/check_sdd.py` |
-| ADR-0078 | rules live in the base | shell 0.26.0 (pinned exactly) over template 0.15.012 (`.template-version`); no product re-implements them, and on adopting 0.26.0 the product dropped its hold of the callout band (known defect 65 fixed in the shell) |
+| ADR-0078 | rules live in the base | shell 0.26.2 (pinned exactly) over template 0.15.014 (`.template-version`); no product re-implements them, and on adopting 0.26.0 the product dropped its hold of the callout band (known defect 65 fixed in the shell) |
 | ADR-0080 | contract-first parallel delivery | `docs/contracts/`, `tests/contracts/`, `frontend/src/readiness/`, `scripts/check_contracts.py`, `scripts/check_readiness.py` |
