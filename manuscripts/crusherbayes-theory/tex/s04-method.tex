@@ -189,8 +189,9 @@ replicate index, so a result does not depend on the order or the number of proce
 \end{algorithmic}
 \end{algorithm}
 
-The full sampler is run, at a reduced size of 20 walkers and 4,000 steps of which 1,000 are discarded, on two tasks the closed
-forms cannot do: simulation-based calibration, which checks that the sampler returns the posterior of the model, and a
-verification on three cells in which the full posterior replaces the closed forms on the same replicates. The reduced size
-keeps more than 50 integrated autocorrelation times after the burn-in, the convergence criterion of~\cite{cb002}, on the
-posterior of the ten surveys, whose largest autocorrelation time is \tauTen~steps.
+The full sampler is run, at a reduced size of 20 walkers and \sbcSteps{} steps of which \sbcBurn{} are discarded, on two tasks the
+closed forms cannot do: simulation-based calibration, which checks that the sampler returns the posterior of the model, and a
+verification on three cells in which the full posterior replaces the closed forms on the same replicates. On the posterior of
+the ten surveys, whose largest autocorrelation time is \tauTen~steps, the reduced size keeps the convergence criterion
+of~\cite{cb002}, at least 50 integrated autocorrelation times after the burn-in; every run records its own autocorrelation
+time and whether it met the criterion (Section~\ref{sec:results-sampler}).

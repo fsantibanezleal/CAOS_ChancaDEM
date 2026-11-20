@@ -83,9 +83,10 @@ at 160 surveys: \capRoSBig{} on the surveys window, \capRoWBig{} on the wide one
 persists and grows with the width of the window and with the distance of the test points: it removes \capRoMseS, \capRoMseW{}
 and \capRoMseX\pct{} of the mean squared error of least squares (\capRoRmseS, \capRoRmseW{} and \capRoRmseX\pct{} of its RMSE).
 Its size is set by the plant: over the surveys window the plant's capacity departs from a plane by \rRmsTph~t/h root mean square
-(\rRmsTphW{} over the wide one) against a noise of \sigTph~t/h, so inside the training window even an engine of exactly the right
-form can remove at most about \curvCeilTph\pct{} of the squared error; under extrapolation the curvature is larger and so is the
-gain. H2 held for the engine of the plant's form and, as the next paragraph shows, failed for the engine with half the exponents.
+(\rRmsTphW{} over the wide one) against a noise of \sigTph~t/h. The fixed-design bound of Theorem~\ref{thm:fixed}, a curvature
+gain of at most $\|\mathbf r\|^2/n$, is then \curvCeilTph\pct{} of the noise variance on the surveys window; on new points of the
+same window the gain also carries the shrinkage term and the measured value is of the same size, and under extrapolation the
+curvature is larger and so is the gain. H2 held for the engine of the plant's form and, as the next paragraph shows, failed for the engine with half the exponents.
 
 The engine with half the exponents tests Corollary~\ref{cor:align} where the alignment is not built in. On the surveys window
 its curvature is aligned ($\rho=\halfRhoS$) and smaller than the plant's ($\kappa=\halfKappaS$), so it gains

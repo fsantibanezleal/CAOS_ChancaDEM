@@ -95,7 +95,7 @@ def fig_theory_check(cells: dict) -> None:
             ax.loglog(th, sim, MARKERS[k], ms=3, mfc="none", color=GRAYS[k], label=SHORT[p])
         lo, hi = ax.get_xlim()
         ax.plot([lo, hi], [lo, hi], "-", lw=0.6, color="0.5")
-        ticks = [1e3, 2e3, 3e3, 5e3, 1e4, 2e4, 3e4, 5e4, 7e4, 1e5]
+        ticks = [1e3, 2e3, 5e3, 1e4, 2e4, 3e4, 5e4, 7e4, 1e5]
         for axis in (ax.xaxis, ax.yaxis):
             axis.set_major_locator(matplotlib.ticker.FixedLocator(ticks))
             axis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:,.0f}"))
@@ -649,7 +649,7 @@ def main() -> None:
         macro(name, f"{span(r['wall_seconds'])} on {r['workers']} processes")
     sbc, ver = load(DATA / "sbc.json", a.partial), load(DATA / "verify.json", a.partial)
     if sbc is None or ver is None:
-        for k in ("sbcN", "sbcAbstract", "sbcText", "runSamplerTime", "sbcSteps", "sbcBurn", "sbcBins", "sbcPerBin", "verReps"):
+        for k in ("sbcN", "sbcAbstract", "sbcText", "runSamplerTime", "sbcSteps", "sbcBurn", "sbcBins", "sbcPerBin", "verReps", "sbcWallHours"):
             macro(k, r"\textbf{[pending]}")
     else:
         sampler_outputs(sbc, ver)
