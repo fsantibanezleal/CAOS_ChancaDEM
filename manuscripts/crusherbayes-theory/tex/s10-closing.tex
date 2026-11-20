@@ -3,8 +3,8 @@
 \subsection{Internal validity}
 
 The theory holds conditionally on the scalars and on the design. The study measures the learning of the scalars in two ways,
-the linearized model and the full sampler, and the second only on three cells with 50 replicates each, because one full
-posterior costs about \cbCpuHours~CPU-hours at the product's size. The closed forms use the plant's noise scale, which the full
+the linearized model and the full sampler, and the second only on three cells with \verReps{} replicates each and at a reduced
+chain length, because one full posterior costs about \cbCpuHours~CPU-hours at the product's size. The closed forms use the plant's noise scale, which the full
 method learns; the verification cells measure what that costs. The linearization is taken at the prior centre, which is the
 shipped engine, and the virtual plants put the truth at the posterior mean of the ten surveys, a distance of up to one prior
 standard deviation on the power scalars; a plant further from the prior centre would make the linearized predictor worse and

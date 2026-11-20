@@ -470,7 +470,7 @@ def sampler_outputs(sbc: dict, ver: dict) -> None:
         ax.set_xticks([])
     for ax in list(axes.flat)[len(names):]:
         ax.axis("off")
-    fig.text(0.5, 0.01, "rank bin (10 bins of the 100 ranks)", ha="center")
+    fig.text(0.5, 0.01, f"rank bin ({B} bins of the {sbc['L'] + 1} ranks)", ha="center")
     fig.text(0.005, 0.5, "posteriors", va="center", rotation=90)
     fig.tight_layout(rect=(0.02, 0.03, 1, 1))
     save(fig, "fig-sbc")
@@ -478,7 +478,8 @@ def sampler_outputs(sbc: dict, ver: dict) -> None:
     rows = [[SBC_TEX[nm], fmt(sbc["ranks"][nm]["chi2"], 1), f"{pv[nm]:.3f}"] for nm in names]
     half = (len(rows) + 1) // 2
     paired = [rows[i] + (rows[i + half] if i + half < len(rows) else ["", "", ""]) for i in range(half)]
-    table("sbc", ["Quantity", "$\\chi^2_9$", "$p$", "Quantity", "$\\chi^2_9$", "$p$"], paired, "@{}lrrlrr@{}")
+    chi = f"$\\chi^2_{{{B - 1}}}$"
+    table("sbc", ["Quantity", chi, "$p$", "Quantity", chi, "$p$"], paired, "@{}lrrlrr@{}")
     worst = min(pv, key=pv.get)
     macro("sbcN", N)
     macro("sbcBins", B)

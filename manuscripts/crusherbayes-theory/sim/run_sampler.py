@@ -310,7 +310,7 @@ def summarize(a) -> int:
            "redraws_engine_failure": int(sum(d["redraws_engine_failure"] for d in sbc_docs)),
            "wall_seconds_mean": float(np.mean([d["wall_seconds"] for d in sbc_docs])) if sbc_docs else None,
            "tau_max_max": float(max(d["convergence"]["tau_max"] for d in sbc_docs)) if sbc_docs else None,
-           "ranks": params, "test": "chi-square of the 10-bin rank histogram against uniform (special.chi2_sf)", **meta}
+           "ranks": params, "test": f"chi-square of the {a.bins}-bin rank histogram against uniform (special.chi2_sf)", **meta}
     cells = {}
     for name in sorted({d["cell"] for d in ver_docs}):
         docs = [d for d in ver_docs if d["cell"] == name]
