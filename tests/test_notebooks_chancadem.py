@@ -2,7 +2,7 @@
 ``docs/design/features/notebooks/requirements.md``): the committed set, read as committed.
 
 The generic rules of the notebooks gate live in ``tests/test_check_notebooks.py`` (a base file, one plant per rule). These tests
-hold what is true of this product's set: 22 notebooks per language in eight topics, built on the crusher engine and the
+hold what is true of this product's set: 23 notebooks per language in eight topics, built on the crusher engine and the
 oracles, and the figure of a notebook that names a case runs that case. Counts are read from the committed set once and
 written here as constants, so an added or removed notebook fails a test on purpose."""
 from __future__ import annotations
@@ -39,9 +39,9 @@ LEVELS = {
     "05-real-surveys": [1, 2],
     "06-crushercal": [1, 2, 3, 3],
     "07-learned-models": [1, 2, 3],
-    "08-crusherbayes": [1, 2, 4],
+    "08-crusherbayes": [1, 2, 4, 4],   # 08-04, the theory study (0.14.000)
 }
-PER_LANGUAGE = 22          # the sum of LEVELS
+PER_LANGUAGE = 23          # the sum of LEVELS
 ORACLE_USERS = {           # the notebooks that import the oracles, read from notebooks/en on 2026-10-27
     "02-size-distributions/01-rosin-rammler-feed.ipynb",
     "02-size-distributions/02-grid-interpolation-and-the-oracle.ipynb",
