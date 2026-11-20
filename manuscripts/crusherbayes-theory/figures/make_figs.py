@@ -75,7 +75,8 @@ def rmse(cell: dict, t: str, p: str) -> tuple[float, float]:
 
 
 def save(fig, name: str) -> None:
-    fig.savefig(HERE / f"{name}.pdf", bbox_inches="tight")
+    # no creation date in the file, so a rebuild from the same summaries gives the same bytes
+    fig.savefig(HERE / f"{name}.pdf", bbox_inches="tight", metadata={"CreationDate": None})
     plt.close(fig)
 
 
@@ -509,7 +510,8 @@ def sampler_outputs(sbc: dict, ver: dict) -> None:
     macro("sbcNotConverged", N - sbc["converged"])
     macro("sbcRedraws", sbc["redraws_engine_failure"])
     rows = []
-    for cell, lab in (("V0-real-n10", "V0, real, n = 10"), ("V2-real-n10", "V2, real, n = 10"), ("V0-surveys-n10", "V0, surveys, 10")):
+    for cell, lab in (("V0-real-n10", "V0, real, $n=10$"), ("V2-real-n10", "V2, real, $n=10$"),
+                      ("V0-surveys-n10", "V0, surveys, $n=10$")):
         c = ver["cells"][cell]
         for t, unit in (("tph", "t/h"), ("kW", "kW")):
             o = c["outputs"][t]
@@ -519,11 +521,34 @@ def sampler_outputs(sbc: dict, ver: dict) -> None:
                 row.append(fmt(math.sqrt(o["exact"][p]["mse"]["mean"]), 1))
             q = o["paired_mse"]["sampler_minus_cb_ko"]
             row.append(f"${fmt(q['mean'], 0)}\\pm{fmt(1.96 * q['mcse'], 0)}$")
-            row.append(fmt(o["sampler"]["coverage80"]["mean"], 2))
+            row.append(f"{fmt(o['sampler']['coverage80']['mean'], 2)} ({fmt(o['exact']['cb_oracle']['coverage80']['mean'], 2)})")
             rows.append(row)
         macro(f"verN{['VzeroReal', 'VtwoReal', 'VzeroS'][[ 'V0-real-n10', 'V2-real-n10', 'V0-surveys-n10'].index(cell)]}",
               c["n_posteriors"])
-    table("verify", ["Cell, output", "Sampler", "True", "KO lin.", "LS", "Sampler $-$ KO", "Cov."], rows, "@{}lrrrrrr@{}")
+    table("verify", ["Cell, output", "Sampler", "True", "KO lin.", "LS", "Sampler $-$ KO", "Cov. (true)"], rows,
+          "@{}lrrrrrr@{}")
+    # the second clause of H6, per cell and output: the sampler's risk is not above the linearized learned predictor's beyond
+    # Monte Carlo error (the lower end of the 95% interval of the paired difference at or below zero)
+    outs = [o for c in ver["cells"].values() for o in c["outputs"].values()]
+    lo_ = lambda q: q["mean"] - 1.96 * q["mcse"]
+    hi_ = lambda q: q["mean"] + 1.96 * q["mcse"]
+    macro("verCellOutputs", len(outs))
+    macro("verRiskHeld", sum(1 for o in outs if lo_(o["paired_mse"]["sampler_minus_cb_ko"]) <= 0))
+    macro("verBelowKO", sum(1 for o in outs if hi_(o["paired_mse"]["sampler_minus_cb_ko"]) < 0))
+    macro("verAtOracle", sum(1 for o in outs if lo_(o["paired_mse"]["sampler_minus_cb_oracle"]) <= 0
+                             <= hi_(o["paired_mse"]["sampler_minus_cb_oracle"])))
+    cov = [o["sampler"]["coverage80"]["mean"] for o in outs]
+    macro("verCovMin", fmt(min(cov), 2))
+    macro("verCovMax", fmt(max(cov), 2))
+    pool = ver["pooled"]
+    macro("verCovPooled", fmt(pool["coverage80_sampler"]["mean"], 2))
+    macro("verCovTrue", fmt(pool["coverage80_cb_oracle"]["mean"], 2))
+    d_ = pool["coverage80_sampler_minus_cb_oracle"]
+    macro("verCovGap", fmt(-100 * d_["mean"], 1))
+    macro("verCovGapCI", fmt(100 * 1.96 * d_["mcse"], 1))
+    w_ = pool["width_ratio_sampler_over_cb_oracle"]
+    macro("verWidthPct", fmt(100 * w_["mean"], 0))
+    macro("verWidthCI", fmt(100 * 1.96 * w_["mcse"], 0))
     macro("verPosteriors", ver["n_posteriors"])
     macro("verReps", min(c["n_posteriors"] for c in ver["cells"].values()))
     macro("verConverged", sum(c["converged"] for c in ver["cells"].values()))
@@ -659,7 +684,7 @@ def main() -> None:
         macro(name, f"{span(r['wall_seconds'])} on {r['workers']} processes")
     sbc, ver = load(DATA / "sbc.json", a.partial), load(DATA / "verify.json", a.partial)
     if sbc is None or ver is None:
-        for k in ("sbcN", "sbcAbstract", "sbcText", "runSamplerTime", "sbcSteps", "sbcBurn", "sbcBins", "sbcPerBin", "verReps", "sbcWallHours"):
+        for k in ("sbcN", "runSamplerTime", "sbcSteps", "sbcBurn", "sbcBins", "sbcPerBin", "verReps", "sbcWallHours"):
             macro(k, r"\textbf{[pending]}")
     else:
         sampler_outputs(sbc, ver)

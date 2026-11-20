@@ -1,3 +1,71 @@
 \subsection{The full sampler}\label{sec:results-sampler}
 
-\sbcText{}
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig-sbc}
+\caption{Rank histograms of simulation-based calibration for the \sbcQuantities{} quantities: the eight scalars, the two noise
+scales, the six discrepancy coefficients and the log likelihood test quantity, over \sbcN{} posteriors in \sbcBins{} bins of the
+$L+1=100$ ranks. The grey band holds 99\pct{} of the counts of a bin under uniform ranks (\sbcBandLo{} to \sbcBandHi{}).}
+\label{fig:sbc}
+\end{figure*}
+
+\begin{table}[!t]
+\caption{Chi-square statistic of each rank histogram of Figure~\ref{fig:sbc} against uniform, on \sbcBins{} bins, and its $p$
+value; \sbcN{} posteriors.}
+\label{tab:sbc}
+\centering\footnotesize
+\input{generated/tab-sbc}
+\end{table}
+
+\begin{table*}[!t]
+\caption{Verification of the full posterior on the replicates of three cells of the closed-form study with $n=10$: RMSE of the
+full sampler and of three closed forms on the same replicates (the calibrated predictor with the true scalars, the linearized
+learned predictor under the Kennedy and O'Hagan prior, least squares), the paired difference of mean squared error, sampler minus
+the linearized predictor, with its 95\pct{} Monte Carlo interval, and the coverage of the sampler's 80\pct{} band, with that of
+the band built with the true scalars and noise scale in brackets; \verReps{} replicates per cell of 50 test points each.}
+\label{tab:verify}
+\centering\footnotesize
+\input{generated/tab-verify}
+\end{table*}
+
+The calibration finds no error in the sampler. Every rank histogram of Figure~\ref{fig:sbc} lies inside the 99\pct{} band
+(\sbcOutsideBand{} of the \sbcAllBins{} bins outside it), and Table~\ref{tab:sbc} gives the tests: the smallest of the
+\sbcQuantities{} $p$ values is \sbcMinP{}, for \sbcMinPName, and \sbcBelowBonf{} fall below \sbcBonfP, the level that keeps the
+chance of any false alarm among the \sbcQuantities{} tests at 5\pct. The ranks of the log likelihood, the test quantity that
+detects a posterior close to the prior or one that ignores part of the data~\cite{modrak}, have $p=\sbcLikP$. The first clause of
+H6 held. The test has the reach of its size: \sbcN{} posteriors in \sbcBins{} wide bins detect a posterior that is clearly too
+narrow, too wide or shifted, the errors that would mislead a band or a mean, and would miss a small distortion in the tails,
+which finer bins and several hundred posteriors would be needed to see.
+
+\sbcConverged{} of the \sbcN{} chains met the criterion of Section~\ref{sec:method}, at least 50 integrated autocorrelation
+times after the burn-in. The largest autocorrelation time of a chain had a median of \sbcTauMedian{} steps, close to the
+\tauTen{} steps of the posterior of the ten surveys, and a maximum of \sbcTauMax: some parameter sets drawn from the prior give
+posteriors much harder to sample than that of the real surveys. The \sbcNotConverged{} chains that missed the criterion do not
+carry the result. The ranks of the \sbcConverged{} chains that met it, tested on their own, have a smallest $p$ of
+\sbcConvMinP{} (\sbcConvMinPName), \sbcConvBelowBonf{} below the Bonferroni level; a subset chosen by a property of the
+simulated data is not a calibration test in its own right, so this is a check of the main test, not a replacement for it. No
+engine evaluation failed (\sbcRedraws{} parameter sets redrawn).
+
+Table~\ref{tab:verify} tests the second clause. On none of the \verCellOutputs{} cell outputs is the risk of the full posterior
+above that of the linearized learned predictor beyond Monte Carlo error: the 95\pct{} interval of the paired difference reaches
+zero or lies below it in all \verRiskHeld{}. In \verBelowKO{} of them, power on the ten surveys' design under V0 and under V2,
+the sampler does better than the linearized predictor by more than that error, and in \verAtOracle{} of the \verCellOutputs{}
+its risk is within Monte Carlo error of the predictor handed the true scalars. The second clause of H6 held, and with it H6.
+The comparison is fair to the closed forms: they are given the noise scales, which the sampler learns from the same ten surveys
+together with the eight scalars and the six discrepancy coefficients. Where the sampler beats the linearized predictor it does
+so despite learning more, so on power it is the linearized model, built at the prior centre, that costs risk, not the
+posterior; on throughput the two are equal within error. Within the reach of three cells, this licenses the linearized learned
+predictor of the closed-form study and the linearized model of the design study as descriptions of the shipped method. \verConverged{} of the \verPosteriors{} verification chains met
+the convergence criterion.
+
+The bands tell a different story from the means. The sampler's 80\pct{} band covered between \verCovMin{} and \verCovMax{} of
+the test points across the cell outputs, \verCovPooled{} pooled over the \verPosteriors{} posteriors, against \verCovTrue{} for
+the band built with the true scalars and noise scale on the same replicates: a shortfall of \verCovGap{} points, with a 95\pct{}
+Monte Carlo interval of $\pm$\verCovGapCI{} points when the two outputs of a posterior count as one observation. The sampler's
+bands were \verWidthPct\pct{} as wide as the true ones (95\pct{} interval $\pm$\verWidthCI{} points), and its means carry the slightly larger risk
+of Table~\ref{tab:verify}; the study does not separate the two causes. The shortfall does not contradict the calibration.
+Simulation-based calibration tests the posterior on average over the prior, with a new truth for every posterior, and a correct
+posterior is calibrated in that average; the verification fixes the truth at one point, the posterior mean of the ten surveys,
+where a posterior learned from ten surveys need not cover at its nominal rate. Coverage was not part of H6, so the hypothesis
+stands, but the number matters to a user: at ten surveys and at this plant the 80\pct{} band of the shipped method is a band of
+about \verCovPooled{} coverage.

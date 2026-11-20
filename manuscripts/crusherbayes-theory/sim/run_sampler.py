@@ -337,10 +337,27 @@ def summarize(a) -> int:
                            for p in docs_t[0]["outputs"][t]["exact"]},
                  "paired_mse": {f"sampler_minus_{p}": _mean_mcse(np.array(s_mse)
                                                                   - np.array([d["outputs"][t]["exact"][p]["mse"] for d in docs_t]))
-                                for p in ("cb_oracle", "cb_ko", "ls")}}
+                                for p in ("cb_oracle", "cb_ko", "ls")},
+                 # the band against the one built with the true scalars and the true noise scale, on the same replicates
+                 "paired_coverage80": {"sampler_minus_cb_oracle": _mean_mcse(np.array(
+                     [d["outputs"][t]["sampler"]["coverage80"] - d["outputs"][t]["exact"]["cb_oracle"]["coverage80"]
+                      for d in docs_t]))},
+                 "width_ratio": {"sampler_over_cb_oracle": _mean_mcse(np.array(
+                     [d["outputs"][t]["sampler"]["width"] / d["outputs"][t]["exact"]["cb_oracle"]["width"] for d in docs_t]))}}
             row["outputs"][t] = o
         cells[name] = row
-    ver = {"schema": SCHEMA_VER, "n_posteriors": len(ver_docs), "cells": cells,
+    # pooled over every verification posterior: each posterior's average over its outputs, so the two outputs of one posterior
+    # (fitted together) count as one observation in the Monte Carlo standard error
+    def pooled(fn) -> dict:
+        vals = [np.mean([fn(d["outputs"][t]) for t in cb.TARGETS if d["outputs"][t]["exact"]]) for d in ver_docs]
+        return _mean_mcse(np.array(vals))
+    pool = {"coverage80_sampler": pooled(lambda o: o["sampler"]["coverage80"]),
+            "coverage80_cb_oracle": pooled(lambda o: o["exact"]["cb_oracle"]["coverage80"]),
+            "coverage80_sampler_minus_cb_oracle": pooled(lambda o: o["sampler"]["coverage80"]
+                                                         - o["exact"]["cb_oracle"]["coverage80"]),
+            "width_ratio_sampler_over_cb_oracle": pooled(lambda o: o["sampler"]["width"] / o["exact"]["cb_oracle"]["width"])} \
+        if ver_docs else None
+    ver = {"schema": SCHEMA_VER, "n_posteriors": len(ver_docs), "cells": cells, "pooled": pool,
            "config": ver_docs[0]["config"] if ver_docs else None, **meta}
     run_exact.write_json(data / "sbc.json", sbc)
     run_exact.write_json(data / "verify.json", ver)

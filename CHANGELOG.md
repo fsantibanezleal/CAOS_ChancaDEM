@@ -16,7 +16,10 @@ open industrial data.
   and scaled discrepancy priors, an information ceiling and a contraction floor for the capacity base). The harness (`sim/`, 18
   tests, the closed forms checked against `pipeline.hp500.crusherbayes`) ran 176 cells of 1,900 replicates (largest theory-versus-
   simulation |z| 3.17 of 832), a design study by expected information gain, the identifiability analysis, the analysis of the
-  discrepancy scale and the band coverage, and a simulation-based calibration and verification of the sampler. The manuscript is a
+  discrepancy scale and the band coverage, and a simulation-based calibration and verification of the sampler: the ranks of 96
+  posteriors are uniform for every parameter and the likelihood, the sampler's risk is never above the linearized predictor's
+  beyond Monte Carlo error on the three verification cells, and its 80% band covers 0.77 at ten surveys against 0.81 for the band
+  with the true scalars and noise scale (the summary also records the paired coverage and width). The manuscript is a
   new Zenodo record; figures, tables and every number of its text are written by `figures/make_figs.py` from the committed summaries.
 - Notebook `08-crusherbayes/04-when-the-engine-beats-a-regression` (en, es), level 4: the predictive given the scalars against
   `_Problem.predict`, the engine's departure from the plane on the ten surveys, the exact risk on a virtual plant and the sign change of

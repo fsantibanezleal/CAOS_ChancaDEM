@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 
 import numpy as np
+import pytest
 
 import run_exact
 import run_sampler
@@ -73,3 +74,14 @@ def test_m_sampler_plumbing(tmp_path, cache_dir):
     v = json.loads((data / "verify.json").read_text(encoding="utf-8"))
     assert s["schema"] == "chancadem.cbt.sbc/v1" and s["n_posteriors"] == 1
     assert v["schema"] == "chancadem.cbt.verify/v1" and CELL in v["cells"]
+    # the band against the true-scalar band, per output and pooled over the posteriors (one posterior here)
+    row = ver["outputs"]["kW"]
+    gap = row["sampler"]["coverage80"] - row["exact"]["cb_oracle"]["coverage80"]
+    o = v["cells"][CELL]["outputs"]["kW"]
+    assert o["paired_coverage80"]["sampler_minus_cb_oracle"]["mean"] == pytest.approx(gap)
+    assert o["width_ratio"]["sampler_over_cb_oracle"]["mean"] == pytest.approx(
+        row["sampler"]["width"] / row["exact"]["cb_oracle"]["width"])
+    outs = [t for t in ("tph", "kW") if ver["outputs"][t]["exact"]]
+    pooled_gap = np.mean([ver["outputs"][t]["sampler"]["coverage80"] - ver["outputs"][t]["exact"]["cb_oracle"]["coverage80"]
+                          for t in outs])
+    assert v["pooled"]["coverage80_sampler_minus_cb_oracle"]["mean"] == pytest.approx(pooled_gap)
