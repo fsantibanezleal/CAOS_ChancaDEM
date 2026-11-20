@@ -297,20 +297,29 @@ def summarize(a) -> int:
     sbc_docs = [json.loads(p.read_text(encoding="utf-8")) for p in sorted((out / "sbc").glob("sbc-*.json"))]
     ver_docs = [json.loads(p.read_text(encoding="utf-8")) for p in sorted((out / "verify").glob("*-r*.json"))]
     meta = {"engine_version": inputs.engine_version(), "inputs_sha256": inputs.digests(), "code_commit": inputs.code_commit()}
-    params = {}
-    for nm in PARAM_NAMES + D_NAMES + ["loglik"]:
-        ranks = np.array([d["rank_loglik"] if nm == "loglik" else d["ranks"][nm] for d in sbc_docs], int)
-        if ranks.size == 0:
-            continue
-        chi2, p = theory.rank_uniformity(ranks, L_DRAWS, a.bins)
-        params[nm] = {"histogram": theory.rank_histogram(ranks, L_DRAWS, a.bins).tolist(), "chi2": chi2, "p_value": p}
+    def rank_tests(docs: list[dict]) -> dict:
+        params = {}
+        for nm in PARAM_NAMES + D_NAMES + ["loglik"]:
+            ranks = np.array([d["rank_loglik"] if nm == "loglik" else d["ranks"][nm] for d in docs], int)
+            if ranks.size == 0:
+                continue
+            chi2, p = theory.rank_uniformity(ranks, L_DRAWS, a.bins)
+            params[nm] = {"histogram": theory.rank_histogram(ranks, L_DRAWS, a.bins).tolist(), "chi2": chi2, "p_value": p}
+        return params
+    params = rank_tests(sbc_docs)
+    # the chains that met the convergence criterion, tested on their own: a check that the shorter-than-criterion chains do not
+    # carry the result (a subset chosen by a property of the data, so it is a check, not the test)
+    params_converged = rank_tests([d for d in sbc_docs if d["convergence"]["converged"]])
+    taus = [d["convergence"]["tau_max"] for d in sbc_docs]
     sbc = {"schema": SCHEMA_SBC, "n_posteriors": len(sbc_docs), "L": L_DRAWS, "bins": a.bins,
            "config": sbc_docs[0]["config"] if sbc_docs else None,
            "converged": int(sum(d["convergence"]["converged"] for d in sbc_docs)),
            "redraws_engine_failure": int(sum(d["redraws_engine_failure"] for d in sbc_docs)),
            "wall_seconds_mean": float(np.mean([d["wall_seconds"] for d in sbc_docs])) if sbc_docs else None,
-           "tau_max_max": float(max(d["convergence"]["tau_max"] for d in sbc_docs)) if sbc_docs else None,
-           "ranks": params, "test": f"chi-square of the {a.bins}-bin rank histogram against uniform (special.chi2_sf)", **meta}
+           "tau_max_max": float(max(taus)) if taus else None,
+           "tau_max_median": float(np.median(taus)) if taus else None,
+           "ranks": params, "ranks_converged": params_converged,
+           "test": f"chi-square of the {a.bins}-bin rank histogram against uniform (special.chi2_sf)", **meta}
     cells = {}
     for name in sorted({d["cell"] for d in ver_docs}):
         docs = [d for d in ver_docs if d["cell"] == name]

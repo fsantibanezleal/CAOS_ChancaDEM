@@ -498,6 +498,13 @@ def sampler_outputs(sbc: dict, ver: dict) -> None:
     macro("sbcBandHi", hi)
     macro("sbcWallHours", fmt(sbc["wall_seconds_mean"] / 3600, 2))
     macro("sbcTauMax", fmt(sbc["tau_max_max"], 0))
+    macro("sbcTauMedian", fmt(sbc["tau_max_median"], 0))
+    pc = {nm: v["p_value"] for nm, v in sbc["ranks_converged"].items()}
+    worst_c = min(pc, key=pc.get)
+    macro("sbcConvMinP", f"{pc[worst_c]:.3f}")
+    macro("sbcConvMinPName", SBC_TEX[worst_c])
+    macro("sbcConvBelowBonf", sum(1 for v in pc.values() if v < 0.05 / len(pc)))
+    macro("sbcNotConverged", N - sbc["converged"])
     macro("sbcRedraws", sbc["redraws_engine_failure"])
     rows = []
     for cell, lab in (("V0-real-n10", "V0, real, n = 10"), ("V2-real-n10", "V2, real, n = 10"), ("V0-surveys-n10", "V0, surveys, 10")):

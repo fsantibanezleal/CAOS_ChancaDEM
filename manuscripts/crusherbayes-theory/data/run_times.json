@@ -20,6 +20,11 @@
    "wall_seconds": 76.0,
    "workers": 8,
    "source": "time of analysis/tau_coverage.py, 2026-11-19 (1 min 16 s)"
+  },
+  "sampler_sbc": {
+   "wall_seconds": 16754.1,
+   "workers": 24,
+   "source": "run_sampler.py sbc, 2026-11-19 to 2026-11-20 (96 posteriors at 5,000 steps in 16,754.1 s on 24 workers; the machine shared with other jobs)"
   }
  },
  "environment": {
