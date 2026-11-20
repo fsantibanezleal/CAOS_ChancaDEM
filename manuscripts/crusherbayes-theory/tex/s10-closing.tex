@@ -35,7 +35,9 @@ on the mean absolute percentage error; a decision that weighs an overprediction 
 would need another loss, under which Theorem~\ref{thm:risk} still gives the error's law under Gaussian noise but not the
 ranking. The band is judged by its coverage and its width at the 80\pct{} level only. The discrepancy is a plane in two
 regressors, as in the released method; a Gaussian-process discrepancy would change Proposition~\ref{prop:bound} (its kernel
-would absorb curved sensitivities too) and the results of Section~\ref{sec:results-capacity}.
+would absorb curved sensitivities too) and the results of Section~\ref{sec:results-capacity}. The plants assume one ore and one
+machine state across the surveys; a drift of the ore's hardness or of the liners' wear between surveys is a regressor that
+neither the plant nor the predictors carry, and in a real campaign it would enter the noise and lower every gain measured here.
 
 \section{Reproducibility}\label{sec:repro}
 
@@ -51,3 +53,18 @@ release, imported from \path{data-pipeline/pipeline/}; nothing in them was chang
 open table of Rocha et al.~\cite{rocha} (CC~BY~4.0), committed as \path{data/examples/hp500-surveys.csv}. The run times on the
 machine of the study (32 logical processors, Windows~11, Python~3.12, numpy~2.4.6, emcee~3.1.6) were \runExactTime{} for the
 closed-form study, \runDesignTime{} for the design study and \runSamplerTime{} for the full-sampler runs.
+
+\section{Conclusions}\label{sec:conclusions}
+
+Given its scalars, the prediction of a Bayesian calibration with a discrepancy linear in the regressors is least squares on
+those regressors, shrunk toward the engine's plane, plus the engine's departure from that plane, and its risk has the exact form
+of Theorem~\ref{thm:risk}. Over an empirical regression in the same regressors the engine gains in two ways: a shrinkage gain,
+bounded by the variance of the fitted plane and fading with the number of surveys, and a curvature gain, which persists and is
+positive only when the engine's curvature is aligned with the plant's and less than twice as large. On \cellsTotal{} cells of
+virtual plants the theory matched the simulation to Monte Carlo error. For the HP500 engine of ChancaDEM the capacity is affine in
+the setting, so on throughput only the shrinkage acts; on power the engine's curvature is \curvShareKw\pct{} of the noise
+variance at best. A curved capacity of the plant's form gains a persistent one to two percent of RMSE, more under
+extrapolation, bounded by the plant's own curvature. The capacity base cannot be narrowed below a floor by more surveys at the
+same speed, and a product-size measurement is the design that teaches the scalars most. The next steps are a product-size
+measurement on the HP500 surveys, a capacity law curved in the setting inside the engine, and a discrepancy whose prior scale is
+set by~\eqref{eq:taustar} rather than by convention.

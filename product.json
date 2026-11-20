@@ -87,6 +87,15 @@
       "covers": [
         "BS-2"
       ]
+    },
+    {
+      "kind": "manuscript",
+      "concept_doi": "",
+      "title": "Shrinkage That Fades and Curvature That Persists: Exact Prediction Risk, an Identifiability Ceiling and a Virtual-Plant Study of a Bayesian Cone-Crusher Calibration",
+      "version": "0.01",
+      "covers": [
+        "BS-2"
+      ]
     }
   ],
   "showcase": {

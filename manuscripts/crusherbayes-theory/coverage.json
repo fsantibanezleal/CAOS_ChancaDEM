@@ -1,0 +1,5 @@
+{
+  "kind": "manuscript",
+  "claims": {"BS-2": "sec:method"},
+  "title_support": ["fig:align", "fig:capacity", "fig:theory-check", "tab:main", "fig:ceiling", "tab:design"]
+}

@@ -33,13 +33,17 @@ discrepancy regressors of the training surveys are always centred; at a new poin
 training statistics. The design matrix has full column rank, which holds whenever the surveys vary both the setting and the
 feed size not in exact proportion. The plant's mean functions are smooth on the operating range; they are not assumed to be the
 engine at any value of its scalars. The scalars of the engine are either given (Section~\ref{sec:theory}) or learned
-(Sections~\ref{sec:method-linear} and~\ref{sec:results-sampler}).
-
-\subsection{Notation}
+(Sections~\ref{sec:method-linear} and~\ref{sec:results-sampler}). The noise of the two outputs is independent between outputs,
+as in the released method; the theory treats one output at a time and needs nothing about the other. The surveys are assumed to
+come from one ore and one machine state: a change of liner wear or of ore hardness between surveys enters the noise, and
+Section~\ref{sec:limitations} returns to it.
 
 Table~\ref{tab:notation} collects the symbols. Bold lower case is a vector over the training surveys, bold upper case a
 matrix, and a subscript $h$ marks a value at the held-out operating point. The output index $t$ is dropped whenever a
-statement concerns one output.
+statement concerns one output. Every scalar of the engine is written on the scale on which it is sampled, the natural logarithm
+for the positive scalars and the value for the others, so that a prior standard deviation of $0.25$ on $\ln Q_{\mathrm{ref}}$ means
+about 25\pct{} of the capacity base. Squared errors carry the square of the output's unit, and every risk in the paper is for
+one output at a time.
 
 \begin{table}[!t]
 \caption{Notation of the paper: the symbols of the model, of the theory and of the study, with their meaning and their unit
@@ -84,4 +88,5 @@ measured power about the plane of the regressors to have a standard deviation of
 plant fixes $\mu_t$, so that each term of Theorem~\ref{thm:risk} is known, the risk can be computed exactly, and the
 simulation can check the computation. The virtual plants of Section~\ref{sec:design} are built from the engine and from the
 published capacity law of Rocha et al.~\cite{rocha}, so they are crushers of the kind the method is meant for, with
-curvatures of known sign and size.
+curvatures of known sign and size. A discrete-element model of the chamber would be a more physical truth, but its cost rules it
+out (Section~\ref{sec:related}).

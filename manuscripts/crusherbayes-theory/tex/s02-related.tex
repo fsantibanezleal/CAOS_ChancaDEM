@@ -41,7 +41,10 @@ random-design bounds for least squares and ridge with an approximation-error ter
 here. The comparison of a regression on two regressors with one on three is Mallows's~\cite{mallows}: a regressor pays when
 its signal exceeds its variance. Proposition~\ref{prop:line} combines these with the engine's offset, which none of them has.
 For comparing two predictors on the same data, Diebold and Mariano~\cite{diebold} gave tests of equal predictive accuracy; in
-a simulation the replicates are independent and the paired difference of errors has a plain Monte Carlo standard error.
+a simulation the replicates are independent and the paired difference of errors has a plain Monte Carlo standard error. What
+these results do not cover is a shrinkage target that is itself a fitted physical model with a curvature of its own: ridge
+theory treats the target as a fixed vector, and the misspecification bounds treat the approximation error of the regression as
+a nuisance, not as something a second model can partly predict. Theorem~\ref{thm:risk} adds that term.
 
 \subsection{Physics-informed against data-driven predictors}
 
@@ -75,4 +78,8 @@ model beats an empirical regression in the same regressors as a function of the 
 no evaluation of a mineral-processing calibration on virtual plants with a known truth, and no Bayesian calibration of a
 Whiten cone-crusher model other than~\cite{cb002}. The closest results, those on the calibration parameter and those on ridge
 risk, each lack the other half: the former do not compare predictors, the latter have no engine. This paper joins them
-for a discrepancy linear in a few regressors, where every quantity is exact.
+for a discrepancy linear in a few regressors, where every quantity is exact. The restriction is the one the released method
+makes, and it is what lets the risk be written without asymptotics: with a Gaussian-process discrepancy the plane would be
+replaced by a kernel smoother, and the curvature gain of Corollary~\ref{cor:align} would compete with the kernel's own ability
+to follow the plant, a comparison that the rates of Tuo~\cite{tuo} and of Xie and Xu~\cite{xiexu} describe only as the number
+of surveys grows.

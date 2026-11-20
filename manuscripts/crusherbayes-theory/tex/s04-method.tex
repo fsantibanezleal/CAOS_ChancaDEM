@@ -102,6 +102,25 @@ posterior on all three counts even for an engine linear in its scalars. The earl
 posterior mean against the sampler on the ten surveys and found the contraction of thirteen of fourteen parameters
 reproduced~\cite{cb002}.
 
+\subsection{The predictive band of each form}
+
+The three forms of the method carry different shares of the uncertainty, and their bands differ accordingly. With the scalars
+and the noise fixed, the band $\hat y_t\pm1.2816\,s_t$ of~\eqref{eq:cbmean} and~\eqref{eq:cbvar} carries the noise and the
+uncertainty of the three discrepancy coefficients. The linearized form~\eqref{eq:linpred} adds the uncertainty of the scalars
+through $\mathbf w_h^{\top}\mathbf P_t^{-1}\mathbf w_h$, which includes their correlation with the discrepancy. The full method
+mixes the conditional predictives over the posterior of the scalars and the noise scale, so its predictive variance is
+\begin{equation}
+\mathrm{Var}(y_{t,h}\mid\mathcal D)=\mathbb E\big[s_t^2(\mathbf x_h)\mid\mathcal D\big]+\mathrm{Var}\big[\hat y_t(\mathbf x_h)\mid\mathcal D\big],
+\label{eq:mixvar}
+\end{equation}
+the average conditional variance plus the spread of the conditional means, and its band is a pair of quantiles of the mixture,
+which is not Gaussian when the posterior of the noise scale is skewed. A band built from the closed forms is therefore narrower
+than the full method's whenever the scalars or the noise scale are uncertain; the study measures how much narrower on the
+verification cells. The bands of the empirical comparators are of a different kind: a Student-$t$ prediction interval is exact
+for a linear model with Gaussian noise and says nothing about the plant's curvature, which it absorbs into the residual variance.
+Corollary~\ref{cor:coverage} gives the exact coverage of the closed-form band under any plant, which is what lets the study
+separate the effect of the bias on coverage from that of the width.
+
 \subsection{Three discrepancy priors}\label{sec:method-priors}
 
 The prior of~\eqref{eq:model} is the one of Kennedy and O'Hagan~\cite{ko} reduced to a plane: the discrepancy may take any
