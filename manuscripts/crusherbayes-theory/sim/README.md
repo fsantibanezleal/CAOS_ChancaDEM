@@ -18,8 +18,8 @@ these bakes (ADR-0074): the summaries they write under `../data/` are committed.
 | `predictors.py` | the eleven predictors (cb_oracle, cb_nominal, cb_ko, cb_orth, cb_scaled, ls, line, engine_nominal, engine_oracle, engine_refit, constant) |
 | `theory.py` | the expected squared prediction errors, the fixed-design decomposition, the expected information gain, the SBC rank and its uniformity test |
 | `run_exact.py` | the exact-route grid (176 cells: V0, six V1 variants, V2, three C-cap engines, each on 16 designs), writes `data/exact/<cell>.json` |
-| `run_design.py` | the design-information study D0 to D5, writes `data/design.json` |
-| `run_sampler.py` | the full posterior: `sbc`, `verify` and `summarize` (writes `data/sbc.json`, `data/verify.json`) |
+| `run_design.py` | the design-information study D0 to D5, writes `manuscripts/crusherbayes-theory/data/design.json` |
+| `run_sampler.py` | the full posterior: `sbc`, `verify` and `summarize` (writes `manuscripts/crusherbayes-theory/data/sbc.json` and `.../verify.json`) |
 
 ## Command lines (from the repository root)
 
