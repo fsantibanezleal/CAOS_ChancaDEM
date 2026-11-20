@@ -87,10 +87,11 @@ def digests() -> dict[str, str]:
 
 
 def code_commit() -> str:
-    """The commit of the checkout the code runs from (the harness code is committed before a run)."""
+    """The last commit that changed the harness code (``sim/``; the code is committed before a run). Not HEAD: other work
+    lands on the branch during a long run, and a summary must not depend on when it was written."""
     try:
-        return subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"], capture_output=True, text=True,
-                              check=True).stdout.strip()
+        return subprocess.run(["git", "-C", str(ROOT), "log", "-1", "--format=%H", "--", str(SIM)], capture_output=True,
+                              text=True, check=True).stdout.strip() or "unknown"
     except (OSError, subprocess.CalledProcessError):
         return "unknown"
 
