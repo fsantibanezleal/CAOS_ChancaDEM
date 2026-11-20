@@ -298,6 +298,18 @@ posterior of most scalars is the prior; the discrepancy can absorb what the engi
 and discrepancy; and the power form of the engine is the weak part, so most of any gain on power may come from the discrepancy, which the
 setting-only line already approximates.
 
+\emph{Theory and virtual-plant study.} Why ten surveys cannot separate the method from the setting-only line is the subject of a second
+manuscript~\cite{cbtheory2026}, whose harness, analyses and summaries live in \texttt{manuscripts/\allowbreak{}crusherbayes-theory/}. Given the
+scalars, the predictive mean is least squares on the discrepancy regressors, shrunk toward the engine's plane, plus the engine's departure from that
+plane; its expected squared error has an exact form, and the engine gains over a regression in the same regressors through a shrinkage that fades as
+surveys accumulate and through its curvature, which persists and helps only when it is aligned with the plant's and less than twice as large. The
+engine's throughput is affine in the setting at the machine's fixed speed, so on throughput only the shrinkage acts, and the engine's power departs
+from a plane by a small fraction of the survey noise. A study on virtual plants with known truths, built from the engine and from the published
+power-law capacity of Rocha et al.~\cite{rocha}, matches the exact risk to Monte Carlo error, shows the sign of the curvature gain change at half of
+the engine's curvature, and finds that the orthogonal discrepancy prior degrades the predictions under the method's proper priors, that the capacity
+base has a contraction floor no number of surveys at the fixed speed can pass, and that a measured product size is the added measurement that teaches
+the population-balance scalars most. Notebook \texttt{08-crusherbayes/04} teaches the decomposition on the product's data.
+
 \emph{Implementation and tests.} \texttt{hp500/\allowbreak{}crusherbayes.py} (\texttt{PRIORS}, \texttt{log\_prior}, \texttt{\_Problem.log\_prob},
 \texttt{\_Problem.conditional}, \texttt{\_Problem.predict}, \texttt{\_fit}, \texttt{kill\_criterion}); the engine takes the scalars through one optional
 argument whose defaults are the shipped values, so the TypeScript engine and the shared reference are untouched. The tests check that the default
