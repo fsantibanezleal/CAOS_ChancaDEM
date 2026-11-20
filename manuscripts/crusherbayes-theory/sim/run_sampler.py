@@ -262,6 +262,9 @@ def run_mode(a) -> int:
         return 0
     ctx = None
     workers = max(1, min(a.workers, MAX_WORKERS, len(todo)))
+    # set before any worker process is spawned, so each one starts with one BLAS thread (an initializer runs after the
+    # worker has imported numpy, too late for the thread pool)
+    engines._blas_one_thread()
     if a.mode == "verify":
         if not a.cache:
             raise SystemExit("verify needs --cache (the exact route's pools)")

@@ -41,6 +41,19 @@ sorted cell list; the pools have fixed seeds; engine evaluations run in fixed ch
 any worker count (test l). `run_sampler.py verify` draws its replicate data with `run_exact.replicate_data`, so its
 replicates are the exact route's (its test points the first 50 of the 200).
 
-## Measured cost
+## Measured cost (2026-11-19, 32 logical processors shared with other sessions)
 
-See the section "Measured cost (2026-11-19)" below, written from the runs of that day.
+| Run | Wall time | Notes |
+|---|---|---|
+| tests (18) | 49 s to 66 s | of which about 45 s are the two tiny sampler runs of test m |
+| `run_exact.py --reps 1900 --workers 22`, first run | 20 min 37 s | 1,016 s building the context (two 4,000-point pools with Jacobians, the two L2 projections of V2 at up to 20 Gauss-Newton iterations each), 1,237 s for the 176 cells |
+| the same with the engine cache present (`--force`) | 2 min 24 s | the summaries are byte-identical to the first run's but for the code commit |
+| `run_design.py --workers 22` | 46 s (2 s cached) | the Jacobians at theta_0 on both pools |
+| `run_sampler.py sbc --pilot` (real Config) | 2,543 s | one process, tau_max 58.9, converged; it shared the machine with the exact run for its first 20 minutes |
+| `run_sampler.py verify --pilot` (real Config) | see the theory-harness report of 2026-11-19 | one process |
+
+The per-replicate arrays of the exact route take 7.8 GB under `<cache>/exact/`; the engine caches 46 MB.
+
+Caveat on the V2 oracle: the L2 projection reached its 20-iteration cap on both windows with the objective still falling
+by less than 0.1 percent per iteration, and three scalars at their prior bounds (P_n = 0, K3 = 4, the t10 shift at -15 on
+the surveys window); the record of every iteration is in each V2 cell's `oracle.l2_projection`.

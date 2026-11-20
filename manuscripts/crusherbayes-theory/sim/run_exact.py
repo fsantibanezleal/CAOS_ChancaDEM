@@ -453,7 +453,7 @@ def _jsonable(o):
 def write_json(path: Path, doc: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(_jsonable(doc), indent=1) + "\n", encoding="utf-8")
+    tmp.write_text(json.dumps(_jsonable(doc), indent=1) + "\n", encoding="utf-8", newline="\n")
     os.replace(tmp, path)
 
 
