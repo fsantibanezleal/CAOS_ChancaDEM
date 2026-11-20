@@ -4,6 +4,35 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [0.14.000] · 2026-11-20
+
+### Added
+
+- The theory and virtual-plant study of CrusherBayes (`manuscripts/crusherbayes-theory/`): why ten surveys cannot separate the
+  calibration from the setting-only line, answered in closed form and on virtual plants with known truths. Given the scalars, the
+  predictive mean is least squares on the discrepancy regressors shrunk toward the engine's plane plus the engine's departure from
+  it, and its expected squared error is exact (a theorem, three corollaries, a fixed-design decomposition into a shrinkage gain that
+  fades and a curvature gain that persists, the crossing size against the line, the relation of the Kennedy and O'Hagan, orthogonal
+  and scaled discrepancy priors, an information ceiling and a contraction floor for the capacity base). The harness (`sim/`, 18
+  tests, the closed forms checked against `pipeline.hp500.crusherbayes`) ran 176 cells of 1,900 replicates (largest theory-versus-
+  simulation |z| 3.17 of 832), a design study by expected information gain, the identifiability analysis, the analysis of the
+  discrepancy scale and the band coverage, and a simulation-based calibration and verification of the sampler. The manuscript is a
+  new Zenodo record; figures, tables and every number of its text are written by `figures/make_figs.py` from the committed summaries.
+- Notebook `08-crusherbayes/04-when-the-engine-beats-a-regression` (en, es), level 4: the predictive given the scalars against
+  `_Problem.predict`, the engine's departure from the plane on the ten surveys, the exact risk on a virtual plant and the sign change of
+  the curvature gain, the curved capacity, the risk-optimal discrepancy scale, the information ceiling, where the method breaks and
+  how to use it on one's own surveys.
+
+### Changed
+
+- Template 0.15.014 and shell 0.26.2 adopted (from 0.15.012 and 0.26.0): chart readouts wrap and keep the keyboard crosshair, the
+  gate reaches its own server with no proxy (shell known defects 45, 69, 70); the workflow refuses a stamped stage input only inside a
+  promoted folder (RP-030); the notebook runner's check copies `manuscripts/` (NB-092, found by the new notebook); the manuscript
+  check measures an abstract as it prints (a value written with empty braces is a word).
+- The CrusherBayes manuscript's abstract trimmed to the 250-word ceiling the corrected counter measures (251 words), a paragraph
+  citing the theory study added, and its release set to 0.14.000; the technical report cites the theory study in its CrusherBayes
+  section and names the shell and template it is built on.
+
 ## [0.13.000] · 2026-11-08
 
 ### Added
