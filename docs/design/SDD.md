@@ -173,17 +173,17 @@ versions were read at the package registries on 2026-10-26 (the sizing record li
 
 ## Resources
 
-What each stage needs on the development workstation (Windows 11, Python 3.12.15, Node 24.14.1; measured 2026-11-15 with `tools/audit/measure_stages.py` of CAOS_MANAGE on `git archive` copies of the release commit `d836e9d` (two runs, each on a fresh copy), each committed as one snapshot so the tests that read the repository through git run: the wall time, the peak memory of the whole process tree polled every 20 ms, and the bytes left). The commands and the raw output are in [`measured-resources.md`](measured-resources.md). No stage needs a GPU or a network after the install.
+What each stage needs on the development workstation (Windows 11, Python 3.12.15, Node 24.14.1; measured 2026-11-20 with `tools/audit/measure_stages.py` of CAOS_MANAGE on `git archive` copies of the release bake commit `958de37` and of the commit after it, `78ee928`, which changes only tests and contract fixtures (two runs, each on a fresh copy, on a workstation that ran other jobs at the same time, which lengthens the times), each committed as one snapshot so the tests that read the repository through git run: the wall time, the peak memory of the whole process tree polled every 20 ms, and the bytes left). The commands and the raw output are in [`measured-resources.md`](measured-resources.md). No stage needs a GPU or a network after the install.
 
 | stage | memory | disk | time | where it runs |
 |---|---|---|---|---|
-| bake (`data-pipeline/run.py all`: 27 cases, the four HP500 documents, the index, readiness) | 1525 MB peak | 308 KB in `data/derived/` (308,364 bytes, 67 files), the trained models included | 39.1 min | workstation, never CI |
-| HP500 step alone (`data-pipeline/run.py hp500`: the backbone, CrusherCal, the CrusherBayes sampler, the paired comparison) | 1549 MB peak | 31 KB in `data/derived/hp500/` (30,568 bytes, 4 files) | 36.0 min | workstation, never CI |
-| training (`data-pipeline/run.py models`: the LHS sweeps of the engine, the surrogate and the autoencoder, ONNX export, held-out evaluation) | 444 MB peak | 59 KB in `data/derived/models/` (59,480 bytes, 5 files) | 41.8 s on the CPU | workstation, never CI |
-| tests (pytest, the whole suite: 1707 passed, 27 skipped) | 452 MB peak (the process tree, notebook kernels included) | temporary trees under the temp root (`--basetemp`), removed after | 13.9 min | workstation; the planted-defect suite `tests/adversarial` also runs in CI |
-| install (`npm ci`) | 708 MB peak | 329.0 MB in `node_modules` (329,009,652 bytes, 11508 files) | 12.4 s | workstation and CI web job |
-| build (`npm run build`) | 648 MB peak | 17.2 MB in `frontend/dist` (17,222,309 bytes, 174 files), of which 13.5 MB is the ONNX Runtime WASM | 9.1 s | workstation and CI web job |
-| web unit tests (`npm test`, 562 tests) | 3214 MB peak (vitest's worker pool) | none | 6.9 s | workstation and CI web job |
+| bake (`data-pipeline/run.py all`: 27 cases, the four HP500 documents, the index, readiness) | 1442 MB peak | 308 KB in `data/derived/` (308,364 bytes, 67 files), the trained models included | 54.2 min | workstation, never CI |
+| HP500 step alone (`data-pipeline/run.py hp500`: the backbone, CrusherCal, the CrusherBayes sampler, the paired comparison) | 1592 MB peak | 31 KB in `data/derived/hp500/` (30,568 bytes, 4 files) | 52.3 min | workstation, never CI |
+| training (`data-pipeline/run.py models`: the LHS sweeps of the engine, the surrogate and the autoencoder, ONNX export, held-out evaluation) | 446 MB peak | 59 KB in `data/derived/models/` (59,480 bytes, 5 files) | 74.3 s on the CPU | workstation, never CI |
+| tests (pytest, the whole suite: 1714 passed, 27 skipped) | 437 MB peak (the process tree, notebook kernels included) | temporary trees under the temp root (`--basetemp`), removed after | 15.6 min | workstation; the planted-defect suite `tests/adversarial` also runs in CI |
+| install (`npm ci`) | 639 MB peak | 329.0 MB in `node_modules` (329,015,953 bytes, 11509 files) | 17.3 s | workstation and CI web job |
+| build (`npm run build`) | 642 MB peak | 17.2 MB in `frontend/dist` (17,223,081 bytes, 174 files), of which 13.5 MB is the ONNX Runtime WASM | 11.8 s | workstation and CI web job |
+| web unit tests (`npm test`, 562 tests) | 3091 MB peak (vitest's worker pool) | none | 9.1 s | workstation and CI web job |
 | deploy payload (GitHub Pages) | none | 17.2 MB uploaded | one Pages deploy | CI after main |
 
 ## Lanes
@@ -199,7 +199,7 @@ What each stage needs on the development workstation (Windows 11, Python 3.12.15
   2.3e-12) and to the baked traces by `frontend/src/engine/crusher.parity.test.ts`; the two ONNX models run in the
   browser through onnxruntime-web 1.27.0 with its WASM served by the site. The basis for the live lane is measured: the
   lane gate (`data-pipeline/pipeline/core/gate.py`) judges each case's engine time against 1500 ms and its trace against
-  256 KiB, and every case is live-eligible (the canonical engine evaluates a case in 1.46 ms, the median over the 27 cases of the median of seven warmed runs, at most 1.61 ms; the largest trace is 4,127 bytes; [`measured-resources.md`](measured-resources.md)).
+  256 KiB, and every case is live-eligible (the canonical engine evaluates a case in 1.31 ms, the median over the 27 cases of the median of seven warmed runs, at most 1.46 ms; the largest trace is 4,127 bytes; [`measured-resources.md`](measured-resources.md)).
 
 ## Method ladder
 
