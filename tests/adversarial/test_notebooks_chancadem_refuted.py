@@ -24,9 +24,10 @@ MAIN.loader.exec_module(GATES)
 @pytest.fixture(scope="module")
 def base(tmp_path_factory: pytest.TempPathFactory) -> Path:
     dest = tmp_path_factory.mktemp("nbc-base")
-    # the notebooks read what the release gate copies (scripts/run_notebooks.py): data, docs, content and models in full; the
-    # gate finds the declared external notebook runtime through scripts/local (workflow.json and its helper), never a local alias
-    make_tree(dest, "scripts/local/workflow.json", "scripts/local/workflow.py", "notebooks", "docs", "content", "models", ".github", "data", "README.md", "data-pipeline",
+    # the notebooks read what the release gate copies (scripts/run_notebooks.py): data, docs, content, models and manuscripts in
+    # full (manuscripts since NB-092: notebook 08-04 reads the theory study's summaries); the gate finds the declared external
+    # notebook runtime through scripts/local (workflow.json and its helper), never a local alias
+    make_tree(dest, "scripts/local/workflow.json", "scripts/local/workflow.py", "notebooks", "docs", "content", "models", ".github", "data", "manuscripts", "README.md", "data-pipeline",
               "scripts/check_notebooks.py", "scripts/notebook_bar.json", "product.json", "scripts/check_template_residue.py", "scripts/run_notebooks.py", "scripts/check_readme_areas.py",
               "scripts/check_tech_matrix.py", "VERSION", "requirements*.txt", "frontend/package.json", "frontend/package-lock.json", "pyproject.toml")
     return dest
@@ -64,7 +65,7 @@ def test_a_spanish_notebook_deleted_from_a_copy_breaks_the_mirror(repo: Path) ->
     assert r.returncode == 1 and "mirror" in r.stdout and "02-measured-against-modelled.ipynb" in r.stdout, r.stdout
     en = sorted(p.relative_to(repo / "notebooks" / "en").as_posix() for p in (repo / "notebooks" / "en").rglob("*.ipynb"))
     es = sorted(p.relative_to(repo / "notebooks" / "es").as_posix() for p in (repo / "notebooks" / "es").rglob("*.ipynb"))
-    assert en != es and len(es) == GATES.PER_LANGUAGE - 1, "the copy must no longer be mirrored and hold 21 Spanish notebooks"
+    assert en != es and len(es) == GATES.PER_LANGUAGE - 1, f"the copy must no longer be mirrored and hold {GATES.PER_LANGUAGE - 1} Spanish notebooks"
 
 
 def test_an_example_notebook_planted_into_a_tree_is_found_by_the_residue_guard_and_the_rule(repo: Path, tmp_path: Path) -> None:

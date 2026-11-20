@@ -17,6 +17,7 @@ They never execute notebook or engine code and do not contact a registry in CI.
 source/pin identity and preservation of canonical artifacts. Execution scratch and
 temporary training/model examples belong under the configured external task root.
 The example curriculum must not write into released `models/` or `data/` trees.
+The copied tree holds `data`, `data-pipeline`, `docs`, `content`, `models`, `manuscripts` and `notebooks` when the repository has them (NB-091, NB-092), so a notebook that loads a released model or imports a manuscript's analysis code runs under `--check`; the repository is never written.
 
 `notebooks/coverage.json` is a bilingual teaching index. Required IDs come from
 the actual ladder, catalog, stage files or explicitly declared existing stage

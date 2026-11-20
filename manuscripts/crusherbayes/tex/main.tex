@@ -44,13 +44,13 @@
 % Page-1 header block (conventions/manuscript-header-standard.md). The four document
 % macros are set by the publishing tool when the version DOI is reserved.
 \newcommand{\doctype}{Preprint}
-\newcommand{\docversion}{v0.02}
-\newcommand{\docdate}{15 November 2026}
-\newcommand{\versiondoi}{10.5281/zenodo.24243558}
+\newcommand{\docversion}{v0.03}
+\newcommand{\docdate}{20 November 2026}
+\newcommand{\versiondoi}{10.5281/zenodo.24395918}
 \newcommand{\conceptdoi}{10.5281/zenodo.23843809}
 \newcommand{\docrepo}{github.com/fsantibanezleal/CAOS\_ChancaDEM}
 % The release of the product whose code and artifacts the manuscript reports; the header and the body read it here only.
-\newcommand{\productrelease}{0.13.000}
+\newcommand{\productrelease}{0.14.000}
 \newcommand{\headerblock}{%
 \begin{center}
 \fbox{\parbox{0.94\textwidth}{\small\raggedright
@@ -92,7 +92,7 @@ scalars the surveys determine or how well a new survey is predicted. We calibrat
 classification and breakage engine of a Metso HP500 cone crusher as a Bayesian posterior on the ten surveys of Rocha et
 al., with a Kennedy and O'Hagan structural discrepancy linear in the closed-side setting and the feed size, integrated
 out exactly and sampled with differential-evolution moves. Strict leave-one-survey-out validation refits every quantity
-per fold; eleven other methods run on the same folds. Held out, the predictive mean reaches \cbTphMape\pct{} (95\pct{} bootstrap interval \cbTphMapeLo{} to
+per fold, beside eleven other methods. Held out, the predictive mean reaches \cbTphMape\pct{} (95\pct{} bootstrap interval \cbTphMapeLo{} to
 \cbTphMapeHi) on throughput and \cbKwMape\pct{} (\cbKwMapeLo{} to \cbKwMapeHi) on power; against the setting-only line
 (\BlinKwMape\pct) the paired difference on power is \dBlinKw{} points (\dBlinKwLo{} to \dBlinKwHi), no gain. The 80\pct{}
 bands cover \cbTphCovN{} and \cbKwCovN{} of the ten held-out surveys and are \widthRedKw\pct{} narrower on power than the
@@ -1415,6 +1415,17 @@ that, on these surveys, the population balance engine contributes a throughput l
 power band narrower than its own residual band, and the power prediction comes from the data's own dependence on the
 setting.
 
+Why ten surveys cannot separate the method from the line is the subject of a companion paper~\cite{cbtheory}. Given its
+scalars, the predictive mean of Proposition~\ref{prop:ridge} has an exact expected squared error; the engine gains over a
+regression in the same regressors through a shrinkage of the plane, which fades as surveys accumulate, and through its
+curvature, which persists and helps only when it is aligned with the plant's and less than twice as large. On this engine
+the capacity is affine in the setting (Proposition~\ref{prop:span}), so on throughput only the shrinkage acts, and the
+engine's power departs from a plane by a small fraction of the survey noise; on a virtual plant fitted to these ten
+surveys, with the scalars handed to the method, it still ties the line at ten surveys. The companion paper also finds a
+floor on the contraction of the capacity base that no number of surveys at the fixed speed over the same setting range can
+pass, and, in the linearized model, a measured product size as the added output that informs the population-balance scalars
+most.
+
 \section{Limitations}\label{sec:limitations}
 
 \subsection{Internal validity}
@@ -1663,6 +1674,10 @@ no.~1, pp.~1--26, 1979. doi:10.1214/aos/1176344552.
 
 \bibitem{wilson} E.~B. Wilson, ``Probable inference, the law of succession, and statistical inference,'' \emph{Journal of
 the American Statistical Association}, vol.~22, no.~158, pp.~209--212, 1927. doi:10.1080/01621459.1927.10502953.
+
+\bibitem{cbtheory} F.~Santib\'a\~nez-Leal, ``Shrinkage that fades and curvature that persists: exact prediction risk, an
+identifiability ceiling and a virtual-plant study of a Bayesian cone-crusher calibration,'' preprint, Zenodo, 2026.
+doi:10.5281/zenodo.24395171.
 
 \end{thebibliography}
 

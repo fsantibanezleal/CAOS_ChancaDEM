@@ -1,0 +1,212 @@
+{
+ "schema": "chancadem.cbt.identifiability/v1",
+ "theta0": {
+  "q_ref_tph": 6.471335582976687,
+  "wi_kwh_t": 2.126730579723001,
+  "zeta": 0.1348804821938182,
+  "pn_kw": 86.3532,
+  "k1_scale": 0.06616220225366877,
+  "k2_scale": 0.04964693988941372,
+  "k3": 2.2271,
+  "t10_shift_pct": -0.1062
+ },
+ "sigma": {
+  "tph": 145.232,
+  "kW": 38.812
+ },
+ "tau": {
+  "tph": 140.0,
+  "kW": 36.0
+ },
+ "ten_surveys": {
+  "tph_lnq_out_of_span_rel": 3.076343590243485e-14,
+  "tph_lnq_info_exact": 54.878,
+  "tph_lnq_ceiling": 60.792,
+  "lnq_prior_precision": 16.0,
+  "tph_only_ratio_lnq": 0.4751,
+  "power_product_sensitivity_rel_diff": 3.3131793367112975e-13,
+  "floor_ratio_lnq_any_n_fixed_speed": 0.424,
+  "linearized_ratio": {
+   "q_ref_tph": 0.457,
+   "wi_kwh_t": 0.9201,
+   "zeta": 0.8481,
+   "pn_kw": 0.8525,
+   "k1_scale": 0.9175,
+   "k2_scale": 0.9803,
+   "k3": 0.9941,
+   "t10_shift_pct": 0.9943
+  },
+  "measured_ratio_sampled_scale": {
+   "q_ref_tph": 0.4688,
+   "wi_kwh_t": 0.9075,
+   "zeta": 0.8476,
+   "pn_kw": 0.7608,
+   "k1_scale": 0.9173,
+   "k2_scale": 0.9915,
+   "k3": 0.9704,
+   "t10_shift_pct": 0.9881
+  }
+ },
+ "sweep": {
+  "n": [
+   10,
+   20,
+   40,
+   80,
+   160,
+   320,
+   640
+  ],
+  "designs": 50,
+  "pool": 2000,
+  "speeds_rpm": [
+   324.0,
+   360.0,
+   396.0
+  ],
+  "fixed_speed": {
+   "10": {
+    "q_ref_tph": 0.4617,
+    "wi_kwh_t": 0.9218,
+    "zeta": 0.8514,
+    "pn_kw": 0.8533,
+    "k1_scale": 0.8116,
+    "k2_scale": 0.9782,
+    "k3": 0.9937,
+    "t10_shift_pct": 0.9966
+   },
+   "20": {
+    "q_ref_tph": 0.4538,
+    "wi_kwh_t": 0.9189,
+    "zeta": 0.8456,
+    "pn_kw": 0.8468,
+    "k1_scale": 0.665,
+    "k2_scale": 0.9696,
+    "k3": 0.9915,
+    "t10_shift_pct": 0.9933
+   },
+   "40": {
+    "q_ref_tph": 0.448,
+    "wi_kwh_t": 0.9169,
+    "zeta": 0.8416,
+    "pn_kw": 0.8419,
+    "k1_scale": 0.5244,
+    "k2_scale": 0.9531,
+    "k3": 0.9871,
+    "t10_shift_pct": 0.9876
+   },
+   "80": {
+    "q_ref_tph": 0.4447,
+    "wi_kwh_t": 0.9144,
+    "zeta": 0.8368,
+    "pn_kw": 0.8345,
+    "k1_scale": 0.3994,
+    "k2_scale": 0.922,
+    "k3": 0.9792,
+    "t10_shift_pct": 0.9755
+   },
+   "160": {
+    "q_ref_tph": 0.4436,
+    "wi_kwh_t": 0.9116,
+    "zeta": 0.831,
+    "pn_kw": 0.8236,
+    "k1_scale": 0.2972,
+    "k2_scale": 0.8713,
+    "k3": 0.9663,
+    "t10_shift_pct": 0.9555
+   },
+   "320": {
+    "q_ref_tph": 0.442,
+    "wi_kwh_t": 0.9073,
+    "zeta": 0.8225,
+    "pn_kw": 0.8076,
+    "k1_scale": 0.2199,
+    "k2_scale": 0.802,
+    "k3": 0.9493,
+    "t10_shift_pct": 0.9216
+   },
+   "640": {
+    "q_ref_tph": 0.4399,
+    "wi_kwh_t": 0.9002,
+    "zeta": 0.8079,
+    "pn_kw": 0.7822,
+    "k1_scale": 0.163,
+    "k2_scale": 0.7211,
+    "k3": 0.9289,
+    "t10_shift_pct": 0.8695
+   }
+  },
+  "varied_speed": {
+   "10": {
+    "q_ref_tph": 0.4629,
+    "wi_kwh_t": 0.9221,
+    "zeta": 0.8519,
+    "pn_kw": 0.8527,
+    "k1_scale": 0.8125,
+    "k2_scale": 0.9783,
+    "k3": 0.9938,
+    "t10_shift_pct": 0.9966
+   },
+   "20": {
+    "q_ref_tph": 0.4549,
+    "wi_kwh_t": 0.9192,
+    "zeta": 0.8462,
+    "pn_kw": 0.8462,
+    "k1_scale": 0.6662,
+    "k2_scale": 0.9698,
+    "k3": 0.9915,
+    "t10_shift_pct": 0.9934
+   },
+   "40": {
+    "q_ref_tph": 0.4491,
+    "wi_kwh_t": 0.9171,
+    "zeta": 0.8421,
+    "pn_kw": 0.8413,
+    "k1_scale": 0.5257,
+    "k2_scale": 0.9534,
+    "k3": 0.9872,
+    "t10_shift_pct": 0.9877
+   },
+   "80": {
+    "q_ref_tph": 0.4457,
+    "wi_kwh_t": 0.9147,
+    "zeta": 0.8372,
+    "pn_kw": 0.8338,
+    "k1_scale": 0.4004,
+    "k2_scale": 0.9224,
+    "k3": 0.9793,
+    "t10_shift_pct": 0.9757
+   },
+   "160": {
+    "q_ref_tph": 0.4446,
+    "wi_kwh_t": 0.9118,
+    "zeta": 0.8315,
+    "pn_kw": 0.8229,
+    "k1_scale": 0.298,
+    "k2_scale": 0.8718,
+    "k3": 0.9664,
+    "t10_shift_pct": 0.9558
+   },
+   "320": {
+    "q_ref_tph": 0.4429,
+    "wi_kwh_t": 0.9075,
+    "zeta": 0.8228,
+    "pn_kw": 0.8068,
+    "k1_scale": 0.2205,
+    "k2_scale": 0.8027,
+    "k3": 0.9495,
+    "t10_shift_pct": 0.922
+   },
+   "640": {
+    "q_ref_tph": 0.4405,
+    "wi_kwh_t": 0.9002,
+    "zeta": 0.808,
+    "pn_kw": 0.7811,
+    "k1_scale": 0.1635,
+    "k2_scale": 0.7219,
+    "k3": 0.9291,
+    "t10_shift_pct": 0.8701
+   }
+  }
+ }
+}

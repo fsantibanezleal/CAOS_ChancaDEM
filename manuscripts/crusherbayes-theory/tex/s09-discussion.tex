@@ -1,0 +1,66 @@
+\section{Discussion}\label{sec:discussion}
+
+\subsection{Why the ten surveys could not separate the method from the line}
+
+The held-out comparison of~\cite{cb002} found the method level with the line in the setting on power. The theory and the study
+say why, term by term. The engine's throughput is affine, so on throughput the method is a ridge regression and its only gain
+is the shrinkage of the plane, which is real at ten surveys but is a variance saving that a regression in both regressors
+also mostly obtains. On power the engine's curvature over the range of the surveys is \eRmsS~kW against a noise of
+\sigKw~kW, so even when it is perfectly aligned it removes \curvShareKw\pct{} of the noise variance. The feed size explains
+little of the power beyond the setting ($\phi^2=\phiTwoKwS$~kW$^2$), so the third regressor of the discrepancy costs about as
+much variance as it earns, and the crossing size $n^\star=\nStarKwS$ lies just above ten. On a virtual plant fitted to the ten
+surveys, with the true scalars handed to it, the method ties the line at ten surveys ($\lineOrTen$~kW$^2$ in paired squared
+error) and overtakes it from twenty on; with learned scalars from forty. A real set of ten surveys could not have shown a
+difference that the theory says is a few kW$^2$ against a noise variance of about \sigKw$^2$.
+
+\subsection{When the physics pays}
+
+Corollary~\ref{cor:align} reduces the question to two numbers over the operating range of interest: the alignment $\rho$ of the
+engine's departure from a plane with the plant's, and their relative size $\kappa$. Both can be estimated before the surveys are taken.
+The engine's departure $e$ is computable at any operating point. The plant's departure $r$ is not, but its size has a lower
+bound in the scatter of past surveys about a plane, which contains the noise, and a sign that process knowledge often gives:
+whether the capacity is concave or convex in the setting. The capacity of the engine used here is affine in the setting at the
+fixed speed, so the physics in it cannot help predict throughput; a capacity law curved like the plant's, such as the power
+law of Rocha et al.~\cite{rocha} or the concave capacity that Duarte et al.~\cite{duarte} measured on an HP400 over 6~mm of
+setting, is the condition for any persistent gain on throughput. When the condition holds the gain persists as surveys
+accumulate and grows under extrapolation, which is where the physics is meant to be used; its size is bounded by the plant's
+own curvature relative to the noise, \curvCeilTph\pct{} of the squared error for the curvature the published capacity law gives
+over the surveys window.
+
+The second lesson is that the discrepancy prior is a predictive decision. Theorem~\ref{thm:fixed} gives the risk-optimal scale
+in closed form, and on the plant fitted to the ten surveys the product's scale is close to it. The orthogonal prior, introduced
+to give the scalars a meaning, takes the room of the discrepancy away when the engine has more sensitivities than the
+discrepancy has regressors, and its predictions degrade toward those of the engine without a discrepancy. A practitioner who
+wants interpretable scalars and good predictions can calibrate twice, with the orthogonal prior for the scalars and with the
+standard prior for the predictions, as Proposition~\ref{prop:priors}(a) shows both are the same linear model with different
+penalties.
+
+\subsection{What to measure next}
+
+The design study answers the question the earlier paper left open, which measurement would teach the scalars most. A product
+size measured with a noise of 2 to 5\pct{} is worth as much as doubling the surveys or more, and it is the only added output
+that reaches the classification and breakage scalars, which throughput and power leave near their priors. More surveys at the
+same speed over the same setting range cannot narrow the capacity base below the floor of~\eqref{eq:floor}, which the ten surveys
+already approach (\ceilShare\pct{} of the possible reduction of the standard-deviation ratio), and varying the speed by ten percent around the engine's capacity optimum adds
+nothing, because the capacity is flat there. A design that moved the capacity base would need a factor that changes the
+capacity outside the span of the discrepancy regressors by an amount comparable to the noise, which the speed does not do on
+this engine; the study did not evaluate other factors. For prediction rather than identification, the noise decides how visible the physics is: the
+curvature gain $C$ does not depend on $\sigma$, so a better estimate of the throughput than the feed rate of a survey, or of the
+power than the one estimated from the motor current, raises the curvature gain relative to the error that remains, while the
+plane gain, bounded by $3\sigma^2/n$, shrinks with the noise.
+
+\subsection{Negative results}
+
+Four hypotheses failed, three of them in part. The speed clause of H5 failed for the reason just given. H4 failed for the
+orthogonal prior, which changes the risk more than any other component except the discrepancy itself. H2 failed for the engine
+with half the exponents of the plant's capacity law: a curvature of the right sign, it lost to least squares on the wide window
+and under extrapolation, because the sign of a curvature does not decide the gain, its projection on the plant's curvature over
+the prediction range does. H3 failed on the wide window and with learned scalars, where the plane term and the learning of the
+scalars move the crossing away from $n^\star$. H6 held in both clauses, and the verification still found a negative result
+that no hypothesis stated: at ten surveys the sampler's 80\pct{} band covered \verCovPooled{} at the plant, \verCovGap{} points
+less than the band built with the true scalars and noise scale. Each of these is a statement about
+this engine and these plants; each follows from a result of Section~\ref{sec:theory} that holds generally. The study also
+confirms the negative result of~\cite{cb002} rather than overturning it: on a virtual plant built from the fit to the ten
+surveys, with the scalars handed to it and the noise known, the method still ties the line at ten surveys. No change of prior,
+scale or sampler would have changed the earlier comparison; only more surveys, less noise or an engine with a curved capacity
+would.

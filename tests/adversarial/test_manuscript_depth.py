@@ -173,6 +173,31 @@ def test_adversarial_printed_values_and_inline_math_count_as_abstract_words(tmp_
     assert has(findings, "abstract", "251 words"), findings
 
 
+def test_adversarial_values_printed_by_macros_with_empty_braces_count_as_abstract_words(tmp_path):
+    # a value written \\name{} (the brace pair keeps the following space) prints like a bare macro: CEFOP_DinHot's six abstracts
+    # carry 10 to 31 of them, and the command-with-argument rule had read each as an empty argument, zero words
+    abstract = prose(240) + " " + " ".join(f"\\valueOf{chr(65 + i)}{{}}" for i in range(11))
+    findings = depth.check(product(tmp_path, paper=paper_tex(abstract=abstract)))
+    assert has(findings, "abstract", "251 words"), findings
+
+
+def test_adversarial_the_document_macros_are_expanded_to_what_they_print(tmp_path):
+    # a defined macro counts the words of its body (a range "1.38 to 1.48" is three words), nested definitions included; an undefined
+    # one still counts one word
+    defs = "\\newcommand{\\ciLo}{1.38}\\newcommand{\\ciHi}{1.48}\\newcommand{\\ci}{\\ciLo{} to \\ciHi{}}\\def\\nSeeds{ten}\n"
+    abstract = prose(244) + " \\ci{} over \\nSeeds{} seeds \\unknown{}"
+    tex = paper_tex(abstract=abstract).replace("\\begin{document}", defs + "\\begin{document}", 1)
+    findings = depth.check(product(tmp_path, paper=tex))
+    # 244 words, "1.38 to 1.48" 3, "over" 1, "ten" 1, "seeds" 1, the undefined value 1: 251
+    assert has(findings, "abstract", "251 words"), findings
+
+
+def test_printed_abstract_reads_definitions_with_arguments_as_commands():
+    macros = depth.defined_macros("\\newcommand{\\val}[1]{#1 units}\\newcommand{\\n}{12}")
+    assert macros == {"n": "12"}
+    assert depth.abstract_words(depth.printed_abstract("\\val{seven} of \\n{} and \\the\\numexpr 3+4\\relax{} more", macros)) == 6
+
+
 def test_adversarial_a_manuscript_not_in_latex_fails(tmp_path):
     root = product(tmp_path, extra={"manuscripts/notes/report.md": "# Report\n\nShort.\n"})
     assert has(depth.check(root), "manuscripts/notes", "no LaTeX", ".md")

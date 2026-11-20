@@ -1,0 +1,336 @@
+\section{Theory}\label{sec:theory}
+
+This section answers the question of the paper in closed form for the predictor of Section~\ref{sec:method} with its
+scalars given. Theorem~\ref{thm:risk} gives its expected squared error at any operating point, exactly, for any design and
+any plant; Corollaries~\ref{cor:align} to~\ref{cor:coverage} read it in three limits; Theorem~\ref{thm:fixed} averages it over
+the design and separates what the engine's curvature buys from what its plane buys; Proposition~\ref{prop:line} sets the
+method against the setting-only line; Proposition~\ref{prop:priors} relates the three discrepancy priors; and
+Proposition~\ref{prop:bound} states what a design can and cannot identify. Every statement holds conditionally on the
+training design, and on the scalars except in Propositions~\ref{prop:priors} and~\ref{prop:bound}, which concern the
+linearized model of Section~\ref{sec:method-linear} in which the scalars are learned; the full-sampler runs of
+Section~\ref{sec:results-sampler} measure what the linearization leaves out.
+
+\subsection{The risk of the predictor given its scalars}
+
+Fix one output and drop its index. The plant has a mean function $\mu(\mathbf x)$ and returns $y=\mu(\mathbf x)+\varepsilon$
+with $\mathbb E\varepsilon=0$ and $\mathrm{Var}\,\varepsilon=\sigma^2$, independently over surveys. The training design
+$\mathbf x_1,\dots,\mathbf x_n$ gives the regressor matrix $\mathbf Z$ of~\eqref{eq:design}, with $\mathbf G=\mathbf
+Z^{\top}\mathbf Z$ nonsingular, and the engine at the given scalars gives $f(\mathbf x)$. Project both functions on the
+column space of $\mathbf Z$ over the training surveys:
+\begin{equation}
+\begin{gathered}
+\boldsymbol\beta=\mathbf G^{-1}\mathbf Z^{\top}\boldsymbol\mu,\quad \mathbf r=\boldsymbol\mu-\mathbf Z\boldsymbol\beta,\\
+\mathbf b=\mathbf G^{-1}\mathbf Z^{\top}\mathbf f,\quad \mathbf e=\mathbf f-\mathbf Z\mathbf b,
+\end{gathered}
+\label{eq:projections}
+\end{equation}
+so that $\mathbf Z^{\top}\mathbf r=\mathbf Z^{\top}\mathbf e=\mathbf 0$. At a held-out point $\mathbf x_h$ with design row
+$\tilde{\mathbf z}_h$ write $r_h=\mu(\mathbf x_h)-\tilde{\mathbf z}_h^{\top}\boldsymbol\beta$ for the plant's departure from its
+training plane, $e_h=f(\mathbf x_h)-\tilde{\mathbf z}_h^{\top}\mathbf b$ for the engine's, and
+$\boldsymbol\delta=\mathbf b-\boldsymbol\beta$ for the difference of the two planes. The vector $\mathbf r$ is the part of the
+plant that no regression on the setting and the feed size can represent; $\mathbf e$ is the part of the engine that the
+discrepancy plane cannot represent, its curvature in the two regressors; $\boldsymbol\delta$ is how far the engine's best
+plane lies from the plant's. With $\mathbf A_\lambda=(\mathbf G+\lambda\mathbf I)^{-1}$ the predictor~\eqref{eq:cbmean} is
+$\hat y_\lambda(\mathbf x_h)=f(\mathbf x_h)+\tilde{\mathbf z}_h^{\top}\mathbf A_\lambda\mathbf Z^{\top}(\mathbf y-\mathbf f)$ and
+least squares on $\mathbf Z$ is $\hat y_{\mathrm{LS}}(\mathbf x_h)=\tilde{\mathbf z}_h^{\top}\mathbf G^{-1}\mathbf Z^{\top}\mathbf y$.
+
+\begin{theorem}[Exact risk given the scalars]\label{thm:risk}
+For every $\lambda\ge0$, with $w_h=\tilde{\mathbf z}_h^{\top}\mathbf A_\lambda\boldsymbol\delta$ and the expectation over the
+training and the held-out noise,
+\begin{align}
+R_\lambda(\mathbf x_h)&=\big(r_h-e_h-\lambda w_h\big)^2+\sigma^2\,\tilde{\mathbf z}_h^{\top}\mathbf A_\lambda\mathbf G\mathbf
+A_\lambda\tilde{\mathbf z}_h+\sigma^2,\label{eq:riskcb}\\
+R_{\mathrm{LS}}(\mathbf x_h)&=r_h^2+\sigma^2\,\tilde{\mathbf z}_h^{\top}\mathbf G^{-1}\tilde{\mathbf z}_h+\sigma^2.\label{eq:riskls}
+\end{align}
+If the noise is Gaussian, the error $y_h-\hat y_\lambda(\mathbf x_h)$ is Gaussian with mean $m_h=r_h-e_h-\lambda w_h$ and
+variance $v_h=\sigma^2(1+\tilde{\mathbf z}_h^{\top}\mathbf A_\lambda\mathbf G\mathbf A_\lambda\tilde{\mathbf z}_h)$.
+\end{theorem}
+\begin{IEEEproof}
+Write $\boldsymbol\mu=\mathbf Z\boldsymbol\beta+\mathbf r$ and $\mathbf f=\mathbf Z\mathbf b+\mathbf e$. Since $\mathbf
+Z^{\top}\mathbf r=\mathbf Z^{\top}\mathbf e=\mathbf 0$, $\mathbf Z^{\top}(\mathbf y-\mathbf f)=-\mathbf G\boldsymbol\delta+\mathbf
+Z^{\top}\boldsymbol\varepsilon$. With $\mathbf A_\lambda\mathbf G=\mathbf I-\lambda\mathbf A_\lambda$,
+\begin{align*}
+\hat y_\lambda(\mathbf x_h)&=\tilde{\mathbf z}_h^{\top}\mathbf b+e_h-\tilde{\mathbf z}_h^{\top}\boldsymbol\delta+\lambda w_h
++\tilde{\mathbf z}_h^{\top}\mathbf A_\lambda\mathbf Z^{\top}\boldsymbol\varepsilon\\
+&=\tilde{\mathbf z}_h^{\top}\boldsymbol\beta+e_h+\lambda w_h+\tilde{\mathbf z}_h^{\top}\mathbf A_\lambda\mathbf Z^{\top}\boldsymbol\varepsilon .
+\end{align*}
+The held-out survey is $y_h=\tilde{\mathbf z}_h^{\top}\boldsymbol\beta+r_h+\varepsilon_h$, so the error is
+$r_h-e_h-\lambda w_h-\tilde{\mathbf z}_h^{\top}\mathbf A_\lambda\mathbf Z^{\top}\boldsymbol\varepsilon+\varepsilon_h$: a constant
+plus two independent zero-mean terms with variances $\sigma^2\tilde{\mathbf z}_h^{\top}\mathbf A_\lambda\mathbf Z^{\top}\mathbf
+Z\mathbf A_\lambda\tilde{\mathbf z}_h$ and $\sigma^2$, which gives~\eqref{eq:riskcb} and, under Gaussian noise, the stated law.
+Least squares is the same computation with the engine removed, $\hat y_{\mathrm{LS}}=\tilde{\mathbf z}_h^{\top}\boldsymbol\beta+\tilde{\mathbf
+z}_h^{\top}\mathbf G^{-1}\mathbf Z^{\top}\boldsymbol\varepsilon$, which gives~\eqref{eq:riskls}.
+\end{IEEEproof}
+
+The theorem splits the risk into three terms with distinct causes. The first is a squared bias: the plant's curvature
+$r_h$ that neither predictor can fit, corrected by the engine's own curvature $e_h$, and moved by the shrinkage toward the
+engine's plane through $\lambda w_h$. The second is the variance of the fitted plane, which the shrinkage reduces. The third
+is the noise of the held-out survey, which no predictor removes. Nothing in the theorem assumes that the plant is the engine,
+that the discrepancy prior is right or that the noise scale of the model equals the plant's: $\lambda$ is any non-negative
+number, and the plant is any function. The proof also shows that the predictor with $\lambda=0$ is least squares on
+$\mathbf Z$ plus $e_h$ exactly, survey by survey and noise draw by noise draw.
+
+\begin{corollary}[The engine helps only through aligned curvature]\label{cor:align}
+At $\lambda=0$, $R_{\mathrm{LS}}(\mathbf x_h)-R_0(\mathbf x_h)=e_h(2r_h-e_h)$. For held-out points drawn from a distribution
+$P$ with $\|r\|_P>0$ and $\|e\|_P>0$, with $\langle u,v\rangle_P=\mathbb E_P[uv]$, $\rho=\langle e,r\rangle_P/(\|e\|_P\|r\|_P)$ and
+$\kappa=\|e\|_P/\|r\|_P$,
+\begin{equation}
+\mathbb E_P\big[R_{\mathrm{LS}}-R_0\big]=2\langle e,r\rangle_P-\|e\|_P^2=\|r\|_P^2\,\big(2\rho\kappa-\kappa^2\big),
+\label{eq:align}
+\end{equation}
+which is positive if and only if $0<\kappa<2\rho$, and largest, $\rho^2\|r\|_P^2$, at $\kappa=\rho$. When the plant is a
+plane on $P$ ($\|r\|_P=0$) the difference is $-\|e\|_P^2\le0$.
+\end{corollary}
+\begin{IEEEproof}
+The variance terms of~\eqref{eq:riskcb} at $\lambda=0$ and~\eqref{eq:riskls} coincide, and $r_h^2-(r_h-e_h)^2=e_h(2r_h-e_h)$;
+take the expectation and divide by $\|r\|_P^2$. The quadratic $2\rho\kappa-\kappa^2$ in $\kappa$ has roots $0$ and $2\rho$.
+\end{IEEEproof}
+
+The corollary is the answer to the question of when the physics pays for itself, with the shrinkage switched off. The
+engine improves on an empirical regression in the same regressors only through the part of it that is not a plane, and only
+when that part points the same way as the plant's own departure from a plane ($\rho>0$) and is not more than twice as large
+as the aligned part of the plant's ($\kappa<2\rho$). An engine whose curvature has the right sign but twice the right size
+gains nothing; one whose curvature has the wrong sign always loses. The gain is not a variance term: it depends on $n$ only
+through the training planes $\boldsymbol\beta$ and $\mathbf b$, and settles to its population value as the design fills its
+range, instead of decaying like $1/n$ as the variance of a fitted plane does. At a small $n$ it varies with the design and can
+take either sign. That persistence is the property that makes a physics-informed predictor worth its cost.
+The noise does not enter~\eqref{eq:align} at all. What enters is the plant's mean function, which no finite set of surveys
+reveals; this is why the question cannot be settled on ten surveys, and why the study of Section~\ref{sec:design} uses
+virtual plants whose mean function is known.
+
+\begin{corollary}[An affine engine is only a shrinkage target]\label{cor:affine}
+If the engine is affine in the regressors at every operating point, $e\equiv0$, then
+\begin{equation}
+\begin{split}
+R_\lambda(\mathbf x_h)-R_{\mathrm{LS}}(\mathbf x_h)&=\lambda^2w_h^2-2\lambda r_hw_h\\
+&\quad-\sigma^2\,\tilde{\mathbf z}_h^{\top}\big(\mathbf G^{-1}-\mathbf A_\lambda\mathbf G\mathbf A_\lambda\big)\tilde{\mathbf z}_h ,
+\end{split}
+\label{eq:affine}
+\end{equation}
+and $\mathbf G^{-1}-\mathbf A_\lambda\mathbf G\mathbf A_\lambda$ is positive semidefinite, with eigenvalues
+$(2\lambda g_k+\lambda^2)/(g_k(g_k+\lambda)^2)$ for the eigenvalues $g_k$ of $\mathbf G$.
+\end{corollary}
+\begin{IEEEproof}
+Set $e_h=0$ in~\eqref{eq:riskcb} and subtract~\eqref{eq:riskls}. $\mathbf G$, $\mathbf A_\lambda$ and their products share the
+eigenvectors of $\mathbf G$, on which $1/g-g/(g+\lambda)^2=(2\lambda g+\lambda^2)/(g(g+\lambda)^2)$.
+\end{IEEEproof}
+
+On the HP500 lane the engine's throughput is $Q_{\mathrm{ref}}(c+17)/38$ at the fixed speed, affine in the setting at every
+value of the eight scalars (Proposition~2 of~\cite{cb002}), so the corollary applies to throughput exactly. CrusherBayes then
+predicts throughput as a ridge regression toward the engine's plane: it can save part of the variance of the fitted plane,
+and the engine contributes no curvature of its own. The only change of the bias is the shrinkage term $\lambda w_h$, which
+averages to zero over the training points (Theorem~\ref{thm:fixed}) and elsewhere, under extrapolation in particular, moves
+the bias by the mismatch of the two planes, in a direction that no property of the engine controls. A capacity law that is curved in the
+setting, as the power law of Rocha et al.~\cite{rocha}, is the condition under which Corollary~\ref{cor:align} can act on
+throughput at all; Section~\ref{sec:results-capacity} measures how much it acts.
+
+\begin{corollary}[The coverage of the band given the scalars]\label{cor:coverage}
+Under Gaussian noise, the band $\hat y_\lambda(\mathbf x_h)\pm q_h$ covers the held-out survey with probability
+\begin{equation}
+\Pr\big(|y_h-\hat y_\lambda(\mathbf x_h)|\le q_h\big)=\Phi\!\left(\frac{q_h-m_h}{\sqrt{v_h}}\right)+\Phi\!\left(\frac{q_h+m_h}{\sqrt{v_h}}\right)-1,
+\label{eq:coverage}
+\end{equation}
+with $m_h$ and $v_h$ of Theorem~\ref{thm:risk} and $\Phi$ the standard normal distribution function. With the predictive
+variance of the model at the plant's noise scale, $s_h^2=\sigma^2(1+\tilde{\mathbf z}_h^{\top}\mathbf A_\lambda\tilde{\mathbf
+z}_h)$, one has $s_h^2-v_h=\sigma^2\lambda\,\tilde{\mathbf z}_h^{\top}\mathbf A_\lambda^2\tilde{\mathbf z}_h\ge0$.
+\end{corollary}
+\begin{IEEEproof}
+The first statement is the law of Theorem~\ref{thm:risk}. For the second, $\mathbf A_\lambda-\mathbf A_\lambda\mathbf G\mathbf
+A_\lambda=\mathbf A_\lambda(\mathbf G+\lambda\mathbf I-\mathbf G)\mathbf A_\lambda=\lambda\mathbf A_\lambda^2$.
+\end{IEEEproof}
+
+The band of the model therefore errs in two directions at once: it is wider than the spread of the error by the prior's
+share $\sigma^2\lambda\tilde{\mathbf z}_h^{\top}\mathbf A_\lambda^2\tilde{\mathbf z}_h$, and it is centred on a biased mean
+whenever $m_h\ne0$. The first effect raises the coverage above the nominal level and the second lowers it, so a band that
+covers 80\pct{} of a set of held-out surveys can do so for the wrong reason. When the plant is the engine plus a plane drawn
+from the prior of the model ($\mathbf r=\mathbf e$) and the model's noise scale is the plant's, averaging over the drawn
+planes makes the bias and the extra width cancel and the coverage nominal; at a fixed discrepancy, as on a real plant, or with
+a plant whose curvature differs from the engine's, they do not, and~\eqref{eq:coverage} gives the coverage the band actually has. The study reports both the coverage and the
+bias-eliminated coverage of Morris et al.~\cite{morris}, which separates the two effects.
+
+\subsection{The risk averaged over the design}
+
+Theorem~\ref{thm:risk} holds point by point. To see how the terms scale with the number of surveys, average it over the
+training surveys themselves as held-out points with new noise, the fixed-design risk $\bar R=\frac1n\sum_iR(\mathbf x_i)$ of
+regression theory~\cite{hastie}. Let $\mathbf G=\mathbf V\mathrm{diag}(g_1,g_2,g_3)\mathbf V^{\top}$ and
+$\tilde{\boldsymbol\delta}=\mathbf V^{\top}\boldsymbol\delta$.
+
+\begin{theorem}[Curvature gain and plane gain]\label{thm:fixed}
+With $C=\frac1n\sum_{i=1}^n e_i(2r_i-e_i)$,
+\begin{equation}
+\bar R_\lambda-\bar R_{\mathrm{LS}}=-C+\frac1n\sum_{k=1}^{3}\frac{\lambda^2g_k\tilde\delta_k^2-\sigma^2(2\lambda g_k+\lambda^2)}{(g_k+\lambda)^2}.
+\label{eq:fixed}
+\end{equation}
+For $\tilde\delta_k\ne0$ the $k$-th term of the sum is minimized at $\lambda_k^\star=\sigma^2/\tilde\delta_k^2$, where it equals
+$-\sigma^4/(n(g_k\tilde\delta_k^2+\sigma^2))$; for $\tilde\delta_k=0$ it decreases toward $-\sigma^2/n$ as $\lambda$ grows. The
+whole sum is never below $-3\sigma^2/n$.
+\end{theorem}
+\begin{IEEEproof}
+Average~\eqref{eq:riskcb} over the training points. The cross term $-\frac{2\lambda}{n}(\mathbf r-\mathbf e)^{\top}\mathbf
+Z\mathbf A_\lambda\boldsymbol\delta$ vanishes because $\mathbf Z^{\top}(\mathbf r-\mathbf e)=\mathbf 0$; the squared shrinkage
+term is $\frac{\lambda^2}{n}\boldsymbol\delta^{\top}\mathbf A_\lambda\mathbf G\mathbf A_\lambda\boldsymbol\delta=\frac{\lambda^2}{n}\sum_kg_k\tilde\delta_k^2/(g_k+\lambda)^2$;
+the variance term is $\frac{\sigma^2}{n}\mathrm{tr}(\mathbf A_\lambda\mathbf G\mathbf A_\lambda\mathbf G)=\frac{\sigma^2}{n}\sum_kg_k^2/(g_k+\lambda)^2$;
+and $\frac1n\|\mathbf r-\mathbf e\|^2=\frac1n\|\mathbf r\|^2-C$. Least squares gives $\frac1n\|\mathbf r\|^2+3\sigma^2/n+\sigma^2$.
+Subtracting and writing $\sigma^2g_k^2-\sigma^2(g_k+\lambda)^2=-\sigma^2(2\lambda g_k+\lambda^2)$ gives~\eqref{eq:fixed}. For one
+term, $\varphi(\lambda)=(\lambda^2g\tilde\delta^2+\sigma^2g^2)/(g+\lambda)^2$ has $\varphi'(\lambda)\propto\lambda g\tilde\delta^2-\sigma^2g$,
+so its minimum is at $\lambda^\star=\sigma^2/\tilde\delta^2$ with $\varphi(\lambda^\star)=\sigma^2g\tilde\delta^2/(g\tilde\delta^2+\sigma^2)$;
+subtracting $\sigma^2$ gives the stated value, which lies between $-\sigma^2$ and $0$.
+\end{IEEEproof}
+
+Theorem~\ref{thm:fixed} separates the two ways the engine can help. The curvature gain $C$ is the empirical form of
+Corollary~\ref{cor:align} and settles, as the design grows, to its population value; it does not decay with $n$. The plane
+gain is a variance saving bounded by the whole variance $3\sigma^2/n$ of least squares on three regressors; with a design
+whose second moments settle, $g_k$ grows like $n$, and when $\tilde\delta_k\ne0$ the gain in that direction decays like
+$\sigma^4/(n^2\nu_k\tilde\delta_k^2)$, with $\nu_k=\lim g_k/n$. With few surveys the plane can matter; with many, only the
+curvature can.
+
+The theorem also says how the discrepancy prior should be scaled. The prior of Kennedy and O'Hagan, $\mathbf d\sim
+N(\mathbf 0,\tau^2\mathbf I)$, with the noise scale of the model equal to the plant's, gives $\lambda=\sigma^2/\tau^2$, which is
+the shrinkage that minimizes the fixed-design risk in the eigendirection $k$ of $\mathbf G$ exactly when
+\begin{equation}
+\tau^2=\tilde\delta_k^2 .
+\label{eq:taustar}
+\end{equation}
+The risk-optimal discrepancy scale is the mismatch between the engine's plane and the plant's plane, measured in the
+eigendirections of $\mathbf G$, for the fixed-design risk; at held-out points the cross term of Corollary~\ref{cor:affine}
+enters and the optimum moves. A single $\tau$ cannot match three different mismatches, and the theorem gives the
+loss of every compromise. This is a frequentist reading of a Bayesian prior: the prior is right, for prediction, when its
+scale is the size of the error it is meant to absorb.
+
+\subsection{Against the setting-only line}
+
+The line in the setting alone is the comparator that the held-out surveys could not separate from CrusherBayes. Let
+$\mathbf Z_1$ hold the first two columns of $\mathbf Z$, $\mathbf P$ and $\mathbf P_1$ the projections on the column spaces of
+$\mathbf Z$ and $\mathbf Z_1$, and $\hat y_{\mathrm{line}}$ least squares on $\mathbf Z_1$.
+
+\begin{proposition}[When the third regressor and the engine pay]\label{prop:line}
+With $\phi^2=\frac1n\|(\mathbf P-\mathbf P_1)\boldsymbol\mu\|^2$, the mean square of the part of the plant that the feed size
+explains beyond the setting,
+\begin{equation}
+\bar R_{\mathrm{line}}-\bar R_\lambda=\phi^2-\frac{\sigma^2}{n}+C-\frac1n\sum_{k=1}^{3}\frac{\lambda^2g_k\tilde\delta_k^2-\sigma^2(2\lambda g_k+\lambda^2)}{(g_k+\lambda)^2}.
+\label{eq:line}
+\end{equation}
+At $\lambda=0$ and at a given design the method beats the line if and only if $n(\phi^2+C)>\sigma^2$. For a design whose
+empirical distribution settles, with $\phi^2$ and $C$ at their limiting values, this reads $n>n^\star=\sigma^2/(\phi^2+C)$ when
+$\phi^2+C>0$, and never when $\phi^2+C\le0$.
+\end{proposition}
+\begin{IEEEproof}
+Least squares on $\mathbf Z_1$ has $\bar R_{\mathrm{line}}=\frac1n\|\boldsymbol\mu-\mathbf P_1\boldsymbol\mu\|^2+2\sigma^2/n+\sigma^2$, and
+since $\mathbf P_1\mathbf P=\mathbf P_1$, $\|\boldsymbol\mu-\mathbf P_1\boldsymbol\mu\|^2=\|\mathbf r\|^2+\|(\mathbf P-\mathbf
+P_1)\boldsymbol\mu\|^2$. Hence $\bar R_{\mathrm{line}}-\bar R_{\mathrm{LS}}=\phi^2-\sigma^2/n$, and~\eqref{eq:fixed} gives the rest.
+\end{IEEEproof}
+
+The proposition puts a number on the observation that ten surveys could not separate the method from the line. The third
+regressor costs one parameter's variance, $\sigma^2/n$, and earns $\phi^2$; the engine earns its curvature gain $C$; the
+shrinkage earns at most the variance of the plane. On power the noise of the surveys is large against both $\phi^2$ and
+$C$ (Section~\ref{sec:results-theory} computes them on the virtual plant fitted to the ten surveys), so the crossing size
+$n^\star$ lies beyond ten. The proposition is an equality at every design, so with the limiting values of $\phi^2$ and $C$ it
+also says how many surveys would be needed.
+
+\subsection{Three discrepancy priors}
+
+The predictor~\eqref{eq:cbmean} takes the scalars as given. When they are learned, CrusherBayes in its linearized form
+(Section~\ref{sec:method-linear}) is a Gaussian linear model in $\mathbf w=(\mathbf u,\mathbf d)$ with features $\mathbf
+W=[\mathbf J,\mathbf Z]$ and prior precision $\mathbf K$, and its predictive mean is
+\begin{equation}
+m_{\mathbf K}(\mathbf x_h)=f_c(\mathbf x_h)+\mathbf w_h^{\top}\big(\mathbf W^{\top}\mathbf W+\sigma^2\mathbf K\big)^{-1}\mathbf W^{\top}(\mathbf y-\mathbf f_c),
+\label{eq:genridge}
+\end{equation}
+a generalized ridge regression on the engine's sensitivities and the discrepancy regressors, toward the engine at the
+linearization point $\boldsymbol\theta_c$. The three priors of Section~\ref{sec:method-priors} differ only in $\mathbf K$ and in
+the features.
+
+\begin{proposition}[What the priors change]\label{prop:priors}
+(a) The orthogonal prior, with features $[\mathbf J,(\mathbf I-\mathbf J\mathbf J^{+})\mathbf Z]$ and held-out row $(\mathbf
+j_h,\tilde{\mathbf z}_h-(\mathbf J^{+}\mathbf Z)^{\top}\mathbf j_h)$ under precision $\mathbf K_\perp$, gives the predictive mean
+of the Kennedy and O'Hagan features $\mathbf W$ under the precision $\mathbf T^{-\top}\mathbf K_\perp\mathbf T^{-1}$, with
+$\mathbf T=\begin{pmatrix}\mathbf I&-\mathbf J^{+}\mathbf Z\\ \mathbf 0&\mathbf I\end{pmatrix}$.
+(b) If the null space $\mathcal N$ of $\mathbf W$ satisfies $\mathbf w(\mathbf x)\perp\mathcal N$ at every operating point
+$\mathbf x$ (a structural confounding), then as $\mathbf K=\epsilon\mathbf K_0$ with $\epsilon\downarrow0$ the predictive
+mean~\eqref{eq:genridge} tends to the same limit for every $\mathbf K_0\succ0$; every prior predicts alike in the diffuse limit,
+however it splits the confounded parameters.
+(c) With no engine parameter learned, the scaled prior $\mathbf K_d=\tau^{-2}(\mathbf I+c\,\mathbf G/n)$ is the predictor of
+Theorem~\ref{thm:fixed} with the shrinkage $\lambda_k=\lambda(1+c\,g_k/n)$ in the $k$-th eigendirection of $\mathbf G$,
+and~\eqref{eq:fixed} holds term by term with $\lambda_k$ in place of $\lambda$.
+\end{proposition}
+\begin{IEEEproof}
+(a) $[\mathbf J,(\mathbf I-\mathbf J\mathbf J^{+})\mathbf Z]=\mathbf W\mathbf T$ and the held-out row is $\mathbf T^{\top}\mathbf w_h$;
+inserting in~\eqref{eq:genridge}, $\mathbf w_h^{\top}\mathbf T(\mathbf T^{\top}\mathbf W^{\top}\mathbf W\mathbf T+\sigma^2\mathbf
+K_\perp)^{-1}\mathbf T^{\top}\mathbf W^{\top}=\mathbf w_h^{\top}(\mathbf W^{\top}\mathbf W+\sigma^2\mathbf T^{-\top}\mathbf K_\perp\mathbf
+T^{-1})^{-1}\mathbf W^{\top}$, and $\mathbf T$ is invertible. (b) As $\epsilon\downarrow0$, $(\mathbf W^{\top}\mathbf W+\epsilon\sigma^2\mathbf
+K_0)^{-1}\mathbf W^{\top}\mathbf v$ tends to the solution of the normal equations $\mathbf W^{\top}\mathbf W\mathbf w=\mathbf W^{\top}\mathbf
+v$ of least $\mathbf K_0$-norm; two such solutions differ by an element of $\mathcal N$, which $\mathbf w(\mathbf x)^{\top}$ maps to zero.
+(c) With $\mathbf W=\mathbf Z$, $\mathbf W^{\top}\mathbf W+\sigma^2\mathbf K_d=\mathbf G+\lambda(\mathbf I+c\mathbf G/n)$, diagonal in the
+eigenvectors of $\mathbf G$ with entries $g_k+\lambda_k$.
+\end{IEEEproof}
+
+Three confoundings of CrusherBayes are structural in the sense of (b) in the joint model of the two outputs. First, the
+engine computes power as $\zeta W_i\,10(P_{80}^{-1/2}-F_{80}^{-1/2})\,Q_{\mathrm{ref}}(c+17)/38+P_n$, so the capacity base,
+the work index and the power slope enter power only through their product $Q_{\mathrm{ref}}W_i\zeta$ (the product of
+Proposition~4 of~\cite{cb002}, extended to the capacity base), while the sensitivity of throughput to $\ln Q_{\mathrm{ref}}$,
+$Q_{\mathrm{ref}}\tilde{\mathbf z}^{\top}\mathbf a$, lies in the span of the throughput discrepancy at every operating point;
+a move of $+1$ in $\ln Q_{\mathrm{ref}}$, $-1$ in $\ln W_i$ and $-Q_{\mathrm{ref}}\mathbf a$ in the throughput discrepancy is
+therefore invisible to both outputs everywhere. Second, $+1$ in $\ln W_i$ and $-1$ in $\ln\zeta$ is invisible everywhere.
+Third, the no-load power has the sensitivity $1$, equal to the constant regressor of the power discrepancy, at every
+operating point. With at least as many surveys as the features have identified combinations (eight on power, which every
+design of the study exceeds), the null space of $\mathbf W$ contains only these structural directions, and part (b) applies,
+the capacity base included. The orthogonal prior of Plumlee~\cite{plumlee} therefore cannot change the predictions of the
+method in the diffuse limit; its effect is on what the scalars mean, which part (a) makes explicit as a correlation between
+the scalars and the discrepancy in the prior. With proper priors the three priors are three generalized ridges with different
+penalties; by analogy with~\eqref{eq:taustar}, which is derived for the discrepancy alone, their predictive risks can be
+expected to differ by how well each penalty matches the mismatch, a statement the study measures rather than proves. Part (c) states the scaled prior of
+Gu and Wang~\cite{guwang} in this finite form: it shrinks most in the directions the design measures best, which is the
+opposite of what~\eqref{eq:taustar} asks when the large-eigenvalue directions carry the large mismatches.
+
+\subsection{What a design can identify}
+
+Proposition~1 of~\cite{cb002} gives the Fisher information of a scalar under the marginal likelihood with the discrepancy
+integrated out. Its consequence for design is a bound that does not depend on the number of surveys.
+
+\begin{proposition}[An information ceiling]\label{prop:bound}
+Let the sensitivity of output $t$ to a scalar $\vartheta$ lie in the span of its discrepancy regressors at every design point,
+$\mathbf j_t=\mathbf Z_t\mathbf c_t$. Then its Fisher information about $\vartheta$ satisfies
+\begin{equation}
+\mathcal I_t(\vartheta)=\mathbf c_t^{\top}\mathbf G_t\big(\sigma_t^2\mathbf I+\tau_t^2\mathbf G_t\big)^{-1}\mathbf c_t\ \le\ \frac{\|\mathbf c_t\|^2}{\tau_t^2}
+\label{eq:ceiling}
+\end{equation}
+for every design (with $\mathbf c_t$ that design's coefficients) and every number of surveys. In the linear Gaussian model the
+posterior standard deviation of $\vartheta$ is then at least $(s_\vartheta^{-2}+\|\mathbf c_t\|^2/\tau_t^2+\mathcal
+I_{\mathrm{other}})^{-1/2}$, with $s_\vartheta$ its prior standard deviation and $\mathcal I_{\mathrm{other}}$ the information
+from the other outputs. A design factor that moves the sensitivity out of the span gives the undiscounted term
+$\|(\mathbf I-\boldsymbol\Pi_t)\mathbf j_t\|^2/\sigma_t^2$, with $\boldsymbol\Pi_t$ the projection on the column space of
+$\mathbf Z_t$, which grows in proportion to the number of surveys.
+\end{proposition}
+\begin{IEEEproof}
+$\mathbf j_t^{\top}\boldsymbol\Sigma_t^{-1}\mathbf j_t$ with $\boldsymbol\Sigma_t=\sigma_t^2\mathbf I+\tau_t^2\mathbf Z_t\mathbf Z_t^{\top}$
+and the push-through identity $\mathbf Z_t^{\top}\boldsymbol\Sigma_t^{-1}\mathbf Z_t=\mathbf G_t(\sigma_t^2\mathbf I+\tau_t^2\mathbf G_t)^{-1}$
+give the equality; each eigenvalue $g/(\sigma_t^2+\tau_t^2g)$ is below $1/\tau_t^2$. In the linear Gaussian model the posterior
+precision of $\vartheta$ is at most its prior precision plus its Fisher information, which gives the standard deviation. The
+last statement is the first term of Proposition~1 of~\cite{cb002}.
+\end{IEEEproof}
+
+For the HP500 capacity base at the fixed speed, $\mathbf c=Q_{\mathrm{ref}}\mathbf a$ with $\mathbf a=((\bar c+17)/38,\varsigma_c/38,0)$
+depends only on the mean $\bar c$ and the spread $\varsigma_c$ of the settings, so no number of surveys at the same speed and
+in the same setting range can narrow $\ln Q_{\mathrm{ref}}$ from throughput beyond~\eqref{eq:ceiling}. The standard-deviation
+bound of the proposition is valid but does not bind on its own, because $\mathcal I_{\mathrm{other}}$, the power's information,
+grows with $n$. What binds is the joint structural confounding stated after Proposition~\ref{prop:priors}: power informs only
+the sum $\ln Q_{\mathrm{ref}}+\ln W_i+\ln\zeta$. With that sum known exactly, the precision of $\ln Q_{\mathrm{ref}}$ is its
+prior precision, the throughput ceiling, and the precision that the priors of $\ln W_i$ and $\ln\zeta$ lend to the
+difference, so that for every number of surveys at the fixed speed, in the linear Gaussian model,
+\begin{equation}
+\frac{\mathrm{sd}(\ln Q_{\mathrm{ref}}\mid\mathcal D)}{s_Q}\ \ge\ \Big(1+s_Q^2\,\frac{\|\mathbf c\|^2}{\tau_{\mathrm{tph}}^2}+\frac{s_Q^2}{s_{W}^2+s_{\zeta}^2}\Big)^{-1/2},
+\label{eq:floor}
+\end{equation}
+with $s_Q$, $s_W$ and $s_\zeta$ the prior standard deviations of the three logarithms.
+Section~\ref{sec:results-design} evaluates the ceiling on the ten surveys and sets it beside the contraction the sampler
+measured; it also gives the expected information gain of each candidate design. For a linear Gaussian model the expected
+information gain of Rainforth et al.~\cite{rainforth}, the mutual information between the scalars and the data, has the
+closed form
+\begin{equation}
+\mathrm{EIG}(\xi)=\tfrac12\ln\det\!\Big(\mathbf I+\mathbf L^{\top}\Big(\sum_t\mathbf J_t^{\top}\boldsymbol\Sigma_t^{-1}\mathbf J_t\Big)\mathbf L\Big),
+\label{eq:eig}
+\end{equation}
+with $\mathbf L$ the diagonal of the prior standard deviations and $\mathbf J_t$, $\boldsymbol\Sigma_t$ evaluated on the design
+$\xi$~\cite{chaloner}. It counts the information of every output, discounted by its discrepancy as
+Proposition~1 of~\cite{cb002} prescribes, and it ranks designs that add an output (the product size), a factor (the speed)
+or surveys.

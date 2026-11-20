@@ -1,0 +1,77 @@
+\section{Limitations}\label{sec:limitations}
+
+\subsection{Internal validity}
+
+The theory holds conditionally on the scalars and on the design. The study measures the learning of the scalars in two ways,
+the linearized model and the full sampler, and the second only on three cells with \verReps{} replicates each and at a reduced
+chain length, because one full posterior took \sbcWallHours{} to \verWallHours~h of wall time on average at that length on a
+shared machine (the engine timing of Section~\ref{sec:method} gives \cbCpuHours~CPU-hours at the product's size on an idle
+core). The closed forms use the plant's noise scale, which the full method learns; the verification cells measure what
+that costs: no risk beyond Monte Carlo error, and \verCovGap{} points of coverage of the 80\pct{} band (Section~\ref{sec:results-sampler}). The linearization is taken at the prior centre, which is the
+shipped engine, and the virtual plants put the truth at the posterior mean of the ten surveys, a distance of up to one prior
+standard deviation on the power scalars; a plant further from the prior centre would make the linearized predictor worse and
+the verification would have to be repeated there. The orthogonal prior is implemented in its empirical form over the training
+surveys, which is the finite-dimensional form of the orthogonality of Plumlee~\cite{plumlee} with respect to the empirical
+distribution of the operating points; a version orthogonal with respect to the operating window as a whole would differ by
+the difference between the two distributions. The scaled prior is used with one value of its scaling constant. The Student-$t$
+bands of the regressions use the residual variance and are exact under Gaussian noise; the Gaussian bands of the closed forms
+use the true noise scale, which favours them.
+
+\subsection{External validity}
+
+The virtual plants are models. V0 and V1 are built from the engine itself, so their curvature is the engine's curvature,
+scaled; V2 uses the capacity law that Rocha et al.~\cite{rocha} fitted to the same ten surveys, which is curved in the setting
+with the exponent 1.27 their Table~4 prints, and which is itself a fit. The study therefore says when the method can win,
+and by how much, on plants that curve as these do; it does not say that a given industrial crusher curves this way. A
+three-point series of an HP400 in the work of Duarte et al.~\cite{duarte} shows a capacity concave in the setting over 6~mm,
+which is evidence that real capacities can curve, not a measurement of how much. No discrete-element simulation is used as a
+truth: one operating point of a quarter section of a secondary cone crusher took 172 to 404 CPU-hours~\cite{quistthesis}, and
+the study needs thousands. The throw and the speed of the HP500 are held at 34~mm and 360~rpm, product assumptions for which no
+primary source was found; the design with varied speed moves it by ten percent either way around the engine's capacity
+optimum, and its conclusion depends on that range.
+
+\subsection{Construct validity}
+
+The risk is the mean squared error of a point prediction, and the comparison with the empirical predictors is made on it and
+on the mean absolute percentage error; a decision that weighs an overprediction of power differently from an underprediction
+would need another loss, under which Theorem~\ref{thm:risk} still gives the error's law under Gaussian noise but not the
+ranking. The band is judged by its coverage and its width at the 80\pct{} level only. The discrepancy is a plane in two
+regressors, as in the released method; a Gaussian-process discrepancy would change Proposition~\ref{prop:bound} (its kernel
+would absorb curved sensitivities too) and the results of Section~\ref{sec:results-capacity}. The plants assume one ore and one
+machine state across the surveys; a drift of the ore's hardness or of the liners' wear between surveys is a regressor that
+neither the plant nor the predictors carry, and in a real set of surveys it would enter the noise and lower every gain measured here.
+
+\section{Reproducibility}\label{sec:repro}
+
+Every number, table and figure of this paper is computed from the files of the repository~\cite{chancadem} at release
+\productrelease{} by committed scripts. The harness is \path{manuscripts/crusherbayes-theory/sim/}: \path{run_exact.py} runs
+the closed-form study, \path{run_design.py} the design study and \path{run_sampler.py} the simulation-based calibration and the
+verification; the identifiability analysis and the pilot are in \path{manuscripts/crusherbayes-theory/analysis/}; the
+figures, the tables and the numbers of the text are written by \path{manuscripts/crusherbayes-theory/figures/make_figs.py}
+from the summaries in \path{manuscripts/crusherbayes-theory/data/}. The tests of the harness, run with \texttt{pytest},
+check the closed forms against the released implementation of the method, every identity of Section~\ref{sec:theory} on random
+instances, and the independence of the results from the number of processes. The engine and the method are those of the
+release, imported from \path{data-pipeline/pipeline/}; nothing in them was changed for this paper. The ten surveys are the
+open table of Rocha et al.~\cite{rocha} (CC~BY~4.0), committed as \path{data/examples/hp500-surveys.csv}. The run times on the
+machine of the study (\envCpus{} logical processors, \envPlatform, Python~\envPython, numpy~\envNumpy, emcee~\envEmcee), recorded
+by \path{analysis/record_runs.py} in \path{data/run_times.json}, were \runExactTime{} for the closed-form study,
+\runDesignTime{} for the design study, \runIdentTime{} for the identifiability analysis, \runTauTime{} for the analysis of the
+discrepancy scale and the coverage, and \runSamplerTime{} for the full-sampler runs.
+
+\section{Conclusions}\label{sec:conclusions}
+
+Given its scalars, the prediction of a Bayesian calibration with a discrepancy linear in the regressors is least squares on
+those regressors, shrunk toward the engine's plane, plus the engine's departure from that plane, and its risk has the exact form
+of Theorem~\ref{thm:risk}. Over an empirical regression in the same regressors the engine gains in two ways: a shrinkage gain,
+bounded by the variance of the fitted plane and fading with the number of surveys, and a curvature gain, which persists and is
+positive only when the engine's curvature is aligned with the plant's and less than twice as large. On \cellsTotal{} cells of
+virtual plants the theory matched the simulation to Monte Carlo error. For the HP500 engine of ChancaDEM the capacity is affine in
+the setting, so on throughput only the shrinkage acts; on power the engine's curvature is \curvShareKw\pct{} of the noise
+variance at best. A curved capacity of the plant's form gains a persistent \capRoRmseS{} to \capRoRmseW\pct{} of RMSE inside the
+operating windows (\capRoMseS{} to \capRoMseW\pct{} of the mean squared error) and \capRoRmseX\pct{} under extrapolation, bounded
+inside the training window by the plant's own curvature. The capacity base cannot be narrowed below a floor by more surveys at
+the same speed over the same setting range, and in the linearized model a product-size measurement is the design that teaches
+the scalars most. The shipped sampler, run at a reduced chain length, passed simulation-based calibration within that
+test's reach and its risk was not above the linearized predictor's on the verification cells, while its 80\pct{} band covered \verCovPooled{} at ten surveys. The next steps are a product-size
+measurement on the HP500 surveys, a capacity law curved in the setting inside the engine, and a discrepancy whose prior scale is
+set by~\eqref{eq:taustar} rather than by convention.
