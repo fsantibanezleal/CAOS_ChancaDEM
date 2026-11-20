@@ -116,13 +116,15 @@ indices.
 
 Simulation-based calibration~\cite{talts} draws \sbcN{} parameter sets from the prior of the method (the eight scalars, the two
 noise scales and the six discrepancy coefficients), simulates the ten surveys' design from each, fits the full posterior at
-the reduced size of Section~\ref{sec:method} and records the rank of each true value among 99 evenly spaced posterior draws,
-for $L+1=100$ possible ranks in 10 bins, which gives $N/B\ge20$ as Talts et al. recommend. The ranks of the marginal log
-likelihood at the true parameters among its values at the draws are the data-dependent test quantity of Modr\'ak et
-al.~\cite{modrak}, which detects a posterior equal to the prior. Uniformity is tested by a chi-square statistic per quantity.
-The verification runs the full posterior on 50 replicates of three cells (V0 and V2 on the real design and V0 on the surveys
-window with $n=10$), on exactly the data of the closed-form replicates with the same indices, and predicts 50 test points per
-replicate from 200 posterior draws, so the full method and the closed forms are paired replicate by replicate.
+the reduced size of Section~\ref{sec:method} (\sbcSteps{} steps, the first \sbcBurn{} discarded) and records the rank of each
+true value among 99 evenly spaced posterior draws, for $L+1=100$ possible ranks in \sbcBins{} bins of equal width, so that each
+bin expects \sbcPerBin{} posteriors, above the 20 that Talts et al. advise keeping. The ranks of the marginal log likelihood at
+the true parameters among its values at the draws are the data-dependent test quantity of Modr\'ak et al.~\cite{modrak}, which
+detects a posterior equal to the prior. Uniformity is tested by a chi-square statistic per quantity. The verification runs the
+full posterior on \verReps{} replicates of each of three cells (V0 and V2 on the real design and V0 on the surveys window with
+$n=10$), on exactly the data of the closed-form replicates with the same indices, and predicts 50 test points per replicate from
+200 posterior draws, so the full method and the closed forms are paired replicate by replicate. The sizes of both runs were set
+by the cost of a posterior on the shared machine of the study, about an hour of one processor each at \sbcSteps{} steps.
 
 \subsection{The design study}
 

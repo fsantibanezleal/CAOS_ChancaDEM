@@ -481,6 +481,8 @@ def sampler_outputs(sbc: dict, ver: dict) -> None:
     table("sbc", ["Quantity", "$\\chi^2_9$", "$p$", "Quantity", "$\\chi^2_9$", "$p$"], paired, "@{}lrrlrr@{}")
     worst = min(pv, key=pv.get)
     macro("sbcN", N)
+    macro("sbcBins", B)
+    macro("sbcPerBin", fmt(N / B, 0))
     macro("sbcConverged", sbc["converged"])
     macro("sbcSteps", f"{sbc['config']['steps']:,}".replace(",", "{,}"))
     macro("sbcBurn", f"{sbc['config']['burn']:,}".replace(",", "{,}"))
@@ -513,6 +515,7 @@ def sampler_outputs(sbc: dict, ver: dict) -> None:
               c["n_posteriors"])
     table("verify", ["Cell, output", "Sampler", "True", "KO lin.", "LS", "Sampler $-$ KO", "Cov."], rows, "@{}lrrrrrr@{}")
     macro("verPosteriors", ver["n_posteriors"])
+    macro("verReps", min(c["n_posteriors"] for c in ver["cells"].values()))
     macro("verConverged", sum(c["converged"] for c in ver["cells"].values()))
     macro("verWallHours", fmt(np.mean([c["wall_seconds_mean"] for c in ver["cells"].values()]) / 3600, 2))
 
@@ -646,7 +649,7 @@ def main() -> None:
         macro(name, f"{span(r['wall_seconds'])} on {r['workers']} processes")
     sbc, ver = load(DATA / "sbc.json", a.partial), load(DATA / "verify.json", a.partial)
     if sbc is None or ver is None:
-        for k in ("sbcN", "sbcAbstract", "sbcText", "runSamplerTime"):
+        for k in ("sbcN", "sbcAbstract", "sbcText", "runSamplerTime", "sbcSteps", "sbcBurn", "sbcBins", "sbcPerBin", "verReps"):
             macro(k, r"\textbf{[pending]}")
     else:
         sampler_outputs(sbc, ver)
