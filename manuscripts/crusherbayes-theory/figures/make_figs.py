@@ -402,9 +402,81 @@ def exact_macros(cells: dict) -> None:
     macro("covKqXTenOr", fmt(cells["V1_a1_k2-extrapolation-n10"]["predictors_summary"]["kW"]["cb_oracle"]["coverage80"], 2))
 
 
+SBC_TEX = {"q_ref_tph": r"$\ln Q_{\mathrm{ref}}$", "wi_kwh_t": r"$\ln W_i$", "zeta": r"$\ln\zeta$", "pn_kw": r"$P_n$",
+           "k1_scale": r"$\ln s_{K_1}$", "k2_scale": r"$\ln s_{K_2}$", "k3": r"$K_3$", "t10_shift_pct": r"$\Delta t_{10}$",
+           "log_sigma_tph": r"$\ln\sigma_{\mathrm{tph}}$", "log_sigma_kW": r"$\ln\sigma_{\mathrm{kW}}$",
+           "discrepancy_tph_constant": r"$d_{\mathrm{tph},0}$", "discrepancy_tph_css": r"$d_{\mathrm{tph},c}$",
+           "discrepancy_tph_f80": r"$d_{\mathrm{tph},f}$", "discrepancy_kW_constant": r"$d_{\mathrm{kW},0}$",
+           "discrepancy_kW_css": r"$d_{\mathrm{kW},c}$", "discrepancy_kW_f80": r"$d_{\mathrm{kW},f}$",
+           "loglik": "log likelihood"}
+
+
+def binom_band(n: int, p: float, lo: float = 0.005, hi: float = 0.995) -> tuple[int, int]:
+    """The 99 percent band of a Binomial(n, p) count (Talts et al.'s histogram band), from the exact cumulative mass."""
+    pmf = [math.comb(n, k) * p ** k * (1 - p) ** (n - k) for k in range(n + 1)]
+    cdf = np.cumsum(pmf)
+    return int(np.searchsorted(cdf, lo)), int(np.searchsorted(cdf, hi))
+
+
 def sampler_outputs(sbc: dict, ver: dict) -> None:
-    """The simulation-based calibration and the verification of the full sampler (filled once the runs end)."""
-    raise NotImplementedError("written once sbc.json and verify.json exist")
+    """The simulation-based calibration and the verification of the full sampler."""
+    N, B = sbc["n_posteriors"], sbc["bins"]
+    lo, hi = binom_band(N, 1.0 / B)
+    names = [k for k in SBC_TEX if k in sbc["ranks"]]
+    fig, axes = plt.subplots(3, 6, figsize=(7.0, 3.6), sharey=True)
+    for ax, nm in zip(axes.flat, names):
+        h = sbc["ranks"][nm]["histogram"]
+        ax.bar(range(B), h, width=0.9, color="0.6", edgecolor="0.0", lw=0.3)
+        ax.axhspan(lo, hi, color="0.85", zorder=0)
+        ax.set_title(SBC_TEX[nm], fontsize=7)
+        ax.set_xticks([])
+    for ax in list(axes.flat)[len(names):]:
+        ax.axis("off")
+    fig.text(0.5, 0.01, "rank bin (10 bins of the 100 ranks)", ha="center")
+    fig.text(0.005, 0.5, "posteriors", va="center", rotation=90)
+    fig.tight_layout(rect=(0.02, 0.03, 1, 1))
+    save(fig, "fig-sbc")
+    pv = {nm: sbc["ranks"][nm]["p_value"] for nm in names}
+    rows = [[SBC_TEX[nm], fmt(sbc["ranks"][nm]["chi2"], 1), f"{pv[nm]:.3f}"] for nm in names]
+    half = (len(rows) + 1) // 2
+    paired = [rows[i] + (rows[i + half] if i + half < len(rows) else ["", "", ""]) for i in range(half)]
+    table("sbc", ["Quantity", "$\\chi^2_9$", "$p$", "Quantity", "$\\chi^2_9$", "$p$"], paired, "@{}lrrlrr@{}")
+    worst = min(pv, key=pv.get)
+    macro("sbcN", N)
+    macro("sbcConverged", sbc["converged"])
+    macro("sbcSteps", f"{sbc['config']['steps']:,}".replace(",", "{,}"))
+    macro("sbcBurn", f"{sbc['config']['burn']:,}".replace(",", "{,}"))
+    macro("sbcMinP", f"{pv[worst]:.3f}")
+    macro("sbcMinPName", SBC_TEX[worst])
+    macro("sbcLikP", f"{pv['loglik']:.3f}")
+    macro("sbcBelowOne", sum(1 for v in pv.values() if v < 0.01))
+    macro("sbcBonfP", f"{0.05 / len(pv):.4f}")
+    macro("sbcBelowBonf", sum(1 for v in pv.values() if v < 0.05 / len(pv)))
+    macro("sbcQuantities", len(pv))
+    macro("sbcBandLo", lo)
+    macro("sbcBandHi", hi)
+    macro("sbcWallHours", fmt(sbc["wall_seconds_mean"] / 3600, 2))
+    macro("sbcTauMax", fmt(sbc["tau_max_max"], 0))
+    macro("sbcRedraws", sbc["redraws_engine_failure"])
+    rows = []
+    for cell, lab in (("V0-real-n10", "V0, real, n = 10"), ("V2-real-n10", "V2, real, n = 10"), ("V0-surveys-n10", "V0, surveys, 10")):
+        c = ver["cells"][cell]
+        for t, unit in (("tph", "t/h"), ("kW", "kW")):
+            o = c["outputs"][t]
+            r_s = math.sqrt(o["sampler"]["mse"]["mean"])
+            row = [f"{lab}, {'throughput' if t == 'tph' else 'power'}", fmt(r_s, 1)]
+            for p in ("cb_oracle", "cb_ko", "ls"):
+                row.append(fmt(math.sqrt(o["exact"][p]["mse"]["mean"]), 1))
+            q = o["paired_mse"]["sampler_minus_cb_ko"]
+            row.append(f"${fmt(q['mean'], 0)}\\pm{fmt(1.96 * q['mcse'], 0)}$")
+            row.append(fmt(o["sampler"]["coverage80"]["mean"], 2))
+            rows.append(row)
+        macro(f"verN{['VzeroReal', 'VtwoReal', 'VzeroS'][[ 'V0-real-n10', 'V2-real-n10', 'V0-surveys-n10'].index(cell)]}",
+              c["n_posteriors"])
+    table("verify", ["Cell, output", "Sampler", "True", "KO lin.", "LS", "Sampler $-$ KO", "Cov."], rows, "@{}lrrrrrr@{}")
+    macro("verPosteriors", ver["n_posteriors"])
+    macro("verConverged", sum(c["converged"] for c in ver["cells"].values()))
+    macro("verWallHours", fmt(np.mean([c["wall_seconds_mean"] for c in ver["cells"].values()]) / 3600, 2))
 
 
 # ---------------------------------------------------------------------------------------------------------------- tables
