@@ -38,8 +38,9 @@ H6 held. The test has the reach of its size, which we measured by simulating it 
 the true one with probability \sbcPowHalf, one 30\pct{} too narrow with probability \sbcPowSeventy{} and one 20\pct{} too narrow
 with probability \sbcPowEighty{} (\sbcPowEightyNom{} at the 5\pct{} level); one 50\pct{} too wide with probability \sbcPowWide;
 one shifted by half a posterior standard deviation with probability \sbcPowShiftHalf, and by a quarter with \sbcPowShiftQuarter.
-The calibration therefore rules out gross errors of the posterior's width or location, not errors of a few tens of percent, which
-would move an 80\pct{} band by several points and which finer bins and several hundred posteriors would be needed to see.
+The calibration therefore detects gross errors of the posterior's width or location, with probabilities from \sbcPowWide{} to
+near one, and does not reliably detect errors of a few tens of percent, which would move an 80\pct{} band by several points and
+which finer bins and several hundred posteriors would be needed to see.
 
 \sbcConverged{} of the \sbcN{} chains met the criterion of Section~\ref{sec:method}, at least 50 integrated autocorrelation
 times after the burn-in. The largest autocorrelation time of a chain had a median of \sbcTauMedian{} steps, close to the
