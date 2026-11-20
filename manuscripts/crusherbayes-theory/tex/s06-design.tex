@@ -99,12 +99,12 @@ the effect of the bias from that of the width as the bias-eliminated coverage of
 
 \subsection{Replications and seeds}
 
-Each cell has 1,900 replicates, the number that gives a Monte Carlo standard error of 0.5 points to a coverage near 95\pct{}
+Each cell has \repsPerCell{} replicates, the number that gives a Monte Carlo standard error of 0.5 points to a coverage near 95\pct{}
 by Equation~(1) of Morris et al.~\cite{morris}, and below 1 point for an 80\pct{} coverage. The seed of a replicate is derived
 from a fixed root, the cell's index and the replicate's index, so a result is reproducible and independent of the number of
 processes; two runs of the same cell give identical files. The same seed fixes the design, the test points and the noise of a
 replicate for every predictor, so the predictors are compared on identical data and the paired differences of
-Section~\ref{sec:results} remove the variation that the design and the noise share. With 1,900 replicates of 200 test points the
+Section~\ref{sec:results} remove the variation that the design and the noise share. With \repsPerCell{} replicates of 200 test points the
 Monte Carlo standard error of a mean squared error has a median of \mcseMedian\pct{} of its value over all cells and predictors,
 at most \mcseMainMax\pct{} for the calibrated predictor, least squares and the line, and \mcseMax\pct{} for the heavy-tailed errors
 of the orthogonal prior at ten surveys; that of a paired difference

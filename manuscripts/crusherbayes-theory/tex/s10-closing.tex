@@ -37,7 +37,7 @@ ranking. The band is judged by its coverage and its width at the 80\pct{} level 
 regressors, as in the released method; a Gaussian-process discrepancy would change Proposition~\ref{prop:bound} (its kernel
 would absorb curved sensitivities too) and the results of Section~\ref{sec:results-capacity}. The plants assume one ore and one
 machine state across the surveys; a drift of the ore's hardness or of the liners' wear between surveys is a regressor that
-neither the plant nor the predictors carry, and in a real campaign it would enter the noise and lower every gain measured here.
+neither the plant nor the predictors carry, and in a real set of surveys it would enter the noise and lower every gain measured here.
 
 \section{Reproducibility}\label{sec:repro}
 
@@ -51,8 +51,10 @@ check the closed forms against the released implementation of the method, every 
 instances, and the independence of the results from the number of processes. The engine and the method are those of the
 release, imported from \path{data-pipeline/pipeline/}; nothing in them was changed for this paper. The ten surveys are the
 open table of Rocha et al.~\cite{rocha} (CC~BY~4.0), committed as \path{data/examples/hp500-surveys.csv}. The run times on the
-machine of the study (32 logical processors, Windows~11, Python~3.12, numpy~2.4.6, emcee~3.1.6) were \runExactTime{} for the
-closed-form study, \runDesignTime{} for the design study and \runSamplerTime{} for the full-sampler runs.
+machine of the study (\envCpus{} logical processors, \envPlatform, Python~\envPython, numpy~\envNumpy, emcee~\envEmcee), recorded
+by \path{analysis/record_runs.py} in \path{data/run_times.json}, were \runExactTime{} for the closed-form study,
+\runDesignTime{} for the design study, \runIdentTime{} for the identifiability analysis, \runTauTime{} for the analysis of the
+discrepancy scale and the coverage, and \runSamplerTime{} for the full-sampler runs.
 
 \section{Conclusions}\label{sec:conclusions}
 
@@ -63,8 +65,9 @@ bounded by the variance of the fitted plane and fading with the number of survey
 positive only when the engine's curvature is aligned with the plant's and less than twice as large. On \cellsTotal{} cells of
 virtual plants the theory matched the simulation to Monte Carlo error. For the HP500 engine of ChancaDEM the capacity is affine in
 the setting, so on throughput only the shrinkage acts; on power the engine's curvature is \curvShareKw\pct{} of the noise
-variance at best. A curved capacity of the plant's form gains a persistent one to two percent of RMSE, more under
-extrapolation, bounded by the plant's own curvature. The capacity base cannot be narrowed below a floor by more surveys at the
-same speed, and a product-size measurement is the design that teaches the scalars most. The next steps are a product-size
+variance at best. A curved capacity of the plant's form gains a persistent \capRoRmseS{} to \capRoRmseW\pct{} of RMSE inside the
+operating windows (\capRoMseS{} to \capRoMseW\pct{} of the mean squared error) and \capRoRmseX\pct{} under extrapolation, bounded
+inside the training window by the plant's own curvature. The capacity base cannot be narrowed below a floor by more surveys at
+the same speed over the same setting range, and a product-size measurement is the design that teaches the scalars most. The next steps are a product-size
 measurement on the HP500 surveys, a capacity law curved in the setting inside the engine, and a discrepancy whose prior scale is
 set by~\eqref{eq:taustar} rather than by convention.

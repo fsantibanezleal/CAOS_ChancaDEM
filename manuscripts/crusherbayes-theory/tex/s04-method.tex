@@ -10,8 +10,10 @@ calibrated model is changed; the closed forms are exact consequences of it, and 
 
 For survey $i$ and output $t\in\{\mathrm{tph},\mathrm{kW}\}$ (throughput in t/h, power in kW),
 \begin{equation}
-y_{t,i}=f_t(\boldsymbol\theta;\mathbf x_i)+\tilde{\mathbf z}_i^{\top}\mathbf d_t+\varepsilon_{t,i},\qquad
+\begin{gathered}
+y_{t,i}=f_t(\boldsymbol\theta;\mathbf x_i)+\tilde{\mathbf z}_i^{\top}\mathbf d_t+\varepsilon_{t,i},\\
 \mathbf d_t\sim N(\mathbf 0,\tau_t^2\mathbf I),\quad \varepsilon_{t,i}\sim N(0,\sigma_t^2),
+\end{gathered}
 \label{eq:model}
 \end{equation}
 where $\mathbf x_i=(c_i,f_{80,i})$ is the operating point (the closed-side setting and the feed size, both in mm), $f_t$ is the
@@ -56,7 +58,8 @@ Given the scalars and the noise scale, the posterior predictive of a held-out su
 push-through identity $\mathbf Z^{\top}(\sigma^2\mathbf I+\tau^2\mathbf Z\mathbf Z^{\top})^{-1}=(\sigma^2\mathbf I+\tau^2\mathbf
 G)^{-1}\mathbf Z^{\top}$, with $\mathbf G=\mathbf Z^{\top}\mathbf Z$ and $\lambda_t=\sigma_t^2/\tau_t^2$, its mean and variance are
 \begin{align}
-\hat y_{t}(\mathbf x_h)&=f_t(\boldsymbol\theta;\mathbf x_h)+\tilde{\mathbf z}_h^{\top}(\mathbf G+\lambda_t\mathbf I)^{-1}\mathbf Z^{\top}\big(\mathbf y_t-\mathbf f_t(\boldsymbol\theta)\big),\label{eq:cbmean}\\
+\hat y_{t}(\mathbf x_h)&=f_t(\boldsymbol\theta;\mathbf x_h)\nonumber\\
+&\quad+\tilde{\mathbf z}_h^{\top}(\mathbf G+\lambda_t\mathbf I)^{-1}\mathbf Z^{\top}\big(\mathbf y_t-\mathbf f_t(\boldsymbol\theta)\big),\label{eq:cbmean}\\
 s_t^2(\mathbf x_h)&=\sigma_t^2\Big(1+\tilde{\mathbf z}_h^{\top}(\mathbf G+\lambda_t\mathbf I)^{-1}\tilde{\mathbf z}_h\Big).\label{eq:cbvar}
 \end{align}
 The mean~\eqref{eq:cbmean} is the engine corrected by a ridge regression of its residuals on the discrepancy regressors; the
@@ -80,7 +83,10 @@ $\mathbf u=\boldsymbol\theta-\boldsymbol\theta_c$ and $\mathbf J_t$ the Jacobian
 with step $10^{-3}$ on the sampled scale). Then~\eqref{eq:model} becomes a Gaussian linear model in $\mathbf w=(\mathbf u,\mathbf
 d_t)$ with features $\mathbf W_t=[\mathbf J_t,\mathbf Z]$,
 \begin{equation}
-\mathbf y_t-\mathbf f_{t,c}=\mathbf W_t\mathbf w+\boldsymbol\varepsilon_t,\qquad \mathbf w\sim N\big(\mathbf 0,\ \mathrm{blockdiag}(\boldsymbol\Lambda^{-1},\mathbf K_d^{-1})\big),
+\begin{gathered}
+\mathbf y_t-\mathbf f_{t,c}=\mathbf W_t\mathbf w+\boldsymbol\varepsilon_t,\\
+\mathbf w\sim N\big(\mathbf 0,\ \mathrm{blockdiag}(\boldsymbol\Lambda^{-1},\mathbf K_d^{-1})\big),
+\end{gathered}
 \label{eq:linear}
 \end{equation}
 with $\boldsymbol\Lambda$ the diagonal prior precision of the scalars from Table~\ref{tab:scalars} (the truncation dropped) and
@@ -88,8 +94,10 @@ $\mathbf K_d=\tau_t^{-2}\mathbf I$ for the prior of~\eqref{eq:model}. The poster
 $\mathbf P_t=\mathbf W_t^{\top}\mathbf W_t/\sigma_t^2+\mathrm{blockdiag}(\boldsymbol\Lambda,\mathbf K_d)$, and with the held-out row
 $\mathbf w_h=(\mathbf j_h,\tilde{\mathbf z}_h)$ the predictive is
 \begin{equation}
-\hat y_t(\mathbf x_h)=f_{t,c}(\mathbf x_h)+\mathbf w_h^{\top}\mathbf P_t^{-1}\mathbf W_t^{\top}(\mathbf y_t-\mathbf f_{t,c})/\sigma_t^2,\qquad
+\begin{gathered}
+\hat y_t(\mathbf x_h)=f_{t,c}(\mathbf x_h)+\mathbf w_h^{\top}\mathbf P_t^{-1}\mathbf W_t^{\top}(\mathbf y_t-\mathbf f_{t,c})/\sigma_t^2,\\
 s_t^2(\mathbf x_h)=\sigma_t^2+\mathbf w_h^{\top}\mathbf P_t^{-1}\mathbf w_h .
+\end{gathered}
 \label{eq:linpred}
 \end{equation}
 The two outputs share $\mathbf u$; each output is fitted separately in~\eqref{eq:linpred}, which keeps the comparison per

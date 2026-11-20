@@ -7,7 +7,7 @@ of this section, each with the half-width of its 95\pct{} Monte Carlo interval; 
 \begin{table*}[!t]
 \caption{Root mean squared error, with the half-width of the 95\pct{} Monte Carlo interval, of five predictors on seven cells
 of the closed-form study: power (kW) on V0 and V1, throughput (t/h) on V2 and on the capacity study with the engine of the form of
-Rocha et al.; 1,900 replicates of 200 test points each. Lower is better.}
+Rocha et al.; \repsPerCell{} replicates of 200 test points each. Lower is better.}
 \label{tab:main}
 \centering\footnotesize
 \input{generated/tab-main}
@@ -20,8 +20,9 @@ with the shipped scalars, least squares on $\mathbf Z$ and the setting-only line
 squared error with the theoretical one computed on the same designs and test points. Over the \zNum{} comparisons the largest
 absolute $z$ score is \zMax; \zOverTwo{} exceed 2, against \zExpectTwo{} expected if every difference were Monte Carlo noise,
 and \zOverThree{} exceed 3. Figure~\ref{fig:theory-check} plots the pairs on logarithmic axes, where they lie on the identity
-line across three orders of magnitude of the error, from the noise floor of the power to the extrapolated throughput. The
-theorem therefore describes the simulated risk to within the Monte Carlo error of 1,900 replicates, for all four virtual
+line over more than an order of magnitude of the error (\theoryMseLo{} to \theoryMseHi{} in squared output units), from the
+noise floor of the power to the extrapolated throughput. The
+theorem therefore describes the simulated risk to within the Monte Carlo error of \repsPerCell{} replicates, for all four virtual
 plants, the four designs and the five sizes; hypothesis H1's first clause held. The figure does not test the learned
 predictors, whose risk has no closed form; they are compared with the theory through the sign tests of the next
 subsections and through the full sampler.
@@ -42,15 +43,18 @@ curvature gain $C=(2\alpha-1)\|e_0\|^2$ that changes sign at $\alpha=1/2$. Figur
 squared error between the calibrated predictor with the true scalars and least squares, against $\alpha$. With 160 training
 surveys the plane gain of Theorem~\ref{thm:fixed} has vanished and the difference is the curvature term alone: on the surveys
 window it is $\alAmS$~kW$^2$ at $\alpha=-1$, $\alAhalfS$ at $\alpha=1/2$ and $\alAtwoS$ at $\alpha=2$, against theoretical values
-of $-C$ of $-(\alCAmS)$, $-(\alCAhalfS)$ and $-(\alCAtwoS)$. The sign changes exactly at one half, on every design: the engine helps
-when the plant carries more than half of the engine's curvature and hurts below. Under extrapolation the same alignment acts
+of $-C$ of $-(\alCAmS)$, $-(\alCAhalfS)$ and $-(\alCAtwoS)$. The sign changes at one half within Monte Carlo error on the surveys
+window and under extrapolation; on the wide window the difference at $\alpha=1/2$ is $\alAhalfW$~kW$^2$, the plane and variance
+remainder of Theorem~\ref{thm:fixed}, so the crossing lies just above one half there. The engine helps when the plant carries
+more than about half of the engine's curvature and hurts below. Under extrapolation the same alignment acts
 with a larger amplitude ($\alAtwoX$~kW$^2$ at $\alpha=2$), because the test points lie where both curvatures are larger than in
 the training window over which the fixed-design term is computed. Adding a curvature that the engine cannot follow,
 V1(1, 2), leaves the gain where it was ($\alKqS$~kW$^2$ against $\alAoneS$ without it), as the corollary says: the orthogonal
 part of the plant's curvature enters $\mathbf r$ but not $\langle e,r\rangle$.
 
 With ten surveys the picture is different. The plane gain is $\alPlaneTen$~kW$^2$ on the surveys window, three times the
-largest curvature gain, and the calibrated predictor beats least squares at every $\alpha$, even at $\alpha=-1$
+curvature gain of the engine itself ($\alpha=1$, $C=\cFixKwS$~kW$^2$) and as large as the largest of the study ($\alpha=2$,
+$\alCAtwoS$), and the calibrated predictor beats least squares at every $\alpha$, even at $\alpha=-1$
 ($\alAmTen$~kW$^2$): with few surveys, what the engine contributes is a shrinkage target for the plane, and its curvature is a
 second-order term. The size of the curvature itself bounds what it can ever contribute. The engine's power departs from a
 plane in the setting and the feed size by \eRmsS~kW root mean square on the surveys window and \eRmsW~kW on the wide one,
@@ -62,7 +66,7 @@ noise variance. H1 held: the method beats least squares at small shrinkage if an
 \includegraphics[width=\columnwidth]{fig-align}
 \caption{Paired difference of squared error, calibrated predictor with the true scalars minus least squares, on the power of
 the plants V1($\alpha$, 0), against the share $\alpha$ of the engine's curvature in the plant (negative: the calibration is
-better). Bars: 95\pct{} Monte Carlo intervals over 1,900 replicates. Crosses: $-C$ of Theorem~\ref{thm:fixed} on the training
+better). Bars: 95\pct{} Monte Carlo intervals over \repsPerCell{} replicates. Crosses: $-C$ of Theorem~\ref{thm:fixed} on the training
 window. The dotted line marks $\alpha=1/2$.}
 \label{fig:align}
 \end{figure}
@@ -73,21 +77,24 @@ On throughput the shipped engine is affine in the regressors, so by Corollary~\r
 shrinkage target. Figure~\ref{fig:capacity} shows the RMSE of the calibrated predictor relative to least squares for the three
 engines of the capacity study, on the plant whose capacity is the power law of Rocha et al.~\cite{rocha}. With the affine engine
 the ratio is \capAffSTen{} at ten surveys and \capAffSBig{} at 160 on the surveys window, the plane gain decaying as
-Theorem~\ref{thm:fixed} predicts; under extrapolation from ten surveys it is \capAffXTen, the largest shrinkage benefit of the
-study, and it too vanishes with the surveys (\capAffXBig). With the engine of the plant's own form the ratio stays below one
+Theorem~\ref{thm:fixed} predicts; under extrapolation from ten surveys it is \capAffXTen, among the largest shrinkage benefits of
+the study, and it too vanishes with the surveys (\capAffXBig). With the engine of the plant's own form the ratio stays below one
 at 160 surveys: \capRoSBig{} on the surveys window, \capRoWBig{} on the wide one and \capRoXBig{} under extrapolation, a gain that
-persists and grows with the width of the window and with the distance of the test points, as H2 stated. Its size is set by the
-plant: the plant's capacity departs from a plane by \rRmsTph~t/h root mean square on the surveys window (\rRmsTphW{} on the wide
-one) against a noise of \sigTph~t/h, so even an engine of exactly the right form can remove at most \curvCeilTph\pct{} of the
-mean squared error.
+persists and grows with the width of the window and with the distance of the test points: it removes \capRoMseS, \capRoMseW{}
+and \capRoMseX\pct{} of the mean squared error of least squares (\capRoRmseS, \capRoRmseW{} and \capRoRmseX\pct{} of its RMSE).
+Its size is set by the plant: over the surveys window the plant's capacity departs from a plane by \rRmsTph~t/h root mean square
+(\rRmsTphW{} over the wide one) against a noise of \sigTph~t/h, so inside the training window even an engine of exactly the right
+form can remove at most about \curvCeilTph\pct{} of the squared error; under extrapolation the curvature is larger and so is the
+gain. H2 held for the engine of the plant's form and, as the next paragraph shows, failed for the engine with half the exponents.
 
 The engine with half the exponents tests Corollary~\ref{cor:align} where the alignment is not built in. On the surveys window
 its curvature is aligned ($\rho=\halfRhoS$) and smaller than the plant's ($\kappa=\halfKappaS$), so it gains
 (\capHalfSBig); on the wide window its departure from the plane has another shape ($\rho=\halfRhoW$, $\kappa=\halfKappaW$, so
 $\kappa>2\rho$) and it loses (\capHalfWBig), and more under extrapolation (\capHalfXBig). A curvature of the right sign is not
 enough: what counts is its projection on the plant's departure from a plane, over the range where predictions are made. The
-engine alone, refit without a discrepancy, is the best predictor when its form is exactly the plant's (\capRoRefitXTen{} of
-the least-squares RMSE under extrapolation from ten surveys, \capRoRefitSBig{} at 160 on the surveys window) and the worst
+engine alone, refit without a discrepancy, is the best of the predictors that learn from the surveys when its form is exactly
+the plant's (\capRoRefitXTen{} of the least-squares RMSE under extrapolation from ten surveys, \capRoRefitSBig{} at 160 on the
+surveys window; only the same engine at the true scale does better) and the worst of those that use a plane or the engine
 when it is not (\capAffRefitSBig{} for the affine engine at 160): the discrepancy is insurance against a wrong form, and it
 costs variance when the form is right.
 
@@ -95,8 +102,10 @@ The plant V2 runs the product's engine, with all eight scalars, against the same
 On throughput its result is the affine case: \rVtwoSTenTphOr~t/h for the calibration with the true scalars against
 \rVtwoSTenTphLs{} for least squares and \rVtwoSTenTphLine{} for the line at ten surveys, a shrinkage gain only. On power the
 engine's curvature is aligned with the plant's but too large ($\rho=\vtwoRho$, $\kappa=\vtwoKappa>2\rho$), the curvature term is
-negative ($C=\vtwoC$~kW$^2$), and at 160 surveys the calibration is level with least squares (\rVtwoSBigKwOr{} against
-\rVtwoSBigKwLs~kW) while at ten it still gains through the shrinkage (\rVtwoSTenKwOr{} against \rVtwoSTenKwLs). The engine
+negative ($C=\vtwoC$~kW$^2$), and at 160 surveys the calibration loses to least squares by $\vtwoPairedBig$~kW$^2$ in paired
+squared error (\rVtwoSBigKwOr{} against \rVtwoSBigKwLs~kW of RMSE), the loss $-C=\vtwoMinusC$~kW$^2$ that
+Corollary~\ref{cor:align} predicts, while at ten it still gains through the shrinkage (\rVtwoSTenKwOr{} against
+\rVtwoSTenKwLs). The engine
 alone at the scalars of the $L_2$ projection predicts power best at ten surveys (\rVtwoSTenKwEngOr~kW). That projection is a
 reference, not a converged optimum: the damped Gauss-Newton iteration reduced the weighted squared distance from \ltwoStart{}
 to \ltwoEnd{} in \ltwoIters{} iterations, stopped at its iteration cap with three scalars on the bounds of their priors, and the
@@ -116,19 +125,22 @@ model. Left to right: surveys window, wide window, extrapolation.}
 
 Figure~\ref{fig:nsweep} shows the RMSE on V0 against the number of surveys. On throughput the feed size carries a large
 signal beyond the setting ($\phi^2=\phiTwoTphS$~(t/h)$^2$ on the surveys window), so the crossing size of
-Proposition~\ref{prop:line} is $n^\star=\nStarTphS$ and every regression on both regressors beats the line from ten surveys on
-($\rVzeroSTenTphOr$ against $\rVzeroSTenTphLine$~t/h at $n=10$). On power the feed signal is small ($\phi^2=\phiTwoKwS$~kW$^2$),
+Proposition~\ref{prop:line} is $n^\star=\nStarTphS$; the calibrated predictor beats the line from ten surveys on
+($\rVzeroSTenTphOr$ against $\rVzeroSTenTphLine$~t/h at $n=10$, paired $\cbLineTphTen$~(t/h)$^2$), and least squares on both
+regressors from twenty (paired $\lsLineTphTen$ at ten, a tie, and $\lsLineTphTwenty$ at twenty). On power the feed signal is small ($\phi^2=\phiTwoKwS$~kW$^2$),
 the curvature gain is $C=\cFixKwS$~kW$^2$ and $n^\star=\nStarKwS$. The paired difference against the line is
 $\lineOrTen$~kW$^2$ at ten surveys, a tie, then $\lineOrTwenty$ at twenty and $\lineOrForty$ at forty, for the predictor with
 the true scalars. With the scalars learned the crossing moves later: $\lineKoTen$ at ten, $\lineKoTwenty$ at twenty, a tie, and
 $\lineKoForty$ at forty. On the wide window the plane term of~\eqref{eq:line} is positive at ten surveys
 ($\planeTenKwW$~kW$^2$: the shrinkage pulls toward an engine plane far from the plant's) and the line wins
-($\rVzeroWTenKwLine$ against $\rVzeroWTenKwOr$~kW), although $n^\star=\nStarKwW$; the proposition accounts for this through its
-plane term, which the crossing size alone omits. H3 held with that qualification: the crossing size locates the overtaking
-when the plane term is small, and the full expression~\eqref{eq:line} locates it in every cell. On the real design of the ten
-surveys the line is the best predictor of the plant fitted to them ($\rVzeroRealKwLine$~kW against $\rVzeroRealKwOr$ for the
-calibration with the true scalars and $\rVzeroRealKwKo$ with learned ones), which is what the held-out comparison
-of~\cite{cb002} found on the real surveys.
+($\rVzeroWTenKwLine$ against $\rVzeroWTenKwOr$~kW, paired $\lineOrWTen$~kW$^2$), although $n^\star=\nStarKwW$, and with learned
+scalars the two still tie at twenty ($\lineKoWTwenty$); the proposition accounts for this through its plane term, which the
+crossing size alone omits. H3 held on the surveys window with the scalars given, and failed on the wide window and with learned
+scalars, where the plane term that $n^\star$ omits dominates at ten surveys and the learning of the scalars adds variance that
+the fixed-design expression does not contain. On the real design of the ten surveys the line is the best predictor of the plant
+fitted to them ($\rVzeroRealKwLine$~kW against $\rVzeroRealKwOr$ for the calibration with the true scalars, paired
+$\lineOrRealKw$~kW$^2$, and $\rVzeroRealKwKo$ with learned ones), which is what the held-out comparison of~\cite{cb002} found on
+the real surveys.
 
 \begin{figure*}[!t]
 \centering
@@ -141,12 +153,13 @@ least squares on the setting and the feed size, the line in the setting and the 
 \end{figure*}
 
 The discrepancy scale enters through $\lambda=\sigma^2/\tau^2$. Figure~\ref{fig:tau} gives the RMSE of the power prediction with
-the true scalars against $\tau$, computed from Theorem~\ref{thm:risk} over 400 designs per size. The risk-optimal scale is
-\tauBestTen~kW at ten surveys and \tauBestOneSixty~kW at 160, against the product's 36~kW, and the per-direction optima
-of~\eqref{eq:taustar}, the mismatches $|\tilde\delta_k|$ of the engine's and the plant's planes, are \deltaOne, \deltaTwo{} and
-\deltaThree~kW. The product's scale sits close to the largest of them and the curve is flat around its minimum:
-\tauRmseProdTen~kW at 36 against \tauRmseBestTen~kW at the optimum, for ten surveys. The scale of the discrepancy prior is
-therefore not what keeps the method from beating the line on ten surveys ($\tauRmseLineTen$~kW); the noise is.
+the true scalars against $\tau$, computed from Theorem~\ref{thm:risk} over 400 designs per size on a grid of 41 values of
+$\tau$ spaced by a factor of 1.12. The risk-optimal scale on that grid is \tauBestTen~kW at ten surveys and \tauBestOneSixty~kW
+at 160, against the product's 36~kW, and the per-direction optima of~\eqref{eq:taustar}, the mismatches $|\tilde\delta_k|$ of the
+engine's and the plant's planes, are \deltaOne, \deltaTwo{} and \deltaThree~kW. The product's scale sits close to the largest of
+them and the curve is flat around its minimum. At ten surveys the scale decides the order against the line by a fifth of a
+kilowatt: \tauRmseBestTen~kW at the optimum and \tauRmseProdTen~kW at 36, against \tauRmseLineTen~kW for the line. A difference of
+that size lies far below what ten surveys with a noise of \sigKw~kW can show.
 
 \begin{figure}[!t]
 \centering
@@ -159,13 +172,14 @@ dotted: the plane mismatches $|\tilde\delta_k|$ of~\eqref{eq:taustar}. From Theo
 
 \subsection{The bands}\label{sec:results-bands}
 
-Excluding one plant discussed below, the 80\pct{} band of the calibrated predictor with the true scalars covers between
+Excluding the extrapolation cells of one plant discussed below, the 80\pct{} band of the calibrated predictor with the true scalars covers between
 \covOrMin{} and \covOrMax{} of the test points, with the learned scalars between \covKoMin{} and \covKoMax, and the Student-$t$
 band of least squares between \covLsMin{} and \covLsMax. The exact coverage of Corollary~\ref{cor:coverage}, computed on the
 plants V0 and V1 over 400 designs, lies between \covExactMin{} and \covExactMax, beside simulated values such as
 \covOrSimRealKw{} on the real design and \covOrSimWTenKw{} on the wide window at ten surveys. The coverage falls below nominal
-where the theorem places a bias, on the wide window and under extrapolation at small $n$, and the calibrated band stays narrower
-than the least-squares band in every cell of Table~\ref{tab:main}. The engine refit without a discrepancy covers as little as
+where the theorem places a bias: on the wide window at small $n$, and under extrapolation also at large $n$ when the plant's
+curvature opposes the engine's (\covAmXBigSim{} for V1($-1$) at 160 surveys). The calibrated band is narrower than the
+least-squares band in every cell of the study. The engine refit without a discrepancy covers as little as
 \covRefitMin{} of the test points (its band ignores its own model error), and the calibration at the shipped scalars covers
 \covNomMin{} to \covNomMax. The exception is V1(1, 2) under extrapolation: the added curvature grows quadratically outside the
 training window, and every band fails there (\covKqXOr{} for the calibration with the true scalars and \covKqXLs{} for least
@@ -178,8 +192,10 @@ The ceiling of Proposition~\ref{prop:bound} is reached on the ten surveys. The t
 Q_{\mathrm{ref}}$ is \ceilInfo{} against the ceiling of \ceilBound{} and a prior precision of \ceilPrior; with throughput alone the
 ratio of posterior to prior standard deviation could not fall below \ceilTphOnly. The linearized model with both outputs gives
 \ceilLinTen{} on the ten surveys and the sampler of~\cite{cb002} measured \ceilMeasTen, while the floor~\eqref{eq:floor} that no
-number of surveys at the fixed speed can pass is \ceilFloor: the ten surveys already give \ceilShare\pct{} of the narrowing of the
-capacity base that any campaign at this speed could give. The power sensitivities to $\ln Q_{\mathrm{ref}}$, $\ln W_i$ and
+number of surveys at the fixed speed over the same setting range can pass is \ceilFloor: the ten surveys already give
+\ceilShare\pct{} of the reduction of the posterior-to-prior standard-deviation ratio that any number of surveys over the same
+setting range at this speed could give (\ceilShareMeas\pct{} with the sampler's ratio, \ceilSharePrec\pct{} of the gain in
+posterior precision). A wider range of settings raises the ceiling, since $\mathbf c$ grows with the spread of the settings. The power sensitivities to $\ln Q_{\mathrm{ref}}$, $\ln W_i$ and
 $\ln\zeta$ agree to a relative \productRel, the structural product the floor rests on. Figure~\ref{fig:ceiling} shows the
 saturation: \ceilSweepMax{} at \ceilSweepN{} surveys at the fixed speed and \ceilSweepVaried{} with the speed varied over 324,
 360 and 396~rpm. Varying the speed does not break the ceiling, because the engine's capacity is flat at its optimum speed (the

@@ -23,6 +23,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.ticker  # noqa: E402
 import numpy as np  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
@@ -94,6 +95,8 @@ def fig_theory_check(cells: dict) -> None:
             ax.loglog(th, sim, MARKERS[k], ms=3, mfc="none", color=GRAYS[k], label=SHORT[p])
         lo, hi = ax.get_xlim()
         ax.plot([lo, hi], [lo, hi], "-", lw=0.6, color="0.5")
+        ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
+        ax.yaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
         ax.set_xlabel(f"theoretical mean squared error {unit}")
         ax.set_ylabel(f"simulated mean squared error {unit}")
         ax.set_title("throughput" if t == "tph" else "power")
@@ -152,7 +155,7 @@ def fig_capacity(cells: dict) -> None:
         ax.set_xlabel("training surveys n")
         ax.set_title(d)
     axes[0].set_ylabel("RMSE relative to least squares")
-    axes[2].legend(frameon=False, fontsize=6)
+    axes[0].legend(frameon=False, fontsize=6, loc="lower right")
     save(fig, "fig-capacity")
 
 
@@ -163,8 +166,9 @@ def fig_nsweep(cells: dict) -> None:
     for ax, t, unit in zip(axes, ("tph", "kW"), ("t/h", "kW")):
         for k, p in enumerate(preds):
             r = [rmse(cells[f"V0-surveys-n{n}"], t, p) for n in NS]
-            ax.errorbar(NS, [x[0] for x in r], yerr=[1.96 * x[1] for x in r], fmt=MARKERS[k] + STYLES[k % 4], ms=3,
-                        lw=0.8, color=GRAYS[k % 4], mfc="none", capsize=2, label=SHORT[p])
+            sty = [("o", "-", "0.0"), ("s", "--", "0.3"), ("^", ":", "0.5"), ("D", "-.", "0.7"), ("v", (0, (1, 1)), "0.0")][k]
+            ax.errorbar(NS, [x[0] for x in r], yerr=[1.96 * x[1] for x in r], marker=sty[0], linestyle=sty[1], ms=3,
+                        lw=0.8, color=sty[2], mfc="none", capsize=2, label=SHORT[p])
         ax.set_xscale("log")
         ax.set_xticks(NS)
         ax.set_xticklabels([str(n) for n in NS])
@@ -232,8 +236,12 @@ def fig_ceiling(idf: dict) -> None:
     macro("ceilSweepVaried", fmt(idf["sweep"]["varied_speed"][str(ns[-1])]["q_ref_tph"], 3))
     macro("ceilSweepN", ns[-1])
     macro("productRel", "$" + f"{ten['power_product_sensitivity_rel_diff']:.0e}".replace("e-", r"\times10^{-") + "}$")
-    share = (1 - ten["linearized_ratio"]["q_ref_tph"]) / (1 - ten["floor_ratio_lnq_any_n_fixed_speed"])
+    lin, flo = ten["linearized_ratio"]["q_ref_tph"], ten["floor_ratio_lnq_any_n_fixed_speed"]
+    share = (1 - lin) / (1 - flo)
     macro("ceilShare", fmt(100 * share, 0))
+    macro("ceilSharePrec", fmt(100 * (1 / lin ** 2 - 1) / (1 / flo ** 2 - 1), 0))
+    meas = ten["measured_ratio_sampled_scale"]["q_ref_tph"]
+    macro("ceilShareMeas", fmt(100 * (1 - meas) / (1 - flo), 0))
 
 
 DESIGN_ROWS = [("D0", None, "ten surveys (throughput, power)"), ("D2", None, "ten surveys, speed 324 to 396 rpm"),
@@ -275,7 +283,7 @@ def design_outputs(doc: dict) -> None:
     ax.set_xticklabels([SCALAR_TEX[k] for k in names])
     ax.axhline(1, color="0.5", lw=0.6)
     ax.set_ylabel("posterior/prior sd")
-    ax.legend(frameon=False, ncol=2)
+    ax.legend(frameon=False, ncol=4, loc="lower center", bbox_to_anchor=(0.5, 1.02), fontsize=6)
     save(fig, "fig-design")
     e0, c0 = design_entry(doc, "D0", None)
     e2, _ = design_entry(doc, "D2", None)
@@ -314,7 +322,7 @@ def exact_macros(cells: dict) -> None:
         macro(f"al{word[a]}Ten", pm(cells[f"{nm}-surveys-n10"]["paired"]["kW"]["cb_oracle"]["vs_ls"]))
     fd = cells["V1_a1_k0-surveys-n10"]["fixed_design"]["kW"]["oracle"]
     macro("alPlaneTen", fmt(fd["plane_sum"], 1))
-    macro("eRmsS", fmt(fd["e_rms"], 1))
+    macro("eRmsS", fmt(cells["V1_a1_k0-surveys-n160"]["fixed_design"]["kW"]["oracle"]["e_rms"], 1))
     macro("eRmsW", fmt(cells["V1_a1_k0-wide-n160"]["fixed_design"]["kW"]["oracle"]["e_rms"], 1))
     sig_kw = cells["V0-surveys-n10"]["sigma"]["kW"]
     sig_t = cells["V0-surveys-n10"]["sigma"]["tph"]
@@ -390,6 +398,27 @@ def exact_macros(cells: dict) -> None:
         macro(f"cov{tag}Max", fmt(max(covs[p]), 3))
     macro("covOrSimRealKw", fmt(cells["V0-real-n10"]["predictors_summary"]["kW"]["cb_oracle"]["coverage80"], 3))
     macro("covOrSimXTenKw", fmt(cells["V0-extrapolation-n10"]["predictors_summary"]["kW"]["cb_oracle"]["coverage80"], 3))
+    # the corrections of the second reading: scopes and the numbers they quote
+    for d, dt in (("surveys", "S"), ("wide", "W"), ("extrapolation", "X")):
+        r = ratio(f"Ccap_rocha-{d}-n160", "cb_oracle")
+        macro(f"capRoMse{dt}", fmt(100 * (1 - r * r), 1))
+        macro(f"capRoRmse{dt}", fmt(100 * (1 - r), 1))
+    q = cells["V2-surveys-n160"]["paired"]["kW"]["cb_oracle"]["vs_ls"]
+    macro("vtwoPairedBig", pm(q))
+    macro("vtwoMinusC", fmt(-cells["V2-surveys-n160"]["fixed_design"]["kW"]["oracle"]["C"], 1))
+    pt = cells["V0-surveys-n10"]["paired"]["tph"]
+    macro("lsLineTphTen", pm(pt["ls"]["vs_line"], 0))
+    macro("cbLineTphTen", pm(pt["cb_oracle"]["vs_line"], 0))
+    macro("lsLineTphTwenty", pm(cells["V0-surveys-n20"]["paired"]["tph"]["ls"]["vs_line"], 0))
+    macro("lineOrWTen", pm(cells["V0-wide-n10"]["paired"]["kW"]["cb_oracle"]["vs_line"]))
+    macro("lineKoWTwenty", pm(cells["V0-wide-n20"]["paired"]["kW"]["cb_ko"]["vs_line"]))
+    macro("lineOrRealKw", pm(cells["V0-real-n10"]["paired"]["kW"]["cb_oracle"]["vs_line"]))
+    w = cells["V0-wide-n10"]["predictors_summary"]["kW"]
+    macro("scaledWideWorse", fmt(100 * (w["cb_scaled"]["rmse"] / w["cb_ko"]["rmse"] - 1), 1))
+    macro("covAmXBigSim", fmt(cells["V1_am1_k0-extrapolation-n160"]["predictors_summary"]["kW"]["cb_oracle"]["coverage80"], 3))
+    th = [c["theory"][t][p]["theory_mse"] for c in cells.values() for t in c["theory"] for p in c["theory"][t]]
+    macro("theoryMseLo", fmt(min(th), 0))
+    macro("theoryMseHi", fmt(max(th), 0))
     rel = [(s["mse_mcse"] / s["mse"], p) for c in cells.values() for t in c["outputs"]
            for p, s in c["predictors_summary"][t].items()]
     macro("mcseMedian", fmt(100 * float(np.median([x for x, _ in rel])), 1))
@@ -590,12 +619,31 @@ def main() -> None:
         tab_main(cells)
         tab_priors(cells)
         exact_macros(cells)
+    runs = load(DATA / "run_times.json", False)
+    env = runs["environment"]
+    macro("envCpus", env["cpu_count"])
+    macro("envPython", env["python"])
+    macro("envNumpy", env["numpy"])
+    macro("envEmcee", env["emcee"])
+    macro("envPlatform", env["platform"].split("-")[0] + " " + env["platform"].split("-")[1])
+
+    def span(sec: float) -> str:
+        h, rem = divmod(int(round(sec)), 3600)
+        m, s = divmod(rem, 60)
+        return (f"{h}~h~{m}~min" if h else (f"{m}~min~{s}~s" if m else f"{s}~s"))
+    for key, name in (("exact", "runExactTime"), ("design", "runDesignTime"), ("identifiability", "runIdentTime"),
+                      ("tau_coverage", "runTauTime")):
+        r = runs["runs"][key]
+        macro(name, f"{span(r['wall_seconds'])} on {r['workers']} processes")
     sbc, ver = load(DATA / "sbc.json", a.partial), load(DATA / "verify.json", a.partial)
     if sbc is None or ver is None:
-        for k in ("sbcN", "sbcAbstract", "sbcText", "runExactTime", "runDesignTime", "runSamplerTime"):
+        for k in ("sbcN", "sbcAbstract", "sbcText", "runSamplerTime"):
             macro(k, r"\textbf{[pending]}")
     else:
         sampler_outputs(sbc, ver)
+        tot = sum(r["wall_seconds"] for k, r in runs["runs"].items() if k.startswith("sampler"))
+        wk = max(r["workers"] for k, r in runs["runs"].items() if k.startswith("sampler"))
+        macro("runSamplerTime", f"{span(tot)} on {wk} processes")
     lines = ["% Written by figures/make_figs.py from the committed summaries; do not edit."]
     lines += [f"\\newcommand{{\\{k}}}{{{v}}}" for k, v in sorted(MACROS.items())]
     (GEN / "numbers.tex").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")

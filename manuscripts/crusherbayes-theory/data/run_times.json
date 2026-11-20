@@ -1,0 +1,33 @@
+{
+ "schema": "chancadem.cbt.run-times/v1",
+ "runs": {
+  "exact": {
+   "wall_seconds": 1237.0,
+   "workers": 22,
+   "source": "harness report s1-theory-harness-2026-11-19, D3 (the first run, 20 min 37 s)"
+  },
+  "design": {
+   "wall_seconds": 46.0,
+   "workers": 22,
+   "source": "harness report s1-theory-harness-2026-11-19, D4"
+  },
+  "identifiability": {
+   "wall_seconds": 133.0,
+   "workers": 12,
+   "source": "time of analysis/identifiability.py, 2026-11-19 (2 min 13 s)"
+  },
+  "tau_coverage": {
+   "wall_seconds": 76.0,
+   "workers": 8,
+   "source": "time of analysis/tau_coverage.py, 2026-11-19 (1 min 16 s)"
+  }
+ },
+ "environment": {
+  "cpu_count": 32,
+  "platform": "Windows-11-10.0.26300-SP0",
+  "python": "3.12.15",
+  "numpy": "2.4.6",
+  "emcee": "3.1.6",
+  "interpreter": ".venv-pipeline"
+ }
+}

@@ -8,7 +8,7 @@ the RMSE of each variant on six cells; the capacity form is the subject of Figur
 \begin{table}[!t]
 \caption{Ablation of the calibrated predictor: RMSE (kW for power, t/h for throughput) on six cells with the scalars at the
 truth, at their shipped values and learned under the three discrepancy priors, with the discrepancy dropped (the engine refit
-alone), and least squares on the setting and the feed size for reference; 1,900 replicates per cell.}
+alone), and least squares on the setting and the feed size for reference; \repsPerCell{} replicates per cell.}
 \label{tab:ablation}
 \centering\footnotesize
 \resizebox{\columnwidth}{!}{\input{generated/tab-ablation}}
@@ -21,7 +21,7 @@ reaches \rVzeroSTenKwOr~kW, the shipped scalars \rVzeroSTenKwNom{} and the learn
 three are within half a kilowatt of one another and of least squares. On throughput the scalars hardly matter at all, because
 the engine's throughput is affine and its scale is absorbed by the plane: the true and the shipped scalars give the same
 \rVzeroSTenTphOr~t/h. The cost of learning the scalars is largest at ten surveys on the real design (\rVzeroRealKwKo{} against
-\rVzeroRealKwOr~kW), where nine degrees of freedom of the data are shared between eight scalars, three discrepancy coefficients
+\rVzeroRealKwOr~kW), where ten observations per output are shared between eight scalars, three discrepancy coefficients
 and the noise; it is the price of the uncertainty that the band of the method carries and the residual band of a refit does not.
 The learned predictor here is the linearized one, which fixes the noise scale at the plant's and drops the truncation of the
 priors; Section~\ref{sec:results-sampler} measures the full posterior on the same replicates.
@@ -36,7 +36,8 @@ three discrepancy regressors, so the orthogonal complement leaves the discrepanc
 must be carried by the scalars, whose priors forbid it. In the diffuse limit the two priors predict alike, by part (b); with the
 priors the product uses, they do not, and the orthogonal prior behaves like the engine without a discrepancy. On throughput,
 where only the capacity base has a sensitivity, the two priors are within a tenth of a percent of each other. The scaled prior
-of Gu and Wang changes little on power and is the best of the three on throughput at ten surveys (\rVzeroSTenTphSc~t/h against
+of Gu and Wang changes little on power on the surveys window (it is \scaledWideWorse\pct{} worse than the Kennedy and O'Hagan prior on
+the wide window at ten surveys) and is the best of the three on throughput at ten surveys (\rVzeroSTenTphSc~t/h against
 \rVzeroSTenTphKo{} for the Kennedy and O'Hagan prior), the shrinkage it adds along the well-measured directions being where the
 throughput's plane mismatch is small. H4 as stated, that the priors change the risk less than they change the meaning of the
 scalars, failed for the orthogonal prior: at proper priors it changes the risk most.
@@ -44,7 +45,7 @@ scalars, failed for the orthogonal prior: at proper priors it changes the risk m
 \subsection{The discrepancy}
 
 Dropping the discrepancy is the largest change of all, in both directions. On every plant whose form the engine does not share
-the refit engine is the worst predictor of the table, up to \rVamWFortyKwRefit~kW on V1($-1$) against \rVamWFortyKwLs{} for
+the refit engine is the worst predictor of the table except the orthogonal prior on two power rows, up to \rVamWFortyKwRefit~kW on V1($-1$) against \rVamWFortyKwLs{} for
 least squares, and its band covers as little as \covRefitMin{} of the test points. On the capacity study with the engine of the
 plant's own form it is the best predictor of the study (Section~\ref{sec:results-capacity}). The discrepancy plane therefore
 buys robustness against a wrong form at the price of the variance of three coefficients, and Theorem~\ref{thm:fixed} prices
@@ -56,7 +57,7 @@ by other means; ten surveys of throughput and power cannot validate it.
 \subsection{What the ablation says about the method}
 
 Read together, the variants say that CrusherBayes is close to the best predictor available to it in every cell of the study
-except one class: when the engine's form is exactly right, the discrepancy should be dropped, which no survey campaign can
+except one class: when the engine's form is exactly right, the discrepancy should be dropped, which no set of surveys can
 establish in advance. Its band covers at about the nominal rate, as the Student-$t$ band of least squares does, and is the
 narrower of the two in every cell of Table~\ref{tab:main}; its accuracy is that of least squares within the curvature and plane
 terms of Theorem~\ref{thm:fixed}; and with learned scalars its RMSE is \rVzeroSTenKwKo~kW on ten random surveys against

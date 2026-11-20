@@ -13,8 +13,8 @@ CrusherBayes~\cite{cb002}, the calibration method of the ChancaDEM studio~\cite{
 calibrates the eight fitted scalars of a Whiten engine of a Metso HP500 cone crusher as a Bayesian posterior on the ten
 surveys of Rocha et al.~\cite{rocha}, with a structural discrepancy in the sense of Kennedy and O'Hagan~\cite{ko} that is a
 plane in the standardized setting and feed size, integrated out exactly. On the ten surveys, held out one at a time, it
-beats the uncalibrated engine on power by 11.63 points of mean absolute percentage error (paired bootstrap interval $-18.25$
-to $-4.47$) and its 80\pct{} bands cover eight of the ten held-out surveys on throughput and nine on power, but it ties the
+beats the engine's power form refit by least squares by 11.63 points of mean absolute percentage error (paired bootstrap
+interval $-18.25$ to $-4.47$) and its 80\pct{} bands cover eight of the ten held-out surveys on throughput and nine on power, but it ties the
 line in the setting alone: the paired difference, $+1.54$
 points with a bootstrap interval of $-1.11$ to $4.10$, cannot be told from zero. That paper proved that the predictive mean
 is a shrunk ridge regression on the discrepancy regressors plus the engine's departure from their plane. It left open the
@@ -54,7 +54,7 @@ cannot improve on a regression for throughput at all on this machine, because it
 can on a plant whose capacity curves, if the engine's capacity curves the same way, and the size of that gain is set by the
 alignment of the two curvatures and not by the number of surveys. The answer to the practitioner's question is therefore a
 property of the engine and of the plant's operating range, which the theory makes computable, rather than of the size of the
-survey campaign.
+set of surveys.
 
 Section~\ref{sec:related} places the work among the published studies of calibration, of ridge regression under
 misspecification, of design for calibration and of the evaluation of samplers. Section~\ref{sec:problem} states the problem

@@ -18,8 +18,10 @@ $\mathbf x_1,\dots,\mathbf x_n$ gives the regressor matrix $\mathbf Z$ of~\eqref
 Z^{\top}\mathbf Z$ nonsingular, and the engine at the given scalars gives $f(\mathbf x)$. Project both functions on the
 column space of $\mathbf Z$ over the training surveys:
 \begin{equation}
-\boldsymbol\beta=\mathbf G^{-1}\mathbf Z^{\top}\boldsymbol\mu,\quad \mathbf r=\boldsymbol\mu-\mathbf Z\boldsymbol\beta,\qquad
+\begin{gathered}
+\boldsymbol\beta=\mathbf G^{-1}\mathbf Z^{\top}\boldsymbol\mu,\quad \mathbf r=\boldsymbol\mu-\mathbf Z\boldsymbol\beta,\\
 \mathbf b=\mathbf G^{-1}\mathbf Z^{\top}\mathbf f,\quad \mathbf e=\mathbf f-\mathbf Z\mathbf b,
+\end{gathered}
 \label{eq:projections}
 \end{equation}
 so that $\mathbf Z^{\top}\mathbf r=\mathbf Z^{\top}\mathbf e=\mathbf 0$. At a held-out point $\mathbf x_h$ with design row
@@ -47,11 +49,11 @@ variance $v_h=\sigma^2(1+\tilde{\mathbf z}_h^{\top}\mathbf A_\lambda\mathbf G\ma
 Write $\boldsymbol\mu=\mathbf Z\boldsymbol\beta+\mathbf r$ and $\mathbf f=\mathbf Z\mathbf b+\mathbf e$. Since $\mathbf
 Z^{\top}\mathbf r=\mathbf Z^{\top}\mathbf e=\mathbf 0$, $\mathbf Z^{\top}(\mathbf y-\mathbf f)=-\mathbf G\boldsymbol\delta+\mathbf
 Z^{\top}\boldsymbol\varepsilon$. With $\mathbf A_\lambda\mathbf G=\mathbf I-\lambda\mathbf A_\lambda$,
-\[
-\hat y_\lambda(\mathbf x_h)=\tilde{\mathbf z}_h^{\top}\mathbf b+e_h-\tilde{\mathbf z}_h^{\top}\boldsymbol\delta+\lambda w_h+\tilde{\mathbf
-z}_h^{\top}\mathbf A_\lambda\mathbf Z^{\top}\boldsymbol\varepsilon=\tilde{\mathbf z}_h^{\top}\boldsymbol\beta+e_h+\lambda w_h+\tilde{\mathbf
-z}_h^{\top}\mathbf A_\lambda\mathbf Z^{\top}\boldsymbol\varepsilon .
-\]
+\begin{align*}
+\hat y_\lambda(\mathbf x_h)&=\tilde{\mathbf z}_h^{\top}\mathbf b+e_h-\tilde{\mathbf z}_h^{\top}\boldsymbol\delta+\lambda w_h
++\tilde{\mathbf z}_h^{\top}\mathbf A_\lambda\mathbf Z^{\top}\boldsymbol\varepsilon\\
+&=\tilde{\mathbf z}_h^{\top}\boldsymbol\beta+e_h+\lambda w_h+\tilde{\mathbf z}_h^{\top}\mathbf A_\lambda\mathbf Z^{\top}\boldsymbol\varepsilon .
+\end{align*}
 The held-out survey is $y_h=\tilde{\mathbf z}_h^{\top}\boldsymbol\beta+r_h+\varepsilon_h$, so the error is
 $r_h-e_h-\lambda w_h-\tilde{\mathbf z}_h^{\top}\mathbf A_\lambda\mathbf Z^{\top}\boldsymbol\varepsilon+\varepsilon_h$: a constant
 plus two independent zero-mean terms with variances $\sigma^2\tilde{\mathbf z}_h^{\top}\mathbf A_\lambda\mathbf Z^{\top}\mathbf
@@ -99,8 +101,10 @@ virtual plants whose mean function is known.
 \begin{corollary}[An affine engine is only a shrinkage target]\label{cor:affine}
 If the engine is affine in the regressors at every operating point, $e\equiv0$, then
 \begin{equation}
-R_\lambda(\mathbf x_h)-R_{\mathrm{LS}}(\mathbf x_h)=\lambda^2w_h^2-2\lambda r_hw_h-\sigma^2\,\tilde{\mathbf z}_h^{\top}\big(\mathbf
-G^{-1}-\mathbf A_\lambda\mathbf G\mathbf A_\lambda\big)\tilde{\mathbf z}_h ,
+\begin{split}
+R_\lambda(\mathbf x_h)-R_{\mathrm{LS}}(\mathbf x_h)&=\lambda^2w_h^2-2\lambda r_hw_h\\
+&\quad-\sigma^2\,\tilde{\mathbf z}_h^{\top}\big(\mathbf G^{-1}-\mathbf A_\lambda\mathbf G\mathbf A_\lambda\big)\tilde{\mathbf z}_h ,
+\end{split}
 \label{eq:affine}
 \end{equation}
 and $\mathbf G^{-1}-\mathbf A_\lambda\mathbf G\mathbf A_\lambda$ is positive semidefinite, with eigenvalues

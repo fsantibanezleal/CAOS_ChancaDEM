@@ -10,13 +10,13 @@ also mostly obtains. On power the engine's curvature over the range of the surve
 little of the power beyond the setting ($\phi^2=\phiTwoKwS$~kW$^2$), so the third regressor of the discrepancy costs about as
 much variance as it earns, and the crossing size $n^\star=\nStarKwS$ lies just above ten. On a virtual plant fitted to the ten
 surveys, with the true scalars handed to it, the method ties the line at ten surveys ($\lineOrTen$~kW$^2$ in paired squared
-error) and overtakes it from twenty on; with learned scalars from forty. A real campaign of ten surveys could not have shown a
+error) and overtakes it from twenty on; with learned scalars from forty. A real set of ten surveys could not have shown a
 difference that the theory says is a few kW$^2$ against a noise variance of about \sigKw$^2$.
 
 \subsection{When the physics pays}
 
 Corollary~\ref{cor:align} reduces the question to two numbers over the operating range of interest: the alignment $\rho$ of the
-engine's departure from a plane with the plant's, and their relative size $\kappa$. Both can be estimated before a campaign.
+engine's departure from a plane with the plant's, and their relative size $\kappa$. Both can be estimated before the surveys are taken.
 The engine's departure $e$ is computable at any operating point. The plant's departure $r$ is not, but its size has a lower
 bound in the scatter of past surveys about a plane, which contains the noise, and a sign that process knowledge often gives:
 whether the capacity is concave or convex in the setting. The capacity of the engine used here is affine in the setting at the
@@ -38,23 +38,25 @@ penalties.
 \subsection{What to measure next}
 
 The design study answers the question the earlier paper left open, which measurement would teach the scalars most. A product
-size measured with a noise of 2 to 5\pct{} is worth as much as doubling the campaign or more, and it is the only added output
+size measured with a noise of 2 to 5\pct{} is worth as much as doubling the surveys or more, and it is the only added output
 that reaches the classification and breakage scalars, which throughput and power leave near their priors. More surveys at the
-same speed cannot narrow the capacity base below the floor of~\eqref{eq:floor}, which the ten surveys already approach
-(\ceilShare\pct{} of the possible narrowing), and varying the speed by ten percent around the engine's capacity optimum adds
+same speed over the same setting range cannot narrow the capacity base below the floor of~\eqref{eq:floor}, which the ten surveys
+already approach (\ceilShare\pct{} of the possible reduction of the standard-deviation ratio), and varying the speed by ten percent around the engine's capacity optimum adds
 nothing, because the capacity is flat there. A design that moved the capacity base would need a factor that changes the
 capacity outside the span of the discrepancy regressors by an amount comparable to the noise, which the speed does not do on
-this engine; the study did not evaluate other factors. For prediction rather than identification, the cheapest improvement is
-the noise itself: every gain of the method is measured against $\sigma^2$, so a better estimate of the throughput than the feed
-rate of a survey, or of the power than the one estimated from the motor current, raises both the curvature and the plane gain in
-proportion.
+this engine; the study did not evaluate other factors. For prediction rather than identification, the noise decides how visible the physics is: the
+curvature gain $C$ does not depend on $\sigma$, so a better estimate of the throughput than the feed rate of a survey, or of the
+power than the one estimated from the motor current, raises the curvature gain relative to the error that remains, while the
+plane gain, bounded by $3\sigma^2/n$, shrinks with the noise.
 
 \subsection{Negative results}
 
-Three hypotheses failed in part. The speed clause of H5 failed for the reason just given. H4 failed for the orthogonal prior,
-which changes the risk more than any other component except the discrepancy itself. And the engine with half the exponents of
-the plant's capacity law, a curvature of the right sign, lost to least squares on the wide window: the sign of a curvature does
-not decide the gain, its projection on the plant's curvature over the prediction range does. Each of these is a statement about
+Four hypotheses failed, three of them in part. The speed clause of H5 failed for the reason just given. H4 failed for the
+orthogonal prior, which changes the risk more than any other component except the discrepancy itself. H2 failed for the engine
+with half the exponents of the plant's capacity law: a curvature of the right sign, it lost to least squares on the wide window
+and under extrapolation, because the sign of a curvature does not decide the gain, its projection on the plant's curvature over
+the prediction range does. H3 failed on the wide window and with learned scalars, where the plane term and the learning of the
+scalars move the crossing away from $n^\star$. Each of these is a statement about
 this engine and these plants; each follows from a result of Section~\ref{sec:theory} that holds generally. The study also
 confirms the negative result of~\cite{cb002} rather than overturning it: on a virtual plant built from the fit to the ten
 surveys, with the scalars handed to it and the noise known, the method still ties the line at ten surveys. No change of prior,
