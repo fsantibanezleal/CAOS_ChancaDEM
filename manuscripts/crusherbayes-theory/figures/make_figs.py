@@ -496,6 +496,8 @@ def sampler_outputs(sbc: dict, ver: dict) -> None:
     macro("sbcQuantities", len(pv))
     macro("sbcBandLo", lo)
     macro("sbcBandHi", hi)
+    macro("sbcOutsideBand", sum(1 for nm in names for h in sbc["ranks"][nm]["histogram"] if not lo <= h <= hi))
+    macro("sbcAllBins", len(names) * B)
     macro("sbcWallHours", fmt(sbc["wall_seconds_mean"] / 3600, 2))
     macro("sbcTauMax", fmt(sbc["tau_max_max"], 0))
     macro("sbcTauMedian", fmt(sbc["tau_max_median"], 0))
