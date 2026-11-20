@@ -173,7 +173,7 @@ versions were read at the package registries on 2026-10-26 (the sizing record li
 
 ## Resources
 
-What each stage needs on the development workstation (Windows 11, Python 3.12.15, Node 24.14.1; measured 2026-11-20 with `tools/audit/measure_stages.py` of CAOS_MANAGE on `git archive` copies of the release bake commit `958de37` and of the commit after it, `78ee928`, which changes only tests and contract fixtures (two runs, each on a fresh copy, on a workstation that ran other jobs at the same time, which lengthens the times), each committed as one snapshot so the tests that read the repository through git run: the wall time, the peak memory of the whole process tree polled every 20 ms, and the bytes left). The commands and the raw output are in [`measured-resources.md`](measured-resources.md). No stage needs a GPU or a network after the install.
+What each stage needs on the development workstation (Windows 11, Python 3.12.15, Node 24.14.1; measured 2026-11-20 with `tools/audit/measure_stages.py` of CAOS_MANAGE on `git archive` copies of the release bake commit `958de37` and of the commit after it, `78ee928`, which changes only tests, contract fixtures and the changelog (two runs, each on a fresh copy, on a workstation that ran other jobs at the same time, which lengthens the times), each committed as one snapshot so the tests that read the repository through git run: the wall time, the peak memory of the whole process tree polled every 20 ms, and the bytes left). The commands and the raw output are in [`measured-resources.md`](measured-resources.md). No stage needs a GPU or a network after the install.
 
 | stage | memory | disk | time | where it runs |
 |---|---|---|---|---|

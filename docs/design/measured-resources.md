@@ -7,15 +7,15 @@ git run), so the working tree was never touched. Each stage ran under `tools/aud
 the peak memory of the command's whole process tree (polled every 20 ms) and the bytes of content under named folders. Two runs,
 each on its own fresh copy: the first, on the release bake commit `958de379c4e1b9cb6f6b15890694131f0cad2fd9`, ran the training, then
 the bake (which trains nothing and reads the trained models), then the HP500 step alone; the second, on the commit after it,
-`78ee92802a69a292ba6c327593f8187a03d04c72`, which changes only tests and contract fixtures, ran the web install, build and unit tests
+`78ee92802a69a292ba6c327593f8187a03d04c72`, which changes only tests, contract fixtures and the changelog, ran the web install, build and unit tests
 and the Python suite. A first attempt at the second group, on the release bake commit, failed on the measuring environment and on the
 release head: a `CAOS_DATA_ROOT` set in the measuring shell redirected the site's data copy (the build stopped), and three tests
 failed on the new notebook and the contract fixtures, fixed in the commit the second run measured; its records are not used.
 
-The workstation ran other sessions' jobs (test suites, an experiment) during both runs, about 15 percent of the processor when the
-first started. That lengthens the wall times more than it changes the memory peaks: the pipeline code and its dependencies are the
+The workstation ran other sessions' jobs (test suites, an experiment) during both runs. That lengthens the wall times more than it changes the memory peaks: the pipeline code and its dependencies are the
 ones measured for 0.13.000 on 2026-11-15 (no change in `data-pipeline/` or the requirements between `v0.13.000` and `958de37`), when
-the bake took 39.1 min, the HP500 step 36.0 min, the training 41.8 s and the suite 13.9 min, with peaks within 6 percent of these.
+the bake took 39.1 min, the HP500 step 36.0 min, the training 41.8 s and the suite 13.9 min, with peaks within 6 percent of these (the suite has since gained seven tests and the
+checks of notebook 08-04, which add time of their own).
 
 ## The stages
 
@@ -58,5 +58,5 @@ TypeScript engine, held to the Python engine by the shared reference.
 17,223,081: the 33 bytes between them are the commit and time stamps of `build.json`), of which 13,479,978 bytes are the ONNX
 Runtime WebAssembly binary, served by the site rather than a CDN so its version is the npm package's. The five largest JavaScript
 chunks: `chamber3d-fd1zuzq4.js` 586 KB; `math-vendor-BZ_bdw18.js` 259 KB; `react-vendor-CNP3Vp4U.js` 219 KB; `index-BnYhul9X.js`
-214 KB; `Methodology-CEFJNGhK.js` 135 KB. The committed artifacts under `data/derived/` hold 308,364 bytes in 66 files. The report's site figure is measured on that clean copy
+214 KB; `Methodology-CEFJNGhK.js` 135 KB. The committed artifacts under `data/derived/` hold 308,364 bytes in 67 files. The report's site figure is measured on that clean copy
 (`measure_resources.py --dist`), because a checkout whose `frontend/public` holds untracked files copies them into its own `dist`.
