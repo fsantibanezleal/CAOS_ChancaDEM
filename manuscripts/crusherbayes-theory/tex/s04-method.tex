@@ -23,7 +23,9 @@ engine, $\boldsymbol\theta$ are its eight fitted scalars, and the discrepancy re
 standardized with the mean and the population standard deviation of the training surveys. The engine is a Whiten
 classification and breakage model~\cite{whiten,napier} of an HP500 secondary cone crusher with the calibration of Rocha et
 al.~\cite{rocha}: the capacity $Q=Q_{\mathrm{ref}}(c+17)/38$ at the machine's fixed speed and throw, the Bond draw $P_d=W Q$
-with the specific energy $W=10\,W_i(P_{80}^{-1/2}-F_{80}^{-1/2})$ in kWh/t~\cite{bond}, and the current-based power
+with the specific energy $W=10\,W_i(P_{80}^{-1/2}-F_{80}^{-1/2})$ in kWh/t~\cite{bond}, where $F_{80}$ is the 80\pct{}
+passing size of the feed the engine reconstructs from the survey's $f_{80}$ (a Rosin-Rammler law read on the engine's sieve
+grid, so $84.86$~mm for the 88~mm of survey~1), and the current-based power
 $P=\zeta P_d+P_n$. The eight scalars are the capacity base $Q_{\mathrm{ref}}$, the work index $W_i$, the power slope $\zeta$,
 the no-load power $P_n$, two multipliers $s_{K_1},s_{K_2}$ of the classification sizes, the classification exponent $K_3$ and a
 shift $\Delta t_{10}$ of the breakage index. Their priors are truncated normals on the natural logarithm of the positive
@@ -61,8 +63,10 @@ The mean~\eqref{eq:cbmean} is the engine corrected by a ridge regression of its 
 posterior covariance of the discrepancy coefficients is $\sigma_t^2(\mathbf G+\lambda_t\mathbf I)^{-1}$, which
 gives~\eqref{eq:cbvar}. Proposition~3 of~\cite{cb002} rewrites~\eqref{eq:cbmean} as a ridge regression of the survey on
 $\mathbf Z$ toward the engine's best plane, plus the engine's departure from that plane at $\mathbf x_h$; Section~\ref{sec:theory}
-computes its risk. The full method averages~\eqref{eq:cbmean} and~\eqref{eq:cbvar} over the posterior of
-$(\boldsymbol\theta,\sigma_t)$; the closed form fixes them. Two fixings are used. The oracle fixing sets the scalars to the
+computes its risk. The full method mixes the Gaussian predictives of~\eqref{eq:cbmean} and~\eqref{eq:cbvar} over the
+posterior of $(\boldsymbol\theta,\sigma_t)$: its mean is the average of~\eqref{eq:cbmean}, and its band is a quantile of the
+mixture, whose variance adds the spread of~\eqref{eq:cbmean} over the posterior to the average of~\eqref{eq:cbvar}. The closed
+form fixes the scalars and the noise. Two fixings are used. The oracle fixing sets the scalars to the
 truth of the virtual plant, or to the scalars that bring the engine closest to the plant in the $L_2$ sense of Tuo and
 Wu~\cite{tuowu} when the plant is not an engine, and the noise to the plant's; it is the best the calibrated predictor can do
 when the scalars are perfectly learned. The nominal fixing sets the scalars to their shipped values, the engine as it leaves
@@ -91,9 +95,12 @@ s_t^2(\mathbf x_h)=\sigma_t^2+\mathbf w_h^{\top}\mathbf P_t^{-1}\mathbf w_h .
 The two outputs share $\mathbf u$; each output is fitted separately in~\eqref{eq:linpred}, which keeps the comparison per
 output and leaves the information that one output carries about the other's scalars to the full sampler and to the design
 study, where the joint form~\eqref{eq:eig} is used. The linearization point is the prior centre, the shipped engine, so the
-learned scalars start where the full method starts. This is a Laplace approximation of the posterior of~\cite{cb002} at
-the prior centre, exact when the engine is linear in its scalars; the earlier paper checked a version of it against the
-sampler on the ten surveys and found the contraction of thirteen of fourteen parameters reproduced.
+learned scalars start where the full method starts. It is a first-order expansion of the engine at the prior centre, not of
+the posterior at its mode; with the noise scales fixed, the truncation of the priors dropped and each output fitted alone,
+\eqref{eq:linpred} is the exact posterior predictive of that per-output linear model, and it differs from the released
+posterior on all three counts even for an engine linear in its scalars. The earlier paper checked a linearization at the
+posterior mean against the sampler on the ten surveys and found the contraction of thirteen of fourteen parameters
+reproduced~\cite{cb002}.
 
 \subsection{Three discrepancy priors}\label{sec:method-priors}
 
