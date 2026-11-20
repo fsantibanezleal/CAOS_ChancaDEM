@@ -262,7 +262,8 @@ python scripts/check_readme_areas.py       # the README by areas
 - `scripts/run_notebooks.py --check` is a local release gate: run it before every release. It never runs in CI (ADR-0074). It
   executes each notebook in a copy and fails on an error and on committed bytes that differ from the fresh result ("stale": an
   output edited by hand, or a notebook changed without a new run). Figures are compared as bytes, so run the gate on the
-  platform and with the pins that wrote the committed outputs.
+  platform and with the pins that wrote the committed outputs. The copy holds `models/` and `manuscripts/` when the repository
+  has them (NB-091, NB-092), so a notebook that loads a released model or imports a manuscript's analysis code runs there too.
 - The notebook environment `.venv-notebooks` is never committed; on a device with a venvs root it is a junction to it.
 
 ## 6. The README by areas
