@@ -95,12 +95,16 @@ def fig_theory_check(cells: dict) -> None:
             ax.loglog(th, sim, MARKERS[k], ms=3, mfc="none", color=GRAYS[k], label=SHORT[p])
         lo, hi = ax.get_xlim()
         ax.plot([lo, hi], [lo, hi], "-", lw=0.6, color="0.5")
-        ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
-        ax.yaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
+        ticks = [1e3, 2e3, 3e3, 5e3, 1e4, 2e4, 3e4, 5e4, 7e4, 1e5]
+        for axis in (ax.xaxis, ax.yaxis):
+            axis.set_major_locator(matplotlib.ticker.FixedLocator(ticks))
+            axis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:,.0f}"))
+            axis.set_minor_formatter(matplotlib.ticker.NullFormatter())
         ax.set_xlabel(f"theoretical mean squared error {unit}")
         ax.set_ylabel(f"simulated mean squared error {unit}")
         ax.set_title("throughput" if t == "tph" else "power")
     axes[0].legend(frameon=False)
+    fig.subplots_adjust(wspace=0.4)
     save(fig, "fig-theory-check")
     z = np.abs(np.array(zs))
     macro("zMax", fmt(float(z.max()), 2))
@@ -235,6 +239,11 @@ def fig_ceiling(idf: dict) -> None:
     macro("ceilSweepMax", fmt(idf["sweep"]["fixed_speed"][str(ns[-1])]["q_ref_tph"], 3))
     macro("ceilSweepVaried", fmt(idf["sweep"]["varied_speed"][str(ns[-1])]["q_ref_tph"], 3))
     macro("ceilSweepN", ns[-1])
+    import csv
+    rows = list(csv.DictReader(open(ROOT / "data/examples/hp500-surveys.csv", encoding="utf-8")))
+    css = np.array([float(r["css_mm"]) for r in rows])
+    spread, level = css.std() ** 2, (css.mean() + 17) ** 2
+    macro("spreadShare", fmt(100 * spread / (spread + level), 1))
     macro("productRel", "$" + f"{ten['power_product_sensitivity_rel_diff']:.0e}".replace("e-", r"\times10^{-") + "}$")
     lin, flo = ten["linearized_ratio"]["q_ref_tph"], ten["floor_ratio_lnq_any_n_fixed_speed"]
     share = (1 - lin) / (1 - flo)

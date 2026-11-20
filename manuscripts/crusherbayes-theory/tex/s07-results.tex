@@ -195,7 +195,9 @@ ratio of posterior to prior standard deviation could not fall below \ceilTphOnly
 number of surveys at the fixed speed over the same setting range can pass is \ceilFloor: the ten surveys already give
 \ceilShare\pct{} of the reduction of the posterior-to-prior standard-deviation ratio that any number of surveys over the same
 setting range at this speed could give (\ceilShareMeas\pct{} with the sampler's ratio, \ceilSharePrec\pct{} of the gain in
-posterior precision). A wider range of settings raises the ceiling, since $\mathbf c$ grows with the spread of the settings. The power sensitivities to $\ln Q_{\mathrm{ref}}$, $\ln W_i$ and
+posterior precision). A design at larger settings raises the ceiling, since $\|\mathbf c\|^2$ grows with $(\bar c+17)^2+\varsigma_c^2$; on the ten
+surveys the spread of the settings contributes \spreadShare\pct{} of it, so widening the range about the same mean changes the
+ceiling, and the floor, little. The power sensitivities to $\ln Q_{\mathrm{ref}}$, $\ln W_i$ and
 $\ln\zeta$ agree to a relative \productRel, the structural product the floor rests on. Figure~\ref{fig:ceiling} shows the
 saturation: \ceilSweepMax{} at \ceilSweepN{} surveys at the fixed speed and \ceilSweepVaried{} with the speed varied over 324,
 360 and 396~rpm. Varying the speed does not break the ceiling, because the engine's capacity is flat at its optimum speed (the
