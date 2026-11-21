@@ -31,8 +31,8 @@ from .whiten import whiten_solve
 
 # --- Sastri (1994) constants, as printed -------------------------------------------------------------------------------
 G_M_S2 = 9.81                    # gravitational acceleration, equation 4 [m/s2]
-HIGH_SPEED_COEF = 450.0          # equation 4: a = 450 g / N^2 [dimensionless coefficient, N in rpm, a in m]
-CRITICAL_SPEED_COEF = 66.4       # equation 8 [rpm]
+HIGH_SPEED_COEF = 450.0          # equation 4: a = 450 g / N^2, half the square of 30 s rpm (the half stroke) [s2 rpm2]
+CRITICAL_SPEED_COEF = 66.4       # equation 8, the square root of 450 g [rpm m^0.5]
 MIN_PER_H = 60.0                 # equations 5 and 6: strokes per minute to strokes per hour [min/h]
 DEPTH_SMALL_GAPE_COEF = 3.25     # equation 12: D = 3.25 G^1.15, G and D in metres [m^(-0.15)]
 DEPTH_SMALL_GAPE_EXP = 1.15      # equation 12 [dimensionless]
@@ -167,9 +167,11 @@ class LabJaw:
     material_k3: float    # Sastri's material factor [-]: 1.0 harder materials, 0.6 softer ones
 
 
-# Barrios, Jimenez-Herrera and Tavares (2020), Minerals 10(8):717, https://doi.org/10.3390/min10080717: Table 2 (feed
+# Barrios, Jimenez-Herrera, Fuentes-Torres and Tavares (2020), Minerals 10(8):717, https://doi.org/10.3390/min10080717:
+# Table 2 (feed
 # opening 140 x 90 mm, throw 10 mm; the closed discharge and the stroke frequency are the operating point, not the
-# machine) and Table 3 (ore density 2700 kg/m3). The ore is a granodiorite, a harder material (K3 = 1.0).
+# machine) and Table 3 (ore density 2700 kg/m3). The ore is a gold-bearing intrusive rock, predominantly granodiorite
+# (section 2.1 of the paper): a harder material in Sastri's two classes (K3 = 1.0).
 OTSUKA_BARRIOS_2020 = LabJaw(gape_mm=90.0, width_mm=140.0, throw_mm=10.0, density_t_m3=2.70, material_k3=1.0)
 
 
