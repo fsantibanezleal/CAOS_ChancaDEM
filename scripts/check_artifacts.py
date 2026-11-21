@@ -4,7 +4,9 @@ For every case of the index: the manifest exists; the trace it names exists, is 
 match the manifest; the lane equals the lane the gate's budgets give (the measured engine time is judged in the bake and
 not stored, so the check recomputes what the stored numbers decide); every metric lies inside the case's expected range;
 and the units gate (CONTRACT 3, core/unit_gate.py) holds over the shipped metrics, so a cell baked before the gate existed
-cannot survive. The files the index lists must exist. A declared-partial bake builds: an absent manifest, trace or file is
+cannot survive. When the particle-simulation document (dem-run) is there, the laboratory units gate holds over its simulated and
+predicted values and each replay file has the byte count and the sha256 digest the document names (DM-009, DM-010); the document
+is optional (readiness says missing without it). The files the index lists must exist. A declared-partial bake builds: an absent manifest, trace or file is
 a warning only when readiness.json lists it in the ``missing`` of a ``partial`` row.
 
 Standard library plus the pipeline's pure-Python modules (no numpy): runs in CI without installing the product.
@@ -80,6 +82,33 @@ def lane_errors(case_id: str, m: dict, size: int) -> list[str]:
     return errs
 
 
+def dem_errors(derived: Path) -> list[str]:
+    """The particle-simulation document under ``derived``: the laboratory units gate over its values and every replay file against the
+    byte count and the sha256 digest the document names. No document, no error (the readiness row says missing)."""
+    path = derived / "dem" / "jaw-lab.json"
+    if not path.is_file():
+        return []
+    try:
+        doc = json.loads(path.read_text(encoding="utf-8"))
+    except ValueError as exc:
+        return [f"{path}: not JSON ({exc})"]
+    errs = [f"units gate (laboratory jaw): {p['detail']}" for p in unit_gate.blocking(unit_gate.check_lab_units(doc))]
+    for point in doc.get("points", []):
+        replay = (point.get("simulation") or {}).get("replay")
+        if not replay:
+            continue
+        frames = derived / replay["file"]
+        if not frames.is_file():
+            errs.append(f"missing replay file {frames}")
+            continue
+        raw = frames.read_bytes()
+        if len(raw) != replay.get("bytes"):
+            errs.append(f"byte drift {frames}: document={replay.get('bytes')} disk={len(raw)}")
+        if hashlib.sha256(raw).hexdigest() != replay.get("sha256"):
+            errs.append(f"sha256 drift {frames}: the document does not describe the file")
+    return errs
+
+
 def main() -> int:
     idx_path = MANIFESTS / "index.json"
     if not idx_path.exists():
@@ -148,6 +177,7 @@ def main() -> int:
         predictions = {k: v for k, v in metrics.items() if k in unit_gate.PHYSICAL_DOMAIN}
         for p in unit_gate.blocking(unit_gate.check_units(cid, predictions, unit_gate.ranges_for(machine, rows if real else None))):
             errs.append(f"units gate: {p['detail']}")
+    errs.extend(dem_errors(DERIVED))
     if errs:
         print("CONTRACT 2/3 DRIFT:")
         for e in errs:

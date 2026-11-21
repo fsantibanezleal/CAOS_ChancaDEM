@@ -11,8 +11,10 @@ committed scientific evidence.
     python data-pipeline/run.py comparison           # only the paired comparison, from the committed LOO and CrusherBayes documents
     python data-pipeline/run.py models               # train then evaluate the two model slots (heavy lane, needs torch)
     python data-pipeline/run.py fixtures             # regenerate the provider tree docs/contracts/fixtures/data
+    python data-pipeline/run.py dem --runs <folder>  # the particle simulation of the laboratory jaw (hours; needs crushdem): the dem-run document
 
-``all`` never trains: the models are read as they stand in ``<derived>/models``.
+``all`` never trains and never simulates: the models are read as they stand in ``<derived>/models`` and the particle-simulation
+document as the ``dem`` command left it.
 """
 from __future__ import annotations
 
@@ -57,6 +59,8 @@ CRUSHERBAYES_FILE = "hp500/crusherbayes.json"
 COMPARISON_FILE = "hp500/comparison.json"
 HP500_FILES = ("hp500/backbone.json", "hp500/loo.json", CRUSHERBAYES_FILE, COMPARISON_FILE)
 METRICS_FILE = "model-metrics.json"
+DEM_FILE = "dem/jaw-lab.json"   # the particle-simulation document (catalog row dem-run); its replay files sit beside it as *.frames.bin
+DEM_SEED = 1                    # the seed of every particle run (pipeline.dem.points.SEED): the dem command takes it unless --seed says otherwise
 
 
 @dataclass(frozen=True)
@@ -192,9 +196,11 @@ def bake_hp500(paths: PipelinePaths, surveys: list[survey_contract.Survey], seed
 
 
 def index_files(root: Path) -> list[str]:
-    """The further files of ``root`` the index lists: the model contracts and graphs, the two HP500 documents and the model
-    metrics, each when present."""
-    return [rel for rel in (*MODEL_FILES, *HP500_FILES, METRICS_FILE) if (root / rel).is_file()]
+    """The further files of ``root`` the index lists: the model contracts and graphs, the HP500 documents, the model metrics and the
+    particle-simulation document with its replay files, each when present."""
+    files = [rel for rel in (*MODEL_FILES, *HP500_FILES, METRICS_FILE, DEM_FILE) if (root / rel).is_file()]
+    replays = sorted(f.relative_to(root).as_posix() for f in (root / "dem").glob("*.frames.bin")) if (root / "dem").is_dir() else []
+    return files + replays
 
 
 def write_readiness(paths: PipelinePaths) -> dict:
@@ -251,7 +257,7 @@ def write_fixtures(out: str | Path | None = None) -> Path:
     dormant API. The two source tables are two-row samples."""
     data = Path(out).resolve() if out else FIXTURES
     derived, examples = data / "derived", data / "examples"
-    for sub in (derived / "manifests", derived / "hp500", derived / "FX01", derived / "FX02", examples):
+    for sub in (derived / "manifests", derived / "hp500", derived / "dem", derived / "FX01", derived / "FX02", examples):
         shutil.rmtree(sub, ignore_errors=True)
     for stale in (derived / "readiness.json", derived / METRICS_FILE):
         stale.unlink(missing_ok=True)
@@ -293,6 +299,8 @@ def write_fixtures(out: str | Path | None = None) -> Path:
     if surveys and released_cb.is_file():       # the sampler is not re-run for the provider tree: it copies the released document
         shutil.copyfile(released_cb, derived / CRUSHERBAYES_FILE)
         write_comparison(paths)
+    if (RELEASED / DEM_FILE).is_file():         # the released particle-simulation document and its replay files are copied, never simulated
+        shutil.copytree(RELEASED / "dem", derived / "dem")
     write_json(paths.manifests / "index.json", build_index(entries, "FX01", index_files(derived)))
     write_json(derived / "readiness.json", readiness.provider_document(repo_root=REPO))
     examples.mkdir(parents=True, exist_ok=True)
@@ -310,14 +318,18 @@ def write_fixtures(out: str | Path | None = None) -> Path:
 def main() -> None:
     ap = argparse.ArgumentParser(prog="pipeline.pipeline")
     ap.add_argument("command", nargs="?", default="all",
-                    help="a case id, or all, readiness, hp500, comparison, models, fixtures (default all)")
-    ap.add_argument("--seed", type=int, default=SEED)
+                    help="a case id, or all, readiness, hp500, comparison, models, dem, fixtures (default all)")
+    ap.add_argument("--seed", type=int, default=None, help=f"the seed (default {SEED}; {DEM_SEED} for dem)")
+    ap.add_argument("--runs", type=Path, help="dem: the folder of the raw particle-run records (default <CAOS_DATA_ROOT>/chancadem/dem-runs)")
+    ap.add_argument("--jobs", type=int, default=3, help="dem: the runs that go in parallel, one process each (default 3)")
     ap.add_argument("--output", type=Path,
                     help="sandbox output root (for fixtures: the fixtures data folder); omit only for an intentional canonical run")
     ap.add_argument("--params", type=Path, help="the params table (default data/examples/params.csv)")
     ap.add_argument("--surveys", type=Path, help="the survey table (default data/examples/hp500-surveys.csv)")
     args = ap.parse_args()
     paths = PipelinePaths.from_output(args.output, params_csv=args.params, surveys_csv=args.surveys)
+    if args.seed is None:
+        args.seed = DEM_SEED if args.command == "dem" else SEED
     if args.command == "readiness":
         doc = write_readiness(paths)
         print(f"readiness -> {paths.root / 'readiness.json'} " + ", ".join(f"{e['id']}={e['state']}" for e in doc["contracts"]))
@@ -342,6 +354,15 @@ def main() -> None:
     elif args.command == "models":
         train_models(paths)
         print(f"models -> {paths.models}; metrics -> {paths.root / METRICS_FILE}")
+    elif args.command == "dem":
+        from .stages import dem as dem_stage
+
+        try:
+            dem_stage.run(paths, seed=args.seed, runs_dir=dem_stage.runs_folder(args.runs), jobs=args.jobs)
+        except dem_stage.PackageMissing as exc:
+            raise SystemExit(f"dem: {exc}") from exc
+        refresh_files(paths)
+        write_readiness(paths)
     elif args.command == "fixtures":
         print(f"fixtures -> {write_fixtures(args.output)}")
     else:
