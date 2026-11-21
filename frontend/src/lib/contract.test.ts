@@ -232,6 +232,7 @@ for (const [label, root, run, why] of roots) {
         expect(bytes.length, `${p.id} bytes`).toBe(r.bytes);
         expect(createHash('sha256').update(bytes).digest('hex'), `${p.id} sha256`).toBe(r.sha256);
         expect(r.bytes).toBe(8 * r.spheres);
+        expect(index.files).toContain(r.file);
         expect([r.t_s.length, r.stroke.length, r.plate_bottom_x_mm.length, r.plate_bottom_z_mm.length, r.count.length]).toEqual(Array(5).fill(r.frames));
       }
     });

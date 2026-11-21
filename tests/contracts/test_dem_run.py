@@ -233,7 +233,11 @@ def test_the_population_balance_block_shows_the_values_reviewed_before_the_bake(
 
 def test_the_replay_file_is_the_one_the_document_names(doc_root):
     root, doc = doc_root
-    assert replay_errors(root, doc) == []        # the index lists the document only: the case-index schema admits .json and .onnx paths
+    index_path = root / "manifests" / "index.json"
+    listed = cs.load_json(index_path)["files"] if index_path.is_file() else None
+    assert replay_errors(root, doc, listed) == []        # every replay file is listed by the index (case-index 1.1.0)
+    if listed is not None:
+        assert [f for f in listed if f.endswith(".bin")] == [p["simulation"]["replay"]["file"] for p in doc["points"] if p["simulation"]["replay"]]
     for p in doc["points"]:
         r = p["simulation"]["replay"]
         if r is None:

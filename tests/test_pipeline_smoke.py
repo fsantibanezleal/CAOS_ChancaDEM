@@ -92,7 +92,10 @@ def test_the_index_lists_the_models_and_the_metrics_when_present(tmp_path: Path)
     out = with_models(tmp_path / "derived")
     pipeline.run_all(output_root=out)
     idx = json.loads((out / "manifests" / "index.json").read_text(encoding="utf-8"))
-    dem = [pipeline.DEM_FILE] if (DERIVED / "dem").is_dir() else []      # with_models copies the particle-simulation document too, when released
+    dem = []                                       # with_models copies the particle-simulation document and its replay files too, when released
+    if (DERIVED / "dem").is_dir():
+        doc = json.loads((DERIVED / "dem" / "jaw-lab.json").read_text(encoding="utf-8"))
+        dem = [pipeline.DEM_FILE, *[p["simulation"]["replay"]["file"] for p in doc["points"] if p["simulation"]["replay"]]]
     assert idx["files"] == [*pipeline.MODEL_FILES, *pipeline.HP500_FILES, "model-metrics.json", *dem]
 
 
