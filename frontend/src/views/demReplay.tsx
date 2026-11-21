@@ -5,7 +5,7 @@
 // below the discharge) through the shell's callout stage, as the chamber's section does; the controls sit in the stage's control row, never over
 // the subject. The animation loop is the shell's (usePausedViz): it stops when the view unmounts, when the tab is hidden and, here, it never
 // starts under reduced motion.
-import { PlotCard, prefersReducedMotion, useLinkedCursor, usePausedViz, useShellLang, useThemeTokens, type BiText, type ShellToken } from '@fasl-work/caos-app-shell';
+import { PlotCard, prefersReducedMotion, resolveToken, useLinkedCursor, usePausedViz, useShellLang, useThemeTokens, type BiText } from '@fasl-work/caos-app-shell';
 import { useEffect, useRef, type ReactNode } from 'react';
 import type { Loaded } from '../api/artifacts';
 import type { DemRun } from '../lib/contract.types';
@@ -17,8 +17,12 @@ import {
   DEFAULT_SPEED,
   frameLabelText,
   frameSpheres,
+  frameBelow,
   insetBounds,
+  plateAt,
   playbackAllowed,
+  SIZE_TOKENS,
+  stageBounds,
   sizeClass,
   sizeClassLabels,
   SIZE_CLASSES,
@@ -36,39 +40,14 @@ import { useNum, useT } from './shared';
 // The colours: shell tokens resolved for the theme, a sequential scale of the size classes between three of them.
 // ---------------------------------------------------------------------------------------------------------------------------------
 
-type Rgb = [number, number, number];
-
-/** A `#rrggbb` or `#rgb` colour as its channels; null for anything else (a canvas never draws a colour it cannot read). */
-export function parseHex(hex: string): Rgb | null {
-  const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim());
-  if (!m) return null;
-  const h = m[1].length === 3 ? [...m[1]].map((c) => c + c).join('') : m[1];
-  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
-}
-
-const toHex = (c: Rgb) => `#${c.map((v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('')}`;
-
-/** The `classes` colours of a sequential scale through the given stops, evenly spaced; a stop that is not a hex colour falls back to `fallback`. */
-export function sequentialScale(stops: readonly string[], classes: number, fallback = '#888888'): string[] {
-  const rgb = stops.map((s) => parseHex(s) ?? parseHex(fallback)!);
-  return Array.from({ length: classes }, (_, c) => {
-    const t = classes === 1 ? 0 : c / (classes - 1);
-    const at = t * (rgb.length - 1);
-    const i = Math.min(rgb.length - 2, Math.floor(at));
-    const f = at - i;
-    return toHex(rgb[i].map((v, k) => v + (rgb[i + 1][k] - v) * f) as Rgb);
-  });
-}
-
-/** The tokens of the sequential scale: finest spheres first, feed-sized spheres last. The same tokens in both themes, so a class keeps its place on the scale. */
-export const SCALE_TOKENS: ShellToken[] = ['--color-step-1', '--color-step-3', '--color-step-5'];
-
-export function paletteOf(tokens: Record<ShellToken, string>): string[] {
-  return sequentialScale(
-    SCALE_TOKENS.map((t) => tokens[t]),
-    SIZE_CLASSES,
-    tokens['--color-fg-subtle'],
-  );
+/**
+ * The colours of the size classes: the data tokens `--cdem-size-0` to `--cdem-size-5` of the view (workbench.css), a sequential scale ordered
+ * in lightness in both themes, finest class first. They are neither a story-step accent nor a state colour. A canvas cannot read a CSS
+ * variable, so they are resolved for the theme in force and re-resolved when the theme changes.
+ */
+export function usePalette(): string[] {
+  useThemeTokens();
+  return SIZE_TOKENS.map((t) => resolveToken(t, '#888888'));
 }
 
 // ---------------------------------------------------------------------------------------------------------------------------------
@@ -88,6 +67,18 @@ export interface DrawArgs {
   feedLowMm: number;
   palette: string[];
   colors: { fg: string; subtle: string; faint: string; accent: string; surface: string; border: string };
+}
+
+const topCache = new WeakMap<DemFrames, number>();
+
+/** The top of the highest sphere over the whole replay [mm]: the section is drawn up to it and the hopper above is left out. */
+export function sphereTop(f: DemFrames): number {
+  const hit = topCache.get(f);
+  if (hit !== undefined) return hit;
+  let top = -Infinity;
+  for (let i = 0; i < f.data.length; i += 4) top = Math.max(top, f.data[i + 2] + f.data[i + 3]);
+  topCache.set(f, top);
+  return top;
 }
 
 /** The extremes of the plate's bottom edge over the replay: its closed (lowest x) and open (highest x) positions. */
@@ -219,7 +210,7 @@ const ReplayCanvas = ({ width, height, run, point, frames, frame, tf, plate, ins
   const lang = useShellLang();
   const r = point.simulation.replay!;
   const ext = plateExtremes(r);
-  const palette = paletteOf(tokens);
+  const palette = usePalette();
   useEffect(() => {
     const canvas = ref.current;
     if (!canvas) return;
@@ -281,7 +272,7 @@ function sectionLabels(tf: StageTransform, point: DemPoint, run: DemRun, plate: 
   const openPx = tf.px(ext.open.x, ext.open.z);
   const swingMid = tf.px((g.swing_pivot_mm[0] + plate.x) / 2, (g.swing_pivot_mm[1] + plate.z) / 2);
   const fixedMid = tf.px(g.fixed_plate_x_mm, g.fixed_plate_z_mm[1] * 0.62);
-  const hop = tf.px(g.swing_pivot_mm[0], tf.bounds.zMax - 40);
+  const hop = tf.px(g.swing_pivot_mm[0], tf.bounds.zMax - 25);
   // each label with the point of the drawing it names
   const items: { text: string; x: number; y: number; anchor: 'start' | 'end'; fill: string; weight?: number; to: { x: number; y: number } }[] = [
     { text: names.fixed, x: left, y: fixedMid.y, anchor: 'end', fill: TOKEN.subtle, to: { x: fixedMid.x - 4, y: fixedMid.y } },
@@ -323,8 +314,8 @@ function sectionLabels(tf: StageTransform, point: DemPoint, run: DemRun, plate: 
 }
 
 export const NAMES: Record<'en' | 'es', Names> = {
-  en: { fixed: 'fixed plate', swing: 'swing plate', hopper: 'hopper (cropped)', discharge: 'discharge level', css: 'closed', oss: 'open' },
-  es: { fixed: 'placa fija', swing: 'placa móvil', hopper: 'tolva (recortada)', discharge: 'nivel de descarga', css: 'cerrada', oss: 'abierta' },
+  en: { fixed: 'fixed plate', swing: 'swing plate', hopper: 'hopper above', discharge: 'discharge level', css: 'closed', oss: 'open' },
+  es: { fixed: 'placa fija', swing: 'placa móvil', hopper: 'tolva arriba', discharge: 'nivel de descarga', css: 'cerrada', oss: 'abierta' },
 };
 
 /** The width the size panel takes beside the section [px]: a third of the stage, at least 150 and at most 230. */
@@ -342,13 +333,14 @@ export function SizePanel({ width, point, counts, max, palette }: { width: numbe
   const height = SIZE_PANEL_H;
   const num = useNum();
   const t = useT();
-  const labels = sizeClassLabels(point.feed_mm[0], num);
+  const lang = useShellLang();
+  const labels = sizeClassLabels(point.feed_mm[0], num, lang);
   const top = 20;
   const row = 18;
   const labelW = 64;
   const barX = 18 + labelW;
   const barMax = Math.max(8, width - barX - 40);
-  const font = { fontFamily: 'var(--font-sans)', fontSize: 11 } as const;
+  const font = { fontFamily: 'var(--font-sans)', fontSize: 11, fontVariantNumeric: 'tabular-nums' } as const;
   return (
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={t('Spheres of the frame by diameter', 'Esferas del cuadro por diámetro')} data-legend="size" data-chart="dem-size-panel" style={{ position: 'absolute', right: 0, top: 0 }}>
       <text x={4} y={13} fill={TOKEN.subtle} fontWeight={600} {...{ style: font }}>
@@ -385,7 +377,7 @@ export const insetHead = (width: number): number => (width < 170 ? 54 : INSET_HE
  * below it, with its own scale bar in millimetres, the closed and open settings marked and a frame and a title that say it is a magnification.
  * It sits below the size panel, where it covers neither the section nor a callout.
  */
-export function Inset({ width, height, run, point, frames, frame, plate, mainScale }: { width: number; height: number; run: DemRun; point: DemPoint; frames: DemFrames | null; frame: number; plate: { x: number; z: number }; mainScale: number }) {
+export function Inset({ width, height, left, run, point, frames, frame, plate, mainScale }: { width: number; height: number; left?: number; run: DemRun; point: DemPoint; frames: DemFrames | null; frame: number; plate: { x: number; z: number }; mainScale: number }) {
   const num = useNum();
   const t = useT();
   const r = point.simulation.replay!;
@@ -400,9 +392,9 @@ export function Inset({ width, height, run, point, frames, frame, plate, mainSca
   const x0 = tf.px(g.fixed_plate_x_mm, 0).x;
   const yDim = tf.px(0, g.discharge_z_mm - 6).y;
   const bar = 10 * tf.scale;
-  const font = { fontFamily: 'var(--font-sans)', fontSize: 11 } as const;
+  const font = { fontFamily: 'var(--font-sans)', fontSize: 11, fontVariantNumeric: 'tabular-nums' } as const;
   return (
-    <div className="cdem-inset" style={{ position: 'absolute', right: 0, bottom: 0, width, height }} data-inset="" data-magnification={mag.toFixed(2)}>
+    <div className="cdem-inset" style={left === undefined ? { position: 'absolute', right: 0, bottom: 0, width, height } : { position: 'absolute', left, top: 0, width, height }} data-inset="" data-magnification={mag.toFixed(2)}>
       <div className="cdem-inset-head" style={{ height: head }}>
         <strong>{t(`Magnified ${num(mag, { digits: 2 })} times: the crushing zone`, `Ampliada ${num(mag, { digits: 2 })} veces: la zona de chancado`)}</strong>
         <span>
@@ -437,34 +429,45 @@ export function Inset({ width, height, run, point, frames, frame, plate, mainSca
   );
 }
 
-/** The stage: the section with its callouts in the shell's header placement, the size panel and the magnified crushing zone beside it; the frame's spheres come from `frames`. */
-export function ReplayStage({ run, point, frames, frame, callouts }: { run: DemRun; point: DemPoint; frames: DemFrames | null; frame: number; callouts: CalloutSpec[] }) {
+/** The columns of the stage's drawing at a width [px]: the section, the magnified crushing zone and the size panel side by side on a desktop; on a phone the zone stacks under the panel. */
+export function stageColumns(width: number, height: number): { wide: boolean; panel: number; main: number; inset: number } {
+  const panel = panelWidth(width);
+  if (width < 640) return { wide: false, panel, main: Math.max(80, width - panel), inset: panel };
+  const drawH = height - insetHead(panel + 200);
+  const inset = Math.round(Math.max(200, Math.min(width - panel - 260, (drawH * 70) / 92 + 8)));
+  return { wide: true, panel, main: width - panel - inset - 12, inset };
+}
+
+/** The stage: the section cropped to where the spheres are, the magnified crushing zone and the size panel, with the callouts in the shell's header placement; the spheres come from `frames` at the stored frame below the cursor and the plate is interpolated at the cursor. */
+export function ReplayStage({ run, point, frames, cursor, callouts }: { run: DemRun; point: DemPoint; frames: DemFrames | null; cursor: number; callouts: CalloutSpec[] }) {
   const lang = useShellLang();
   const num = useNum();
-  const tokens = useThemeTokens();
+  const palette = usePalette();
   const r = point.simulation.replay!;
-  const k = Math.max(0, Math.min(r.frames - 1, frame));
-  const plate = { x: r.plate_bottom_x_mm[k], z: r.plate_bottom_z_mm[k] };
-  const counts = frames ? classCounts(frames, k, point.feed_mm[0]) : new Array<number>(SIZE_CLASSES).fill(0);
+  const frame = frameBelow(r, cursor);
+  const plate = plateAt(r, cursor);
+  const counts = frames ? classCounts(frames, frame, point.feed_mm[0]) : new Array<number>(SIZE_CLASSES).fill(0);
+  const bounds = stageBounds(r.geometry, frames ? sphereTop(frames) : undefined);
   return (
     <CalloutStage
       label={{ en: 'Particle replay in the jaw section', es: 'Repetición de partículas en la sección de la mandíbula' }}
       callouts={callouts}
       draw={({ width, height }) => {
-        const pw = panelWidth(width);
-        const cw = Math.max(80, width - pw);
-        const tf = stageTransform(r.geometry, cw, height);
-        const { node, subjects } = sectionLabels(tf, point, run, plate, cw, height, NAMES[lang], num);
-        // the inset takes what the size panel leaves on the right; a stage too short for it leaves it out
-        const insetH = height - SIZE_PANEL_H - 8;
-        const showInset = insetH - insetHead(pw) >= INSET_MIN_PX;
+        const col = stageColumns(width, height);
+        const tf = stageTransform(r.geometry, col.main, height, 8, bounds);
+        const { node, subjects } = sectionLabels(tf, point, run, plate, col.main, height, NAMES[lang], num);
+        const head = insetHead(col.inset);
+        // wide: the zone takes the height beside the section; narrow: it stacks under the size panel; a stage too short for it leaves it out
+        const insetH = col.wide ? height : height - SIZE_PANEL_H - 8;
+        const showInset = insetH - head >= INSET_MIN_PX;
+        const insetLeft = col.wide ? col.main + 6 : undefined;
         return {
           node: (
-            <div style={{ position: 'relative', width, height }} data-dem-stage="" data-frame={frame} data-inset-shown={showInset ? 'true' : 'false'}>
-              <ReplayCanvas width={cw} height={height} run={run} point={point} frames={frames} frame={frame} tf={tf} plate={plate} />
+            <div style={{ position: 'relative', width, height }} data-dem-stage="" data-frame={frame} data-layout={col.wide ? 'wide' : 'narrow'} data-inset-shown={showInset ? 'true' : 'false'}>
+              <ReplayCanvas width={col.main} height={height} run={run} point={point} frames={frames} frame={frame} tf={tf} plate={plate} />
               {node}
-              <SizePanel width={pw} point={point} counts={counts} max={Math.max(1, ...r.count)} palette={paletteOf(tokens)} />
-              {showInset && <Inset width={pw} height={insetH} run={run} point={point} frames={frames} frame={frame} plate={plate} mainScale={tf.scale} />}
+              <SizePanel width={col.panel} point={point} counts={counts} max={Math.max(1, ...r.count)} palette={palette} />
+              {showInset && <Inset width={col.inset} height={insetH} left={insetLeft} run={run} point={point} frames={frames} frame={frame} plate={plate} mainScale={tf.scale} />}
             </div>
           ),
           subjects,
@@ -570,7 +573,7 @@ export function ReplayControls({ point, frame, reducedMotion, speed, onSpeed }: 
       </label>
       {!allowed && (
         <span className="cdem-note" data-reduced-motion-note="">
-          {t('Reduced motion: the replay does not play by itself; scrub to a stroke.', 'Movimiento reducido: la repetición no se reproduce sola; mueva el cursor a un golpe.')}
+          {t('Reduced motion is on: the replay does not play; step with the slider or the arrow keys.', 'Movimiento reducido activo: la repetición no se reproduce; avance con el control deslizante o las flechas.')}
         </span>
       )}
     </div>

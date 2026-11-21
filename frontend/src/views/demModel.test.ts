@@ -23,8 +23,18 @@ import {
   finalAttempt as finalAttemptOf,
   frameAt,
   frameLabel,
-  localizeNumbers,
   frameLabelText,
+  feedClassText,
+  frameBelow,
+  labMachine,
+  overlapClause,
+  packageMessage,
+  plateAt,
+  powerRange,
+  QUANTITY_DECIMALS,
+  storedRateText,
+  SIZE_TOKENS,
+  verdictSummary,
   hasPaperSimulation,
   insetBounds,
   paperSentence,
@@ -475,7 +485,7 @@ describe('DM-014: the verdict table, the product distribution and the per-stroke
         expect(r.basis === null).toBe(c.verdict !== 'not compared');
       }
     }
-    expect(verdictCounts(run)).toEqual({ met: 3, notMet: 13, notCompared: 11, total: 27 });
+    expect(verdictCounts(run)).toEqual({ met: 3, unresolved: 1, notMet: 13, notCompared: 11, total: 27 });
     const d = copy();
     d.points[0].verdicts.simulation_vs_measured.throughput.verdict = 'met';
     expect(verdictCounts(d).met).toBe(4);
@@ -502,15 +512,6 @@ describe('DM-014: the verdict table, the product distribution and the per-stroke
     expect(windowMeanPower(coarse.simulation)! / 1000).toBeCloseTo(coarse.simulation.net_power_kw!, 4);
     expect(windowMeanPower(fine.simulation)! / 1000).toBeCloseTo(fine.simulation.net_power_kw!, 4);
     expect(windowMeanPower(middle.simulation)).toBeNull();
-  });
-});
-
-describe('a source text on a Spanish page writes its numbers with a decimal comma', () => {
-  it('rewrites the digits of the document’s English sources, and leaves a DOI, a path and every word alone', () => {
-    expect(localizeNumbers('measured 0.34 kW (section 3.2, p. 10)', 'es')).toBe('measured 0,34 kW (section 3,2, p. 10)');
-    expect(localizeNumbers('DOI 10.3390/min10080717 and 7.5 mm, 31.5/26.5', 'es')).toBe('DOI 10.3390/min10080717 and 7,5 mm, 31,5/26,5');
-    expect(localizeNumbers('measured 0.34 kW', 'en')).toBe('measured 0.34 kW');
-    for (const p of run.points) expect(localizeNumbers(p.measured.throughput_kg_h.source, 'es')).not.toMatch(/\d\.\d/);
   });
 });
 
@@ -546,7 +547,7 @@ describe('the paper’s own simulation: context for the reader, used in no verdi
     expect(s.en).toContain('5.88 percent below the measured value');
     expect(s.en).toContain('throughput 890 kg/h');
     expect(s.en).toContain('percent above the measured value');
-    expect(s.es).toContain('por debajo de el valor medido');
+    expect(s.es).toContain('por debajo del valor medido');
     expect(`${s.en} ${s.es}`).not.toMatch(AGREEMENT);
     expect(VERDICT_SCOPE.en).toContain('not about the published study');
     expect(VERDICT_SCOPE.es).toContain('no al estudio publicado');
@@ -628,5 +629,100 @@ describe('the inset of the crushing zone', () => {
     expect(t.scale).toBeGreaterThan(2.5 * main.scale);
     const gap = t.px(run.settings.oss_mm, 0).x - t.px(0, 0).x;
     expect(gap / t.scale).toBeCloseTo(run.settings.oss_mm, 6);
+  });
+});
+
+describe('M2 and m13: the reader\u2019s language in the model', () => {
+  it('a feed class goes through the number formatter on both numbers, and a class with no decimal keeps none', () => {
+    const es = (v: number, o?: { decimals?: number; digits?: number }) => (o?.decimals !== undefined ? v.toFixed(o.decimals) : String(v)).replace('.', ',');
+    expect(feedClassText('31.5/26.5', es)).toBe('31,5/26,5');
+    expect(feedClassText('63/52', es)).toBe('63/52');
+    expect(feedClassText('16/13.2', plain)).toBe('16/13.2');
+    expect(nearerSentence(run, 1, 'throughput', es).es).toContain('Con 31,5/26,5 mm');
+    expect(nearerSentence(run, 1, 'throughput', es).es).not.toContain('31.5');
+    expect(takeaway(middle, run.bands, es).es).toContain('31,5/26,5');
+  });
+  it('the size classes say "a" and not "to" in Spanish', () => {
+    expect(sizeClassLabels(52, plain, 'es')[1]).toBe('5.2 a 10');
+    expect(sizeClassLabels(52, plain, 'en')[1]).toBe('5.2 to 10');
+  });
+  it('the machine is named in the reader\u2019s language with its article', () => {
+    expect(labMachine(run.machine.name, 'en')).toBe('the laboratory jaw crusher of Barrios et al. 2020');
+    expect(labMachine(run.machine.name, 'es')).toBe('la chancadora de mandíbula de laboratorio de Barrios et al. 2020');
+    expect(labMachine('Another machine', 'es')).toBe('Another machine');
+  });
+  it('the package\u2019s message is kept apart, verbatim, and the status text no longer embeds it', () => {
+    expect(packageMessage(middle.simulation)).toBe(middle.simulation.error);
+    expect(packageMessage(coarse.simulation)).toBeNull();
+    expect(runStatusText(middle.simulation, plain).en).not.toContain('0.547');
+    expect(runStatusText(middle.simulation, plain).es).not.toContain('0.547');
+  });
+});
+
+describe('the verdict summary, the stored rate, the plate between frames, the overlap clause', () => {
+  it('the summary counts the verdicts not resolved by the package\u2019s rule', () => {
+    expect(verdictSummary(run).en).toContain('3 met (1 of them not resolved by the package\u2019s rule), 13 not met and 11 not compared');
+    expect(verdictSummary(run).es).toContain('3 se cumplen (1 de ellos sin resolver por la regla del paquete), 13 no se cumplen y 11 no se comparan');
+    const d = copy();
+    for (const p of d.points) for (const pair of ['simulation_vs_measured', 'population_balance_vs_measured', 'population_balance_vs_simulation'] as const) for (const q of ['throughput', 'net_power', 'reduction_ratio'] as const) if (p.verdicts[pair][q].verdict === 'met') p.verdicts[pair][q].resolved = true;
+    expect(verdictSummary(d as DemRun).en).not.toContain('not resolved');
+  });
+  it('the plate is interpolated between the two stored frames around the cursor; the spheres stay at the stored frame below it', () => {
+    for (const p of run.points) {
+      const r = p.simulation.replay!;
+      for (const i of [0, 1, Math.floor(r.frames / 2), r.frames - 1]) {
+        const c = cursorOfFrame(r, i);
+        expect(plateAt(r, c).x).toBeCloseTo(r.plate_bottom_x_mm[i], 9);
+        expect(plateAt(r, c).z).toBeCloseTo(r.plate_bottom_z_mm[i], 9);
+        expect(frameBelow(r, c)).toBe(i);
+      }
+      const i = 3;
+      const mid = (cursorOfFrame(r, i) + cursorOfFrame(r, i + 1)) / 2;
+      expect(plateAt(r, mid).x).toBeCloseTo((r.plate_bottom_x_mm[i] + r.plate_bottom_x_mm[i + 1]) / 2, 9);
+      expect(frameBelow(r, mid)).toBe(i);
+      expect(frameBelow(r, mid + 0.4 / r.frames_per_stroke)).toBe(i);
+    }
+    const r = coarse.simulation.replay!;
+    expect(plateAt(r, null).x).toBe(r.plate_bottom_x_mm[r.frames - 1]);
+    expect(plateAt(r, -5).x).toBe(r.plate_bottom_x_mm[0]);
+    expect(plateAt(r, 1e6).x).toBe(r.plate_bottom_x_mm[r.frames - 1]);
+  });
+  it('the plate moves continuously at the screen\u2019s rate even at 4 frames per stroke: the step between two screen frames is a small share of the stored step', () => {
+    const r = fine.simulation.replay!;
+    expect(r.frames_per_stroke).toBe(4);
+    const c0 = cursorOfFrame(r, 5);
+    const steps = 15;
+    const xs = Array.from({ length: steps + 1 }, (_, k) => plateAt(r, c0 + (k / steps) * (1 / r.frames_per_stroke)).x);
+    const stored = Math.abs(r.plate_bottom_x_mm[6] - r.plate_bottom_x_mm[5]);
+    for (let k = 1; k < xs.length; k++) expect(Math.abs(xs[k] - xs[k - 1])).toBeLessThanOrEqual(stored / steps + 1e-9);
+  });
+  it('says how many frames per stroke each point stores, from the document (12, 12 and 4)', () => {
+    expect(run.points.map((p) => storedRateText(p.simulation.replay!).en.match(/stores (\d+) frames/)![1])).toEqual(['12', '12', '4']);
+    expect(storedRateText(fine.simulation.replay!).es).toContain('guarda 4 cuadros por golpe');
+  });
+  it('m7: the status says how many strokes of the window ran above the reference overlap, which the power verdicts rest on', () => {
+    expect(overlapClause(coarse.simulation, run.settings, plain)!.en).toBe('18 of the 29 strokes of the steady window ran above the reference overlap of 0.3.');
+    expect(overlapClause(fine.simulation, run.settings, plain)!.es).toContain('17 de los 25 golpes');
+    expect(overlapClause(middle.simulation, run.settings, plain)).toBeNull();
+  });
+  it('m3: the power axis reaches below zero when a stroke\u2019s power is negative; m4: one precision per quantity', () => {
+    const [lo, hi] = powerRange(coarse.simulation);
+    expect(Math.min(...coarse.simulation.series.plate_power_w)).toBeLessThan(0);
+    expect(lo).toBeLessThan(Math.min(...coarse.simulation.series.plate_power_w) + 1e-9);
+    expect(hi).toBeGreaterThan(Math.max(...coarse.simulation.series.plate_power_w));
+    expect(powerRange(middle.simulation)[0]).toBeLessThanOrEqual(0);
+    expect(QUANTITY_DECIMALS).toEqual({ throughput: 1, net_power: 3, reduction_ratio: 2 });
+  });
+  it('m1 and m2: the callout\u2019s measured value has its unit; a missing value has no unit', () => {
+    expect(calloutSource(pointCallouts(coarse)[0], plain).en).toContain('Measured 799 kg/h');
+    expect(calloutSource(pointCallouts(coarse)[1], plain).en).toContain('Measured 0.34 kW');
+    expect(calloutSource(pointCallouts(coarse)[2], plain).en).toContain('Measured 7.12 mm');
+  });
+  it('m12: the takeaway of a complete run names the reduction ratio and its verdict', () => {
+    expect(takeaway(coarse, run.bands, plain).en).toContain('its reduction ratio F80/P80 is 4.17 against 8.6 (not met for the 15 percent band)');
+    expect(takeaway(coarse, run.bands, plain).es).toContain('su razón de reducción F80/P80 es 4.17 frente a 8.6 (no cumple para la banda de 15 por ciento)');
+  });
+  it('M3: the size scale of the spheres is a set of six data tokens of the view', () => {
+    expect(SIZE_TOKENS).toEqual(['--cdem-size-0', '--cdem-size-1', '--cdem-size-2', '--cdem-size-3', '--cdem-size-4', '--cdem-size-5']);
   });
 });

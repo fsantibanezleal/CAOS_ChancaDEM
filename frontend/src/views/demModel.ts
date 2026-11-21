@@ -60,6 +60,9 @@ export const pairTitle = (pair: PairKey): Text => {
 
 export const pick = (t: Text, lang: Lang): string => t[lang];
 
+/** A feed class ("31.5/26.5") with each of its numbers through the number formatter of the page ("31,5/26,5" in Spanish); a class with no decimal keeps none. */
+export const feedClassText = (feedClass: string, num: Num): string => feedClass.replace(/\d+(?:\.\d+)?/g, (n) => num(Number(n), { decimals: n.includes('.') ? n.split('.')[1].length : 0 }));
+
 /** The text of `fmt` for a plain number: the formatter of the interface language, or this fallback in a test. */
 export const plain: Num = (v, o) => (o?.decimals !== undefined ? v.toFixed(o.decimals) : Number(v.toPrecision(o?.digits ?? 3)).toString());
 
@@ -129,6 +132,32 @@ export function frameAt(r: DemReplay, cursor: number | null): number {
   return Math.max(0, Math.min(r.frames - 1, i));
 }
 
+/** The stored frame at or below a cursor position: the spheres carry no identity across frames, so they are shown as stored, never interpolated. */
+export function frameBelow(r: DemReplay, cursor: number | null): number {
+  if (cursor === null || !Number.isFinite(cursor)) return r.frames - 1;
+  const f = (cursor - (r.first_stroke - 1)) * r.frames_per_stroke - 1;
+  return Math.max(0, Math.min(r.frames - 1, Math.floor(f + 1e-9)));
+}
+
+/** The swing plate's bottom edge at a cursor position [mm]: the two stored positions around the cursor, interpolated, so the plate moves continuously. */
+export function plateAt(r: DemReplay, cursor: number | null): { x: number; z: number } {
+  const last = r.frames - 1;
+  if (cursor === null || !Number.isFinite(cursor)) return { x: r.plate_bottom_x_mm[last], z: r.plate_bottom_z_mm[last] };
+  const f = Math.max(0, Math.min(last, (cursor - (r.first_stroke - 1)) * r.frames_per_stroke - 1));
+  const i0 = Math.floor(f);
+  const i1 = Math.min(last, i0 + 1);
+  const t = f - i0;
+  return { x: r.plate_bottom_x_mm[i0] + (r.plate_bottom_x_mm[i1] - r.plate_bottom_x_mm[i0]) * t, z: r.plate_bottom_z_mm[i0] + (r.plate_bottom_z_mm[i1] - r.plate_bottom_z_mm[i0]) * t };
+}
+
+/** The sentence under the controls: how many frames per stroke this point stores, and what is interpolated. */
+export function storedRateText(r: DemReplay): Text {
+  return {
+    en: `This replay stores ${r.frames_per_stroke} frames per stroke; the spheres are shown as stored and the plate is interpolated between them.`,
+    es: `Esta repetición guarda ${r.frames_per_stroke} cuadros por golpe; las esferas se muestran como se guardaron y la placa se interpola entre ellos.`,
+  };
+}
+
 /** The cursor a point opens at: the first stroke of the steady window for a run that has one, else the last stroke the replay holds. */
 export function openingCursor(point: DemPoint): number | null {
   const r = point.simulation.replay;
@@ -178,13 +207,16 @@ export interface StageTransform {
 
 /** The part of the section the stage draws [mm]: from the sphere-free ground below the discharge level to just above the plates; the hopper
  * rises above and is cropped there, and the stage says so. */
-export function stageBounds(g: DemReplay['geometry']): StageTransform['bounds'] {
+export function stageBounds(g: DemReplay['geometry'], sphereTopMm?: number): StageTransform['bounds'] {
   const gape = g.swing_pivot_mm[0] - g.fixed_plate_x_mm;
+  const plateTop = g.fixed_plate_z_mm[1] + 12;
+  // cropped to the highest sphere of the replay (with a margin), never above the plates: the hopper above is left out
+  const zMax = sphereTopMm !== undefined && Number.isFinite(sphereTopMm) ? Math.min(plateTop, sphereTopMm + 25) : plateTop;
   return {
     xMin: g.fixed_plate_x_mm - 0.55 * gape,
     xMax: g.swing_pivot_mm[0] + 0.3 * gape,
     zMin: g.discharge_z_mm - 20,
-    zMax: g.fixed_plate_z_mm[1] + 12,
+    zMax,
   };
 }
 
@@ -211,6 +243,9 @@ export function stageTransform(g: DemReplay['geometry'], width: number, height: 
 // The colour class of a sphere: its diameter against the lower size of the feed class. Class 5 is feed-sized or larger.
 // ---------------------------------------------------------------------------------------------------------------------------------
 
+/** The data tokens of the size scale (defined for both themes in workbench.css): finest class first, ordered in lightness. */
+export const SIZE_TOKENS = Array.from({ length: 6 }, (_, c) => `--cdem-size-${c}`);
+
 /** The upper edges of the size classes as fractions of the feed class's lower size. */
 export const SIZE_CLASS_EDGES = [0.1, 0.2, 0.35, 0.6, 1.0] as const;
 export const SIZE_CLASSES = SIZE_CLASS_EDGES.length + 1;
@@ -231,12 +266,12 @@ export function classCounts(f: DemFrames, i: number, feedLowMm: number): number[
 }
 
 /** The legend of the classes: each class's range in millimetres for a feed class. */
-export function sizeClassLabels(feedLowMm: number, num: Num): string[] {
+export function sizeClassLabels(feedLowMm: number, num: Num, lang: Lang = 'en'): string[] {
   const edges = SIZE_CLASS_EDGES.map((e) => e * feedLowMm);
   return Array.from({ length: SIZE_CLASSES }, (_, c) => {
     if (c === 0) return `< ${num(edges[0], { digits: 2 })}`;
     if (c === SIZE_CLASSES - 1) return `>= ${num(edges[c - 1], { digits: 2 })}`;
-    return `${num(edges[c - 1], { digits: 2 })} to ${num(edges[c], { digits: 2 })}`;
+    return `${num(edges[c - 1], { digits: 2 })} ${lang === 'es' ? 'a' : 'to'} ${num(edges[c], { digits: 2 })}`;
   });
 }
 
@@ -294,10 +329,23 @@ export function runStatusText(s: DemSimulation, num: Num): Text {
   }
   const at = a.stopped_during_stroke;
   const where = at === null ? { en: `after ${s.strokes} strokes`, es: `tras ${s.strokes} golpes` } : { en: `during stroke ${at}`, es: `durante el golpe ${at}` };
-  const why = s.error ? ` (${s.error})` : '';
   return {
-    en: `The run did not complete: it ${STATUS_WORD[s.status].en} ${where.en}${why}, with ${a.held_spheres} spheres held and ${num(a.mass_passed_kg, { digits: 3 })} of ${num(s.mass_fed_kg, { digits: 3 })} kg passed. The replay runs to the stop.`,
-    es: `La corrida no se completó: ${STATUS_WORD[s.status].es} ${where.es}${s.error ? ` (${s.error})` : ''}, con ${a.held_spheres} esferas retenidas y ${num(a.mass_passed_kg, { digits: 3 })} de ${num(s.mass_fed_kg, { digits: 3 })} kg pasados. La repetición llega hasta la detención.`,
+    en: `The run did not complete: it ${STATUS_WORD[s.status].en} ${where.en}, with ${a.held_spheres} spheres held and ${num(a.mass_passed_kg, { digits: 3 })} of ${num(s.mass_fed_kg, { digits: 3 })} kg passed. The replay runs to the stop.`,
+    es: `La corrida no se completó: ${STATUS_WORD[s.status].es} ${where.es}, con ${a.held_spheres} esferas retenidas y ${num(a.mass_passed_kg, { digits: 3 })} de ${num(s.mass_fed_kg, { digits: 3 })} kg pasados. La repetición llega hasta la detención.`,
+  };
+}
+
+/** The package's own message of a run that did not complete (English, verbatim), or null. */
+export const packageMessage = (s: DemSimulation): string | null => (isComplete(s) ? null : s.error);
+
+/** How many strokes of the steady window ran above the reference overlap, which both "met" power verdicts rest on; null for a run without a window. */
+export function overlapClause(s: DemSimulation, settings: DemRun['settings'], num: Num): Text | null {
+  if (!s.window || s.window_strokes_above_overlap_reference === null) return null;
+  const a = s.window_strokes_above_overlap_reference;
+  const ref = num(settings.overlap_reference, { digits: 2 });
+  return {
+    en: `${a} of the ${s.window.strokes} strokes of the steady window ran above the reference overlap of ${ref}.`,
+    es: `${a} de los ${s.window.strokes} golpes de la ventana estacionaria superaron el traslape de referencia de ${ref}.`,
   };
 }
 
@@ -422,7 +470,7 @@ export function calloutSource(c: CalloutModel, num: Num): Text {
     return { en: `P80 of the ${passed} of ${fed} kg passed before the stop; no verdict rests on this run`, es: `P80 de los ${passed} de ${fed} kg pasados antes de la detención; ningún veredicto se apoya en esta corrida` };
   }
   if (c.measured === null) return { en: `${mark} ${word.en}`, es: `${mark} ${word.es}` };
-  const m = num(c.measured, c.id === 'net_power' ? { digits: 3 } : { digits: 3 });
+  const m = `${num(c.measured, { digits: 3 })} ${c.unit.en}`;
   if (c.value === null) return { en: `Measured ${m}; ${mark} ${word.en}: ${basisShort(c.cell.basis).en}`, es: `Medido ${m}; ${mark} ${word.es}: ${basisShort(c.cell.basis).es}` };
   const e = c.relativeError === null ? '' : `${signedPct(c.relativeError, num)}% `;
   if (c.state === 'not-compared') return { en: `Measured ${m}; ${e}${mark} ${word.en}: ${basisShort(c.cell.basis).en}`, es: `Medido ${m}; ${e}${mark} ${word.es}: ${basisShort(c.cell.basis).es}` };
@@ -451,7 +499,7 @@ export function basisShort(basis: DemBasis | null): Text {
 // ---------------------------------------------------------------------------------------------------------------------------------
 
 export function takeaway(p: DemPoint, bands: DemRun['bands'], num: Num): Text {
-  const feed = `${p.feed_class}`;
+  const feed = feedClassText(p.feed_class, num);
   const s = p.simulation;
   if (!isComplete(s) || s.window === null) {
     const a = finalAttempt(s);
@@ -465,10 +513,12 @@ export function takeaway(p: DemPoint, bands: DemRun['bands'], num: Num): Text {
   const w = cellOf(p, 'simulation_vs_measured', 'net_power');
   const tw = verdictWord(verdictState(t));
   const ww = verdictWord(verdictState(w));
+  const rr = cellOf(p, 'simulation_vs_measured', 'reduction_ratio');
+  const rw = verdictWord(verdictState(rr));
   const e = (c: DemVerdictCell) => (c.relative_error === null ? '' : `${signedPct(c.relative_error, num)} percent`);
   return {
-    en: `At the ${feed} mm feed the particle simulation passes ${num(s.throughput_kg_h ?? 0, { digits: 3 })} kg/h against ${num(t.second ?? 0, { digits: 3 })} measured (${e(t)}, ${tw.en.toLowerCase()} for the ${num(bands.throughput_relative * 100, { digits: 2 })} percent band) and draws ${num(s.net_power_kw ?? 0, { digits: 3 })} kW against ${num(w.second ?? 0, { digits: 3 })} kW (${e(w)}, ${ww.en.toLowerCase()} for the ${num(bands.net_power_relative * 100, { digits: 2 })} percent band).`,
-    es: `Con la alimentación de ${feed} mm la simulación de partículas pasa ${num(s.throughput_kg_h ?? 0, { digits: 3 })} kg/h frente a ${num(t.second ?? 0, { digits: 3 })} medidos (${e(t).replace('percent', 'por ciento')}, ${tw.es.toLowerCase()} para la banda de ${num(bands.throughput_relative * 100, { digits: 2 })} por ciento) y consume ${num(s.net_power_kw ?? 0, { digits: 3 })} kW frente a ${num(w.second ?? 0, { digits: 3 })} kW (${e(w).replace('percent', 'por ciento')}, ${ww.es.toLowerCase()} para la banda de ${num(bands.net_power_relative * 100, { digits: 2 })} por ciento).`,
+    en: `At the ${feed} mm feed the particle simulation passes ${num(s.throughput_kg_h ?? 0, { digits: 3 })} kg/h against ${num(t.second ?? 0, { digits: 3 })} measured (${e(t)}, ${tw.en.toLowerCase()} for the ${num(bands.throughput_relative * 100, { digits: 2 })} percent band) and draws ${num(s.net_power_kw ?? 0, { digits: 3 })} kW against ${num(w.second ?? 0, { digits: 3 })} kW (${e(w)}, ${ww.en.toLowerCase()} for the ${num(bands.net_power_relative * 100, { digits: 2 })} percent band); its reduction ratio F80/P80 is ${num(rr.first ?? 0, { digits: 3 })} against ${num(rr.second ?? 0, { digits: 3 })} (${rw.en.toLowerCase()} for the ${num(bands.reduction_ratio_relative * 100, { digits: 2 })} percent band).`,
+    es: `Con la alimentación de ${feed} mm la simulación de partículas pasa ${num(s.throughput_kg_h ?? 0, { digits: 3 })} kg/h frente a ${num(t.second ?? 0, { digits: 3 })} medidos (${e(t).replace('percent', 'por ciento')}, ${tw.es.toLowerCase()} para la banda de ${num(bands.throughput_relative * 100, { digits: 2 })} por ciento) y consume ${num(s.net_power_kw ?? 0, { digits: 3 })} kW frente a ${num(w.second ?? 0, { digits: 3 })} kW (${e(w).replace('percent', 'por ciento')}, ${ww.es.toLowerCase()} para la banda de ${num(bands.net_power_relative * 100, { digits: 2 })} por ciento); su razón de reducción F80/P80 es ${num(rr.first ?? 0, { digits: 3 })} frente a ${num(rr.second ?? 0, { digits: 3 })} (${rw.es.toLowerCase()} para la banda de ${num(bands.reduction_ratio_relative * 100, { digits: 2 })} por ciento).`,
   };
 }
 
@@ -615,7 +665,7 @@ export function nearerSentence(run: DemRun, pointIndex: number, q: ChartQuantity
   const p = run.points[pointIndex];
   const vq = CHART_VERDICT_QUANTITY[q];
   const n = nearer(p, q);
-  const feed = p.feed_class;
+  const feed = feedClassText(p.feed_class, num);
   const band = cellOf(p, 'simulation_vs_measured', vq).band;
   const bandName: Text =
     q === 'p80'
@@ -694,13 +744,13 @@ export const hasPaperSimulation = (run: DemRun): boolean => run.points.some((p) 
 export function paperSentence(p: DemPoint, num: Num): Text | null {
   const ps = paperSimulation(p);
   if (!ps) return null;
-  const dir = (f: number, en: boolean) => (f < 0 ? (en ? 'below' : 'por debajo de') : f > 0 ? (en ? 'above' : 'por encima de') : en ? 'at' : 'igual a');
+  const dir = (f: number, en: boolean) => (f < 0 ? (en ? 'below' : 'por debajo del') : f > 0 ? (en ? 'above' : 'por encima del') : en ? 'at' : 'igual al');
   const part = (label: Text, unit: string, v: PaperValue | null): Text | null =>
     v === null || v.relativeToMeasured === null
       ? null
       : {
           en: `${label.en} ${num(v.value, { digits: 3 })} ${unit} (${v.source}), ${num(Math.abs(v.relativeToMeasured) * 100, { digits: 3 })} percent ${dir(v.relativeToMeasured, true)} the measured value`,
-          es: `${label.es} ${num(v.value, { digits: 3 })} ${unit} (${v.source}), ${num(Math.abs(v.relativeToMeasured) * 100, { digits: 3 })} por ciento ${dir(v.relativeToMeasured, false)} el valor medido`,
+          es: `${label.es} ${num(v.value, { digits: 3 })} ${unit} (${v.source}), ${num(Math.abs(v.relativeToMeasured) * 100, { digits: 3 })} por ciento ${dir(v.relativeToMeasured, false)} valor medido`,
         };
   const parts = [part({ en: 'net power', es: 'potencia neta' }, 'kW', ps.netPower), part({ en: 'throughput', es: 'capacidad' }, 'kg/h', ps.throughput)].filter((x): x is Text => x !== null);
   if (!parts.length) return null;
@@ -787,18 +837,42 @@ export function verdictRows(p: DemPoint): VerdictRow[] {
 }
 
 /** How many of the document's verdicts are met, not met and not compared (the summary of the whole document). */
-export function verdictCounts(run: DemRun): { met: number; notMet: number; notCompared: number; total: number } {
+export function verdictCounts(run: DemRun): { met: number; unresolved: number; notMet: number; notCompared: number; total: number } {
   let met = 0;
+  let unresolved = 0;
   let notMet = 0;
   let notCompared = 0;
   for (const p of run.points) for (const pair of PAIRS) for (const q of QUANTITIES) {
     const v = p.verdicts[pair][q].verdict;
-    if (v === 'met') met++;
+    if (v === 'met') {
+      met++;
+      if (p.verdicts[pair][q].resolved === false) unresolved++;
+    }
     else if (v === 'not met') notMet++;
     else notCompared++;
   }
-  return { met, notMet, notCompared, total: met + notMet + notCompared };
+  return { met, unresolved, notMet, notCompared, total: met + notMet + notCompared };
 }
+
+/** The summary sentence of the verdicts of the whole document, from its counts. */
+export function verdictSummary(run: DemRun): Text {
+  const c = verdictCounts(run);
+  const un: Text = c.unresolved ? { en: ` (${c.unresolved} of them not resolved by the package\u2019s rule)`, es: ` (${c.unresolved} de ellos sin resolver por la regla del paquete)` } : { en: '', es: '' };
+  return {
+    en: `Of the ${c.total} verdicts of the document, ${c.met} met${un.en}, ${c.notMet} not met and ${c.notCompared} not compared. A verdict that is met is within the band; one that is not met or not compared is outside it or not judged.`,
+    es: `De los ${c.total} veredictos del documento, ${c.met} se cumplen${un.es}, ${c.notMet} no se cumplen y ${c.notCompared} no se comparan. Un veredicto que se cumple está dentro de la banda; uno que no se cumple o no se compara está fuera de ella o sin juzgar.`,
+  };
+}
+
+/** The laboratory machine named in the reader's language and with its article: "the laboratory jaw crusher of Barrios et al. 2020". */
+export function labMachine(name: string, lang: Lang): string {
+  const m = /^Laboratory jaw crusher of (.+)$/.exec(name);
+  if (!m) return name;
+  return lang === 'es' ? `la chancadora de mandíbula de laboratorio de ${m[1]}` : `the laboratory jaw crusher of ${m[1]}`;
+}
+
+/** The decimals each quantity of the verdict table is written with, so a column reads at one precision. */
+export const QUANTITY_DECIMALS: Record<Quantity, number> = { throughput: 1, net_power: 3, reduction_ratio: 2 };
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // The per-stroke series of a run.
@@ -819,6 +893,13 @@ export function windowMeanPower(s: DemSimulation): number | null {
   return n ? sum / n : null;
 }
 
+/** The range of the per-stroke power axis [W]: from zero, or from below the lowest stroke when a stroke's power is negative, to above the highest. */
+export function powerRange(s: DemSimulation): [number, number] {
+  const lo = Math.min(...s.series.plate_power_w);
+  const hi = Math.max(...s.series.plate_power_w);
+  return [lo < 0 ? lo * 1.15 : 0, hi * 1.12];
+}
+
 /** The stroke a chart click chooses: the stroke at index `i` of the per-stroke series, as a cursor position (the end of that stroke), clamped to the replay. */
 export function cursorOfStrokeIndex(s: DemSimulation, i: number): number | null {
   const r = s.replay;
@@ -833,17 +914,4 @@ export function passedAt(s: DemSimulation, cursor: number): number | null {
   const stroke = Math.max(1, Math.ceil(cursor - 1e-9));
   const i = s.series.stroke.indexOf(stroke);
   return i < 0 ? null : s.series.passed_kg[i];
-}
-
-/**
- * The document's own source texts are English and carry numbers written with a decimal point ("section 3.2", "0.34 kW"). On a Spanish page
- * every number is written with a decimal comma, so the digits of such a text are rewritten; a token that holds a slash and letters (a DOI, a path) is
- * left as it is, and so is every word.
- */
-export function localizeNumbers(text: string, lang: Lang): string {
-  if (lang !== 'es') return text;
-  return text
-    .split(' ')
-    .map((tok) => ((tok.includes('/') && /[A-Za-z]{2,}/.test(tok)) || /^https?:/i.test(tok) ? tok : tok.replace(/(?<![\d.])(\d+)\.(\d+)(?!\d|\.\d)/g, '$1,$2')))
-    .join(' ');
 }

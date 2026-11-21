@@ -437,10 +437,6 @@
   min-width: 0;
 }
 
-.cdem-dem-main > .caos-views-row {
-  flex: 1 1 auto;
-}
-
 .cdem-dem-rest {
   display: flex;
   flex-direction: column;
@@ -631,4 +627,165 @@
 .cdem-inset-head strong {
   color: var(--color-fg);
   font-weight: 600;
+}
+
+/* The view's data tokens (M3 of the visual review): the size scale of the spheres, finest class first, ordered in lightness in both themes. They are
+   neither a story-step accent nor a state colour, and the story keeps its own. */
+:root,
+[data-theme='dark'] {
+  --cdem-size-0: #3d5a99;
+  --cdem-size-1: #4f7aa8;
+  --cdem-size-2: #6c9aa0;
+  --cdem-size-3: #96b58c;
+  --cdem-size-4: #c6cf78;
+  --cdem-size-5: #fbe94a;
+}
+
+[data-theme='light'] {
+  --cdem-size-0: #fde66a;
+  --cdem-size-1: #cbbf6b;
+  --cdem-size-2: #98957a;
+  --cdem-size-3: #666a74;
+  --cdem-size-4: #35466e;
+  --cdem-size-5: #00224e;
+}
+
+/* Numbers of the view line up (m6): the counts change every frame while playing. */
+.cdem-dem {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The stage and the per-stroke series are revealed one after the other when the operating point changes (ADR-0082 rule 4). */
+.cdem-reveal {
+  transition: opacity 240ms ease;
+}
+
+.cdem-reveal[data-on='false'] {
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cdem-reveal {
+    transition: none;
+  }
+}
+
+.cdem-quote {
+  font-style: normal;
+  quotes: 'C' 'D';
+}
+
+/* The per-stroke charts side by side under the stage (a column on a phone). */
+.cdem-series-row {
+  display: flex;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.cdem-series-cell {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 300px;
+}
+
+.cdem-series-cell > .cdem-callout-host {
+  height: 100%;
+}
+
+/* The verdict table (views/dem.tsx VerdictTable): the summary outside the scroller, the basis a wrapped line under the verdict. */
+.cdem-vt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.cdem-vt-summary {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.cdem-vt .caos-table th,
+.cdem-vt .caos-table td {
+  vertical-align: top;
+}
+
+.cdem-vt-pair {
+  max-width: 13rem;
+  text-align: left;
+}
+
+.cdem-basis {
+  max-width: 20rem;
+  margin-top: 0.15rem;
+  font-size: var(--text-xs);
+  color: var(--color-fg-subtle);
+  white-space: normal;
+}
+
+@media (max-width: 899px) {
+  .cdem-series-row {
+    flex-direction: column;
+  }
+  .cdem-series-cell {
+    height: auto;
+    min-height: 16rem;
+  }
+  /* The table restacked: one block per quantity, each cell with its label, nothing scrolled sideways. */
+  .cdem-vt .cdem-tablewrap {
+    overflow-x: visible;
+  }
+  .cdem-vt table,
+  .cdem-vt tbody,
+  .cdem-vt tr,
+  .cdem-vt th,
+  .cdem-vt td {
+    display: block;
+  }
+  .cdem-vt thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .cdem-vt tr {
+    margin: 0 0 0.5rem;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+  }
+  .cdem-vt .cdem-vt-pair {
+    max-width: none;
+    margin-top: 0.4rem;
+    padding: 0.2rem 0;
+    border: 0;
+    font-weight: 700;
+  }
+  .cdem-vt td {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.15rem 0;
+    border: 0;
+    text-align: right;
+  }
+  .cdem-vt td::before {
+    content: attr(data-label);
+    flex: none;
+    color: var(--color-fg-subtle);
+    font-weight: 600;
+    text-align: left;
+  }
+  .cdem-vt .cdem-vt-verdict {
+    display: block;
+    text-align: left;
+  }
+  .cdem-vt .cdem-vt-verdict::before {
+    display: block;
+  }
+  .cdem-basis {
+    max-width: none;
+  }
 }
