@@ -3,9 +3,9 @@
 // and the two model slots take the readiness document and the index into account: nothing the build does not hold is asked for.
 import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { CaseIndex, Readiness, ReadinessEntry } from '../lib/contract.types';
+import type { CaseIndex, DemRun, Readiness, ReadinessEntry } from '../lib/contract.types';
 import { resetReadiness } from '../readiness/readiness';
-import { ArtifactError, ArtifactUnavailable, getJSON, loadAnomaly, loadHp500Loo, loadModelMetrics, loadSurrogate } from './artifacts';
+import { ArtifactError, ArtifactUnavailable, getJSON, loadAnomaly, loadDemFrames, loadDemRun, loadHp500Loo, loadModelMetrics, loadSurrogate } from './artifacts';
 
 // the product version, read from VERSION like the build does, never written here
 const VERSION = readFileSync(new URL('../../../VERSION', import.meta.url), 'utf8').trim();
@@ -115,5 +115,75 @@ describe('the model slots', () => {
     host({ 'readiness.json': readiness(row('surrogate-model', 'available')) });
     const slot = await loadSurrogate(index([]));
     expect(slot.answer).toBe('baseline');
+  });
+});
+
+// ---- the particle-simulation document and its frames files (catalog row dem-run) ----
+const provider = new URL('../../../docs/contracts/fixtures/data/derived/dem/', import.meta.url);
+const demDoc = JSON.parse(readFileSync(new URL('jaw-lab.json', provider), 'utf8')) as DemRun;
+const framesBytes = (file: string): ArrayBuffer => {
+  const b = readFileSync(new URL(file, provider));
+  return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer;
+};
+
+/** A host that answers JSON documents and binary files by relative path, counting what it was asked for. */
+function binaryHost(docs: Record<string, unknown>, bins: Record<string, { body: ArrayBuffer; type?: string; status?: number }>) {
+  const asked: string[] = [];
+  const fetch = vi.fn(async (url: string) => {
+    asked.push(url);
+    const bin = Object.keys(bins).find((k) => url.includes(`/data/${k}`));
+    if (bin) {
+      const b = bins[bin];
+      return { ok: (b.status ?? 200) < 400, status: b.status ?? 200, headers: new Headers({ 'content-type': b.type ?? 'application/octet-stream' }), arrayBuffer: async () => b.body };
+    }
+    const rel = Object.keys(docs).find((k) => url.includes(`/data/${k}`));
+    return { ok: !!rel, status: rel ? 200 : 404, headers: new Headers({ 'content-type': 'application/json' }), json: async () => docs[rel ?? ''] };
+  });
+  vi.stubGlobal('fetch', fetch);
+  vi.stubGlobal('__APP_VERSION__', 'test-version');
+  resetReadiness();
+  return asked;
+}
+
+describe('the particle-simulation document and its replay files', () => {
+  const files = ['dem/jaw-lab.json', ...demDoc.points.map((p) => p.simulation.replay!.file)];
+  const coarse = demDoc.points[0].simulation.replay!;
+  it('the document is read through the index when the readiness says partial: what the document holds is drawn', async () => {
+    binaryHost({ 'readiness.json': readiness(row('dem-run', 'partial', { en: '1 of 3 particle runs did not complete.', es: '1 de 3' })), 'dem/jaw-lab.json': demDoc }, {});
+    await expect(loadDemRun(index(files))).resolves.toMatchObject({ schema: 'chancadem.dem.run/v1', state: 'partial' });
+  });
+  it('adversarial: a document the readiness marks missing is not asked for and carries the row\'s reason', async () => {
+    const asked = binaryHost({ 'readiness.json': readiness(row('dem-run', 'missing', { en: 'the bake was not run', es: 'no se ejecutó la generación' })), 'dem/jaw-lab.json': demDoc }, {});
+    const e = await loadDemRun(index(files)).catch((x: unknown) => x);
+    expect(e).toBeInstanceOf(ArtifactUnavailable);
+    expect((e as ArtifactUnavailable).reason.es).toContain('no se ejecutó la generación');
+    expect(asked.some((u) => u.includes('jaw-lab.json'))).toBe(false);
+  });
+  it('a replay file is fetched under the release version and decoded to its frames, with the length of the document', async () => {
+    const asked = binaryHost({ 'readiness.json': readiness(row('dem-run', 'partial')) }, { [coarse.file]: { body: framesBytes(coarse.file.replace(/^dem\//, '')) } });
+    const f = await loadDemFrames(index(files), coarse);
+    expect(f.frames).toBe(coarse.frames);
+    expect(f.offsets[f.frames]).toBe(coarse.spheres);
+    expect(asked.find((u) => u.includes('.frames.bin'))).toMatch(/\/data\/dem\/jaw-lab-63-52\.frames\.bin\?v=test-version$/);
+  });
+  it('adversarial: a file of another length than the document names is refused with both lengths, and nothing is decoded', async () => {
+    const short = framesBytes(coarse.file.replace(/^dem\//, '')).slice(0, 1000);
+    binaryHost({ 'readiness.json': readiness(row('dem-run', 'partial')) }, { [coarse.file]: { body: short } });
+    const e = await loadDemFrames(index(files), coarse).catch((x: unknown) => x);
+    expect(e).toBeInstanceOf(ArtifactError);
+    expect(String(e)).toContain('1000');
+    expect(String(e)).toContain(String(coarse.bytes));
+  });
+  it('adversarial: an HTML answer (the host fallback for a missing file) and an error status are refused, naming the file', async () => {
+    binaryHost({ 'readiness.json': readiness(row('dem-run', 'partial')) }, { [coarse.file]: { body: new ArrayBuffer(coarse.bytes), type: 'text/html' } });
+    await expect(loadDemFrames(index(files), coarse)).rejects.toThrow(/jaw-lab-63-52\.frames\.bin: answered text\/html/);
+    binaryHost({ 'readiness.json': readiness(row('dem-run', 'partial')) }, { [coarse.file]: { body: new ArrayBuffer(0), status: 404 } });
+    await expect(loadDemFrames(index(files), coarse)).rejects.toThrow(/jaw-lab-63-52\.frames\.bin: HTTP 404/);
+  });
+  it('adversarial: a file the index does not declare is never asked for', async () => {
+    const asked = binaryHost({ 'readiness.json': readiness(row('dem-run', 'partial')) }, { [coarse.file]: { body: framesBytes(coarse.file.replace(/^dem\//, '')) } });
+    const e = await loadDemFrames(index(['dem/jaw-lab.json']), coarse).catch((x: unknown) => x);
+    expect(e).toBeInstanceOf(ArtifactUnavailable);
+    expect(asked.some((u) => u.includes('.frames.bin'))).toBe(false);
   });
 });

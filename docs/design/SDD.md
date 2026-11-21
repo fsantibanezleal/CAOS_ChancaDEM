@@ -23,10 +23,11 @@ Non-goals, each something a reader could reasonably assume:
 
 - A sizing or selection tool for a real crusher, or a digital twin of a measured plant. The synthetic machines' constants
   are illustrative of their class; only the HP500 lane is calibrated, and to one machine on one ore.
-- A discrete-element simulation. The 3D chamber is a kinematic view of the chamber geometry, its motion and the engine's
-  gradation; industrial DEM with breakage needs hours per second of operation and runs offline in the state of the art
-  (Methodology, the population-balance topic). The product's earlier work-in-progress 2-D DEM tracer was removed in
-  0.10.000 and is a backlog item, not a method of this release.
+- A particle simulation of the plant machines, or one that runs in the browser. The 3D chamber is a kinematic view of the
+  chamber geometry, its motion and the engine's gradation. The discrete element method with breakage is run offline, by
+  the bake, on one laboratory jaw crusher with published measurements (Method ladder, M16; feature `dem`); the plant
+  machines stay with the population balance, because no liner geometry of an industrial cone is public and a simulation of
+  one needs hours of computing per second of operation.
 - A grinding model. Grinding and SAG milling are another product's lane (ChargeCascade); ChancaDEM stops at the crusher
   product.
 - A backend. `app/` is a dormant read-only API; the product is a static site.
@@ -229,13 +230,15 @@ criterion below holds in the TypeScript port because the shared reference holds 
 | B-lin | classical | The setting-only power line: ordinary least squares of throughput and of power on the closed-side setting alone, refit without each held-out survey (the baseline every other HP500 method is held to) | it reproduces the dossier's 12.78 percent (power) and 13.67 percent (throughput) leave-one-survey-out MAPE on the ten surveys, and a survey planted with an absurd target moves every other fold and not its own | `tests/test_hp500_loo.py::test_b_lin_reproduces_the_dossier_numbers`, `tests/test_hp500_loo.py::test_adversarial_a_fold_never_sees_its_held_out_survey` |
 | M14 | sota | Morrell's size-specific crusher energy W_c = S_c K2 M_ic 4 (x2^f(x2) - x1^f(x1)) (Morrell 2009; GMSG guideline, equations B4 and B5), beside Bond, with M_ic and a no-load term fitted per fold because the ore's M_ic is not published | equation B4 is the guideline's, its result is kWh/t (kW with the throughput), S_c is applied below 1 and dropped above it; the held-out numbers (38.08 and 15.21 percent) are reported as they come, the negative M_ic of the no-load variant flagged | `tests/test_morrell.py::test_the_equation_b4_as_printed`, `tests/test_morrell.py::test_units_give_kwh_per_tonne_and_kw`, `tests/test_morrell.py::test_sc_is_applied_below_one_and_dropped_above_one`, `tests/test_hp500_loo.py::test_morrell_variants_report_the_numbers_as_they_come` |
 | M15 | classical | The laboratory-jaw module (offline, `data-pipeline/pipeline/model/crusher/labjaw.py`): the jaw capacity model of Sastri (1994), a laboratory classification preset (the first estimate of Donovan 2003 with the ranges of King 2000 as a band), a narrow feed class through the engine's own breakage and Whiten solve, Bond's energy per unit of work index and no power (the ore's work index is not published) | Sastri's Table 2 is reproduced (eight rows within 0.2 percent, the fifth within 3 percent); the capacity is continuous at the critical speed; the product closes mass, is finer than the feed and finer at a tighter setting; no constant of the module is a measured value of the jaw it is compared with; the five plant machines and the learned models' encodings are unchanged | `tests/test_labjaw.py::test_sastri_table_2_rows`, `tests/test_labjaw.py::test_capacity_is_continuous_at_the_critical_speed_and_peaks_there`, `tests/test_labjaw.py::test_the_evaluation_closes_mass_and_is_finer_than_the_feed`, `tests/test_labjaw.py::test_the_module_source_holds_no_measured_value_of_the_laboratory_jaw`, `tests/test_labjaw.py::test_the_plant_engine_holds_exactly_the_five_plant_machines` |
+| M16 | sota | The discrete element method with particle-replacement breakage (the Tavares breakage model), run offline by the bake through the published package `crushdem` on the laboratory jaw crusher of Barrios et al. 2020, at the three operating points with a measured throughput, net power and product, beside the measurement and the laboratory-jaw evaluation of the population balance (M15) | the document holds the package's own result of each point (its window statistics and its resolved rule), a run that does not complete is recorded as such and no verdict rests on it, every verdict follows its band, the inputs read no measured outcome, and a fixed-seed run is reproduced bit for bit; the verdicts are reported as they come | `tests/contracts/test_dem_run.py::test_every_verdict_follows_its_band`, `tests/test_dem_stage.py::test_a_run_that_does_not_complete_is_recorded_as_such`, `tests/test_dem_stage.py::test_no_input_reads_the_measured_outcome`, `tests/test_dem_stage.py::test_a_short_run_is_reproduced_bit_for_bit`, `tests/test_dem_stage.py::test_the_stage_takes_the_simulation_from_the_package` |
 | BS-2 | beyond | CrusherBayes: a Bayesian calibration of the engine's fitted scalars with a structural discrepancy term per target (Kennedy and O'Hagan 2001), sampled by a differential-evolution ensemble sampler, refit without each held-out survey | the kill criterion of `## Beyond the state of the art`, applied as written; the identifiability table reported in any case | `tests/test_crusher_bayes.py::test_kill_criterion_is_applied_as_written`, `tests/test_crusher_bayes.py::test_loo_refits_without_the_held_out_survey`, `tests/test_crusher_bayes.py::test_a_short_chain_is_recorded_as_not_converged_never_kept_silently`, `tests/test_crusher_bayes.py::test_the_document_is_byte_identical_and_independent_of_the_worker_count`, `tests/contracts/test_hp500_crusherbayes.py::test_crusherbayes_validates` |
 
 Landed for 0.12.000 (CAOS_MANAGE `plans/chancadem/plan-0-12-000.md`): the setting-only power line B-lin (classical),
-Morrell's size-specific energy (M14) beside Bond, and CrusherBayes (BS-2). Still being built, entering the ladder with its gate when it
-lands: discrete-element simulation with breakage (particle replacement with the Tavares
-breakage model, in the separate package `crushdem`, validated on the laboratory jaw of Barrios et al. 2020,
-https://doi.org/10.3390/min10080717).
+Morrell's size-specific energy (M14) beside Bond, and CrusherBayes (BS-2). Landed for 0.15.000 (CAOS_MANAGE
+`plans/chancadem/plan-0-15-000.md`): the laboratory-jaw module (M15) and the discrete element method with particle
+replacement (M16), run through the separate published package `crushdem` on the laboratory jaw of Barrios et al. 2020
+(https://doi.org/10.3390/min10080717) and compared there with the measurement and with the population balance. Open: a
+cone (no readable result of a laboratory cone test was found; CAOS_MANAGE `plans/chancadem/dem-plan.md`, units K1 to K4).
 
 ## Cases
 
@@ -368,7 +371,7 @@ The target is written in `deploy/TARGET` and checked by `scripts/check_deploy_pl
 | ADR-0054 | the committed artifacts are the evidence; the web replays them and re-runs only a light engine live | `data-pipeline/`, `docs/contracts/catalog.md`, the lane gate |
 | ADR-0057 | two contracts, named stages, lanes; the product declares no package | `data-pipeline/`, `docs/contracts/catalog.md`; `product.json` `method_packages` is `[]` |
 | ADR-0058 | architecture modal, five themed bilingual tabs | `frontend/src/architecture/`, validated by the shell on mount |
-| ADR-0069 | every promised method one vertical implementation with its acceptance criterion | the Method ladder above, each criterion with its gate; the DEM is not promised in this release |
+| ADR-0069 | every promised method one vertical implementation with its acceptance criterion | the Method ladder above, each criterion with its gate; the discrete element method is a vertical of its own from 0.15.000 (the package, the bake stage, the contract `dem-run`, the view, the notebooks) |
 | ADR-0070 | Focus mode for the App: the workbench opens the open group of a case in the full viewport; `?focus=1`, Escape or the exit button returns to the same case, group and sub-view | `frontend/src/workbench/Workbench.tsx` (`focus`), `npm run gate` with `--require-focus` (G18); the App is a workbench (`product.json` has no `app` field) |
 | ADR-0071 | the page is the viewport; one tab row; the instrument at least half the App route | the shell's `CaseWorkbench`; the gate (G5, G6) |
 | ADR-0074 | CI runs cheap checks only; training and the bake are local | `.github/workflows/ci.yml`, `scripts/check_ci_budget.py` |
