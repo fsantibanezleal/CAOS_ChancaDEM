@@ -109,7 +109,7 @@ def test_state_available(repo):
     for e in doc["contracts"]:
         if e["id"] not in ("api", "dem-run"):
             assert (e["state"], e["provenance"], e["reason"], e["missing"]) == ("available", "real", None, []), e["id"]
-    dem = derived(repo, "dem/jaw-lab.json")       # the particle simulation says what its own document says (test_dem_run_states plants each state)
+    dem = derived(repo, "dem/jaw-lab.json")       # the particle simulation says what its own document says (test_adversarial_state_dem_run plants each state)
     expected = "missing" if not dem.is_file() else ("partial" if json.loads(dem.read_text(encoding="utf-8"))["state"] == "partial" else "available")
     assert entry(doc, "dem-run")["state"] == expected
     assert entry(doc, "api")["state"] == "missing"
@@ -284,7 +284,7 @@ def test_state_missing_model_metrics(repo):
     assert e["reason"] == ({"en": "The models were not evaluated in this build.", "es": "Los modelos no se evaluaron en esta versión."})
 
 
-def test_dem_run_states(repo):
+def test_adversarial_state_dem_run(repo):
     """DM-011: missing when the document is absent, stale when its engine_version is not VERSION, partial (naming how many) when a run
     did not complete, available otherwise; in the order of the catalog's table (absent, stale, partial)."""
     path = derived(repo, "dem/jaw-lab.json")

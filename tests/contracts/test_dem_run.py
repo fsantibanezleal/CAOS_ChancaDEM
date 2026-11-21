@@ -105,6 +105,25 @@ def verdict_errors(doc: dict) -> list[str]:
     return out
 
 
+def incomplete_errors(doc: dict) -> list[str]:
+    """DM-003: a run that did not complete states no window statistic, and the document names it and says ``partial``."""
+    out: list[str] = []
+    stopped = [p["id"] for p in doc["points"] if p["simulation"]["status"] != "complete"]
+    if doc["incomplete"] != stopped:
+        out.append(f"incomplete {doc['incomplete']} is not the runs that did not complete {stopped}")
+    if doc["state"] != ("partial" if stopped else "available"):
+        out.append(f"state {doc['state']} with {len(stopped)} runs that did not complete")
+    for p in doc["points"]:
+        s = p["simulation"]
+        if s["status"] == "complete":
+            continue
+        for key in ("window", "throughput_kg_h", "throughput_se_kg_h", "net_power_kw", "net_power_se_kw", "specific_energy_j_kg",
+                    "specific_energy_kwh_t"):
+            if s[key] is not None:
+                out.append(f"{p['id']}: {key} is stated for a run that ended with {s['status']}")
+    return out
+
+
 def replay_errors(root: Path, doc: dict, index_files: list[str] | None = None) -> list[str]:
     out: list[str] = []
     for p in doc["points"]:
@@ -153,6 +172,11 @@ def test_dem_run_validates(doc_root):
 
 def test_every_point_carries_the_three_sides(doc_root):
     _, doc = doc_root
+    assert_three_sides(doc)
+    assert incomplete_errors(doc) == []
+
+
+def assert_three_sides(doc: dict) -> None:
     sieves = doc["settings"]["sieves_mm"]
     for p in doc["points"]:
         m, s, pb = p["measured"], p["simulation"], p["population_balance"]
@@ -193,11 +217,15 @@ def test_every_verdict_follows_its_band(doc_root):
 
 def test_the_population_balance_block_is_the_engine_at_the_point(doc_root):
     """DM-006: the module called again at the point's operating values gives the block."""
+    _, doc = doc_root
+    assert_engine_block(doc)
+
+
+def assert_engine_block(doc: dict) -> None:
     from pipeline.model.crusher import labjaw
     from pipeline.model.crusher.breakage import specific_energy
     from pipeline.model.crusher.sieve import passing_at_size
 
-    _, doc = doc_root
     css, speed, jaw = doc["settings"]["css_mm"], doc["settings"]["speed_rpm"], labjaw.OTSUKA_BARRIOS_2020
     assert (jaw.gape_mm, jaw.width_mm, jaw.throw_mm) == (doc["machine"]["gape_mm"], doc["machine"]["width_mm"], doc["machine"]["throw_mm"])
     ore = doc["ore"]
@@ -312,6 +340,87 @@ def test_adversarial_rule_violations_are_found(doc_root):
         r["sha256"] = hashlib.sha256(b"").hexdigest()
         r["bytes"] += 1
         assert any("bytes" in e for e in replay_errors(root, bad))
+
+
+def test_adversarial_a_statistic_or_a_verdict_on_a_run_that_did_not_complete_is_found(doc_root):
+    """DM-003: a complete run of a copy is turned into one that stopped, with its window statistics and its verdicts left in place:
+    the statistics, the document's state and every verdict that rests on the run are each reported."""
+    _, doc = doc_root
+    assert incomplete_errors(doc) == [] and verdict_errors(doc) == []
+    done = next(i for i, p in enumerate(doc["points"]) if p["simulation"]["status"] == "complete")
+    bad = copy.deepcopy(doc)
+    sim = bad["points"][done]["simulation"]
+    sim["status"] = sim["attempts"][-1]["status"] = "overlap_error"
+    pid = bad["points"][done]["id"]
+    found = incomplete_errors(bad)
+    assert any("incomplete" in e for e in found)                                              # the document does not name it
+    assert any(f"{pid}: window is stated" in e for e in found) and any(f"{pid}: net_power_kw is stated" in e for e in found)
+    resting = [e for e in verdict_errors(bad) if "rests on a run that did not complete" in e]
+    assert {e.split(":")[0] for e in resting} >= {f"{pid} simulation_vs_measured throughput", f"{pid} simulation_vs_measured net_power",
+                                                 f"{pid} population_balance_vs_simulation throughput"}
+    named = copy.deepcopy(bad)                                                                # naming it is not enough: the statistics stay refused
+    named["incomplete"] = [p["id"] for p in named["points"] if p["simulation"]["status"] != "complete"]
+    named["state"] = "partial"
+    assert any("window is stated" in e for e in incomplete_errors(named)) and not any("incomplete" in e for e in incomplete_errors(named))
+    silent = copy.deepcopy(doc)                                                               # a partial document that says available
+    if silent["incomplete"]:
+        silent["state"] = "available"
+        assert any("state available" in e for e in incomplete_errors(silent))
+
+
+def test_adversarial_a_point_without_a_source_a_whole_curve_or_a_derived_value_is_found(doc_root):
+    """DM-004: a measured value without its source, a product curve that lost a value, a measured energy that does not follow from
+    the measured power and throughput, a reduction ratio that is not F80 over P80 and a verdict that uses the paper's own simulated
+    value are each refused."""
+    _, doc = doc_root
+    assert_three_sides(doc)
+
+    def refused(change):
+        bad = copy.deepcopy(doc)
+        change(bad)
+        with pytest.raises((AssertionError, KeyError)):
+            assert_three_sides(bad)
+
+    refused(lambda d: d["points"][0]["measured"]["throughput_kg_h"].update(source=""))
+    refused(lambda d: d["points"][1]["measured"]["net_power_kw"].pop("source"))
+    refused(lambda d: d["points"][0]["measured"]["product"]["passing_pct"].pop())
+    refused(lambda d: d["points"][2]["population_balance"]["product"]["passing_pct"].pop())
+    refused(lambda d: d["points"][0]["measured"].update(specific_energy_j_kg=d["points"][0]["measured"]["specific_energy_j_kg"] * 1.01))
+    refused(lambda d: d["points"][1]["measured"].update(reduction_ratio=d["points"][1]["measured"]["reduction_ratio"] * 1.01))
+    refused(lambda d: d["points"][0]["simulation"]["series"]["stroke"].pop())
+    refused(lambda d: d["points"][0]["verdicts"].pop("population_balance_vs_simulation"))
+    with_paper = next((i for i, p in enumerate(doc["points"]) if p["paper_simulation"] is not None), None)
+    assert with_paper is not None
+    refused(lambda d: d["points"][with_paper]["verdicts"]["simulation_vs_measured"]["net_power"].update(
+        second=d["points"][with_paper]["paper_simulation"]["net_power_kw"]["value"]))
+    refused(lambda d: d["points"][1].update(paper_simulation=copy.deepcopy(d["points"][with_paper]["paper_simulation"])))
+
+
+def test_adversarial_a_population_balance_block_that_is_not_the_engines_is_found(doc_root):
+    """DM-006: a block whose throughput, product size, classification, ore link, product curve or spread was written by anything but
+    the laboratory-jaw module at the point's operating values does not survive the module being called again."""
+    _, doc = doc_root
+    assert_engine_block(doc)
+
+    def refused(change):
+        bad = copy.deepcopy(doc)
+        change(bad["points"][1]["population_balance"])
+        with pytest.raises(AssertionError):
+            assert_engine_block(bad)
+
+    refused(lambda pb: pb.update(throughput_kg_h=pb["throughput_kg_h"] * 1.01))
+    refused(lambda pb: pb.update(p80_mm=pb["p80_mm"] + 0.02))
+    refused(lambda pb: pb.update(reduction_ratio=pb["reduction_ratio"] * 1.01))
+    refused(lambda pb: pb["classification"].update(k3=2.4))
+    refused(lambda pb: pb.update(ore_axb=pb["ore_axb"] * 1.05))
+    refused(lambda pb: pb.update(t10_pct=pb["t10_pct"] + 0.5))
+    refused(lambda pb: pb["product"]["passing_pct"].__setitem__(3, pb["product"]["passing_pct"][3] + 0.5))
+    refused(lambda pb: pb["band"]["p80_mm"].__setitem__(0, pb["band"]["p80_mm"][0] * 0.9))
+    refused(lambda pb: pb["capacity"].update(throw_factor=pb["capacity"]["throw_factor"] * 1.02))
+    bad = copy.deepcopy(doc)                                                                   # a machine other than the paper's jaw
+    bad["machine"]["gape_mm"] = 150.0
+    with pytest.raises(AssertionError):
+        assert_engine_block(bad)
 
 
 def test_the_package_is_not_needed_to_read_the_document():

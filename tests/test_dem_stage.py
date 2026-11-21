@@ -43,17 +43,49 @@ def _sources() -> dict[str, str]:
     return {f.relative_to(ROOT).as_posix(): f.read_text(encoding="utf-8") for f in files}
 
 
+ENGINE_PIECE = re.compile(r"\bwhile\b|def\s+(contact|breakage|stroke|step|run_cycles|integrate|neighbour)\w*|hertz|restitution|"
+                          r"from\s+crushdem\.breakage\.tavares|\btavares_\w+\(", re.I)
+RUNS_SRC, DOCUMENT_SRC = "data-pipeline/pipeline/dem/runs.py", "data-pipeline/pipeline/dem/document.py"
+
+
+def engine_findings(src: dict[str, str]) -> list[str]:
+    """What a set of stage sources holds of a particle engine of its own, and what it fails to take from the package."""
+    out = [f"{name} holds a piece of the particle engine" for name, text in src.items() if ENGINE_PIECE.search(text)]
+    runs_src, document_src = src[RUNS_SRC], src[DOCUMENT_SRC]
+    if "from crushdem.cases import barrios2020" not in runs_src or ".run_case(" not in runs_src:
+        out.append(f"{RUNS_SRC} does not run the package's case")
+    if "from crushdem" not in document_src or "compare_with_measurement" not in document_src or "window_statistics" not in document_src:
+        out.append(f"{DOCUMENT_SRC} does not take the window statistics and the comparison from the package")
+    return out
+
+
 def test_the_stage_takes_the_simulation_from_the_package():
     """DM-002: the product holds no contact, breakage or stroke loop: its modules import the case from crushdem and call it."""
     src = _sources()
     assert len(src) >= 5
-    for name, text in src.items():
-        assert not re.search(r"\bwhile\b|def\s+(contact|breakage|stroke|step|run_cycles|integrate|neighbour)\w*|hertz|restitution|from\s+crushdem\.breakage\.tavares|\btavares_\w+\(",
-                             text, re.I), f"{name} holds a piece of the particle engine"
-    runs_src, document_src = src["data-pipeline/pipeline/dem/runs.py"], src["data-pipeline/pipeline/dem/document.py"]
-    assert "from crushdem.cases import barrios2020" in runs_src and ".run_case(" in runs_src
-    assert "from crushdem" in document_src and "compare_with_measurement" in document_src and "window_statistics" in document_src
+    assert engine_findings(src) == []
     assert "crushdem" in (ROOT / "requirements-precompute.txt").read_text(encoding="utf-8")
+
+
+def test_adversarial_a_piece_of_a_particle_engine_in_the_stage_is_found():
+    """DM-002: a time loop, a contact function, a Hertz term, the package's breakage model imported to be called here, a stage that
+    no longer runs the package's case and a document builder with window statistics of its own are each reported, by file."""
+    src = _sources()
+    assert engine_findings(src) == []
+    planted = {
+        "a time loop": (RUNS_SRC, lambda s: s + "\n\ndef advance(t, t_end, dt):\n    while t < t_end:\n        t += dt\n    return t\n"),
+        "a contact function": ("data-pipeline/pipeline/dem/replay.py", lambda s: s + "\n\ndef contact_force(a, b):\n    return 0.0\n"),
+        "a Hertz term": (DOCUMENT_SRC, lambda s: s + "\n# stiffness of the Hertz contact\nK_HERTZ = 4.0 / 3.0\n"),
+        "a restitution coefficient": ("data-pipeline/pipeline/dem/points.py", lambda s: s + "\nRESTITUTION = 0.5\n"),
+        "the breakage model called here": ("data-pipeline/pipeline/stages/dem.py", lambda s: s + "\nfrom crushdem.breakage.tavares import TavaresModel\n"),
+    }
+    for what, (name, change) in planted.items():
+        bad = {**src, name: change(src[name])}
+        assert engine_findings(bad) == [f"{name} holds a piece of the particle engine"], what
+    no_case = {**src, RUNS_SRC: src[RUNS_SRC].replace(".run_case(", ".own_case(")}
+    assert engine_findings(no_case) == [f"{RUNS_SRC} does not run the package's case"]
+    own_stats = {**src, DOCUMENT_SRC: src[DOCUMENT_SRC].replace("window_statistics", "own_statistics")}
+    assert engine_findings(own_stats) == [f"{DOCUMENT_SRC} does not take the window statistics and the comparison from the package"]
 
 
 def test_the_points_and_settings_are_the_definitions_and_read_no_measurement():
@@ -64,9 +96,30 @@ def test_the_points_and_settings_are_the_definitions_and_read_no_measurement():
     assert (s.seed, s.ore, s.backend, s.mass_kg, s.frequency_hz, s.closed_side_setting_m) == (1, "paper", "numba", 6.0, 6.0, 0.0075)
     assert (s.overlaps, s.stall_strokes, s.max_strokes, s.frames) == ((0.3, 0.5), 40, 400, (1, 400, 12))
     assert points.SPEED_RPM == 360.0 and points.BANDS == {"throughput": 0.10, "net_power": 0.30, "reduction_ratio": 0.15}
+    assert measured_numbers_in((PIPELINE / "dem" / "points.py").read_text(encoding="utf-8")) == []
+
+
+MEASURED_NUMBERS = ("798", "937", "1220", "0.337", "0.166", "0.135", "0.34 ", "kg/h")   # the paper's throughputs and powers, and their unit
+
+
+def measured_numbers_in(text: str) -> list[str]:
+    """The measured throughputs and powers of the jaw that a source states outside its comments (a unit label in brackets is none)."""
+    code = re.sub(r"#.*", "", text).replace("[kg/h]", "")
+    return [m for m in MEASURED_NUMBERS if m in code]
+
+
+def test_adversarial_a_measured_number_written_in_the_points_source_is_found():
+    """DM-007: a measured throughput or power written into the definitions of the points (a constant, a default, a target to stop at)
+    is reported; the same number in a comment is not a value the code can read."""
     text = (PIPELINE / "dem" / "points.py").read_text(encoding="utf-8")
-    for measured in ("798", "937", "1220", "0.337", "0.166", "0.135", "0.34 ", "kg/h"):
-        assert measured not in re.sub(r"#.*", "", text).replace("[kg/h]", ""), measured
+    assert measured_numbers_in(text) == []
+    assert measured_numbers_in(text + "\nTARGET_THROUGHPUT = 798.7\n") == ["798"]
+    assert measured_numbers_in(text + "\nSTOP_AT = {'63-52': 937.2, '16-13.2': 1220.4}\n") == ["937", "1220"]
+    assert measured_numbers_in(text + "\nNET_POWER_KW = (0.337, 0.166, 0.135)\n") == ["0.337", "0.166", "0.135"]
+    assert measured_numbers_in(text + "\nUNIT = 'kg/h'\n") == ["kg/h"]
+    assert measured_numbers_in(text + "\n# the paper measured 798.7 kg/h at this point\n") == []
+    for name in ("runs.py", "document.py", "replay.py"):                 # the other modules of the stage state no measured number either
+        assert [m for m in measured_numbers_in((PIPELINE / "dem" / name).read_text(encoding="utf-8")) if m != "kg/h"] == [], name
 
 
 @needs_package
@@ -86,20 +139,56 @@ def test_the_web_bundle_holds_no_simulation():
     """DM-018: no file under frontend/src imports or names a simulation step: the document is read, never computed. The
     documentation content (frontend/src/content) explains the method in words, so the names of its laws (Hertz, Verlet) are
     allowed there and only the identifiers of an implementation are refused; everywhere else the names are refused too."""
-    identifiers = r"run_case|run_cycles|contactForce|integrateStep|simulationStep|stepSimulation"
-    in_code = re.compile(identifiers + r"|verlet|hertz", re.I)
-    in_content = re.compile(identifiers, re.I)
-    content = ROOT / "frontend" / "src" / "content"
+    assert web_simulation_files(ROOT) == []
+    assert ci_simulation_files(ROOT) == []   # CI only validates the committed documents (ADR-0074)
+
+
+SIMULATION_IDENTIFIERS = r"run_case|run_cycles|contactForce|integrateStep|simulationStep|stepSimulation"
+
+
+def web_simulation_files(repo: Path) -> list[str]:
+    """The files under ``frontend/src`` of a tree that name a simulation step (see the test above for the two rules)."""
+    in_code = re.compile(SIMULATION_IDENTIFIERS + r"|verlet|hertz", re.I)
+    in_content = re.compile(SIMULATION_IDENTIFIERS, re.I)
+    content = repo / "frontend" / "src" / "content"
     found = []
-    for f in (ROOT / "frontend" / "src").rglob("*"):
+    for f in sorted((repo / "frontend" / "src").rglob("*")):
         if f.suffix not in (".ts", ".tsx", ".js", ".jsx", ".mjs"):
             continue
         rule = in_content if content in f.parents else in_code
         if rule.search(f.read_text(encoding="utf-8")):
-            found.append(str(f.relative_to(ROOT)))
-    assert found == []
-    ci = " ".join(p.read_text(encoding="utf-8") for p in (ROOT / ".github").rglob("*.yml")) if (ROOT / ".github").is_dir() else ""
-    assert "run.py dem" not in ci and "crushdem" not in ci   # CI only validates the committed documents (ADR-0074)
+            found.append(f.relative_to(repo).as_posix())
+    return found
+
+
+def ci_simulation_files(repo: Path) -> list[str]:
+    """The CI workflows of a tree that run the bake command of the particle simulation or name its package."""
+    if not (repo / ".github").is_dir():
+        return []
+    return [f.relative_to(repo).as_posix() for f in sorted((repo / ".github").rglob("*.yml"))
+            if re.search(r"run\.py dem|crushdem", f.read_text(encoding="utf-8"))]
+
+
+def test_adversarial_a_simulation_step_in_the_web_sources_or_in_ci_is_found(tmp_path):
+    """DM-018: in a planted tree, a view that integrates a step, a module that names a contact law in code, a documentation page that
+    calls the package's case and a workflow that runs the bake or installs the package are each reported; a documentation page that
+    explains the laws in words is not."""
+    views, content, flows = tmp_path / "frontend/src/views", tmp_path / "frontend/src/content/methodology", tmp_path / ".github/workflows"
+    for d in (views, content, flows):
+        d.mkdir(parents=True)
+    (views / "clean.tsx").write_text("export const replay = (frames: number[]) => frames.length;\n", encoding="utf-8")
+    (content / "words.tsx").write_text("export const text = 'The contact follows Hertz and the integration is velocity Verlet.';\n", encoding="utf-8")
+    (flows / "ci.yml").write_text("jobs:\n  test:\n    steps:\n      - run: python scripts/check_artifacts.py\n", encoding="utf-8")
+    assert web_simulation_files(tmp_path) == [] and ci_simulation_files(tmp_path) == []
+    (views / "stepper.ts").write_text("export function integrateStep(dt: number) { return dt; }\n", encoding="utf-8")
+    (views / "contact.tsx").write_text("// Hertz normal force\nexport const k = 4 / 3;\n", encoding="utf-8")
+    (content / "calls.tsx").write_text("export const run = () => run_case('63/52');\n", encoding="utf-8")
+    (views / "notes.md").write_text("verlet\n", encoding="utf-8")            # not a source of the bundle
+    assert web_simulation_files(tmp_path) == ["frontend/src/content/methodology/calls.tsx", "frontend/src/views/contact.tsx",
+                                              "frontend/src/views/stepper.ts"]
+    (flows / "bake.yml").write_text("jobs:\n  bake:\n    steps:\n      - run: python data-pipeline/run.py dem --jobs 3\n", encoding="utf-8")
+    (flows / "deps.yml").write_text("jobs:\n  deps:\n    steps:\n      - run: uv pip install crushdem[jit]\n", encoding="utf-8")
+    assert ci_simulation_files(tmp_path) == [".github/workflows/bake.yml", ".github/workflows/deps.yml"]
 
 
 # --- the missing package -----------------------------------------------------------------------------------------------------
@@ -288,6 +377,19 @@ def test_a_short_run_is_reproduced_bit_for_bit(short):
     for name, arr in a.frames["arrays"].items():
         assert np.array_equal(arr, b.frames["arrays"][name]), name
     assert "wall_time_s" not in json.dumps(a.record) and "started_utc" not in json.dumps(a.record)      # no wall time, no date in a record
+
+
+@needs_package
+def test_adversarial_another_seed_gives_another_record_under_another_key(short):
+    """DM-008: the equality of the two processes is not vacuous: the same point with another seed gives another record, another
+    per-stroke series and other frames, under another key (so the raw records of one seed are never read for another). The
+    document's side of the requirement (no wall time, no date) is planted in ``tests/contracts/test_dem_run.py``."""
+    other = runs.run_points([points.POINTS[0]], dataclasses.replace(SHORT, seed=2), None, jobs=1, log=lambda s: None).runs["63-52"]
+    same = short["again"]
+    assert other.record != same.record and other.key != same.key
+    assert other.record["attempts"][-1]["series"] != same.record["attempts"][-1]["series"]
+    a, b = same.frames["arrays"], other.frames["arrays"]
+    assert a["x_m"].shape != b["x_m"].shape or not np.array_equal(a["x_m"], b["x_m"])
 
 
 @needs_package
