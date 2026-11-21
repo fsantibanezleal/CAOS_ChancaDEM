@@ -23,6 +23,7 @@ code has them, where it runs, tests, what it is not, references.
 | [Classification](12_classification/classification.md) | M3 | Whiten 1972, Andersen and Napier-Munn 1988 |
 | [Whiten population balance](01_whiten-engine/whiten.md) | M4 | Whiten 1972 |
 | [Capacity](13_capacity/capacity.md) | M5 | Evertsson 2000 |
+| [Jaw capacity and the laboratory jaw](20_jaw-capacity-sastri/jaw-capacity.md) | M15 | Sastri 1994; King 2000 and Donovan 2003 for the classification preset |
 | [Regimes and nip angle](14_regimes-and-nip-angle/regimes.md) | M6 | the engine's rules |
 | [Power model](09_power_model/power-model.md) | M7 | Bond 1952; the paper's form; a documented negative |
 | [HP500 calibration](16_hp500-calibration/hp500-calibration.md) | M8 | Rocha et al. 2024 |

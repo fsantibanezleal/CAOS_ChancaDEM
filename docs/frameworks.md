@@ -13,6 +13,7 @@ them, where it runs, its tests and what it is not. The full index, with the pins
 | [12, classification](frameworks/12_classification/classification.md) | M3 Andersen and Napier-Munn K1, K2, K3 |
 | [01, Whiten engine](frameworks/01_whiten-engine/whiten.md) | M4 the population balance, and the engine as a whole |
 | [13, capacity](frameworks/13_capacity/capacity.md) | M5 the Evertsson capacity hump |
+| [20, jaw capacity](frameworks/20_jaw-capacity-sastri/jaw-capacity.md) | M15 the jaw capacity model of Sastri and the laboratory-jaw module |
 | [14, regimes and nip angle](frameworks/14_regimes-and-nip-angle/regimes.md) | M6 |
 | [09, power](frameworks/09_power_model/power-model.md) | M7 Bond and the current-based form, with the honest negative |
 | [16, HP500 calibration](frameworks/16_hp500-calibration/hp500-calibration.md) | M8 the Andersen-Whiten fit |
