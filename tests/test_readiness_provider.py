@@ -54,8 +54,12 @@ def test_the_workflow_names_the_product_and_its_real_bake():
     assert config["environment_namespace"] == "chancadem" and config["external_environments_required"] is True
     # the release generation trains the models first, so the bake records the trained slots and every stamped document of a
     # release carries its VERSION (0.13.000: carried metrics of the previous version were refused as mixed/stale)
+    # the particle simulation is baked last: its stage refreshes the index and the readiness the first two wrote, and with the raw
+    # run records of the data root it rebuilds its document without running the simulation again (0.15.000)
     assert config["generation"] == [{"script": "data-pipeline/run.py", "args": ["models", "--output", "{derived}"]},
-                                    {"script": "data-pipeline/run.py", "args": ["all", "--output", "{derived}"]}]
+                                    {"script": "data-pipeline/run.py", "args": ["all", "--output", "{derived}"]},
+                                    {"script": "data-pipeline/run.py", "args": ["dem", "--output", "{derived}"]}]
+    assert {"crushdem", "numba"} <= set(config["generation_modules"])
     assert [row["script"] for row in config["validators"]] == ["scripts/check_artifacts.py", "scripts/check_documents.py"]
     assert config["promote"] == ["data/derived"], "the released models live in data/derived/models; models/ holds none"
     assert config["readiness_provider"] == "scripts/local/readiness_provider.py" and config["product_admission"] is True
@@ -68,7 +72,7 @@ def test_the_bake_inputs_are_the_source_tables_and_the_models_are_trained_in_the
     assert set(inputs) == {"data/examples/params.csv", "data/examples/hp500-surveys.csv"}
     carried = [i for i in inputs if i.startswith("data/derived/models/") or i == "data/derived/model-metrics.json"]
     assert not carried, f"the release generation trains the models and writes their metrics; carrying {carried} mixes versions"
-    assert [row["args"][0] for row in config["generation"]] == ["models", "all"]
+    assert [row["args"][0] for row in config["generation"]] == ["models", "all", "dem"]
     assert all((ROOT / name).is_file() for name in inputs)
 
 
