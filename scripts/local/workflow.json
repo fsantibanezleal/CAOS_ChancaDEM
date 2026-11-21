@@ -99,6 +99,14 @@
         "--output",
         "{derived}"
       ]
+    },
+    {
+      "script": "data-pipeline/run.py",
+      "args": [
+        "dem",
+        "--output",
+        "{derived}"
+      ]
     }
   ],
   "validators": [
@@ -118,6 +126,8 @@
   "generation_modules": [
     "numpy",
     "jsonschema",
-    "emcee"
+    "emcee",
+    "crushdem",
+    "numba"
   ]
 }

@@ -28,6 +28,7 @@ BACKBONE_REL = "hp500/backbone.json"
 LOO_REL = "hp500/loo.json"
 CRUSHERBAYES_REL = "hp500/crusherbayes.json"
 COMPARISON_REL = "hp500/comparison.json"
+DEM_REL = "dem/jaw-lab.json"
 METRICS_REL = "model-metrics.json"
 STATUSES = ("real", "active")  # the catalog's status vocabulary (its Contracts section), exactly, lower case
 MODEL_SLOTS = ("surrogate-model", "anomaly-model")
@@ -52,6 +53,8 @@ T_NO_SURROGATE = ("No released surrogate; the engine itself answers.",
                   "No hay un sustituto publicado; responde el propio motor.")
 T_NO_ANOMALY = ("No released autoencoder; the envelope gate answers.",
                 "No hay un autocodificador publicado; responde la compuerta de envolvente.")
+T_NO_DEM = ("The particle simulation was not baked in this build.", "La simulación de partículas no se generó en esta versión.")
+T_DEM_PARTIAL = ("{n} of {total} particle runs did not complete.", "{n} de {total} corridas de partículas no se completaron.")
 T_NO_METRICS = ("The models were not evaluated in this build.", "Los modelos no se evaluaron en esta versión.")
 T_API = ("The API lane is dormant; the site reads the committed documents.",
          "La API está inactiva; el sitio lee los documentos versionados.")
@@ -151,6 +154,7 @@ class _Facts:
         self.crusherbayes = _json(derived_root / CRUSHERBAYES_REL)
         self.comparison = _json(derived_root / COMPARISON_REL)
         self.metrics = _json(derived_root / METRICS_REL)
+        self.dem = _json(derived_root / DEM_REL)
         self.slots = released_slots(models_dir)
 
 
@@ -193,9 +197,14 @@ def _rule(row: dict[str, str], f: _Facts) -> dict:
     hp500 = {"hp500-backbone": f.backbone, "hp500-loo": f.loo, "hp500-crusherbayes": f.crusherbayes, "hp500-comparison": f.comparison}
     if rid in hp500 and not isinstance(hp500[rid], dict):
         return _entry(row, "missing", None, _fill(T_NO_HP500))
-    doc = {**hp500, "model-metrics": f.metrics}.get(rid)
-    if rid in (*hp500, "model-metrics") and isinstance(doc, dict) and _engine_version(doc) != f.version:
+    if rid == "dem-run" and not isinstance(f.dem, dict):
+        return _entry(row, "missing", None, _fill(T_NO_DEM))
+    doc = {**hp500, "model-metrics": f.metrics, "dem-run": f.dem}.get(rid)
+    if rid in (*hp500, "model-metrics", "dem-run") and isinstance(doc, dict) and _engine_version(doc) != f.version:
         return _entry(row, "stale", "real", _fill(T_STALE, engine_version=_engine_version(doc), version=f.version))
+    if rid == "dem-run" and f.dem.get("state") == "partial":
+        return _entry(row, "partial", "real", _fill(T_DEM_PARTIAL, n=len(f.dem.get("incomplete", [])), total=len(f.dem.get("points", []))),
+                      [str(i) for i in f.dem.get("incomplete", [])])
     if rid == "surrogate-model" and not f.slots["surrogate-model"]:
         return _entry(row, "training", "baseline", _fill(T_NO_SURROGATE))
     if rid == "anomaly-model" and not f.slots["anomaly-model"]:
