@@ -36,7 +36,11 @@ overlaps.
 
 **The ore.** Derived from the paper's single-particle tests (the sample median force of 30 particles per class, digitised) and
 not calibrated to the jaw: $E_\infty$ and $d_0$ are fitted to the two coarse classes, and $\varphi$, $\sigma^2$, $\gamma$, $A$
-and $b'$ are assumptions taken from one rock of Tavares 2022; the document's `ore.derivation` states each. The contact is
+and $b'$ are assumptions taken from one rock of Tavares 2022; the document's `ore.derivation` states each. No ore property
+was tuned to reach a band, but two choices of the derivation were made by the package's authors after jaw results of the
+package were known, as its validation record discloses: $\varphi$ was fixed and the finest class left out after a first
+trial run, and the sample median replaced the median of a lognormal fit after an earlier set of jaw runs. The run with the
+other statistic does not exist, so the sensitivity of the net power verdicts to that choice is not known. The contact is
 that of Tables 3 and 4 of the paper, which its own Fig. 6a contradicts (the package's validation document finds it about six
 times softer than the paper's calibrated sphere).
 
