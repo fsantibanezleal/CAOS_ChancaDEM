@@ -174,6 +174,14 @@ def test_every_point_carries_the_three_sides(doc_root):
         assert pb["product"]["sieves_mm"] == sieves and len(pb["product"]["passing_pct"]) == len(sieves)
         assert len(pb["band"]["passing_low_pct"]) == len(pb["band"]["passing_high_pct"]) == len(sieves)
         assert pb["band"]["p80_mm"][0] <= pb["p80_mm"] <= pb["band"]["p80_mm"][1]
+        # the paper's own simulated values are context: stated with their source where the paper has them, and no verdict uses them
+        ps = p["paper_simulation"]
+        assert (ps is not None) == (p["id"] == "63-52"), p["id"]
+        if ps is not None:
+            for k in ("net_power_kw", "throughput_kg_h"):
+                assert ps[k]["value"] > 0 and "p. " in ps[k]["source"], (p["id"], k)
+            used = {v[side] for pair in p["verdicts"].values() for v in pair.values() for side in ("first", "second")}
+            assert ps["net_power_kw"]["value"] not in used and ps["throughput_kg_h"]["value"] not in used
         assert pb["mass_closure"] == pytest.approx(1.0, abs=1e-5) and pb["f80_mm"] == p["feed_f80_mm"]
         assert set(p["verdicts"]) == set(PAIRS) and all(set(p["verdicts"][pair]) == set(QUANTITIES) for pair in PAIRS)
 

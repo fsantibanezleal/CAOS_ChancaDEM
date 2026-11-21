@@ -83,11 +83,19 @@ def test_the_points_are_the_packages_feed_classes():
 
 
 def test_the_web_bundle_holds_no_simulation():
-    """DM-018: no file under frontend/src imports or names a simulation step: the document is read, never computed."""
-    forbidden = re.compile(r"run_case|run_cycles|verlet|hertz|contactForce|integrateStep|simulationStep|stepSimulation", re.I)
+    """DM-018: no file under frontend/src imports or names a simulation step: the document is read, never computed. The
+    documentation content (frontend/src/content) explains the method in words, so the names of its laws (Hertz, Verlet) are
+    allowed there and only the identifiers of an implementation are refused; everywhere else the names are refused too."""
+    identifiers = r"run_case|run_cycles|contactForce|integrateStep|simulationStep|stepSimulation"
+    in_code = re.compile(identifiers + r"|verlet|hertz", re.I)
+    in_content = re.compile(identifiers, re.I)
+    content = ROOT / "frontend" / "src" / "content"
     found = []
     for f in (ROOT / "frontend" / "src").rglob("*"):
-        if f.suffix in (".ts", ".tsx", ".js", ".jsx", ".mjs") and forbidden.search(f.read_text(encoding="utf-8")):
+        if f.suffix not in (".ts", ".tsx", ".js", ".jsx", ".mjs"):
+            continue
+        rule = in_content if content in f.parents else in_code
+        if rule.search(f.read_text(encoding="utf-8")):
             found.append(str(f.relative_to(ROOT)))
     assert found == []
     ci = " ".join(p.read_text(encoding="utf-8") for p in (ROOT / ".github").rglob("*.yml")) if (ROOT / ".github").is_dir() else ""

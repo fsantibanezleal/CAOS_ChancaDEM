@@ -565,6 +565,7 @@ export type ModelMetrics = Of<{ readonly object: typeof MODEL_METRICS }>;
 const NULLABLE_NUMBER = { nullable: 'number' } as const;
 const SIEVE_CURVE = { object: { sieves_mm: { array: 'number' }, passing_pct: { array: NULLABLE_NUMBER } } } as const;
 const DEM_VALUE_SOURCE = { object: { value: 'number', digitisation_noise: 'number', source: 'string' } } as const;
+const DEM_PAPER_VALUE = { object: { value: 'number', source: 'string' } } as const;
 const DEM_VERDICT = {
   object: {
     first: NULLABLE_NUMBER,
@@ -777,6 +778,7 @@ export const DEM_RUN = {
         feed_mean_mm: 'number',
         feed_f80_mm: 'number',
         measured: DEM_MEASURED,
+        paper_simulation: { nullable: { object: { net_power_kw: { nullable: DEM_PAPER_VALUE }, throughput_kg_h: { nullable: DEM_PAPER_VALUE } } } },
         simulation: DEM_SIMULATION,
         population_balance: DEM_POPULATION_BALANCE,
         verdicts: { object: { simulation_vs_measured: DEM_VERDICT_SET, population_balance_vs_measured: DEM_VERDICT_SET, population_balance_vs_simulation: DEM_VERDICT_SET } },

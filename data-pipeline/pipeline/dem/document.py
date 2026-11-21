@@ -83,6 +83,16 @@ def _plain(comparison, first, second, band, absent_basis) -> dict:
 
 # --- the three sides -----------------------------------------------------------------------------------------------------------------
 
+def _paper_simulation(case, point: P.Point) -> dict | None:
+    """What the source paper's own simulation gave at the point, where the package's ``PAPER`` holds it (the feed of the paper's
+    product, power and throughput text): context for the reader, used in no verdict. None where the paper states nothing."""
+    if point.feed_class != case.DEFAULT_FEED_CLASS:
+        return None
+    power, flow = case.PAPER["simulated_mean_net_power_63_52_kw"], case.PAPER["paper_simulation_throughput_63_52_kg_h"]
+    return {"net_power_kw": {"value": float(power["value"]), "source": f"{power['source']}, p. {power['page']}"},
+            "throughput_kg_h": {"value": float(flow["value"]), "source": f"{flow['source']}, p. {flow['page']}"}}
+
+
 def _measured_block(case, point: P.Point, f80: float) -> dict:
     m = case.measured(point.feed_class)
     prod = m.product
@@ -264,6 +274,7 @@ def build(raw_runs: Mapping[str, RawRun], version: str, replays: Mapping[str, di
             incomplete.append(point.id)
         pts.append({"id": point.id, "feed_class": point.feed_class, "feed_mm": [point.lower_mm, point.upper_mm],
                     "feed_mean_mm": labjaw.class_mean_mm(point.lower_mm, point.upper_mm), "feed_f80_mm": f80, "measured": meas,
+                    "paper_simulation": _paper_simulation(case, point),
                     "simulation": sim, "population_balance": pb, "verdicts": _verdicts(case, comparison, point, meas, sim, pb, facts)})
     from .runs import package_version
 
