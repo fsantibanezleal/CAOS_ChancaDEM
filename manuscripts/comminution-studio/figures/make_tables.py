@@ -22,6 +22,8 @@ Sources read (nothing else):
   data-pipeline/pipeline/model/crusher/labjaw.py, tests/test_labjaw.py  the laboratory-jaw module and the printed Table 2 of
                                                                       Sastri 1994 as the test holds it (tab-sastri-table2,
                                                                       numbers-labjaw)
+  data/derived/dem/jaw-lab.json                                       the laboratory-jaw document (tab-dem-runs, tab-dem-sides, tab-dem-pb,
+                                                                      tab-dem-decisions, numbers-dem-results)
   the installed package crushdem (crushdem.cases.barrios2020, crushdem.machines)  the laboratory jaw case: its machine, contacts,
                                                                       ore derivation and digitised measurements
                                                                       (tab-dem-parameters, tab-lab-measured); skipped, with the
@@ -1037,21 +1039,11 @@ def schema_longtable(cid: str, version: str, schema_path: Path) -> None:
     write(f"schema-{cid}", "\n".join(lines))
 
 
-DEM_RUN_SCHEMA = ROOT / "docs" / "contracts" / "schemas" / "dem-run.schema.json"
-
-
 def schemas() -> None:
-    listed = set()
     for r in catalog_rows():
         path = ROOT / r["schema file"]
-        listed.add(r["id"])
         if path.name.endswith(".schema.json"):
             schema_longtable(r["id"], r["version"], path)
-    if "dem-run" not in listed:
-        # the catalog row of dem-run is added with the stage that writes the document; until then the table is generated from
-        # the schema file alone, with the version its description states
-        version = re.search(r"dem-run (\d+\.\d+\.\d+)", _json(DEM_RUN_SCHEMA)["description"]).group(1)
-        schema_longtable("dem-run", version, DEM_RUN_SCHEMA)
     api = _json(ROOT / "docs" / "contracts" / "api.openapi.json")
     rows = []
     for p, ops in api["paths"].items():
@@ -1082,7 +1074,8 @@ HASHED = ["data/examples/hp500-surveys.csv", "data/examples/params.csv", "data/d
           "data/derived/hp500/loo.json", "data/derived/hp500/crusherbayes.json", "data/derived/hp500/comparison.json",
           "data/derived/model-metrics.json",
           "data/derived/models/surrogate.onnx", "data/derived/models/psd-ae.onnx", "data/derived/manifests/index.json",
-          "data-pipeline/pipeline/model/crusher/labjaw.py", "docs/contracts/schemas/dem-run.schema.json"]
+          "data-pipeline/pipeline/model/crusher/labjaw.py", "docs/contracts/schemas/dem-run.schema.json",
+          "data/derived/dem/jaw-lab.json"]
 
 
 def hashes() -> None:
@@ -1316,6 +1309,187 @@ def tab_lab_measured() -> None:
     ]))
 
 
+
+# ---------------------------------------------------------------------------------------------------------------------
+# the committed document of the laboratory jaw (contract dem-run): data/derived/dem/jaw-lab.json
+# ---------------------------------------------------------------------------------------------------------------------
+DEM_DOC = DER / "dem" / "jaw-lab.json"
+POINT_WORD = {"63-52": "Coarse", "31.5-26.5": "Mid", "16-13.2": "Fine"}
+PAIR_NAME = {"simulation_vs_measured": "particle simulation against measurement",
+             "population_balance_vs_measured": "population balance against measurement",
+             "population_balance_vs_simulation": "population balance against particle simulation"}
+SIDE_SHORT = {"simulation_vs_measured": "sim/meas", "population_balance_vs_measured": "pb/meas", "population_balance_vs_simulation": "pb/sim"}
+QUANTITY_NAME = {"throughput": ("throughput", "kg/h", 1), "net_power": ("net power", "kW", 3), "reduction_ratio": ("reduction ratio", "--", 2)}
+
+
+def _dem() -> dict:
+    """The committed document with each measured value that carries its source reduced to the value (its digitisation noise kept
+    beside it as ``<name>_noise``)."""
+    d = _json(DEM_DOC)
+    for p in d["points"]:
+        m = p["measured"]
+        for k in list(m):
+            if isinstance(m[k], dict) and "digitisation_noise" in m[k]:
+                m[k + "_noise"] = m[k]["digitisation_noise"]
+                m[k] = m[k]["value"]
+    return d
+
+
+def _v(x: object, nd: int = 2) -> str:
+    """A value to nd decimals in math mode, or the dash for an absent one (never a made-up number)."""
+    return DASH if x is None else num(x, nd)
+
+
+def _limit_text(a: dict) -> str:
+    return f"{a['max_overlap_fraction']:g}: " + {"complete": "complete", "overlap_error": "overlap error"}.get(a["status"], a["status"]) + f" ({a['strokes']})"
+
+
+def tab_dem_results() -> None:
+    """The result tables and macros of the laboratory jaw, read from the committed document of the contract dem-run."""
+    d = _dem()
+    pts = d["points"]
+    names = {p["id"]: p["id"].replace("-", "/") for p in pts}
+    # --- the runs -------------------------------------------------------------------------------------------------------
+    head = ["Quantity"] + [r"$" + names[p["id"]] + r"$~mm" for p in pts]
+    rows = []
+
+    def row(label, fn):
+        rows.append([label] + [fn(p) for p in pts])
+
+    row("State of the final attempt", lambda p: tex(p["simulation"]["status"].replace("_", " ")))
+    row("Attempts (overlap limit: end, strokes)", lambda p: tex("; ".join(_limit_text(a) for a in p["simulation"]["attempts"])))
+    row("Strokes, steps ($10^6$) of the final attempt", lambda p: f"{p['simulation']['strokes']}, {num(p['simulation']['steps'] / 1e6, 2)}")
+    row("Simulated time (s)", lambda p: _v(p["simulation"]["simulated_s"], 2))
+    row("Mass fed and passed (kg)", lambda p: f"{num(p['simulation']['mass_fed_kg'], 3)} and {num(p['simulation']['mass_passed_kg'], 3)}")
+    row("Spheres and mass held at the end (kg)", lambda p: f"{p['simulation']['held_spheres']} and {num(p['simulation']['hold_up_kg'], 3)}")
+    row("Window (first and last stroke)", lambda p: (f"{p['simulation']['window']['first_stroke']} and {p['simulation']['window']['last_stroke']}" if p["simulation"]["window"] else DASH))
+    row("Window strokes above the reference overlap", lambda p: (str(p["simulation"]["window_strokes_above_overlap_reference"]) if p["simulation"]["window"] else DASH))
+    row("Power stationary in the window", lambda p: (num(p["simulation"]["power_trend_stationary"]) if p["simulation"]["window"] else DASH))
+    row("Whole-run throughput (kg/h)", lambda p: _v(p["simulation"]["throughput_whole_run_kg_h"], 0))
+    row("Whole-run net power (kW)", lambda p: _v(p["simulation"]["net_power_whole_run_kw"], 3))
+    row("Peak number of spheres (pool)", lambda p: f"{p['simulation']['breakage']['peak_particles']} ({p['simulation']['capacity_slots']})")
+    row("Breakage events and progeny", lambda p: f"{p['simulation']['breakage']['events']} and {p['simulation']['breakage']['progeny']}")
+    row("Placements deferred for want of room", lambda p: str(p["simulation"]["breakage"]["deferred_placements"]))
+    row("Injected and absorbed energy (J)", lambda p: f"{num(p['simulation']['breakage']['injected_energy_j'], 1)} and {num(p['simulation']['breakage']['absorbed_energy_j'], 0)}")
+    row("Fines below the smallest sphere (\\%)", lambda p: _v(p["simulation"]["fines_below_minimum_pct"], 1))
+    row("Largest product sphere (mm); spheres above the open side", lambda p: f"{num(p['simulation']['largest_product_mm'], 1)}; {p['simulation']['spheres_above_open_side']}")
+    row("Mass-balance residual (kg)", lambda p: _sci(p["simulation"]["mass_balance_residual_kg"]))
+    write("tab-dem-runs", tabular("@{}p{0.34\\textwidth} p{0.19\\textwidth} p{0.19\\textwidth} p{0.19\\textwidth}@{}", head, rows))
+
+    # --- the three sides ------------------------------------------------------------------------------------------------
+    srows = []
+    for p in pts:
+        m, s, b = p["measured"], p["simulation"], p["population_balance"]
+        band = b["band"]
+        nm = r"$" + names[p["id"]] + r"$"
+        srows.append([nm, "throughput (kg/h)", _v(m["throughput_kg_h"], 1), _pm(s["throughput_kg_h"], s["throughput_se_kg_h"], 0), _v(b["throughput_kg_h"], 0)])
+        srows.append(["", "net power (kW)", _v(m["net_power_kw"], 3), _pm(s["net_power_kw"], s["net_power_se_kw"], 3), DASH])
+        srows.append(["", "specific energy (J/kg)", _v(m["specific_energy_j_kg"], 0), _v(s["specific_energy_j_kg"], 0), DASH])
+        srows.append(["", "$P_{80}$ (mm)", _v(m["p80_mm"], 2), _v(s["p80_mm"], 2), _rng(b["p80_mm"], band["p80_mm"], 2)])
+        srows.append(["", "$P_{50}$ (mm)", _v(m["p50_mm"], 2), _v(s["p50_mm"], 2), _rng(b["p50_mm"], band["p50_mm"], 2)])
+        srows.append(["", "reduction ratio", _v(m["reduction_ratio"], 2), _v(s["reduction_ratio"], 2), _rng(b["reduction_ratio"], band["reduction_ratio"], 2)])
+    write("tab-dem-sides", tabular("@{}l l r r r@{}", ["Point (mm)", "Quantity", "Measured", "Particle simulation", "Population balance [spread]"], srows))
+
+    # --- the population balance -----------------------------------------------------------------------------------------
+    prow = []
+
+    def prow_add(label, fn):
+        prow.append([label] + [fn(p) for p in pts])
+
+    prow_add("Median fracture energy $E_{50}$ at the class mean size (J/kg)", lambda p: _v(p["population_balance"]["e50_j_kg"], 1))
+    prow_add(r"Ore competence $A\times b$", lambda p: _v(p["population_balance"]["ore_axb"], 1))
+    prow_add("Specific energy $E_{cs}$ (kWh/t) and $t_{10}$ (\\%)", lambda p: f"{num(p['population_balance']['specific_energy_kwh_t'], 3)} and {num(p['population_balance']['t10_pct'], 1)}")
+    prow_add("Feed-size factor $k_{\\mathrm F}$ and throw factor $k_{\\mathrm T}$", lambda p: f"{num(p['population_balance']['capacity']['feed_factor'], 3)} and {num(p['population_balance']['capacity']['throw_factor'], 3)}")
+    prow_add("Volume per hour $V_h$ (m$^3$/h) and critical speed (rpm)", lambda p: f"{num(p['population_balance']['capacity']['volumetric_m3_h'], 3)} and {num(p['population_balance']['capacity']['critical_speed_rpm'], 0)}")
+    prow_add("Capacity (kg/h)", lambda p: _v(p["population_balance"]["throughput_kg_h"], 0))
+    prow_add("Analytic $F_{80}$ (mm)", lambda p: _v(p["population_balance"]["f80_mm"], 2))
+    prow_add("Bond energy per unit of work index $w_{\\mathrm B}$", lambda p: _v(p["population_balance"]["bond_kwh_t_per_wi"], 4))
+    prow_add("Work index implied by the measured energy at the predicted sizes $W_i^{\\ast}$ (kWh/t)", lambda p: _v(p["population_balance"]["implied_work_index_kwh_t"], 2))
+    prow_add("Work index implied at the measured sizes (kWh/t)", lambda p: _v(p["measured"]["implied_work_index_kwh_t"], 2))
+    prow_add("Flags of the engine", lambda p: tex("; ".join(p["population_balance"]["flags"]) or "none"))
+    write("tab-dem-pb", tabular("@{}p{0.34\\textwidth} p{0.19\\textwidth} p{0.19\\textwidth} p{0.19\\textwidth}@{}", head, prow))
+
+    # --- the decisions --------------------------------------------------------------------------------------------------
+    lines = [r"\begingroup\scriptsize",
+             r"\begin{longtable}{@{}l l l r r r l p{0.17\textwidth} l@{}}",
+             r"\caption{The $27$ decisions of the laboratory jaw, read from the committed document: for each operating point, each pair of sides "
+             r"and each quantity (the bands are $10$ percent for the throughput, $30$ for the net power and $15$ for the reduction ratio RR; sides: sim is the particle simulation, meas the measurement, pb the population balance), the two values (the first side against the second), the relative error of Equation~\eqref{eq:proto-band}, the "
+             r"decision, the basis of a decision that is not compared and, for a decision that rests on a steady window, whether it is resolved (the "
+             r"nearer band edge more than two standard errors from the window mean) and that distance in standard errors. Generated from "
+             r"\texttt{jaw-lab.json}.}\label{tab:dem-decisions}\\",
+             r"\toprule", r"Point & Sides & Quantity & First & Second & Error (\%) & Decision & Basis & Resolved \\", r"\midrule", r"\endfirsthead",
+             r"\multicolumn{9}{@{}l}{\footnotesize Table~\thetable{} (continued)}\\", r"\toprule",
+             r"Point & Sides & Quantity & First & Second & Error (\%) & Decision & Basis & Resolved \\", r"\midrule", r"\endhead",
+             r"\bottomrule", r"\endfoot"]
+    counts = {"met": 0, "not met": 0, "not compared": 0}
+    for p in pts:
+        for pair, label in PAIR_NAME.items():
+            for q, (qn, unit, nd) in QUANTITY_NAME.items():
+                v = p["verdicts"][pair][q]
+                counts[v["verdict"]] += 1
+                res = DASH if v["resolved"] is None else ("yes" if v["resolved"] else "no") + (f" ({num(v['edge_distance_se'], 1)})" if v["edge_distance_se"] is not None else "")
+                lines.append(" & ".join([r"$" + names[p["id"]] + r"$", SIDE_SHORT[pair], {"throughput": "throughput", "net_power": "power", "reduction_ratio": "RR"}[q], _v(v["first"], nd), _v(v["second"], nd),
+                                         _v(None if v["relative_error"] is None else 100 * v["relative_error"], 1),
+                                         tex(v["verdict"].replace("verdict", "decision")), tex((v["basis"] or "").replace("_", " ")) or DASH, res]) + r" \\")
+    lines += [r"\end{longtable}", r"\endgroup"]
+    write("tab-dem-decisions", "\n".join(lines))
+
+    # --- macros ---------------------------------------------------------------------------------------------------------
+    mac = [f"\\newcommand{{\\demDecMet}}{{{counts['met']}}}", f"\\newcommand{{\\demDecNotMet}}{{{counts['not met']}}}",
+           f"\\newcommand{{\\demDecNotComp}}{{{counts['not compared']}}}", f"\\newcommand{{\\demDecAll}}{{{sum(counts.values())}}}",
+           f"\\newcommand{{\\demDocVersion}}{{{d['engine_version']}}}", f"\\newcommand{{\\demSeed}}{{{d['seed']}}}"]
+    for p in pts:
+        w = POINT_WORD[p["id"]]
+        m, s, b = p["measured"], p["simulation"], p["population_balance"]
+        vs, vp = p["verdicts"]["simulation_vs_measured"], p["verdicts"]["population_balance_vs_measured"]
+        pairs = {
+            "Qsim": (s["throughput_kg_h"], 0), "QsimSe": (s["throughput_se_kg_h"], 0), "Qmeas": (m["throughput_kg_h"], 0), "Qpb": (b["throughput_kg_h"], 0),
+            "Psim": (s["net_power_kw"], 3), "PsimSe": (s["net_power_se_kw"], 3), "Pmeas": (m["net_power_kw"], 3),
+            "RRsim": (s["reduction_ratio"], 2), "RRmeas": (m["reduction_ratio"], 2), "RRpb": (b["reduction_ratio"], 2),
+            "Dsim": (s["p80_mm"], 1), "Dmeas": (m["p80_mm"], 1), "Dpb": (b["p80_mm"], 1), "DpbLo": (b["band"]["p80_mm"][0], 1), "DpbHi": (b["band"]["p80_mm"][1], 1),
+            "Fsim": (s["fines_below_minimum_pct"], 1), "Esim": (s["specific_energy_j_kg"], 0), "Emeas": (m["specific_energy_j_kg"], 0),
+            "Strokes": (s["strokes"], 0), "WinFirst": (s["window"]["first_stroke"] if s["window"] else None, 0),
+            "WinLast": (s["window"]["last_stroke"] if s["window"] else None, 0), "WinN": (s["window"]["strokes"] if s["window"] else None, 0),
+            "WinAbove": (s["window_strokes_above_overlap_reference"], 0), "Held": (s["held_spheres"], 0), "HoldKg": (s["hold_up_kg"], 2),
+            "Passed": (s["mass_passed_kg"], 2), "Peak": (s["breakage"]["peak_particles"], 0), "Events": (s["breakage"]["events"], 0),
+            "Deferred": (s["breakage"]["deferred_placements"], 0), "Above": (s["spheres_above_open_side"], 0), "Largest": (s["largest_product_mm"], 1),
+            "QwholeSim": (s["throughput_whole_run_kg_h"], 0), "PwholeSim": (s["net_power_whole_run_kw"], 3), "Slots": (s["capacity_slots"], 0),
+            "Wi": (b["implied_work_index_kwh_t"], 1), "WiMeas": (m["implied_work_index_kwh_t"], 1), "Axb": (b["ore_axb"], 0), "Esub": (b["e50_j_kg"], 1),
+            "SimTime": (s["simulated_s"], 1), "Steps": (None if s["steps"] is None else s["steps"] / 1e6, 2),
+            "FeightyMm": (p["feed_f80_mm"], 2),
+            "Qratio": (None if s["throughput_kg_h"] is None else s["throughput_kg_h"] / m["throughput_kg_h"], 2),
+            "Eratio": (None if s["specific_energy_j_kg"] is None else s["specific_energy_j_kg"] / m["specific_energy_j_kg"], 2),
+            "Pratio": (None if s["net_power_kw"] is None else s["net_power_kw"] / m["net_power_kw"], 2),
+            "PbQerrAbs": (None if vp["throughput"]["relative_error"] is None else abs(100 * vp["throughput"]["relative_error"]), 1),
+            "PbRRerrAbs": (None if vp["reduction_ratio"]["relative_error"] is None else abs(100 * vp["reduction_ratio"]["relative_error"]), 1),
+            "ErrPsimAbs": (None if vs["net_power"]["relative_error"] is None else abs(100 * vs["net_power"]["relative_error"]), 1),
+            "ErrQsim": (None if vs["throughput"]["relative_error"] is None else 100 * vs["throughput"]["relative_error"], 0),
+            "ErrPsim": (None if vs["net_power"]["relative_error"] is None else 100 * vs["net_power"]["relative_error"], 1),
+            "ErrRRsim": (None if vs["reduction_ratio"]["relative_error"] is None else 100 * vs["reduction_ratio"]["relative_error"], 1),
+            "ErrQpb": (None if vp["throughput"]["relative_error"] is None else 100 * vp["throughput"]["relative_error"], 1),
+            "ErrRRpb": (None if vp["reduction_ratio"]["relative_error"] is None else 100 * vp["reduction_ratio"]["relative_error"], 1),
+        }
+        for k, (val, nd) in pairs.items():
+            if val is not None:
+                mac.append(f"\\newcommand{{\\dem{w}{k}}}{{{val:.{nd}f}}}")
+        mac.append(f"\\newcommand{{\\dem{w}Status}}{{{s['status'].replace('_', ' ')}}}")
+        mac.append(f"\\newcommand{{\\dem{w}Att}}{{{len(s['attempts'])}}}")
+    write("numbers-dem-results", "\n".join(mac))
+
+
+def _sci(x: float) -> str:
+    mant, _, exp = f"{x:.1e}".partition("e")
+    return f"${float(mant):g}\\times10^{{{int(exp)}}}$"
+
+
+def _pm(v: object, se: object, nd: int) -> str:
+    return DASH if v is None else f"{num(v, nd)} $\\pm$ {num(se, nd)}"
+
+
+def _rng(v: object, rng: list, nd: int) -> str:
+    return f"{num(v, nd)} [{num(rng[0], nd)}, {num(rng[1], nd)}]"
+
+
 if __name__ == "__main__":
     parity_numbers()
     tab_surveys()
@@ -1345,5 +1519,6 @@ if __name__ == "__main__":
     tab_sastri_table2()
     tab_dem_parameters()
     tab_lab_measured()
+    tab_dem_results()
     hashes()
     print("tables written to", OUT)
