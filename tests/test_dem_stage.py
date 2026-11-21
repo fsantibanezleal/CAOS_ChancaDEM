@@ -517,14 +517,14 @@ def test_the_stage_writes_the_document_and_one_replay_file_per_point(baked):
 
 
 @needs_package
-def test_two_bakes_of_the_same_records_are_byte_identical_and_the_index_lists_the_files(baked, short, tmp_path):
+def test_two_bakes_of_the_same_records_are_byte_identical_and_the_index_lists_the_replay_files(baked, short, tmp_path):
     second = pipeline.PipelinePaths.from_output(tmp_path / "again")
     stage.run(second, seed=points.SEED, runs_dir=short["folder"], jobs=3, settings=SHORT)
     for f in (baked["root"] / "dem").iterdir():
         assert f.read_bytes() == (tmp_path / "again" / "dem" / f.name).read_bytes(), f.name
     listed = pipeline.index_files(baked["root"])
-    assert listed[:1] == ["dem/jaw-lab.json"] or "dem/jaw-lab.json" in listed
-    assert {"dem/jaw-lab.json", "dem/jaw-lab-63-52.frames.bin", "dem/jaw-lab-31.5-26.5.frames.bin", "dem/jaw-lab-16-13.2.frames.bin"} <= set(listed)
+    assert listed[listed.index("dem/jaw-lab.json"):] == ["dem/jaw-lab.json", "dem/jaw-lab-63-52.frames.bin", "dem/jaw-lab-31.5-26.5.frames.bin",
+                                                         "dem/jaw-lab-16-13.2.frames.bin"]      # the document, then the files it names, in the order of its points
 
 
 @needs_package
@@ -561,3 +561,24 @@ def test_the_command_refreshes_the_index_and_the_readiness(short, tmp_path):
     ready = json.loads((out / "readiness.json").read_text(encoding="utf-8"))
     entry = next(e for e in ready["contracts"] if e["id"] == "dem-run")
     assert entry["state"] == "partial" and entry["missing"] == ["16-13.2", "31.5-26.5", "63-52"]
+
+
+def test_the_index_lists_a_replay_file_only_when_the_document_names_it_and_it_exists(tmp_path):
+    """index_files reads the replay files from the document, never from a glob of the folder."""
+    dem = tmp_path / "dem"
+    dem.mkdir()
+    doc = {"points": [{"simulation": {"replay": {"file": f"dem/jaw-lab-{i}.frames.bin"}}} for i in ("a", "b")] + [{"simulation": {"replay": None}}]}
+    (dem / "jaw-lab.json").write_text(json.dumps(doc), encoding="utf-8")
+    (dem / "jaw-lab-a.frames.bin").write_bytes(b"")
+    (dem / "jaw-lab-stale.frames.bin").write_bytes(b"")          # in the folder, named by no point: never listed
+    assert pipeline.index_files(tmp_path) == ["dem/jaw-lab.json", "dem/jaw-lab-a.frames.bin"]       # "b" is named but absent: not listed
+    (dem / "jaw-lab.json").unlink()
+    assert pipeline.index_files(tmp_path) == []                       # no document, no replay file
+
+
+@pytest.mark.parametrize("path,ok", [("dem/jaw-lab-63-52.frames.bin", True), ("hp500/loo.json", True), ("/dem/x.bin", False),
+                                     ("dem/../x.bin", False), ("dem\\x.bin", False), ("dem/x.exe", False), ("dem/x.binary", False)])
+def test_the_case_index_pattern_admits_bin_and_still_refuses_the_rest(path, ok):
+    idx = json.loads((ROOT / "docs" / "contracts" / "fixtures" / "data" / "derived" / "manifests" / "index.json").read_text(encoding="utf-8"))
+    idx["files"] = [path]
+    assert (errors("case-index", idx) == []) is ok, (path, errors("case-index", idx))

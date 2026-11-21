@@ -1,6 +1,6 @@
 // The web side of the ChancaDEM contracts (docs/contracts/catalog.md): the case documents (case-index, case-manifest, trace),
-// the HP500 documents (hp500-backbone, hp500-loo), the two model slots (surrogate-model, anomaly-model), the model metrics and
-// the readiness document. The types of the first three and of readiness are GENERATED: contract.gen.ts comes from
+// the HP500 documents (hp500-backbone, hp500-loo), the two model slots (surrogate-model, anomaly-model), the model metrics, the
+// particle-simulation document (dem-run) and the readiness document. The types of the first three and of readiness are GENERATED: contract.gen.ts comes from
 // docs/contracts/api.openapi.json, whose components are the schema files of docs/contracts/schemas/ (ADR-0080 decision 2;
 // `npm run contracts:types`, checked by `npm run build`), and the names below are aliases of the generated types. The
 // OpenAPI document serves only those four documents, so the other five have no generated type: their types are inferred
@@ -51,6 +51,7 @@ export const SCHEMAS = {
   surrogate: 'chancadem.surrogate/v1',
   anomaly: 'chancadem.anomaly/v1',
   metrics: 'chancadem.model-metrics/v1',
+  demRun: 'chancadem.dem.run/v1',
 } as const satisfies {
   trace: Trace['schema'];
   manifest: CaseManifest['schema'];
@@ -63,6 +64,7 @@ export const SCHEMAS = {
   surrogate: Schemas['SurrogateModel']['schema'];
   anomaly: string;
   metrics: string;
+  demRun: string;
 };
 
 /**
@@ -559,6 +561,230 @@ export const MODEL_METRICS = {
   },
 } as const satisfies Record<string, Kind>;
 export type ModelMetrics = Of<{ readonly object: typeof MODEL_METRICS }>;
+
+const NULLABLE_NUMBER = { nullable: 'number' } as const;
+const SIEVE_CURVE = { object: { sieves_mm: { array: 'number' }, passing_pct: { array: NULLABLE_NUMBER } } } as const;
+const DEM_VALUE_SOURCE = { object: { value: 'number', digitisation_noise: 'number', source: 'string' } } as const;
+const DEM_VERDICT = {
+  object: {
+    first: NULLABLE_NUMBER,
+    second: NULLABLE_NUMBER,
+    relative_error: NULLABLE_NUMBER,
+    band: 'number',
+    verdict: { enum: ['met', 'not met', 'not compared'] },
+    basis: { nullable: { enum: ['run_incomplete', 'no_window', 'no_work_index', 'nothing_passed'] } },
+    resolved: { nullable: 'boolean' },
+    edge_distance_se: NULLABLE_NUMBER,
+  },
+} as const;
+const DEM_VERDICT_SET = { object: { throughput: DEM_VERDICT, net_power: DEM_VERDICT, reduction_ratio: DEM_VERDICT } } as const;
+const DEM_STATUS = { enum: ['complete', 'overlap_error', 'stalled', 'max_strokes', 'max_wall_time'] } as const;
+const DEM_PAIR = { tuple: ['number', 'number'] } as const;
+const DEM_ATTEMPT = {
+  object: {
+    max_overlap_fraction: 'number',
+    status: DEM_STATUS,
+    strokes: 'integer',
+    stopped_during_stroke: { nullable: 'integer' },
+    max_overlap_reached: 'number',
+    held_spheres: 'integer',
+    hold_up_kg: 'number',
+    mass_passed_kg: 'number',
+    peak_particles: 'integer',
+    deferred_placements: 'integer',
+  },
+} as const;
+const DEM_REPLAY = {
+  object: {
+    file: 'string',
+    bytes: 'integer',
+    sha256: 'string',
+    first_stroke: 'integer',
+    last_stroke: 'integer',
+    frames_per_stroke: 'integer',
+    frames: 'integer',
+    spheres: 'integer',
+    t_s: { array: 'number' },
+    stroke: { array: 'integer' },
+    plate_bottom_x_mm: { array: 'number' },
+    plate_bottom_z_mm: { array: 'number' },
+    count: { array: 'integer' },
+    encoding: { object: { record: { enum: ['uint16le x, uint16le y, uint16le z, uint16le radius'] }, x_range_mm: DEM_PAIR, y_range_mm: DEM_PAIR, z_range_mm: DEM_PAIR, radius_max_mm: 'number' } },
+    geometry: {
+      object: {
+        fixed_plate_x_mm: 'number',
+        fixed_plate_z_mm: DEM_PAIR,
+        swing_pivot_mm: DEM_PAIR,
+        swing_closed_bottom_mm: DEM_PAIR,
+        discharge_z_mm: 'number',
+        hopper_height_mm: 'number',
+        width_mm: 'number',
+      },
+    },
+  },
+} as const;
+const DEM_SIMULATION = {
+  object: {
+    status: DEM_STATUS,
+    error: { nullable: 'string' },
+    attempts: { array: DEM_ATTEMPT },
+    capacity_slots: 'integer',
+    strokes: 'integer',
+    steps: 'integer',
+    time_step_s: 'number',
+    simulated_s: 'number',
+    mass_fed_kg: 'number',
+    mass_passed_kg: 'number',
+    held_spheres: 'integer',
+    hold_up_kg: 'number',
+    pending_kg: 'number',
+    window: { nullable: { object: { first_stroke: 'integer', last_stroke: 'integer', strokes: 'integer' } } },
+    throughput_kg_h: NULLABLE_NUMBER,
+    throughput_se_kg_h: NULLABLE_NUMBER,
+    throughput_whole_run_kg_h: NULLABLE_NUMBER,
+    net_power_kw: NULLABLE_NUMBER,
+    net_power_se_kw: NULLABLE_NUMBER,
+    net_power_whole_run_kw: NULLABLE_NUMBER,
+    power_trend_stationary: { nullable: 'boolean' },
+    specific_energy_j_kg: NULLABLE_NUMBER,
+    specific_energy_kwh_t: NULLABLE_NUMBER,
+    product: { nullable: SIEVE_CURVE },
+    p80_mm: NULLABLE_NUMBER,
+    p50_mm: NULLABLE_NUMBER,
+    reduction_ratio: NULLABLE_NUMBER,
+    fines_below_minimum_pct: NULLABLE_NUMBER,
+    largest_product_mm: NULLABLE_NUMBER,
+    spheres_above_open_side: { nullable: 'integer' },
+    breakage: { object: { events: 'integer', progeny: 'integer', peak_particles: 'integer', deferred_placements: 'integer', injected_energy_j: 'number', absorbed_energy_j: 'number' } },
+    mass_balance_residual_kg: 'number',
+    window_strokes_above_overlap_reference: { nullable: 'integer' },
+    series: {
+      object: {
+        stroke: { array: 'integer' },
+        t_s: { array: 'number' },
+        plate_power_w: { array: 'number' },
+        passed_kg: { array: 'number' },
+        held: { array: 'integer' },
+        hold_up_kg: { array: 'number' },
+        pending_kg: { array: 'number' },
+        max_overlap: { array: 'number' },
+      },
+    },
+    replay: { nullable: DEM_REPLAY },
+  },
+} as const;
+const DEM_POPULATION_BALANCE = {
+  object: {
+    classification: { object: { k1_mm: 'number', k2_mm: 'number', k3: 'number' } },
+    e50_j_kg: 'number',
+    ore_axb: 'number',
+    specific_energy_kwh_t: 'number',
+    t10_pct: 'number',
+    capacity: {
+      object: {
+        depth_m: 'number',
+        critical_speed_rpm: 'number',
+        regime: { enum: ['below_critical_speed', 'at_or_above_critical_speed'] },
+        volumetric_m3_h: 'number',
+        feed_factor: 'number',
+        throw_factor: 'number',
+        material_factor: 'number',
+        density_t_m3: 'number',
+      },
+    },
+    throughput_kg_h: 'number',
+    f80_mm: 'number',
+    p80_mm: 'number',
+    p50_mm: 'number',
+    reduction_ratio: 'number',
+    product: SIEVE_CURVE,
+    band: { object: { p80_mm: DEM_PAIR, p50_mm: DEM_PAIR, reduction_ratio: DEM_PAIR, passing_low_pct: { array: 'number' }, passing_high_pct: { array: 'number' } } },
+    bond_kwh_t_per_wi: 'number',
+    implied_work_index_kwh_t: 'number',
+    mass_closure: 'number',
+    flags: { array: 'string' },
+  },
+} as const;
+const DEM_MEASURED = {
+  object: {
+    throughput_kg_h: DEM_VALUE_SOURCE,
+    net_power_kw: DEM_VALUE_SOURCE,
+    specific_energy_j_kg: 'number',
+    specific_energy_kwh_t: 'number',
+    product: { object: { sieves_mm: { array: 'number' }, passing_pct: { array: NULLABLE_NUMBER } } },
+    product_source: 'string',
+    product_noise_pct: 'number',
+    p80_mm: 'number',
+    p50_mm: 'number',
+    reduction_ratio: 'number',
+    bond_kwh_t_per_wi: 'number',
+    implied_work_index_kwh_t: 'number',
+  },
+} as const;
+const DEM_POINT_IDS = ['63-52', '31.5-26.5', '16-13.2'] as const;
+
+/** dem-run: the discrete element method with particle-replacement breakage on the laboratory jaw crusher at three operating points, beside the measurement and the population balance, with nine verdicts per point and a replay of particle frames per point. */
+export const DEM_RUN = {
+  schema: { enum: ['chancadem.dem.run/v1'] },
+  engine_version: 'string',
+  machine: { object: { name: 'string', gape_mm: 'number', width_mm: 'number', throw_mm: 'number', source: 'string' } },
+  source: { object: { paper: 'string', doi: 'string', license: 'string', digitised: 'string' } },
+  package: { object: { name: { enum: ['crushdem'] }, version: 'string', backend: { enum: ['numba', 'numpy', 'warp'] } } },
+  seed: 'integer',
+  bands: { object: { throughput_relative: 'number', net_power_relative: 'number', reduction_ratio_relative: 'number', set: 'string' } },
+  settings: {
+    object: {
+      css_mm: 'number',
+      oss_mm: 'number',
+      frequency_hz: 'number',
+      speed_rpm: 'number',
+      batch_kg: 'number',
+      overlap_ladder: { array: 'number' },
+      overlap_reference: 'number',
+      stall_strokes: 'integer',
+      max_strokes: 'integer',
+      minimum_sphere_mm: 'number',
+      sieves_mm: { array: 'number' },
+    },
+  },
+  ore: {
+    object: { name: 'string', density_kg_m3: 'number', e_inf_j_kg: 'number', d0_mm: 'number', phi: 'number', variance: 'number', gamma: 'number', a_max_percent: 'number', b_prime: 'number', derivation: 'string' },
+  },
+  preset: {
+    object: {
+      k1_over_css: 'number',
+      k2: { enum: ['open-side setting'] },
+      k3: 'number',
+      first_estimate_source: 'string',
+      k1_over_css_range: DEM_PAIR,
+      k2_over_css_range: DEM_PAIR,
+      k3_range: DEM_PAIR,
+      ranges_source: 'string',
+      capacity_model: 'string',
+      material_factor: 'number',
+      ore_link: 'string',
+      power: 'string',
+    },
+  },
+  state: { enum: ['available', 'partial'] },
+  incomplete: { array: { enum: DEM_POINT_IDS } },
+  points: {
+    array: {
+      object: {
+        id: { enum: DEM_POINT_IDS },
+        feed_class: { enum: ['63/52', '31.5/26.5', '16/13.2'] },
+        feed_mm: DEM_PAIR,
+        feed_mean_mm: 'number',
+        feed_f80_mm: 'number',
+        measured: DEM_MEASURED,
+        simulation: DEM_SIMULATION,
+        population_balance: DEM_POPULATION_BALANCE,
+        verdicts: { object: { simulation_vs_measured: DEM_VERDICT_SET, population_balance_vs_measured: DEM_VERDICT_SET, population_balance_vs_simulation: DEM_VERDICT_SET } },
+      },
+    },
+  },
+} as const satisfies Record<string, Kind>;
+export type DemRun = Of<{ readonly object: typeof DEM_RUN }>;
 
 /** Every way `value` departs from `kind`, with its path; empty when it conforms. Booleans are not numbers. */
 export function conform(value: unknown, kind: Kind, path = '$'): string[] {

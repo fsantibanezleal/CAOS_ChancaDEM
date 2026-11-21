@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import dataclasses
+import json
 import shutil
 import time
 from dataclasses import dataclass, field
@@ -197,10 +198,17 @@ def bake_hp500(paths: PipelinePaths, surveys: list[survey_contract.Survey], seed
 
 def index_files(root: Path) -> list[str]:
     """The further files of ``root`` the index lists: the model contracts and graphs, the HP500 documents, the model metrics and the
-    particle-simulation document with its replay files, each when present."""
+    particle-simulation document with the replay files it names (``simulation.replay.file``, in the order of its points; never a glob of
+    the folder, so a stale file is never shipped), each when present."""
     files = [rel for rel in (*MODEL_FILES, *HP500_FILES, METRICS_FILE, DEM_FILE) if (root / rel).is_file()]
-    replays = sorted(f.relative_to(root).as_posix() for f in (root / "dem").glob("*.frames.bin")) if (root / "dem").is_dir() else []
-    return files + replays
+    if DEM_FILE in files:
+        try:
+            doc = json.loads((root / DEM_FILE).read_text(encoding="utf-8"))
+            named = [(p.get("simulation") or {}).get("replay") for p in doc.get("points", [])]
+        except (OSError, ValueError, AttributeError):
+            named = []
+        files += [r["file"] for r in named if isinstance(r, dict) and isinstance(r.get("file"), str) and (root / r["file"]).is_file()]
+    return files
 
 
 def write_readiness(paths: PipelinePaths) -> dict:

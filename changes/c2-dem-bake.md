@@ -13,3 +13,5 @@
   simulated and predicted values in the bake and again in `scripts/check_artifacts.py`, which also checks each replay file's bytes and
   sha256 digest. Readiness gains the four states of `dem-run`; the web descriptor and its conformance test read the document in both
   directions. Pins: `crushdem[jit]` 0.6.0, `numba` 0.68.1, `llvmlite` 0.50.0 (requirements-precompute.txt).
+- The case-index contract steps to 1.1.0 (minor, a widening): the `files` pattern admits `.bin`, and the index lists the replay files that the
+  particle-simulation document names, so the build copies them to `public/data/dem/`.
