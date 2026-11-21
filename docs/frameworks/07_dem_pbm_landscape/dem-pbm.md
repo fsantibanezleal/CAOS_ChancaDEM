@@ -84,7 +84,7 @@ State `partial`. Of the 27 verdicts, 3 are met, 13 are not met and 11 are not co
   paper reports very good agreement of its own simulation with its measurements (for the 63/52 mm feed 0.32 kW simulated against
   0.34 kW measured, page 10, which is 5.9 percent low; its simulated throughput curve of Fig. 14a reads about 890 kg/h there
   against 799 measured, about 11 percent high by a by-eye reading). That simulation breaks a particle at a threshold force and
-  replaces it with a fixed progeny set that the paper fitted to the product of its own jaw tests (page 9), whereas `crushdem`
+  replaces it with a fixed progeny set that the paper fitted to the product of its own jaw tests (page 7), whereas `crushdem`
   uses the energy-based model
   of Tavares with an ore derived from the paper's single-particle tests. Which of the machine's assumptions (the contact
   stiffness, the harmonic swing law, the 20 degree nip angle, the flat smooth plates) accounts for the departure is not isolated
