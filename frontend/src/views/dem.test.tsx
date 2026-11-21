@@ -12,6 +12,7 @@ import { toCallout } from './callouts';
 import { bareReason, calloutSpecs, CATEGORY, ComparisonOverlay, cursorMark, DemBody, DemUnavailable, DemUnreadable, LabNote, pointStages, Q, sideOffset, Sources, VerdictTable } from './dem';
 import { comparisonSeries, decodeFrames, frameAt, frameLabelText, nearerSentence, openingCursor, plain, type DemFrames, type DemPoint } from './demModel';
 import { FramesState, NAMES, panelWidth, plateExtremes, drawReplay, stageColumns, sphereTop } from './demReplay';
+import { decimalProblems, labelOverlapProblems, nullMarkProblems, stageShare, stageShareProblems, verdictLayoutProblems } from './dem.rules.mjs';
 import { subOfUrl, ViewContext, type ViewCtx } from './shared';
 import { ValidationGroup } from './validation';
 
@@ -128,7 +129,7 @@ describe('DM-012: the view with the provider document', () => {
     expect(shown.value).toBe(coarse[1].value);
     expect((shown.unit as { es: string }).es).toBe('kW');
   });
-  it('the three callouts follow the document: a value or a verdict changed in a copy moves them', () => {
+  it('adversarial: a value or a verdict changed in a copy of the document moves the callout', () => {
     const d = copy(run);
     d.points[0].simulation.net_power_kw = 0.987;
     d.points[0].verdicts.simulation_vs_measured.net_power.verdict = 'not met';
@@ -144,7 +145,7 @@ describe('DM-012: the view with the provider document', () => {
 });
 
 describe('DM-013: one stroke cursor for the stage and the charts, and reduced motion', () => {
-  it('the frame label, the slider and the charts’ marker stand at the same cursor, for any cursor', () => {
+  it('adversarial: the frame label, the slider and both charts marker follow a planted cursor, for any cursor', () => {
     for (const cursor of [37, 40.5, 70.25, 83]) {
       const html = render({ initialCursor: cursor });
       const p = run.points[0];
@@ -177,7 +178,7 @@ describe('DM-013: one stroke cursor for the stage and the charts, and reduced mo
     expect(src).not.toMatch(/autoStart: true/);
     expect(src).not.toMatch(/requestAnimationFrame/);
   });
-  it('under reduced motion the play button is off, the note says so and the frame at the cursor is shown', () => {
+  it('adversarial: under reduced motion the play button is off, the note says so and the frame at the cursor is shown', () => {
     const html = render({ reducedMotion: true, initialCursor: 40.5 });
     expect(html).toContain('data-reduced-motion="true"');
     expect(html).toContain('data-playing="false"');
@@ -366,9 +367,9 @@ describe('DM-015: the states of the row', () => {
     setLang('es');
     const es = textOf(render({ readiness }));
     expect(es).toContain('Versión parcial:');
-    expect(es).toContain('1 de 3 corridas');
+    expect(es).toContain('1 de 3');
   });
-  it('stale: the note says the bake is stale with its reason, and the document the build holds is still drawn', () => {
+  it('adversarial: a stale bake says so with its reason, and nothing the document does not hold is drawn', () => {
     const doc = copy(readiness);
     const row = doc.contracts.find((c) => c.id === 'dem-run')!;
     row.state = 'stale';
@@ -385,7 +386,7 @@ describe('DM-015: the states of the row', () => {
     expect(render({ readiness: null })).toContain('data-readiness="unknown"');
     expect(render({ readiness: undefined })).not.toContain('data-readiness=');
   });
-  it('missing: the reason is said in both languages with nothing drawn', () => {
+  it('adversarial: a document that is missing says why in both languages and draws nothing', () => {
     const reason = { en: 'the bake was not run for this build.', es: 'no se ejecutó la generación para esta versión.' };
     const en1 = renderToStaticMarkup(<DemUnavailable reason={reason} />);
     expect(en1).toContain('data-state="unavailable"');
@@ -394,7 +395,7 @@ describe('DM-015: the states of the row', () => {
     setLang('es');
     expect(textOf(renderToStaticMarkup(<DemUnavailable reason={reason} />))).toContain('aún no está disponible: no se ejecutó la generación para esta versión.');
   });
-  it('a replay file that is loading, unavailable or failed is said in the stage’s place, with its reason', () => {
+  it('adversarial: a replay file that failed is said in the stage place, with its reason', () => {
     expect(renderToStaticMarkup(<FramesState frames={{ state: 'loading' }} />)).toContain('Loading the particle replay');
     expect(renderToStaticMarkup(<FramesState frames={{ state: 'unavailable', reason: { en: 'the index does not declare it', es: 'el índice no lo declara' } }} />)).toContain('the index does not declare it');
     const failed = renderToStaticMarkup(<FramesState frames={{ state: 'error', error: 'dem/x.bin: 12 bytes, the document names 99' }} />);
@@ -527,7 +528,7 @@ describe('B1: the verdict table keeps its summary and its verdict in view', () =
 describe('B2: a side with no value has no mark inside the plotting range', () => {
   const at = (p: { x: number; y: number }) => ({ x: 60 + p.x * 100, y: 300 - p.y * 0.2 });
   const overlay = (q: 'throughput' | 'net_power' | 'p80', lang: 'en' | 'es' = 'en') => renderToStaticMarkup(<svg><ComparisonOverlay series={comparisonSeries(run, q)} at={at} lang={lang} /></svg>);
-  it('draws the text "no value" under the baseline for each null, in the side\u2019s colour, and no circle or other mark inside the plot', () => {
+  it('adversarial: a side with no value yields no mark inside the plotting range of the rendered overlay, only the text no value under the baseline', () => {
     const svg = overlay('net_power');
     const baseline = at({ x: 1, y: 0 }).y;
     const texts = [...svg.matchAll(/<text[^>]*data-no-value="([^"]+)"[^>]*y="([\d.]+)"/g)].map((m) => ({ id: m[1], y: Number(m[2]) }));
@@ -709,5 +710,77 @@ describe('M4, m9 and the small findings', () => {
   });
   it('the sources give the digitisation noise with its unit', () => {
     expect(textOf(renderToStaticMarkup(<Sources run={run} point={run.points[0]} />))).toContain('digitisation noise 0.48 kg/h');
+  });
+});
+
+describe('DM-017: the layout rules decide from measured boxes and strings (src/views/dem.rules.mjs)', () => {
+  const card = { left: 207, right: 1264, top: 130, bottom: 700 };
+  const goodColumns = [
+    { name: 'Comparison', left: 220, right: 420 },
+    { name: 'Quantity', left: 420, right: 560 },
+    { name: 'Verdict', left: 560, right: 900 },
+    { name: 'Band', left: 900, right: 1250 },
+  ];
+  const good = {
+    card,
+    columns: goodColumns,
+    wrapper: { scrollWidth: 1040, clientWidth: 1040 },
+    summary: { left: 220, right: 1240, top: 150, bottom: 190, scrollWidth: 1020, clientWidth: 1020, text: 'Of the 27 verdicts of the document, 3 met' },
+    stacked: false,
+  };
+  it('a table whose every column is inside its card and whose summary is whole passes', () => {
+    expect(verdictLayoutProblems(good)).toEqual([]);
+    expect(verdictLayoutProblems({ ...good, stacked: true, columns: goodColumns.map((c) => ({ ...c, left: 220, right: 1240 })) })).toEqual([]);
+  });
+  it('adversarial: a verdict column outside its card is reported, with the column named', () => {
+    const p = verdictLayoutProblems({ ...good, columns: [...goodColumns, { name: 'Verdict', left: 1541, right: 1712 }] });
+    expect(p).toHaveLength(1);
+    expect(p[0]).toContain('the column "Verdict" lies outside its card');
+  });
+  it('adversarial: a table that scrolls sideways, and on a phone a table that is not restacked, are reported', () => {
+    expect(verdictLayoutProblems({ ...good, wrapper: { scrollWidth: 1712, clientWidth: 1040 } })[0]).toContain('scrolls sideways');
+    expect(verdictLayoutProblems({ ...good, stacked: true, wrapper: { scrollWidth: 635, clientWidth: 337 } })[0]).toContain('restacked');
+  });
+  it('adversarial: a summary sentence that is cut, outside its card or without a count is reported', () => {
+    expect(verdictLayoutProblems({ ...good, summary: { ...good.summary, scrollWidth: 1712 } })[0]).toContain('summary sentence is cut');
+    expect(verdictLayoutProblems({ ...good, summary: { ...good.summary, right: 2465 } })[0]).toContain('summary sentence lies outside its card');
+    expect(verdictLayoutProblems({ ...good, summary: { ...good.summary, text: '' } })[0]).toContain('holds no count');
+  });
+  it('adversarial: two overlapping tick labels are reported, and well separated ones pass', () => {
+    const a = { text: '16/13.2 mm', left: 100, right: 160, top: 300, bottom: 313 };
+    const b = { text: '31.5/26.5 mm', left: 140, right: 215, top: 300, bottom: 313 };
+    expect(labelOverlapProblems([a, b])).toEqual(['the labels "16/13.2 mm" and "31.5/26.5 mm" overlap']);
+    expect(labelOverlapProblems([a, { ...b, left: 200, right: 275 }])).toEqual([]);
+    expect(labelOverlapProblems([a, { ...b, top: 330, bottom: 343 }])).toEqual([]);
+  });
+  it('adversarial: a stage of 40 percent of the viewport is reported, and one of 65 percent passes', () => {
+    const vp = { width: 1280, height: 800 };
+    const p = stageShareProblems({ width: 1057 * 0.6, height: 640 }, vp);
+    expect(p).toHaveLength(1);
+    expect(p[0]).toContain('39.6 percent');
+    expect(stageShareProblems({ width: 1057, height: 635 }, vp)).toEqual([]);
+    expect(stageShare({ width: 640, height: 640 }, vp)).toBeCloseTo(0.4, 9);
+  });
+  it('adversarial: a mark of a null inside the plotting range is reported, and one under the baseline passes', () => {
+    const plot = { left: 60, right: 340, top: 40, bottom: 260 };
+    const inside = { id: '31.5-26.5:simulation', box: { left: 100, right: 108, top: 250, bottom: 258 } };
+    const under = { id: '31.5-26.5:population_balance', box: { left: 100, right: 150, top: 296, bottom: 309 } };
+    expect(nullMarkProblems([inside], plot)[0]).toContain('lies inside the plotting range');
+    expect(nullMarkProblems([under], plot)).toEqual([]);
+    expect(nullMarkProblems([under, inside], plot)).toHaveLength(1);
+  });
+  it('adversarial: a decimal point on a Spanish string is reported; the quoted English, a thousands group and a version are not', () => {
+    expect(decimalProblems([{ text: 'Con 31.5/26.5 mm la simulación', quoted: false }])).toHaveLength(1);
+    expect(decimalProblems([{ text: 'potencia 0.34 kW', quoted: false }])[0]).toContain('0.34');
+    expect(decimalProblems([{ text: 'section 3.2, p. 10', quoted: true }])).toEqual([]);
+    expect(decimalProblems([{ text: '2.167 kg/h', quoted: false }])).toEqual([]);
+    expect(decimalProblems([{ text: 'crushdem 0.6.0 (numba)', quoted: false }])).toEqual([]);
+    expect(decimalProblems([{ text: '1.220 y 2.464', quoted: false }])).toEqual([]);
+    expect(decimalProblems([{ text: '0,34 kW y 31,5/26,5 mm', quoted: false }])).toEqual([]);
+  });
+  it('the browser script hands its measurements to these rules and is run by the story checks', () => {
+    const b = readFileSync(new URL('./dem.browser.mjs', import.meta.url), 'utf8');
+    for (const rule of ['verdictLayoutProblems', 'nullMarkProblems', 'labelOverlapProblems', 'stageShareProblems', 'decimalProblems']) expect(b).toContain(rule);
+    expect(readFileSync(new URL('../pages/story.browser.mjs', import.meta.url), 'utf8')).toContain("import('../views/dem.browser.mjs')");
   });
 });

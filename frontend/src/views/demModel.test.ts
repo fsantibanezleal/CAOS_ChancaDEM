@@ -314,7 +314,7 @@ describe('DM-012: the three callouts of a point, from the document', () => {
     expect(calloutState(w.state)).toBe('warning');
     expect(calloutSource(w, plain).en).toContain('not resolved');
   });
-  it('a value changed in a copy of the document moves the callout; a verdict turned to not met moves its state and word', () => {
+  it('adversarial: a value changed in a copy of the document moves the callout, and a verdict turned to not met moves its state and word', () => {
     const d = copy();
     d.points[0].simulation.throughput_kg_h = 1234.5;
     d.points[0].verdicts.simulation_vs_measured.net_power.verdict = 'not met';
@@ -582,7 +582,7 @@ describe('a run that did not complete: no relative difference is printed anywher
     expect(stopped.map((p) => p.id)).toEqual(['31.5-26.5']);
   });
   for (const lang of ['en', 'es'] as const) {
-    it(`${lang}: the callouts carry no percentage and the P80 is the product of the mass passed before the stop, with a neutral state`, () => {
+    it(`adversarial: ${lang}: a run that did not complete prints no percentage in any callout, and its P80 is the product of the mass passed before the stop, with a neutral state`, () => {
       for (const p of stopped) {
         const cs = pointCallouts(p);
         for (const c of cs) {
@@ -599,7 +599,7 @@ describe('a run that did not complete: no relative difference is printed anywher
         expect(src).not.toMatch(/Measured|Medido|\+91/);
       }
     });
-    it(`${lang}: no sentence of any chart prints a difference for the run`, () => {
+    it(`adversarial: ${lang}: no sentence of any chart prints a relative difference for a run that did not complete`, () => {
       for (const q of CHART_QUANTITIES) {
         const i = run.points.findIndex((p) => p.simulation.status !== 'complete');
         const n = nearer(run.points[i], q);

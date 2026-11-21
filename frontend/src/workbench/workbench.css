@@ -711,9 +711,11 @@
   vertical-align: top;
 }
 
-.cdem-vt-pair {
+.cdem-vt .caos-table th.cdem-vt-pair {
+  width: 13rem;
   max-width: 13rem;
   text-align: left;
+  white-space: normal;
 }
 
 .cdem-basis {
