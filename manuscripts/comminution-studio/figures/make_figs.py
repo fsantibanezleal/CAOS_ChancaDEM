@@ -31,6 +31,10 @@ figure needs a curve no artifact stores, from the product's own engine code (nam
                        finite differences. Calls pipeline.model.crusher.evaluate, .campaign and .classification.
   fig-replacement.pdf  the particle-replacement walk on the chamber of case S01 against the Whiten product, by number of
                        parcels (five seeds each). Calls pipeline.model.crusher.whiten.replacement_walk and evaluate.
+  fig-labjaw.pdf       (a) the capacity of the laboratory jaw of Barrios et al. against the stroke frequency for the three narrow
+                       feeds, by the jaw capacity model of Sastri, with the critical speed and the operating speed marked;
+                       (b) the classification curve of the first estimate at the closed side of 7.5 mm and the spread of the
+                       curve over the eight corners of the published ranges. Calls pipeline.model.crusher.labjaw.
 
 Run:  python manuscripts/comminution-studio/figures/make_figs.py     (any working directory)
 Deps: matplotlib, numpy (the notebook environment of the product carries both).
@@ -40,6 +44,7 @@ from __future__ import annotations
 import csv
 import json
 import sys
+from itertools import product as itertools_product
 from pathlib import Path
 
 import matplotlib
@@ -60,6 +65,7 @@ from pipeline.model.crusher.breakage import appearance_cum, phi_from_t10  # noqa
 from pipeline.model.crusher.classification import classification_params, classify  # noqa: E402
 from pipeline.model.crusher.engine import grid_f80  # noqa: E402
 from pipeline.model.crusher.types import Operating  # noqa: E402
+from pipeline.model.crusher import labjaw  # noqa: E402
 from pipeline.model.crusher.whiten import assemble_chamber, replacement_walk  # noqa: E402
 
 INK = "#1a1a2e"
@@ -558,6 +564,48 @@ def fig_replacement() -> None:
           f"{errs.mean(axis=1)[-1]:.5f}")
 
 
+def fig_labjaw() -> None:
+    jaw, css, speed_op = labjaw.OTSUKA_BARRIOS_2020, 7.5, 360.0
+    g, s_m, t_m = jaw.gape_mm / 1e3, css / 1e3, jaw.throw_mm / 1e3
+    nc = labjaw.critical_speed_rpm(g, s_m, t_m, labjaw.depth_between_jaws_m(g))
+    n = np.linspace(100.0, 700.0, 601)
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(7.0, 2.9))
+    for (dmax, dmin), col, ls in (((63.0, 52.0), BLUE, "-"), ((31.5, 26.5), GREEN, "--"), ((16.0, 13.2), ORANGE, ":")):
+        fav = labjaw.class_mean_mm(dmin, dmax) / 1e3
+        q = [1e3 * labjaw.jaw_capacity_tph(float(x), jaw.width_mm / 1e3, s_m, t_m, g, fav, jaw.density_t_m3, jaw.material_k3).w_tph
+             for x in n]
+        a1.plot(n, q, color=col, ls=ls, lw=1.5, label=f"feed {dmax:g}/{dmin:g} mm")
+    a1.axvline(nc, color=INK, lw=0.9, ls="-.")
+    a1.annotate(f"$N_c$ = {nc:.0f}", (nc, a1.get_ylim()[1] * 0.97), xytext=(4, -2), textcoords="offset points", fontsize=7,
+                va="top")
+    a1.axvline(speed_op, color=GREY, lw=0.9, ls=":")
+    a1.annotate("360 (6.0 Hz)", (speed_op, 0.04), xycoords=("data", "axes fraction"), xytext=(-4, 0),
+                textcoords="offset points", fontsize=7, ha="right", va="bottom", rotation=90)
+    a1.set_ylim(0.0, 1020.0)
+    a1.set_xlabel("strokes per minute $N$")
+    a1.set_ylabel("capacity (kg/h)")
+    a1.set_title("(a) capacity model of Sastri", fontsize=8.6)
+    a1.legend(fontsize=6.5, frameon=True, facecolor="white", edgecolor=GRID, loc="lower right")
+    _clean(a1)
+    d = np.linspace(0.0, 25.0, 501)
+    first = labjaw.lab_classification(css, jaw.throw_mm)
+    curves = []
+    for a1c, a2c, kn in itertools_product(labjaw.KING_RANGES.alpha1, labjaw.KING_RANGES.alpha2, labjaw.KING_RANGES.n):
+        c = labjaw.lab_classification(css, jaw.throw_mm, alpha1=a1c, alpha2=a2c, n=kn)
+        curves.append([classify(float(x), c) for x in d])
+    lo, hi = np.min(curves, axis=0), np.max(curves, axis=0)
+    a2.fill_between(d, lo, hi, color=BLUE, alpha=0.18, lw=0, label="spread over the 8 corners of the ranges")
+    a2.plot(d, [classify(float(x), first) for x in d], color=BLUE, lw=1.6,
+            label=f"first estimate ($K_1$ {first.k1:.1f}, $K_2$ {first.k2:.1f} mm, $K_3$ {first.k3:g})")
+    a2.axvline(css, color=INK, lw=0.7, ls=":")
+    a2.set_xlabel("particle size $d$ (mm)")
+    a2.set_ylabel("classification $C(d)$")
+    a2.set_title("(b) classification at a 7.5 mm setting", fontsize=8.6)
+    a2.legend(fontsize=6.3, frameon=True, facecolor="white", edgecolor=GRID, loc="upper center", bbox_to_anchor=(0.5, -0.3))
+    _clean(a2)
+    _save(fig, "fig-labjaw.pdf")
+
+
 if __name__ == "__main__":
     fig_dataflow()
     fig_physics()
@@ -573,4 +621,5 @@ if __name__ == "__main__":
     fig_drift()
     fig_drift_response()
     fig_replacement()
+    fig_labjaw()
     print("figures written to", HERE)

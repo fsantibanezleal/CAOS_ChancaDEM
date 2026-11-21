@@ -19,6 +19,13 @@ Sources read (nothing else):
   manuscripts/comminution-studio/data/resources.json                  the measured stages (measure_resources.py)
   figures/heldout_uq.py                                               the bootstrap over surveys and the published
                                                                       throughput model of Rocha et al. (tab-uncertainty)
+  data-pipeline/pipeline/model/crusher/labjaw.py, tests/test_labjaw.py  the laboratory-jaw module and the printed Table 2 of
+                                                                      Sastri 1994 as the test holds it (tab-sastri-table2,
+                                                                      numbers-labjaw)
+  the installed package crushdem (crushdem.cases.barrios2020, crushdem.machines)  the laboratory jaw case: its machine, contacts,
+                                                                      ore derivation and digitised measurements
+                                                                      (tab-dem-parameters, tab-lab-measured); skipped, with the
+                                                                      committed fragments kept, when the package is not importable
 
 Run:  python manuscripts/comminution-studio/figures/make_tables.py     (any working directory; numpy only)
 """
@@ -996,7 +1003,7 @@ def schema_longtable(cid: str, version: str, schema_path: Path) -> None:
             if entered in first:
                 meaning = (meaning + " " if meaning else "") + "Its fields are those of " + field(first[entered]) + "."
             rows.append([field(name), tex(_type_of(v, defs)), breakable(tex(rng)) if rng else DASH,
-                         "yes" if k in required else "no", tex(unit) if unit else DASH, meaning or DASH])
+                         "yes" if k in required else "no", tex(unit.replace("dimensionless", "--").replace("percentage points", "points")) if unit else DASH, meaning or DASH])
             if sub is not None and entered not in first:
                 fields, req, sep, sub_chain = sub
                 if entered is not None:
@@ -1030,11 +1037,21 @@ def schema_longtable(cid: str, version: str, schema_path: Path) -> None:
     write(f"schema-{cid}", "\n".join(lines))
 
 
+DEM_RUN_SCHEMA = ROOT / "docs" / "contracts" / "schemas" / "dem-run.schema.json"
+
+
 def schemas() -> None:
+    listed = set()
     for r in catalog_rows():
         path = ROOT / r["schema file"]
+        listed.add(r["id"])
         if path.name.endswith(".schema.json"):
             schema_longtable(r["id"], r["version"], path)
+    if "dem-run" not in listed:
+        # the catalog row of dem-run is added with the stage that writes the document; until then the table is generated from
+        # the schema file alone, with the version its description states
+        version = re.search(r"dem-run (\d+\.\d+\.\d+)", _json(DEM_RUN_SCHEMA)["description"]).group(1)
+        schema_longtable("dem-run", version, DEM_RUN_SCHEMA)
     api = _json(ROOT / "docs" / "contracts" / "api.openapi.json")
     rows = []
     for p, ops in api["paths"].items():
@@ -1064,7 +1081,8 @@ def schemas() -> None:
 HASHED = ["data/examples/hp500-surveys.csv", "data/examples/params.csv", "data/derived/hp500/backbone.json",
           "data/derived/hp500/loo.json", "data/derived/hp500/crusherbayes.json", "data/derived/hp500/comparison.json",
           "data/derived/model-metrics.json",
-          "data/derived/models/surrogate.onnx", "data/derived/models/psd-ae.onnx", "data/derived/manifests/index.json"]
+          "data/derived/models/surrogate.onnx", "data/derived/models/psd-ae.onnx", "data/derived/manifests/index.json",
+          "data-pipeline/pipeline/model/crusher/labjaw.py", "docs/contracts/schemas/dem-run.schema.json"]
 
 
 def hashes() -> None:
@@ -1116,6 +1134,188 @@ def parity_numbers() -> None:
     ]))
 
 
+
+# ---------------------------------------------------------------------------------------------------------------------
+# the laboratory jaw: the capacity model of Sastri (1994), the discrete element case and the measurements it is held to
+# ---------------------------------------------------------------------------------------------------------------------
+def _literal_assignments(path: Path, names: set[str]) -> dict:
+    """The literal values assigned to ``names`` at module level of a Python file, read without importing it (so the printed
+    Table 2 of Sastri 1994 stays in ONE place, tests/test_labjaw.py, and the report reads it from there)."""
+    import ast
+
+    out: dict = {}
+    for node in ast.parse(path.read_text(encoding="utf-8")).body:
+        if not isinstance(node, ast.Assign):
+            continue
+        for target in node.targets:
+            if isinstance(target, ast.Name) and target.id in names:
+                out[target.id] = ast.literal_eval(node.value)
+            elif isinstance(target, ast.Tuple) and all(isinstance(e, ast.Name) for e in target.elts):
+                keys = [e.id for e in target.elts]
+                if names.issuperset(keys):
+                    out.update(dict(zip(keys, ast.literal_eval(node.value))))
+    missing = names - out.keys()
+    if missing:
+        raise KeyError(f"{path.name} no longer assigns {sorted(missing)} as literals")
+    return out
+
+
+def tab_sastri_table2() -> None:
+    """The nine rows of Table 2 of Sastri (1994) (Hersam's laboratory jaw), recomputed by the product's laboratory-jaw module
+    against the printed column, and the numbers of the laboratory jaw of Barrios et al. that the text quotes."""
+    from pipeline.model.crusher import labjaw as lj
+
+    held = _literal_assignments(ROOT / "tests" / "test_labjaw.py",
+                                {"TABLE_2", "HERSAM_W_M", "HERSAM_D_M", "HERSAM_N_RPM", "HERSAM_S_M"})
+    rows, rels, worst, worst_row = [], [], 0.0, 0
+    for i, (t_m, t_over_g, fav_over_g, k1_printed, printed, density) in enumerate(held["TABLE_2"], 1):
+        gape = t_m / t_over_g
+        vh = lj.volumetric_capacity_m3_h(held["HERSAM_N_RPM"], held["HERSAM_W_M"], held["HERSAM_S_M"], t_m, gape, held["HERSAM_D_M"])
+        k1 = lj.feed_factor(fav_over_g * gape, gape)
+        got = vh * k1 * 1.0 * density
+        rel = 100.0 * (got - printed) / printed
+        rels.append(rel)
+        if abs(rel) > abs(worst):
+            worst, worst_row = rel, i
+        rows.append([str(i), num(1e3 * t_m, 2), num(t_over_g, 4), num(fav_over_g, 3), num(k1_printed, 3), num(k1, 3),
+                     num(density, 2), num(printed, 3), num(got, 3), num(rel, 2)])
+    head = ["Row", "$T$ (mm)", "$T/G$", r"$\bar F/G$", r"$k_{\mathrm F}$ printed", r"$k_{\mathrm F}$ computed",
+            r"$\rho_s$ (t/m$^3$)", r"$Q_{\mathrm S}$ printed (t/h)", r"$Q_{\mathrm S}$ computed (t/h)", "Difference (\\%)"]
+    write("tab-sastri-table2", tabular("@{}r r r r r r r r r r@{}", head, rows))
+    jaw = lj.OTSUKA_BARRIOS_2020
+    g, s_m, t_m = jaw.gape_mm / 1e3, 7.5e-3, jaw.throw_mm / 1e3
+    depth = lj.depth_between_jaws_m(g)
+    nc = lj.critical_speed_rpm(g, s_m, t_m, depth)
+    n_rows = len(held["TABLE_2"])
+    within = sum(1 for r in rels if abs(r) <= 0.2)
+    write("numbers-labjaw", "\n".join([
+        f"\\newcommand{{\\labjawDepth}}{{{depth:.4f}}}",
+        f"\\newcommand{{\\labjawCrit}}{{{nc:.0f}}}",
+        f"\\newcommand{{\\labjawKT}}{{{lj.throw_factor(t_m, g):.3f}}}",
+        f"\\newcommand{{\\sastriRows}}{{{n_rows}}}",
+        f"\\newcommand{{\\sastriWithin}}{{{within}}}",
+        f"\\newcommand{{\\sastriWorstRow}}{{{worst_row}}}",
+        f"\\newcommand{{\\sastriWorstPct}}{{{abs(worst):.1f}}}",
+        f"\\newcommand{{\\sastriHersamN}}{{{held['HERSAM_N_RPM']:.0f}}}",
+        f"\\newcommand{{\\sastriMatch}}{{{100 * (lj.CRITICAL_SPEED_COEF ** 2 / (lj.HIGH_SPEED_COEF * lj.G_M_S2) - 1):.2f}}}",
+    ]))
+
+
+def _crushdem():
+    try:
+        import crushdem  # noqa: F401
+        from crushdem.cases import barrios2020 as case
+        from crushdem.machines import barrios_contact_table, jaw_barrios2020
+    except ImportError as exc:  # the committed fragments stay as they are
+        print(f"crushdem is not importable ({exc}): tab-dem-parameters and tab-lab-measured are not regenerated")
+        return None
+    return case, barrios_contact_table, jaw_barrios2020
+
+
+def tab_dem_parameters() -> None:
+    """Every parameter of the discrete element model of the laboratory jaw with its value as the installed package holds it, its
+    unit and where it comes from: the paper's tables, the package's derivation of the ore from the paper's single-particle
+    tests, or an assumption."""
+    got = _crushdem()
+    if got is None:
+        return
+    case, contact_table, jaw = got
+    import crushdem
+
+    m = jaw()
+    prov = {n: v for n, v, _ in m.provenance}
+    ore, der = case.paper_ore("A", seed=1)
+    ct = contact_table()
+    ore_m, steel_m = ct.materials
+    shear = lambda mat: mat.youngs_modulus / (2.0 * (1.0 + mat.poisson))  # noqa: E731
+    paper, derived, assumed = "paper", "derived from the paper", "assumption"
+    def g(x: float) -> str:
+        mant, _, exp = f"{x:.3e}".partition("e")
+        return f"${float(mant):g}\\times10^{{{int(exp)}}}$"
+
+    rows = [
+        ["Machine", "", "", "", ""],
+        ["Feed opening, width and gap", r"$w$, $G$", f"{1e3 * prov['width_m']:g} and {1e3 * prov['top_gap_m']:g}", "mm", paper + ", Table 2"],
+        ["Closed-side setting", r"$S$", f"{1e3 * prov['closed_side_setting_m']:g}", "mm", paper + ", Table 2"],
+        ["Swing jaw throw (read as the opening of the bottom edge)", r"$T$", f"{1e3 * prov['throw_m']:g}", "mm", paper + " (reading: " + assumed + ")"],
+        ["Stroke frequency", r"$f$", f"{prov['frequency_hz']:g}", "Hz", paper + ", Table 2"],
+        ["Nip angle between the plates", r"$\alpha_{\mathrm n}$", f"{prov['nip_angle_deg']:g}", "deg", assumed],
+        ["Plate height and length", r"$H_{\mathrm p}$, $L_{\mathrm p}$", f"{1e3 * prov['plate_height_m']:.1f} and {1e3 * prov['plate_length_m']:.1f}", "mm", "derived from the gaps and the nip angle"],
+        ["Peak swing angle", r"$\theta_{\max}$", f"{prov['swing_angle_max_rad']:.5f}", "rad", "derived: the bottom edge opens by the throw"],
+        ["Swing law", "", "harmonic rocking about the top pivot", "", assumed],
+        ["Contacts", "", "", "", ""],
+        ["Ore density, shear modulus, Poisson ratio", r"$\rho$, $G_{\mathrm{sh}}$, $\nu_{\mathrm P}$", f"{ore_m.density:g}, {g(shear(ore_m))}, {ore_m.poisson:g}", "kg/m$^3$, Pa, --", paper + ", Table 3"],
+        ["Steel density, shear modulus, Poisson ratio", r"$\rho$, $G_{\mathrm{sh}}$, $\nu_{\mathrm P}$", f"{steel_m.density:g}, {g(shear(steel_m))}, {steel_m.poisson:g}", "kg/m$^3$, Pa, --", paper + ", Table 3"],
+        ["Restitution, friction, rolling friction of ore on ore", r"$e_{\mathrm r}$, $\mu_{\mathrm c}$, $\mu_{\mathrm r}$", f"{ct.restitution[0][0]:g}, {ct.mu[0][0]:g}, {ct.mu_r[0][0]:g}", "--", paper + ", Table 4"],
+        ["Restitution, friction, rolling friction of steel on ore", r"$e_{\mathrm r}$, $\mu_{\mathrm c}$, $\mu_{\mathrm r}$", f"{ct.restitution[0][1]:g}, {ct.mu[0][1]:g}, {ct.mu_r[0][1]:g}", "--", paper + ", Table 4"],
+        ["Tangential damping ratio", r"$x_{\gamma,t}$", f"{ct.xt[0][0]:g}", "--", "package default"],
+        ["Ore (breakage), derived in the package from the single-particle tests of Fig.~6b", "", "", "", ""],
+        ["Fracture energy at large size", r"$E_\infty$", f"{ore.e_inf:.2f}", "J/kg", derived + ", fit to the two coarse classes"],
+        ["Size scale of the size effect", r"$d_0$", f"{1e3 * ore.d0:.1f}", "mm", derived + ", same fit"],
+        ["Size exponent", r"$\phi_E$", f"{ore.phi:g}", "--", assumed + ": the gneiss value of Tavares (2022), fixed"],
+        ["Variance of the logarithm of the fracture energy", r"$\sigma_E^2$", f"{ore.variance:g}", "--",
+         f"{derived}: the data give {der['variance_from_data']:.2f}, limited to the upper end of the range of Tavares (2022)"],
+        ["Damage coefficient", r"$\gamma_D$", f"{ore.gamma:g}", "--", assumed + ": Tavares (2022), mean of 3 to 4"],
+        ["Maximum $t_{10}$ of one event and exponent", r"$A$, $b'$", f"{ore.a_max:g}, {ore.b_prime:g}", "\\%, --", assumed + ": the gneiss row of Tavares (2022), Table 4"],
+        ["Upper truncation of the fracture energy", r"$E_{\max}/E_{50}$", r"$\infty$", "--", assumed + ": the plain lognormal"],
+        ["Smallest sphere kept", r"$d_{\min}$", f"{1e3 * ore.min_diameter:g}", "mm", assumed],
+        ["Run control", "", "", "", ""],
+        ["Time step as a fraction of the Rayleigh time of the smallest sphere", "", "0.1", "--", "package default of the case"],
+        ["Steps between services of the feed, the discharge and the breakage", "", "50", "steps", "package default"],
+        ["Overlap limits tried in turn", "", " and ".join(f"{x:g}" for x in case.OVERLAP_LADDER), "of the smaller radius", "package default of the case"],
+        ["Strokes without progress that stop a run as stalled", "", "40", "strokes", "package default of the case command"],
+        ["Largest number of strokes", "", "400", "strokes", "package default of the case command"],
+    ]
+    caption = (r"Parameters of the discrete element model of the laboratory jaw as the installed package \texttt{crushdem} holds them: the machine and "
+               "the contacts from the paper's tables, the ore derived in the package from the paper's single-particle tests (pass A of the two "
+               "digitisation passes), and the run control, each with its unit and its origin: the paper, a derivation from the paper, an "
+               "assumption or a package default. Generated from the installed package.")
+    head = r"Parameter & Symbol & Value & Unit & Origin \\"
+    lines = [r"\begingroup\scriptsize",
+             r"\begin{longtable}{@{}p{0.28\textwidth} p{0.09\textwidth} p{0.13\textwidth} p{0.10\textwidth} p{0.26\textwidth}@{}}",
+             r"\caption{" + caption + r"}\label{tab:dem-params}\\", r"\toprule", head, r"\midrule", r"\endfirsthead",
+             r"\multicolumn{5}{@{}l}{\footnotesize Table~\thetable{} (continued)}\\", r"\toprule", head, r"\midrule", r"\endhead",
+             r"\bottomrule", r"\endfoot"]
+    for r in rows:
+        if not r[1] and not r[2] and not r[3]:
+            lines.append(r"\multicolumn{5}{@{}l}{\emph{" + r[0] + r"}} \\")
+        else:
+            lines.append(" & ".join(r) + r" \\")
+    lines += [r"\end{longtable}", r"\endgroup"]
+    write("tab-dem-parameters", "\n".join(lines))
+    stiff = case.contact_check_fig6a(case.load_digitised())["stiffness_ratio"]
+    write("numbers-dem", "\n".join([
+        f"\\newcommand{{\\demPackageVersion}}{{{crushdem.__version__}}}",
+        f"\\newcommand{{\\demStiffRatio}}{{{stiff:.1f}}}",
+        f"\\newcommand{{\\demSigmaData}}{{{der['variance_from_data']:.2f}}}",
+        f"\\newcommand{{\\demPhiFree}}{{{der['free_three_class_fit']['phi']:.2f}}}",
+    ]))
+
+
+def tab_lab_measured() -> None:
+    """What the laboratory tests measured at the three feed classes, as the package digitised it from the figures of the paper
+    (two passes: the mean is the value, their difference the digitisation noise)."""
+    got = _crushdem()
+    if got is None:
+        return
+    case = got[0]
+    rows = []
+    for fc in ("63/52", "31.5/26.5", "16/13.2"):
+        m = case.measured(fc)
+        rows.append([tex(fc), f"{num(m.throughput_kg_h, 1)} $\\pm$ {num(m.throughput_noise_kg_h, 1)}",
+                     f"{num(m.net_power_kw, 4)} $\\pm$ {num(m.net_power_noise_kw, 4)}",
+                     f"{num(m.product['noise_pct_max'], 2)} and {num(m.product['noise_pct_rms'], 2)}"])
+    write("tab-lab-measured", tabular("@{}l r r r@{}", ["Feed class (mm)", "Throughput (kg/h)", "Net power (kW)",
+                                                        "Product, largest and rms pass difference (points)"], rows))
+    dig = case.load_digitised()
+    noise = dig["fig6b_noise"]
+    write("numbers-lab", "\n".join([
+        f"\\newcommand{{\\labFsixNoiseMax}}{{{100 * max(v['max_abs_ln_force'] for v in noise.values()):.1f}}}",
+        f"\\newcommand{{\\labFsixN}}{{{noise['63/53']['n_pairs']}}}",
+        "\\newcommand{\\labQcross}{%.0f}" % (0.5 * sum(dig["throughput_kg_h"]["cross_check_fig13a_time_mean_1_to_24_5_s"][k] for k in ("A", "B"))),
+    ]))
+
+
 if __name__ == "__main__":
     parity_numbers()
     tab_surveys()
@@ -1142,5 +1342,8 @@ if __name__ == "__main__":
     tab_anomaly()
     tab_contracts()
     schemas()
+    tab_sastri_table2()
+    tab_dem_parameters()
+    tab_lab_measured()
     hashes()
     print("tables written to", OUT)
