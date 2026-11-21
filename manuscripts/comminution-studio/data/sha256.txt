@@ -9,5 +9,5 @@ fc4095cc8876eecf45f6e30cb1b632ec73de7c21ad4e7b4f30896812c861fbe5  data/derived/m
 22f844b802f374321de71cac46fe9742c4bf4d65c87c76981933c24bcc0bf125  data/derived/models/psd-ae.onnx
 5864fb0d1a02940e2db0645aaa25ce67ac178e03dedc6b9c11a4a8720cd47d63  data/derived/manifests/index.json
 f295ed4b07c6ebe5a5e32122bb8dcc7d4ef2cd44cfbb725537d7556e25dc152b  data-pipeline/pipeline/model/crusher/labjaw.py
-5709a27bb0b3a43cb14504ca4303d3c899428d75b36592c8c1a2cf84f5335398  docs/contracts/schemas/dem-run.schema.json
+644867cc25f421a1bd5d9184c7a88d6231daf45a9a7449071bb63b6ea8cc5922  docs/contracts/schemas/dem-run.schema.json
 3528f54f8929fe5723e461b3a23313c6c1e80e6f6558015819bfd34a0ede98ad  data/derived/dem/jaw-lab.json
