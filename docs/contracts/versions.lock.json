@@ -59,6 +59,11 @@
     "schema": "docs/contracts/schemas/model-metrics.schema.json",
     "sha256": "66a09c59bbfd285a98f34901c506280540fa2b79de53fa86bb79dd1f4c94ab77"
   },
+  "dem-run": {
+    "version": "1.0.0",
+    "schema": "docs/contracts/schemas/dem-run.schema.json",
+    "sha256": "8b445d81ca9d451379ffe38668aacef0e397b504555af72c0b3417b8f4b9d2e1"
+  },
   "readiness": {
     "version": "1.0.1",
     "schema": "docs/contracts/schemas/readiness.schema.json",

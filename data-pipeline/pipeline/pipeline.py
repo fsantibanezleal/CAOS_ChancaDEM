@@ -197,10 +197,9 @@ def bake_hp500(paths: PipelinePaths, surveys: list[survey_contract.Survey], seed
 
 def index_files(root: Path) -> list[str]:
     """The further files of ``root`` the index lists: the model contracts and graphs, the HP500 documents, the model metrics and the
-    particle-simulation document with its replay files, each when present."""
-    files = [rel for rel in (*MODEL_FILES, *HP500_FILES, METRICS_FILE, DEM_FILE) if (root / rel).is_file()]
-    replays = sorted(f.relative_to(root).as_posix() for f in (root / "dem").glob("*.frames.bin")) if (root / "dem").is_dir() else []
-    return files + replays
+    particle-simulation document, each when present. The replay files (``dem/*.frames.bin``) are named by the document and are not
+    listed: the case-index schema admits only .json and .onnx paths (a binary entry needs a change of that contract)."""
+    return [rel for rel in (*MODEL_FILES, *HP500_FILES, METRICS_FILE, DEM_FILE) if (root / rel).is_file()]
 
 
 def write_readiness(paths: PipelinePaths) -> dict:

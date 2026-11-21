@@ -1,14 +1,16 @@
 // T11: the committed artifacts against the web's declared contract, in both directions, types included. The same
 // assertions run on two roots: the committed bake (data/derived, when it holds the product's own bake) and the provider
 // tree (docs/contracts/fixtures/data/derived). They are the swap test and the consumer test of the catalog rows
-// case-index, case-manifest, trace, hp500-backbone, hp500-loo, hp500-comparison, surrogate-model, anomaly-model and model-metrics,
+// case-index, case-manifest, trace, hp500-backbone, hp500-loo, hp500-comparison, dem-run, surrogate-model, anomaly-model and model-metrics,
 // and the consumer side of readiness. A document the root must hold and does not is a failure naming its path, never a pass.
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 import {
   ANOMALY_MODEL,
   conform,
+  DEM_RUN,
   FLAG_CODES,
   HP500_BACKBONE,
   HP500_COMPARISON,
@@ -26,6 +28,7 @@ import {
   type AnomalyModel,
   type CaseIndex,
   type CaseManifest,
+  type DemRun,
   type Hp500Backbone,
   type Hp500Comparison,
   type Hp500CrusherBayes,
@@ -105,6 +108,7 @@ for (const [label, root, run, why] of roots) {
     it('the files the index declares exist, and name the HP500 documents and the model contracts and graphs', () => {
       for (const rel of index.files) expect(existsSync(new URL(rel, root)), rel).toBe(true);
       for (const rel of ['hp500/backbone.json', 'hp500/loo.json', 'hp500/crusherbayes.json', 'hp500/comparison.json', 'models/surrogate.json', 'models/psd-ae.json']) expect(index.files, rel).toContain(rel);
+      if (existsSync(new URL('dem/jaw-lab.json', root))) expect(index.files, 'dem/jaw-lab.json').toContain('dem/jaw-lab.json');
     });
 
     for (const entry of index.cases) {
@@ -206,6 +210,30 @@ for (const [label, root, run, why] of roots) {
         }
       }
       expect(c.crusherbayes.included).toBe(c.targets.kW.methods.some((m) => m.id === 'crusherbayes'));
+    });
+
+    it('the particle-simulation document conforms in both directions, follows its own state, and its replay files are the bytes it names', () => {
+      const url = new URL('dem/jaw-lab.json', root);
+      if (!existsSync(url)) {
+        // the provider tree must hold the document; a bake without it is the readiness state missing, and nothing else fails
+        expect(root.href, `${fileURLToPath(url)} is absent`).not.toBe(PROVIDER.href);
+        return;
+      }
+      const d = read('dem/jaw-lab.json') as DemRun;
+      expect(conform(d, { object: DEM_RUN })).toEqual([]);
+      expect(d.schema).toBe(SCHEMAS.demRun);
+      expect(d.points.map((p) => p.id)).toEqual(['63-52', '31.5-26.5', '16-13.2']);
+      expect(d.state).toBe(d.incomplete.length > 0 ? 'partial' : 'available');
+      expect(d.incomplete).toEqual(d.points.filter((p) => p.simulation.status !== 'complete').map((p) => p.id));
+      for (const p of d.points) {
+        const r = p.simulation.replay;
+        if (r === null) continue;
+        const bytes = readFileSync(new URL(r.file, root));
+        expect(bytes.length, `${p.id} bytes`).toBe(r.bytes);
+        expect(createHash('sha256').update(bytes).digest('hex'), `${p.id} sha256`).toBe(r.sha256);
+        expect(r.bytes).toBe(8 * r.spheres);
+        expect([r.t_s.length, r.stroke.length, r.plate_bottom_x_mm.length, r.plate_bottom_z_mm.length, r.count.length]).toEqual(Array(5).fill(r.frames));
+      }
     });
 
     it('the model contracts conform and name graphs that exist with the bytes they declare', () => {
@@ -334,13 +362,29 @@ describe('CONTRACT 2: the checker', () => {
     badCi.targets.kW.paired[0].ci95 = 'wide';
     expect(conform(badCi, { object: HP500_COMPARISON }).join(' ')).toMatch(/ci95/);
   });
+  it('adversarial: a dem-run document that lacks a side, breaks a type or an enum, or carries a wall time is refused, and the field is named', () => {
+    const good = JSON.parse(readFileSync(new URL('dem/jaw-lab.json', PROVIDER), 'utf8')) as DemRun;
+    expect(conform(good, { object: DEM_RUN })).toEqual([]);
+    const noSide = structuredClone(good) as unknown as { points: Array<Record<string, unknown>> };
+    delete noSide.points[0].population_balance;
+    expect(conform(noSide, { object: DEM_RUN }).join(' ')).toMatch(/points\[0\]\.population_balance: declared by the web, not written/);
+    const badVerdict = structuredClone(good);
+    (badVerdict.points[0].verdicts.simulation_vs_measured.throughput as { verdict: string }).verdict = 'maybe';
+    expect(conform(badVerdict, { object: DEM_RUN }).join(' ')).toMatch(/expected one of met, not met, not compared/);
+    const wall = structuredClone(good) as unknown as { points: Array<{ simulation: Record<string, unknown> }> };
+    wall.points[0].simulation.wall_s = 12;
+    expect(conform(wall, { object: DEM_RUN }).join(' ')).toMatch(/wall_s: written by the pipeline, not declared by the web/);
+    const badType = structuredClone(good) as unknown as { seed: unknown };
+    badType.seed = '1';
+    expect(conform(badType, { object: DEM_RUN }).join(' ')).toMatch(/seed: expected an integer/);
+  });
   it('adversarial: a loo 1.2.0 block with a Morrell score of the wrong type is refused', () => {
     const l = JSON.parse(readFileSync(new URL('hp500/loo.json', PROVIDER), 'utf8')) as Hp500Loo;
     const bad = structuredClone(l);
     (bad.loo.kW.strict.Morrell as Record<string, unknown>).mape_pct = 'x';
     expect(conform(bad, { object: HP500_LOO }).join(' ')).toMatch(/Morrell\.mape_pct: expected a finite number/);
   });
-  it('the catalog table is parsed: fourteen rows, readiness among them', () => {
+  it('the catalog table is parsed: fifteen rows, readiness among them', () => {
     expect(catalogIds()).toEqual([
       'params-record',
       'hp500-survey',
@@ -354,6 +398,7 @@ describe('CONTRACT 2: the checker', () => {
       'surrogate-model',
       'anomaly-model',
       'model-metrics',
+      'dem-run',
       'readiness',
       'api',
     ]);

@@ -517,14 +517,14 @@ def test_the_stage_writes_the_document_and_one_replay_file_per_point(baked):
 
 
 @needs_package
-def test_two_bakes_of_the_same_records_are_byte_identical_and_the_index_lists_the_files(baked, short, tmp_path):
+def test_two_bakes_of_the_same_records_are_byte_identical_and_the_index_lists_the_document(baked, short, tmp_path):
     second = pipeline.PipelinePaths.from_output(tmp_path / "again")
     stage.run(second, seed=points.SEED, runs_dir=short["folder"], jobs=3, settings=SHORT)
     for f in (baked["root"] / "dem").iterdir():
         assert f.read_bytes() == (tmp_path / "again" / "dem" / f.name).read_bytes(), f.name
     listed = pipeline.index_files(baked["root"])
-    assert listed[:1] == ["dem/jaw-lab.json"] or "dem/jaw-lab.json" in listed
-    assert {"dem/jaw-lab.json", "dem/jaw-lab-63-52.frames.bin", "dem/jaw-lab-31.5-26.5.frames.bin", "dem/jaw-lab-16-13.2.frames.bin"} <= set(listed)
+    assert "dem/jaw-lab.json" in listed
+    assert not [f for f in listed if f.endswith(".bin")]      # the case-index schema admits .json and .onnx only: the document names its replay files
 
 
 @needs_package

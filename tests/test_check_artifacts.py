@@ -133,4 +133,8 @@ def test_adversarial_a_replay_file_changed_by_one_byte_fails_on_the_sha256_and_a
 
 def test_a_bake_without_the_particle_simulation_passes(repo):
     shutil.rmtree(repo / "data" / "derived" / "dem", ignore_errors=True)       # readiness says missing for dem-run: nothing else fails
+    index = repo / "data" / "derived" / "manifests" / "index.json"
+    doc = json.loads(index.read_text(encoding="utf-8"))
+    doc["files"] = [f for f in doc["files"] if not f.startswith("dem/")]       # a bake without the document does not list it
+    index.write_text(json.dumps(doc, separators=(",", ":")), encoding="utf-8")
     assert check(repo).returncode == 0

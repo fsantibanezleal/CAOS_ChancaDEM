@@ -22,6 +22,8 @@ def tree(root: Path) -> dict[str, str]:
 def with_models(root: Path) -> Path:
     shutil.copytree(DERIVED / "models", root / "models")
     shutil.copyfile(DERIVED / "model-metrics.json", root / "model-metrics.json")   # the precompute lane's outputs, as released
+    if (DERIVED / "dem").is_dir():                                                  # so is the particle-simulation document (run.py dem; hours)
+        shutil.copytree(DERIVED / "dem", root / "dem")
     return root
 
 
@@ -90,7 +92,8 @@ def test_the_index_lists_the_models_and_the_metrics_when_present(tmp_path: Path)
     out = with_models(tmp_path / "derived")
     pipeline.run_all(output_root=out)
     idx = json.loads((out / "manifests" / "index.json").read_text(encoding="utf-8"))
-    assert idx["files"] == [*pipeline.MODEL_FILES, *pipeline.HP500_FILES, "model-metrics.json"]
+    dem = [pipeline.DEM_FILE] if (DERIVED / "dem").is_dir() else []      # with_models copies the particle-simulation document too, when released
+    assert idx["files"] == [*pipeline.MODEL_FILES, *pipeline.HP500_FILES, "model-metrics.json", *dem]
 
 
 def planted_params(tmp_path: Path, extra: str = "", drop: str | None = None) -> Path:
