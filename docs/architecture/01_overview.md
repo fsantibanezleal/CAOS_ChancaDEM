@@ -9,13 +9,15 @@ The question it answers: for one crushing case, how do the closed-side setting, 
 and the feed size distribution set the product size $P_{80}$, the throughput and the power, and how far can that answer
 be trusted against ten measured surveys of an HP500 secondary cone. What it is and is not is stated in
 [design/SDD.md](../design/SDD.md) (Problem and non-goals): a studio and a validation, not a sizing tool, not a
-discrete-element simulator, not a grinding model, not a backend.
+grinding model, not a backend. It does run one discrete element method, offline, on a laboratory jaw crusher, through the
+published package `crushdem`, to compare it with its own population balance and a measurement ([card 07](../frameworks/07_dem_pbm_landscape/dem-pbm.md));
+the plant engine and the live lane hold no particle simulation.
 
 ## The lanes
 
 | Lane | Where | What runs |
 |---|---|---|
-| Offline | `data-pipeline/`, in `.venv-pipeline` | the canonical Python engine; the bake of the 27 cases; the HP500 documents; the training and the evaluation of the two models |
+| Offline | `data-pipeline/`, in `.venv-pipeline` | the canonical Python engine; the bake of the 27 cases; the HP500 documents; the training and the evaluation of the two models; the particle simulation of the laboratory jaw (`run.py dem`, hours, never in CI) |
 | Replay | `data/derived/`, copied into the site | the committed artifacts, read as they are |
 | Live | `frontend/src/engine/` | the TypeScript port of the engine, re-run with the reader's values; the two ONNX models through onnxruntime-web |
 | API | `app/` | dormant; a read-only layer over `data/derived` |
@@ -28,6 +30,7 @@ raw tables (data/examples/*.csv)
   contract 2 (index, manifests, traces)               core/manifest.py, core/trace.py
   HP500 documents (backbone, CrusherCal)              hp500/backbone.py, hp500/loo.py
   models (train, evaluate)                            stages/train.py, stages/evaluate.py   [run.py models]
+  particle simulation, laboratory jaw (dem-run)       stages/dem.py, dem/, crushdem 0.6.0   [run.py dem]
   readiness                                           core/readiness.py
 committed into data/derived/
   copied exactly as declared into the site            frontend/scripts/copy-data.mjs

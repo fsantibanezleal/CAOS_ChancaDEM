@@ -34,7 +34,7 @@ code has them, where it runs, tests, what it is not, references.
 | [CrusherCal](08_calibration_validation/calibration-validation.md) | M10 | leave-one-survey-out, controls, predictive band |
 | [Surrogate MLP](05_surrogate/surrogate.md) | M11 | a population-balance emulator (Koh et al. 2021 as the state of the art) |
 | [Denoising autoencoder](06_denoising-ae/denoising-ae.md) | M12 | reconstruction error as an extrapolation score |
-| [DEM landscape](07_dem_pbm_landscape/dem-pbm.md) | frontier | Cleary and Sinnott 2015, Delaney et al. 2015, Quist and Evertsson 2016 |
+| [Particle simulation (discrete element method)](07_dem_pbm_landscape/dem-pbm.md) | run offline on one laboratory jaw | crushdem 0.6.0; Barrios et al. 2020, Tavares 2022; Cleary and Sinnott 2015, Delaney et al. 2015 and Quist and Evertsson 2016 as the literature |
 
 Real-data calibration and validation anchor: Rocha et al. 2024 (Minerals 14(9):919,
 [doi:10.3390/min14090919](https://doi.org/10.3390/min14090919), CC BY 4.0), the ten HP500 surveys; Duarte et al. 2021

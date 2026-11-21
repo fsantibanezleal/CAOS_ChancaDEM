@@ -86,7 +86,9 @@ place the two languages differ by construction. See [architecture 04](../../arch
 ## What it is not
 
 - Not a plant model: one breakage zone with a classification function, no spatial resolution of the chamber, no
-  wear, no feed segregation. See the [DEM landscape](../07_dem_pbm_landscape/dem-pbm.md).
+  wear, no feed segregation. The mechanism it approximates is resolved by the discrete element method, which the product
+  runs offline, through the package `crushdem`, on one laboratory jaw and compares with this engine there: see the
+  [particle simulation card](../07_dem_pbm_landscape/dem-pbm.md).
 - Not calibrated on the synthetic machines: their constants are illustrative of their class and reproduce trends, not a
   vendor's numbers. Only the HP500 cone lane is calibrated (see the [calibration card](../16_hp500-calibration/hp500-calibration.md)).
 - Not a package: the product declares none (`product.json` carries no `method_packages` key); the engine is a module folder

@@ -21,7 +21,7 @@ them, where it runs, its tests and what it is not. The full index, with the pins
 | [08, CrusherCal](frameworks/08_calibration_validation/calibration-validation.md) | M10 leave-one-survey-out validation |
 | [05, surrogate MLP](frameworks/05_surrogate/surrogate.md) | M11 |
 | [06, denoising autoencoder](frameworks/06_denoising-ae/denoising-ae.md) | M12 |
-| [07, DEM landscape](frameworks/07_dem_pbm_landscape/dem-pbm.md) | the frontier, not a method of the product |
+| [07, particle simulation](frameworks/07_dem_pbm_landscape/dem-pbm.md) | the discrete element method with particle replacement (the package crushdem), run offline on one laboratory jaw and compared with the measurement and the population balance |
 
 ## Engines
 

@@ -16,8 +16,11 @@ So the models train on the CPU in minutes at most, and the committed artifacts a
 
 ## When it would be activated
 
-Only if the offline engine genuinely needs CUDA: a discrete-element simulation with breakage (the product's earlier 2-D DEM
-tracer was removed and is a backlog item, [the DEM card](../frameworks/07_dem_pbm_landscape/dem-pbm.md)), a much larger
+Only if the offline engine genuinely needs CUDA. The discrete-element simulation with breakage that the product now runs
+(the package `crushdem` on a laboratory jaw, [the particle simulation card](../frameworks/07_dem_pbm_landscape/dem-pbm.md),
+[guide 01](01_precompute-pipeline.md)) uses the package's numba CPU path, pinned in `requirements-precompute.txt`; the package's
+CUDA path is not used, and the product's earlier 2-D DEM tracer was removed in release 0.10.000. A CUDA path would be needed for
+a larger bed, such as a cone, a much larger
 sweep or model, or a Monte-Carlo wrapper around the engine. Then:
 
 1. Pin the CUDA build in `requirements-gpu.txt` (an exact `torch==...+cu...`, or the DEM engine's own package) and record
