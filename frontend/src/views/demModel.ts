@@ -214,6 +214,14 @@ export function sizeClass(diameterMm: number, feedLowMm: number): number {
   return SIZE_CLASS_EDGES.length;
 }
 
+/** How many spheres of each size class a frame holds (index 0 finest): the mix the stage's panel draws beside the section. */
+export function classCounts(f: DemFrames, i: number, feedLowMm: number): number[] {
+  const out = new Array<number>(SIZE_CLASSES).fill(0);
+  const [a, b] = frameSpheres(f, i);
+  for (let s = a; s < b; s++) out[sizeClass(2 * f.data[s * 4 + 3], feedLowMm)]++;
+  return out;
+}
+
 /** The legend of the classes: each class's range in millimetres for a feed class. */
 export function sizeClassLabels(feedLowMm: number, num: Num): string[] {
   const edges = SIZE_CLASS_EDGES.map((e) => e * feedLowMm);
@@ -286,9 +294,10 @@ export function runStatusText(s: DemSimulation, num: Num): Text {
 }
 
 /** The state of a run in one short phrase (the operating point choice). */
-export function runStateText(s: DemSimulation): Text {
-  if (isComplete(s)) return { en: `complete, ${s.strokes} strokes`, es: `completa, ${s.strokes} golpes` };
+export function runStateText(s: DemSimulation, short = false): Text {
+  if (isComplete(s)) return short ? { en: 'complete', es: 'completa' } : { en: `complete, ${s.strokes} strokes`, es: `completa, ${s.strokes} golpes` };
   const at = finalAttempt(s).stopped_during_stroke;
+  if (short) return { en: 'stopped', es: 'detenida' };
   return { en: `stopped${at === null ? '' : ` in stroke ${at}`}`, es: `detenida${at === null ? '' : ` en el golpe ${at}`}` };
 }
 

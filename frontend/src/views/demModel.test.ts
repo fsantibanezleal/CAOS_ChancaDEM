@@ -8,6 +8,7 @@ import type { DemRun } from '../lib/contract.types';
 import {
   advance,
   basisText,
+  classCounts,
   calloutSource,
   calloutState,
   cellOf,
@@ -191,6 +192,17 @@ describe('the stage: the section to scale', () => {
     const fixed = t.px(g.fixed_plate_x_mm, 0).x;
     const closed = t.px(g.swing_closed_bottom_mm[0], 0).x;
     expect((closed - fixed) / t.scale).toBeCloseTo(run.settings.css_mm, 6);
+  });
+});
+
+describe('the mix of a frame by size class', () => {
+  it('the counts add up to the frame’s spheres, and the first frame of the 63/52 mm point is all feed-sized', () => {
+    const r = coarse.simulation.replay!;
+    const f = decodeFrames(bytesOf(coarse), r);
+    for (const i of [0, 40, r.frames - 1]) expect(classCounts(f, i, coarse.feed_mm[0]).reduce((a, c) => a + c, 0)).toBe(r.count[i]);
+    const first = classCounts(f, 0, coarse.feed_mm[0]);
+    expect(first.slice(0, SIZE_CLASSES - 2).every((c) => c === 0)).toBe(true);
+    expect(classCounts(f, 500, coarse.feed_mm[0])[0]).toBeGreaterThan(0);
   });
 });
 
@@ -494,7 +506,7 @@ describe('the words of the view never use the internal tier names, and carry no 
       } catch {
         return;
       }
-      expect(src).not.toMatch(/—|→|←|⇒/);
+      expect(src).not.toMatch(new RegExp(`${String.fromCharCode(0x2014)}|${String.fromCharCode(0x2192)}|${String.fromCharCode(0x2190)}|${String.fromCharCode(0x21d2)}`));
       expect(src).not.toMatch(/\bclassical\b|state of the art|state-of-the-art|\bSOTA\b|\bbeyond\b|\btier\b/i);
     });
   }
