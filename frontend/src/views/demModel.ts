@@ -754,3 +754,16 @@ export function passedAt(s: DemSimulation, cursor: number): number | null {
   const i = s.series.stroke.indexOf(stroke);
   return i < 0 ? null : s.series.passed_kg[i];
 }
+
+/**
+ * The document's own source texts are English and carry numbers written with a decimal point ("section 3.2", "0.34 kW"). On a Spanish page
+ * every number is written with a decimal comma, so the digits of such a text are rewritten; a token that holds a slash and letters (a DOI, a path) is
+ * left as it is, and so is every word.
+ */
+export function localizeNumbers(text: string, lang: Lang): string {
+  if (lang !== 'es') return text;
+  return text
+    .split(' ')
+    .map((tok) => ((tok.includes('/') && /[A-Za-z]{2,}/.test(tok)) || /^https?:/i.test(tok) ? tok : tok.replace(/(?<![\d.])(\d+)\.(\d+)(?!\d|\.\d)/g, '$1,$2')))
+    .join(' ');
+}

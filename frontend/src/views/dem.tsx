@@ -25,6 +25,7 @@ import {
   finalAttempt,
   frameAt,
   isComplete,
+  localizeNumbers,
   nearerSentence,
   openingCursor,
   pairTitle,
@@ -498,6 +499,8 @@ function VerdictCard({ run, point }: { run: DemRun; point: DemPoint }) {
 function Sources({ run, point }: { run: DemRun; point: DemPoint }) {
   const t = useT();
   const num = useNum();
+  const lang = useShellLang();
+  const loc = (s: string) => localizeNumbers(s, lang);
   const stateKey = useWorkbenchState()?.stateKey;
   const m = point.measured;
   const row = (term: string, def: ReactNode) => (
@@ -509,18 +512,18 @@ function Sources({ run, point }: { run: DemRun; point: DemPoint }) {
   return (
     <PlotCard title={{ en: 'Sources, package, seed and bands', es: 'Fuentes, paquete, semilla y bandas' }} lane="replay" provenance="published" dataKey={stateKey} note={{ en: 'The source texts are the document’s own, in English.', es: 'Los textos de fuente son los del documento, en inglés.' }}>
       <dl className="cdem-sources" data-sources="">
-        {row(t('Measured throughput', 'Capacidad medida'), `${num(m.throughput_kg_h.value, { digits: 4 })} kg/h (${t('digitisation noise', 'ruido de digitalización')} ${num(m.throughput_kg_h.digitisation_noise, { digits: 2 })}): ${m.throughput_kg_h.source}`)}
-        {row(t('Measured net power', 'Potencia neta medida'), `${num(m.net_power_kw.value, { digits: 3 })} kW: ${m.net_power_kw.source}`)}
-        {row(t('Measured product', 'Producto medido'), m.product_source)}
-        {row(t('Paper', 'Artículo'), `${run.source.paper}; DOI ${run.source.doi}; ${run.source.license}`)}
-        {row(t('Digitisation', 'Digitalización'), run.source.digitised)}
-        {row(t('Machine', 'Máquina'), `${run.machine.name}: ${run.machine.source}`)}
+        {row(t('Measured throughput', 'Capacidad medida'), `${num(m.throughput_kg_h.value, { digits: 4 })} kg/h (${t('digitisation noise', 'ruido de digitalización')} ${num(m.throughput_kg_h.digitisation_noise, { digits: 2 })}): ${loc(m.throughput_kg_h.source)}`)}
+        {row(t('Measured net power', 'Potencia neta medida'), `${num(m.net_power_kw.value, { digits: 3 })} kW: ${loc(m.net_power_kw.source)}`)}
+        {row(t('Measured product', 'Producto medido'), loc(m.product_source))}
+        {row(t('Paper', 'Artículo'), `${loc(run.source.paper)}; DOI ${run.source.doi}; ${loc(run.source.license)}`)}
+        {row(t('Digitisation', 'Digitalización'), loc(run.source.digitised))}
+        {row(t('Machine', 'Máquina'), `${run.machine.name}: ${loc(run.machine.source)}`)}
         {row(t('Particle simulation', 'Simulación de partículas'), `${run.package.name} ${run.package.version} (${run.package.backend}); ${t('seed', 'semilla')} ${run.seed}`)}
-        {row(t('Ore', 'Mineral'), `${run.ore.name}; ${run.ore.derivation}`)}
-        {row(t('Population balance', 'Balance poblacional'), `${run.preset.capacity_model} ${run.preset.first_estimate_source} ${run.preset.ranges_source} ${run.preset.power}`)}
+        {row(t('Ore', 'Mineral'), `${loc(run.ore.name)}; ${loc(run.ore.derivation)}`)}
+        {row(t('Population balance', 'Balance poblacional'), loc(`${run.preset.capacity_model} ${run.preset.first_estimate_source} ${run.preset.ranges_source} ${run.preset.power}`))}
         {row(
           t('Bands', 'Bandas'),
-          `${t('throughput', 'capacidad')} ${num(run.bands.throughput_relative * 100, { digits: 2 })} %, ${t('net power', 'potencia neta')} ${num(run.bands.net_power_relative * 100, { digits: 2 })} %, ${t('reduction ratio', 'razón de reducción')} ${num(run.bands.reduction_ratio_relative * 100, { digits: 2 })} %. ${run.bands.set}`,
+          `${t('throughput', 'capacidad')} ${num(run.bands.throughput_relative * 100, { digits: 2 })} %, ${t('net power', 'potencia neta')} ${num(run.bands.net_power_relative * 100, { digits: 2 })} %, ${t('reduction ratio', 'razón de reducción')} ${num(run.bands.reduction_ratio_relative * 100, { digits: 2 })} %. ${loc(run.bands.set)}`,
         )}
       </dl>
     </PlotCard>

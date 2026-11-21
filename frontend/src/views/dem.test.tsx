@@ -287,6 +287,17 @@ describe('DM-014: the comparison, the distribution, the verdicts and the sources
   });
 });
 
+describe('a Spanish page writes no decimal point in the sources', () => {
+  it('the sources block holds no digit.digit outside a DOI or a version', () => {
+    setLang('es');
+    const html = render();
+    const block = html.slice(html.indexOf('data-sources'));
+    const text = textOf(block.slice(0, block.indexOf('</dl>'))).replace(/10\.3390\/\S+/g, '').replace(/\d+\.\d+\.\d+/g, '');
+    // a version or a section number with two dots is not a decimal (the gate reads it the same way)
+    expect((text.match(/\S*\d\.\d\S*/g) ?? []).filter((tok) => !/\d\.\d+\.\d/.test(tok))).toEqual([]);
+  });
+});
+
 describe('DM-015: the states of the row', () => {
   it('partial: the reason is shown in the reader’s language and what the document holds is drawn', () => {
     const html = render({ readiness });

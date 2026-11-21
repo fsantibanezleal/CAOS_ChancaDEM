@@ -540,8 +540,7 @@
     min-height: 28rem;
   }
   .cdem-distribution {
-    height: auto;
-    min-height: 24rem;
+    height: 24rem;
   }
   .cdem-stage-fill {
     min-height: 34rem;

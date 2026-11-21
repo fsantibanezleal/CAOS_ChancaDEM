@@ -22,6 +22,7 @@ import {
   distributionOf,
   frameAt,
   frameLabel,
+  localizeNumbers,
   frameLabelText,
   frameSpheres,
   nearer,
@@ -494,6 +495,15 @@ describe('DM-014: the verdict table, the product distribution and the per-stroke
     expect(windowMeanPower(coarse.simulation)! / 1000).toBeCloseTo(coarse.simulation.net_power_kw!, 4);
     expect(windowMeanPower(fine.simulation)! / 1000).toBeCloseTo(fine.simulation.net_power_kw!, 4);
     expect(windowMeanPower(middle.simulation)).toBeNull();
+  });
+});
+
+describe('a source text on a Spanish page writes its numbers with a decimal comma', () => {
+  it('rewrites the digits of the document’s English sources, and leaves a DOI, a path and every word alone', () => {
+    expect(localizeNumbers('measured 0.34 kW (section 3.2, p. 10)', 'es')).toBe('measured 0,34 kW (section 3,2, p. 10)');
+    expect(localizeNumbers('DOI 10.3390/min10080717 and 7.5 mm, 31.5/26.5', 'es')).toBe('DOI 10.3390/min10080717 and 7,5 mm, 31,5/26,5');
+    expect(localizeNumbers('measured 0.34 kW', 'en')).toBe('measured 0.34 kW');
+    for (const p of run.points) expect(localizeNumbers(p.measured.throughput_kg_h.source, 'es')).not.toMatch(/\d\.\d/);
   });
 });
 
