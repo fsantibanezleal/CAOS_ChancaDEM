@@ -1,0 +1,1882 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "dem-run.schema.json",
+  "title": "DemRun",
+  "description": "Catalog row dem-run 1.0.0: the discrete element method with particle-replacement breakage on the laboratory jaw crusher of Barrios et al. 2020 at the three operating points that have a measured throughput, net power and product, beside the measurement and the prediction of the product's population-balance engine with a laboratory preset, with the verdicts against bands set before the runs. Written by data-pipeline/pipeline/stages/dem.py to data/derived/dem/jaw-lab.json from runs of the pinned package crushdem. A function of the package version, the seed and the committed inputs: it holds no wall time and no date.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "engine_version",
+    "machine",
+    "source",
+    "package",
+    "seed",
+    "bands",
+    "settings",
+    "ore",
+    "preset",
+    "state",
+    "incomplete",
+    "points"
+  ],
+  "properties": {
+    "schema": {
+      "const": "chancadem.dem.run/v1",
+      "description": "The document schema identifier, chancadem.dem.run/v1."
+    },
+    "engine_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d{2}\\.\\d{3}$",
+      "description": "The product version that wrote the document (format X.XX.XXX); a version other than VERSION makes the row stale."
+    },
+    "machine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "gape_mm",
+        "width_mm",
+        "throw_mm",
+        "source"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The laboratory jaw crusher, as the paper names it."
+        },
+        "gape_mm": {
+          "type": "number",
+          "description": "The feed opening across the jaws [mm].",
+          "exclusiveMinimum": 0
+        },
+        "width_mm": {
+          "type": "number",
+          "description": "The feed opening along the jaws [mm].",
+          "exclusiveMinimum": 0
+        },
+        "throw_mm": {
+          "type": "number",
+          "description": "The throw of the swing jaw at the discharge [mm].",
+          "exclusiveMinimum": 0
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The table and page of the paper the constants are read from."
+        }
+      },
+      "description": "The laboratory machine. It is not one of the plant machines of the engine."
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "paper",
+        "doi",
+        "license",
+        "digitised"
+      ],
+      "properties": {
+        "paper": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The source publication of the machine, the tests and the measurements."
+        },
+        "doi": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Its DOI."
+        },
+        "license": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Its licence."
+        },
+        "digitised": {
+          "type": "string",
+          "minLength": 1,
+          "description": "How the figure values were read, and where the digitised values live."
+        }
+      },
+      "description": "The source of the laboratory tests."
+    },
+    "package": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version",
+        "backend"
+      ],
+      "properties": {
+        "name": {
+          "const": "crushdem",
+          "description": "The published package that ran the particle simulation."
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Its installed version."
+        },
+        "backend": {
+          "enum": [
+            "numba",
+            "numpy",
+            "warp"
+          ],
+          "description": "The backend that ran."
+        }
+      },
+      "description": "The particle engine."
+    },
+    "seed": {
+      "type": "integer",
+      "description": "The seed of every run."
+    },
+    "bands": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "throughput_relative",
+        "net_power_relative",
+        "reduction_ratio_relative",
+        "set"
+      ],
+      "properties": {
+        "throughput_relative": {
+          "type": "number",
+          "description": "The throughput band [dimensionless].",
+          "exclusiveMinimum": 0
+        },
+        "net_power_relative": {
+          "type": "number",
+          "description": "The net power band [dimensionless].",
+          "exclusiveMinimum": 0
+        },
+        "reduction_ratio_relative": {
+          "type": "number",
+          "description": "The reduction-ratio band [dimensionless].",
+          "exclusiveMinimum": 0
+        },
+        "set": {
+          "type": "string",
+          "minLength": 1,
+          "description": "When and where the bands were set, before any run of the product."
+        }
+      },
+      "description": "The relative bands set before the runs."
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "css_mm",
+        "oss_mm",
+        "frequency_hz",
+        "speed_rpm",
+        "batch_kg",
+        "overlap_ladder",
+        "overlap_reference",
+        "stall_strokes",
+        "max_strokes",
+        "minimum_sphere_mm",
+        "sieves_mm"
+      ],
+      "properties": {
+        "css_mm": {
+          "type": "number",
+          "description": "The closed-side setting of every point [mm].",
+          "exclusiveMinimum": 0
+        },
+        "oss_mm": {
+          "type": "number",
+          "description": "The open-side setting, the closed-side setting plus the throw [mm].",
+          "exclusiveMinimum": 0
+        },
+        "frequency_hz": {
+          "type": "number",
+          "description": "The stroke frequency [Hz].",
+          "exclusiveMinimum": 0
+        },
+        "speed_rpm": {
+          "type": "number",
+          "description": "The same frequency in strokes per minute [1/min].",
+          "exclusiveMinimum": 0
+        },
+        "batch_kg": {
+          "type": "number",
+          "description": "The batch fed at each point [kg].",
+          "exclusiveMinimum": 0
+        },
+        "overlap_ladder": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "The overlap limits tried in order, as fractions of the smaller radius.",
+          "minItems": 1
+        },
+        "overlap_reference": {
+          "type": "number",
+          "description": "The overlap the window's strokes are counted against, as a fraction of the smaller radius [dimensionless]: the limit of the Hertz contact.",
+          "exclusiveMinimum": 0
+        },
+        "stall_strokes": {
+          "type": "integer",
+          "description": "Strokes without 0.1 percent of the batch passing after which a run is stalled.",
+          "minimum": 1
+        },
+        "max_strokes": {
+          "type": "integer",
+          "description": "The stroke limit of a run.",
+          "minimum": 1
+        },
+        "minimum_sphere_mm": {
+          "type": "number",
+          "description": "The smallest sphere the simulation keeps; finer progeny are pooled as fines [mm].",
+          "exclusiveMinimum": 0
+        },
+        "sieves_mm": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "The sieves on which the simulated and the predicted products are given [mm], ascending: the paper's nine sieves, the smallest sphere kept and the sizes above them up to the coarsest feed.",
+          "minItems": 1
+        }
+      },
+      "description": "The run settings shared by the three points."
+    },
+    "ore": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "density_kg_m3",
+        "e_inf_j_kg",
+        "d0_mm",
+        "phi",
+        "variance",
+        "gamma",
+        "a_max_percent",
+        "b_prime",
+        "derivation"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The ore's name in the package."
+        },
+        "density_kg_m3": {
+          "type": "number",
+          "description": "The ore's density [kg/m3].",
+          "exclusiveMinimum": 0
+        },
+        "e_inf_j_kg": {
+          "type": "number",
+          "description": "The median specific fracture energy of a large particle [J/kg].",
+          "exclusiveMinimum": 0
+        },
+        "d0_mm": {
+          "type": "number",
+          "description": "The size parameter of the size effect [mm].",
+          "exclusiveMinimum": 0
+        },
+        "phi": {
+          "type": "number",
+          "description": "The exponent of the size effect [dimensionless].",
+          "exclusiveMinimum": 0
+        },
+        "variance": {
+          "type": "number",
+          "description": "The variance of the logarithm of the specific fracture energy [dimensionless].",
+          "exclusiveMinimum": 0
+        },
+        "gamma": {
+          "type": "number",
+          "description": "The damage accumulation parameter [dimensionless].",
+          "exclusiveMinimum": 0
+        },
+        "a_max_percent": {
+          "type": "number",
+          "description": "The largest t10 of one event [%].",
+          "exclusiveMinimum": 0
+        },
+        "b_prime": {
+          "type": "number",
+          "description": "The fragmentation parameter of the t10 law [dimensionless].",
+          "exclusiveMinimum": 0
+        },
+        "derivation": {
+          "type": "string",
+          "minLength": 1,
+          "description": "How the package derives the ore from the paper's single-particle tests, and which values are assumptions."
+        }
+      },
+      "description": "The ore of the particle simulation, derived in the package from the paper's single-particle tests; no value is fitted to the jaw."
+    },
+    "preset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "k1_over_css",
+        "k2",
+        "k3",
+        "first_estimate_source",
+        "k1_over_css_range",
+        "k2_over_css_range",
+        "k3_range",
+        "ranges_source",
+        "capacity_model",
+        "material_factor",
+        "ore_link",
+        "power"
+      ],
+      "properties": {
+        "k1_over_css": {
+          "type": "number",
+          "description": "The first estimate of K1 over the closed-side setting [dimensionless].",
+          "exclusiveMinimum": 0
+        },
+        "k2": {
+          "const": "open-side setting",
+          "description": "The first estimate of K2: the open-side setting."
+        },
+        "k3": {
+          "type": "number",
+          "description": "The first estimate of the classification exponent [dimensionless].",
+          "exclusiveMinimum": 0
+        },
+        "first_estimate_source": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The source of the first estimate."
+        },
+        "k1_over_css_range": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "The published range of K1 over the closed-side setting [dimensionless].",
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "k2_over_css_range": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "The published range of K2 over the closed-side setting [dimensionless].",
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "k3_range": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "The published range of the exponent [dimensionless].",
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "ranges_source": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The source of the three ranges."
+        },
+        "capacity_model": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The jaw capacity model and its source."
+        },
+        "material_factor": {
+          "type": "number",
+          "description": "The capacity model's factor of the material's nature [dimensionless].",
+          "exclusiveMinimum": 0
+        },
+        "ore_link": {
+          "type": "string",
+          "minLength": 1,
+          "description": "How the engine's A times b follows from the particle simulation's ore, and that the conversion is the product's own algebra."
+        },
+        "power": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why the population balance states no power at these points."
+        }
+      },
+      "description": "The laboratory preset of the population balance: every constant with its source, none fitted to this jaw's measured throughput, power or product."
+    },
+    "state": {
+      "enum": [
+        "available",
+        "partial"
+      ],
+      "description": "available when every run completed; partial when at least one did not."
+    },
+    "incomplete": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "63-52",
+          "31.5-26.5",
+          "16-13.2"
+        ]
+      },
+      "description": "The operating points whose run did not complete, in the order of points; empty when the state is available."
+    },
+    "points": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/point"
+      },
+      "description": "The three operating points, coarsest feed first.",
+      "minItems": 3,
+      "maxItems": 3
+    }
+  },
+  "$defs": {
+    "value_source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "value",
+        "digitisation_noise",
+        "source"
+      ],
+      "properties": {
+        "value": {
+          "type": "number",
+          "description": "The measured value, in the unit its field names."
+        },
+        "digitisation_noise": {
+          "type": "number",
+          "description": "The difference between the two digitisation passes of the figure marker, in the same unit; zero for a value the paper states in its text.",
+          "minimum": 0
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Where the value is read: the figure or the text of the paper with its page, and how it was digitised."
+        }
+      },
+      "description": "A measured value with its source."
+    },
+    "curve": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sieves_mm",
+        "passing_pct"
+      ],
+      "properties": {
+        "sieves_mm": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "The sieve sizes [mm], ascending.",
+          "minItems": 1
+        },
+        "passing_pct": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": "The cumulative mass passing each sieve [%]; null at a sieve at or below the smallest sphere the particle simulation keeps, where it resolves nothing."
+        }
+      },
+      "description": "A cumulative size distribution on named sieves; the two lists have the same length."
+    },
+    "verdict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "first",
+        "second",
+        "relative_error",
+        "band",
+        "verdict",
+        "basis",
+        "resolved",
+        "edge_distance_se"
+      ],
+      "properties": {
+        "first": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The value of the first side of the pair, in the unit of the quantity; null when it is absent."
+        },
+        "second": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The value of the second side of the pair, in the unit of the quantity; null when it is absent."
+        },
+        "relative_error": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "(first minus second) over second [dimensionless]; null when either value is absent."
+        },
+        "band": {
+          "type": "number",
+          "description": "The relative band set before the runs [dimensionless]: 0.10 throughput, 0.30 net power, 0.15 reduction ratio.",
+          "exclusiveMinimum": 0
+        },
+        "verdict": {
+          "enum": [
+            "met",
+            "not met",
+            "not compared"
+          ],
+          "description": "met when the absolute relative error is within the band, not met otherwise, not compared when either value is absent."
+        },
+        "basis": {
+          "enum": [
+            null,
+            "run_incomplete",
+            "no_window",
+            "no_work_index",
+            "nothing_passed"
+          ],
+          "description": "Why a verdict is not compared: run_incomplete (the particle run did not run the whole batch through, so no verdict rests on it), no_window (the run gives no steady window), no_work_index (no work index of the ore is published, so the population balance predicts no power), nothing_passed (the run discharged nothing); null for met and not met."
+        },
+        "resolved": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "For a verdict that rests on a steady window of the particle simulation: true when the nearer band edge lies more than two standard errors from the window mean (the package's rule); null when the verdict rests on no window statistic."
+        },
+        "edge_distance_se": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The distance of the nearer band edge from the window mean, in standard errors of the mean [dimensionless]; null when the verdict rests on no window statistic."
+        }
+      },
+      "description": "The verdict of one quantity for one pair of sides."
+    },
+    "verdict_set": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "throughput",
+        "net_power",
+        "reduction_ratio"
+      ],
+      "properties": {
+        "throughput": {
+          "$ref": "#/$defs/verdict",
+          "description": "Throughput [kg/h]."
+        },
+        "net_power": {
+          "$ref": "#/$defs/verdict",
+          "description": "Net power [kW]."
+        },
+        "reduction_ratio": {
+          "$ref": "#/$defs/verdict",
+          "description": "The reduction ratio F80 over P80 [dimensionless]."
+        }
+      },
+      "description": "The three verdicts of one pair of sides, the first side against the second."
+    },
+    "measured": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "throughput_kg_h",
+        "net_power_kw",
+        "specific_energy_j_kg",
+        "specific_energy_kwh_t",
+        "product",
+        "product_source",
+        "product_noise_pct",
+        "p80_mm",
+        "p50_mm",
+        "reduction_ratio",
+        "bond_kwh_t_per_wi",
+        "implied_work_index_kwh_t"
+      ],
+      "properties": {
+        "throughput_kg_h": {
+          "$ref": "#/$defs/value_source",
+          "description": "The measured throughput [kg/h]."
+        },
+        "net_power_kw": {
+          "$ref": "#/$defs/value_source",
+          "description": "The measured mean net power [kW]."
+        },
+        "specific_energy_j_kg": {
+          "type": "number",
+          "description": "The measured net power over the measured throughput [J/kg]; derived here, the paper reports none.",
+          "exclusiveMinimum": 0
+        },
+        "specific_energy_kwh_t": {
+          "type": "number",
+          "description": "The same specific energy [kWh/t].",
+          "exclusiveMinimum": 0
+        },
+        "product": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sieves_mm",
+            "passing_pct"
+          ],
+          "properties": {
+            "sieves_mm": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "description": "The sieve sizes [mm], ascending.",
+              "minItems": 1
+            },
+            "passing_pct": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "description": "The cumulative mass passing each sieve [%]; null at a sieve at or below the smallest sphere the particle simulation keeps, where it resolves nothing."
+            }
+          },
+          "description": "The measured product size distribution of this feed class on the paper's nine sieves, the mean of two digitisation passes."
+        },
+        "product_source": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The figure and page of the measured product, and the series read."
+        },
+        "product_noise_pct": {
+          "type": "number",
+          "description": "The largest difference between the two digitisation passes of the product curve [percentage points].",
+          "minimum": 0
+        },
+        "p80_mm": {
+          "type": "number",
+          "description": "The measured product size at 80 percent passing [mm], interpolated linearly on the digitised curve.",
+          "exclusiveMinimum": 0
+        },
+        "p50_mm": {
+          "type": "number",
+          "description": "The measured product size at 50 percent passing [mm], interpolated linearly on the digitised curve.",
+          "exclusiveMinimum": 0
+        },
+        "reduction_ratio": {
+          "type": "number",
+          "description": "The feed class's F80 over the measured P80 [dimensionless].",
+          "exclusiveMinimum": 0
+        },
+        "bond_kwh_t_per_wi": {
+          "type": "number",
+          "description": "Bond's size term 10 (1/sqrt(P80) - 1/sqrt(F80)) with the measured P80 and the feed's F80 in micrometres: the energy per unit of work index [dimensionless, kWh/t per kWh/t].",
+          "exclusiveMinimum": 0
+        },
+        "implied_work_index_kwh_t": {
+          "type": "number",
+          "description": "The work index at which Bond's energy for the measured size reduction equals the measured specific energy [kWh/t]: a derived reading of the measurement, not an ore property the paper reports.",
+          "exclusiveMinimum": 0
+        }
+      },
+      "description": "What the paper measured at this operating point."
+    },
+    "attempt": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "max_overlap_fraction",
+        "status",
+        "strokes",
+        "stopped_during_stroke",
+        "max_overlap_reached",
+        "held_spheres",
+        "hold_up_kg",
+        "mass_passed_kg",
+        "peak_particles",
+        "deferred_placements"
+      ],
+      "properties": {
+        "max_overlap_fraction": {
+          "type": "number",
+          "description": "The overlap limit of this attempt, as a fraction of the smaller radius [dimensionless]."
+        },
+        "status": {
+          "enum": [
+            "complete",
+            "overlap_error",
+            "stalled",
+            "max_strokes",
+            "max_wall_time"
+          ],
+          "description": "How the attempt ended."
+        },
+        "strokes": {
+          "type": "integer",
+          "description": "The whole strokes the attempt ran.",
+          "minimum": 0
+        },
+        "stopped_during_stroke": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The stroke during which the overlap error stopped the attempt; null for any other ending."
+        },
+        "max_overlap_reached": {
+          "type": "number",
+          "description": "The largest overlap reached, as a fraction of the smaller radius [dimensionless].",
+          "minimum": 0
+        },
+        "held_spheres": {
+          "type": "integer",
+          "description": "The spheres in the chamber when the attempt ended.",
+          "minimum": 0
+        },
+        "hold_up_kg": {
+          "type": "number",
+          "description": "The mass in the chamber when the attempt ended [kg].",
+          "minimum": 0
+        },
+        "mass_passed_kg": {
+          "type": "number",
+          "description": "The mass that had left through the discharge, fines included [kg].",
+          "minimum": 0
+        },
+        "peak_particles": {
+          "type": "integer",
+          "description": "The largest number of spheres alive at once.",
+          "minimum": 0
+        },
+        "deferred_placements": {
+          "type": "integer",
+          "description": "Progeny placements deferred for want of room in the bed.",
+          "minimum": 0
+        }
+      },
+      "description": "One attempt of the package's overlap ladder."
+    },
+    "series": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "stroke",
+        "t_s",
+        "plate_power_w",
+        "passed_kg",
+        "held",
+        "hold_up_kg",
+        "pending_kg",
+        "max_overlap"
+      ],
+      "properties": {
+        "stroke": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "The stroke number, from 1."
+        },
+        "t_s": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "The simulated time at the end of the stroke [s]."
+        },
+        "plate_power_w": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "The mean power the swing plate delivered to the bed over the stroke [W]."
+        },
+        "passed_kg": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "The cumulative mass that has left through the discharge, fines included [kg]."
+        },
+        "held": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          },
+          "description": "The spheres in the chamber at the end of the stroke."
+        },
+        "hold_up_kg": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "The mass in the chamber at the end of the stroke [kg]."
+        },
+        "pending_kg": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "The mass of the batch not yet fed at the end of the stroke [kg]."
+        },
+        "max_overlap": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "The largest overlap reached during the stroke, as a fraction of the smaller radius [dimensionless]."
+        }
+      },
+      "description": "The per-stroke series of the final attempt; every list has one entry per stroke."
+    },
+    "simulation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "error",
+        "attempts",
+        "capacity_slots",
+        "strokes",
+        "steps",
+        "time_step_s",
+        "simulated_s",
+        "mass_fed_kg",
+        "mass_passed_kg",
+        "held_spheres",
+        "hold_up_kg",
+        "pending_kg",
+        "window",
+        "throughput_kg_h",
+        "throughput_se_kg_h",
+        "throughput_whole_run_kg_h",
+        "net_power_kw",
+        "net_power_se_kw",
+        "net_power_whole_run_kw",
+        "power_trend_stationary",
+        "specific_energy_j_kg",
+        "specific_energy_kwh_t",
+        "product",
+        "p80_mm",
+        "p50_mm",
+        "reduction_ratio",
+        "fines_below_minimum_pct",
+        "largest_product_mm",
+        "spheres_above_open_side",
+        "breakage",
+        "mass_balance_residual_kg",
+        "window_strokes_above_overlap_reference",
+        "series",
+        "replay"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "complete",
+            "overlap_error",
+            "stalled",
+            "max_strokes",
+            "max_wall_time"
+          ],
+          "description": "How the final attempt ended; only complete runs the whole batch through."
+        },
+        "error": {
+          "oneOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The package's message when the final attempt stopped with an error; null otherwise."
+        },
+        "attempts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/attempt"
+          },
+          "description": "Every attempt of the overlap ladder, in order; the last is the final one.",
+          "minItems": 1
+        },
+        "capacity_slots": {
+          "type": "integer",
+          "description": "The particle slots of the pool at this point.",
+          "minimum": 1
+        },
+        "strokes": {
+          "type": "integer",
+          "description": "The whole strokes of the final attempt.",
+          "minimum": 0
+        },
+        "steps": {
+          "type": "integer",
+          "description": "The time steps of the final attempt.",
+          "minimum": 0
+        },
+        "time_step_s": {
+          "type": "number",
+          "description": "The time step [s], a tenth of the Rayleigh step of the smallest sphere.",
+          "exclusiveMinimum": 0
+        },
+        "simulated_s": {
+          "type": "number",
+          "description": "The simulated time of the final attempt [s].",
+          "minimum": 0
+        },
+        "mass_fed_kg": {
+          "type": "number",
+          "description": "The mass fed into the chamber [kg].",
+          "minimum": 0
+        },
+        "mass_passed_kg": {
+          "type": "number",
+          "description": "The mass that left through the discharge, fines included [kg].",
+          "minimum": 0
+        },
+        "held_spheres": {
+          "type": "integer",
+          "description": "The spheres still in the chamber when the attempt ended.",
+          "minimum": 0
+        },
+        "hold_up_kg": {
+          "type": "number",
+          "description": "The mass still in the chamber when the attempt ended [kg].",
+          "minimum": 0
+        },
+        "pending_kg": {
+          "type": "number",
+          "description": "The mass of the batch never fed [kg].",
+          "minimum": 0
+        },
+        "window": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "first_stroke",
+                "last_stroke",
+                "strokes"
+              ],
+              "properties": {
+                "first_stroke": {
+                  "type": "integer",
+                  "description": "The first stroke of the window.",
+                  "minimum": 1
+                },
+                "last_stroke": {
+                  "type": "integer",
+                  "description": "The last stroke of the window.",
+                  "minimum": 1
+                },
+                "strokes": {
+                  "type": "integer",
+                  "description": "The number of strokes in the window.",
+                  "minimum": 1
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The steady window: from the stroke at which 25 percent of the product mass has passed to the stroke at which 75 percent has; null when the run did not complete or gives none."
+        },
+        "throughput_kg_h": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The mass passed in the window over its duration [kg/h]; null without a window."
+        },
+        "throughput_se_kg_h": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The standard error of the per-stroke throughput in the window, with the lag-1 autocorrelation of the strokes [kg/h]; null without a window."
+        },
+        "throughput_whole_run_kg_h": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The mass passed over the whole run's time [kg/h]; null for a run with no stroke."
+        },
+        "net_power_kw": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The mean of the per-stroke plate power in the window [kW]; null without a window."
+        },
+        "net_power_se_kw": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Its standard error, with the lag-1 autocorrelation of the strokes [kW]; null without a window."
+        },
+        "net_power_whole_run_kw": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The plate's energy over the whole run's time [kW]; null for a run with no stroke."
+        },
+        "power_trend_stationary": {
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "True when the linear trend of the per-stroke power over the window is within two standard errors of zero; null without a window."
+        },
+        "specific_energy_j_kg": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The plate's energy in the window over the mass passed in it [J/kg]; null without a window."
+        },
+        "specific_energy_kwh_t": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The same specific energy [kWh/t]; null without a window."
+        },
+        "product": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "sieves_mm",
+                "passing_pct"
+              ],
+              "properties": {
+                "sieves_mm": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "description": "The sieve sizes [mm], ascending.",
+                  "minItems": 1
+                },
+                "passing_pct": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "description": "The cumulative mass passing each sieve [%]; null at a sieve at or below the smallest sphere the particle simulation keeps, where it resolves nothing."
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The product of the final attempt on the document's sieves; null when nothing passed. For a run that did not complete it is the product of the mass passed before the stop, not of the batch."
+        },
+        "p80_mm": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The product size at 80 percent passing [mm]; null when nothing passed."
+        },
+        "p50_mm": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The product size at 50 percent passing [mm]; null when nothing passed."
+        },
+        "reduction_ratio": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The feed class's F80 over the simulated P80 [dimensionless]; null when nothing passed."
+        },
+        "fines_below_minimum_pct": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The product mass pooled below the smallest sphere kept [%]; null when nothing passed."
+        },
+        "largest_product_mm": {
+          "oneOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The largest sphere that passed the discharge [mm]; null when nothing passed."
+        },
+        "spheres_above_open_side": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The product spheres larger than the open side setting, which leave only by overlapping a plate; null when nothing passed."
+        },
+        "breakage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "events",
+            "progeny",
+            "peak_particles",
+            "deferred_placements",
+            "injected_energy_j",
+            "absorbed_energy_j"
+          ],
+          "properties": {
+            "events": {
+              "type": "integer",
+              "description": "Breakage events.",
+              "minimum": 0
+            },
+            "progeny": {
+              "type": "integer",
+              "description": "Progeny spheres created.",
+              "minimum": 0
+            },
+            "peak_particles": {
+              "type": "integer",
+              "description": "The largest number of spheres alive at once.",
+              "minimum": 0
+            },
+            "deferred_placements": {
+              "type": "integer",
+              "description": "Progeny placements deferred for want of room in the bed (they wait, none is dropped).",
+              "minimum": 0
+            },
+            "injected_energy_j": {
+              "type": "number",
+              "description": "The elastic energy the replacements injected [J].",
+              "minimum": 0
+            },
+            "absorbed_energy_j": {
+              "type": "number",
+              "description": "The energy the breakage events absorbed [J].",
+              "minimum": 0
+            }
+          },
+          "description": "The breakage summary of the final attempt."
+        },
+        "mass_balance_residual_kg": {
+          "type": "number",
+          "description": "Fed minus passed, held and pending [kg]; zero to rounding."
+        },
+        "window_strokes_above_overlap_reference": {
+          "oneOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The strokes of the window whose largest overlap exceeded the reference overlap of the settings, the limit of the Hertz contact; null without a window."
+        },
+        "series": {
+          "$ref": "#/$defs/series",
+          "description": "The per-stroke series of the final attempt."
+        },
+        "replay": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "file",
+                "bytes",
+                "sha256",
+                "first_stroke",
+                "last_stroke",
+                "frames_per_stroke",
+                "frames",
+                "spheres",
+                "t_s",
+                "stroke",
+                "plate_bottom_x_mm",
+                "plate_bottom_z_mm",
+                "count",
+                "encoding",
+                "geometry"
+              ],
+              "properties": {
+                "file": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The frames file, relative to data/derived."
+                },
+                "bytes": {
+                  "type": "integer",
+                  "description": "The size of the frames file [bytes].",
+                  "minimum": 1
+                },
+                "sha256": {
+                  "type": "string",
+                  "pattern": "^[0-9a-f]{64}$",
+                  "description": "The sha256 digest of the frames file."
+                },
+                "first_stroke": {
+                  "type": "integer",
+                  "description": "The first stroke of the frames.",
+                  "minimum": 1
+                },
+                "last_stroke": {
+                  "type": "integer",
+                  "description": "The last stroke with a frame; the stroke during which a run stopped is included up to its last recorded frame.",
+                  "minimum": 1
+                },
+                "frames_per_stroke": {
+                  "type": "integer",
+                  "description": "Frames per whole stroke, at equal step intervals, the last at the end of the stroke.",
+                  "minimum": 1
+                },
+                "frames": {
+                  "type": "integer",
+                  "description": "The number of frames.",
+                  "minimum": 1
+                },
+                "spheres": {
+                  "type": "integer",
+                  "description": "The spheres over all frames: the file holds this many records.",
+                  "minimum": 0
+                },
+                "t_s": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "description": "The simulated time of each frame [s]."
+                },
+                "stroke": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  },
+                  "description": "The stroke of each frame, from 1."
+                },
+                "plate_bottom_x_mm": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "description": "The horizontal position of the swing plate's bottom edge at each frame [mm]."
+                },
+                "plate_bottom_z_mm": {
+                  "type": "array",
+                  "items": {
+                    "type": "number"
+                  },
+                  "description": "The height of the swing plate's bottom edge at each frame [mm]."
+                },
+                "count": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  },
+                  "description": "The spheres drawn in each frame; their sum is the field spheres."
+                },
+                "encoding": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "record",
+                    "x_range_mm",
+                    "y_range_mm",
+                    "z_range_mm",
+                    "radius_max_mm"
+                  ],
+                  "properties": {
+                    "record": {
+                      "const": "uint16le x, uint16le y, uint16le z, uint16le radius",
+                      "description": "One sphere: four little-endian unsigned 16-bit integers; the file is the frames' spheres one after another, in frame order."
+                    },
+                    "x_range_mm": {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "description": "The range the 16-bit x spans linearly: x is horizontal across the opening, from the fixed plate towards the swing plate [mm].",
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    "y_range_mm": {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "description": "The range the 16-bit y spans linearly: y is horizontal along the plates' width [mm].",
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    "z_range_mm": {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "description": "The range the 16-bit z spans linearly: z is vertical, up [mm].",
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    "radius_max_mm": {
+                      "type": "number",
+                      "description": "The radius the 16-bit radius spans linearly from zero [mm].",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "description": "How a sphere is stored: its centre and its radius, each on a linear 16-bit scale."
+                },
+                "geometry": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "fixed_plate_x_mm",
+                    "fixed_plate_z_mm",
+                    "swing_pivot_mm",
+                    "swing_closed_bottom_mm",
+                    "discharge_z_mm",
+                    "hopper_height_mm",
+                    "width_mm"
+                  ],
+                  "properties": {
+                    "fixed_plate_x_mm": {
+                      "type": "number",
+                      "description": "The horizontal position of the fixed plate's face [mm]."
+                    },
+                    "fixed_plate_z_mm": {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "description": "The lower and upper ends of the fixed plate [mm].",
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    "swing_pivot_mm": {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "description": "The swing plate's pivot, x and z [mm].",
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    "swing_closed_bottom_mm": {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      },
+                      "description": "The swing plate's bottom edge at the closed position, x and z [mm].",
+                      "minItems": 2,
+                      "maxItems": 2
+                    },
+                    "discharge_z_mm": {
+                      "type": "number",
+                      "description": "The height below which a sphere has left the chamber [mm]."
+                    },
+                    "hopper_height_mm": {
+                      "type": "number",
+                      "description": "The height of the feed hopper above the plates [mm].",
+                      "minimum": 0
+                    },
+                    "width_mm": {
+                      "type": "number",
+                      "description": "The chamber's width along the plates [mm].",
+                      "exclusiveMinimum": 0
+                    }
+                  },
+                  "description": "The chamber, so a viewer draws it without the package."
+                }
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The particle frames of the final attempt; null when the attempt recorded no frame."
+        }
+      },
+      "description": "The particle simulation at this operating point: the run of the pinned package, its state and its statistics."
+    },
+    "population_balance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "classification",
+        "e50_j_kg",
+        "ore_axb",
+        "specific_energy_kwh_t",
+        "t10_pct",
+        "capacity",
+        "throughput_kg_h",
+        "f80_mm",
+        "p80_mm",
+        "p50_mm",
+        "reduction_ratio",
+        "product",
+        "band",
+        "bond_kwh_t_per_wi",
+        "implied_work_index_kwh_t",
+        "mass_closure",
+        "flags"
+      ],
+      "properties": {
+        "classification": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "k1_mm",
+            "k2_mm",
+            "k3"
+          ],
+          "properties": {
+            "k1_mm": {
+              "type": "number",
+              "description": "The size below which no particle is broken [mm]: the closed-side setting.",
+              "exclusiveMinimum": 0
+            },
+            "k2_mm": {
+              "type": "number",
+              "description": "The size above which every particle is broken [mm]: the open-side setting.",
+              "exclusiveMinimum": 0
+            },
+            "k3": {
+              "type": "number",
+              "description": "The exponent of the classification curve between them [dimensionless].",
+              "exclusiveMinimum": 0
+            }
+          },
+          "description": "The classification function of the Whiten model at this point, from the preset."
+        },
+        "e50_j_kg": {
+          "type": "number",
+          "description": "The median specific fracture energy of the particle simulation's ore at the feed class's mean size [J/kg].",
+          "exclusiveMinimum": 0
+        },
+        "ore_axb": {
+          "type": "number",
+          "description": "The drop-weight A times b the engine reads [dimensionless]: 3600 A b' over E50, the preset's link.",
+          "exclusiveMinimum": 0
+        },
+        "specific_energy_kwh_t": {
+          "type": "number",
+          "description": "The engine's specific comminution energy of one breakage event [kWh/t], from the throw and the speed.",
+          "minimum": 0
+        },
+        "t10_pct": {
+          "type": "number",
+          "description": "The engine's t10 at that energy [%].",
+          "minimum": 0
+        },
+        "capacity": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "depth_m",
+            "critical_speed_rpm",
+            "regime",
+            "volumetric_m3_h",
+            "feed_factor",
+            "throw_factor",
+            "material_factor",
+            "density_t_m3"
+          ],
+          "properties": {
+            "depth_m": {
+              "type": "number",
+              "description": "The vertical depth between the jaws [m].",
+              "exclusiveMinimum": 0
+            },
+            "critical_speed_rpm": {
+              "type": "number",
+              "description": "The speed above which the material's fall, not the stroke, limits the capacity [1/min].",
+              "exclusiveMinimum": 0
+            },
+            "regime": {
+              "enum": [
+                "below_critical_speed",
+                "at_or_above_critical_speed"
+              ],
+              "description": "The branch of the capacity model at the operating speed."
+            },
+            "volumetric_m3_h": {
+              "type": "number",
+              "description": "The volumetric capacity [m3/h].",
+              "minimum": 0
+            },
+            "feed_factor": {
+              "type": "number",
+              "description": "The factor of the mean feed size over the gape [dimensionless].",
+              "minimum": 0
+            },
+            "throw_factor": {
+              "type": "number",
+              "description": "The factor of the throw over the gape [dimensionless].",
+              "minimum": 0
+            },
+            "material_factor": {
+              "type": "number",
+              "description": "The factor of the material's nature [dimensionless].",
+              "exclusiveMinimum": 0
+            },
+            "density_t_m3": {
+              "type": "number",
+              "description": "The ore's true density [t/m3].",
+              "exclusiveMinimum": 0
+            }
+          },
+          "description": "The factors of the jaw capacity model at this point."
+        },
+        "throughput_kg_h": {
+          "type": "number",
+          "description": "The capacity model's throughput [kg/h].",
+          "minimum": 0
+        },
+        "f80_mm": {
+          "type": "number",
+          "description": "The 80 percent passing size of the feed class [mm], analytic.",
+          "exclusiveMinimum": 0
+        },
+        "p80_mm": {
+          "type": "number",
+          "description": "The product's 80 percent passing size [mm].",
+          "exclusiveMinimum": 0
+        },
+        "p50_mm": {
+          "type": "number",
+          "description": "The product's 50 percent passing size [mm].",
+          "exclusiveMinimum": 0
+        },
+        "reduction_ratio": {
+          "type": "number",
+          "description": "F80 over P80 [dimensionless].",
+          "exclusiveMinimum": 0
+        },
+        "product": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sieves_mm",
+            "passing_pct"
+          ],
+          "properties": {
+            "sieves_mm": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "description": "The sieve sizes [mm], ascending.",
+              "minItems": 1
+            },
+            "passing_pct": {
+              "type": "array",
+              "items": {
+                "oneOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "description": "The cumulative mass passing each sieve [%]; null at a sieve at or below the smallest sphere the particle simulation keeps, where it resolves nothing."
+            }
+          },
+          "description": "The engine's product on the document's sieves."
+        },
+        "band": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "p80_mm",
+            "p50_mm",
+            "reduction_ratio",
+            "passing_low_pct",
+            "passing_high_pct"
+          ],
+          "properties": {
+            "p80_mm": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "description": "The lowest and highest P80 over the corners of the published ranges [mm].",
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "p50_mm": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "description": "The lowest and highest P50 over the corners of the published ranges [mm].",
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "reduction_ratio": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "description": "The lowest and highest reduction ratio over the corners of the published ranges [dimensionless].",
+              "minItems": 2,
+              "maxItems": 2
+            },
+            "passing_low_pct": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "description": "The lowest cumulative passing at each of the document's sieves over the corners [%]."
+            },
+            "passing_high_pct": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "description": "The highest cumulative passing at each of the document's sieves over the corners [%]."
+            }
+          },
+          "description": "The spread of the prediction over the eight corners of the published ranges of the three classification parameters: a sensitivity band, not a confidence interval."
+        },
+        "bond_kwh_t_per_wi": {
+          "type": "number",
+          "description": "Bond's size term 10 (1/sqrt(P80) - 1/sqrt(F80)) with the engine's P80 and the feed's F80 in micrometres: the energy per unit of work index [dimensionless, kWh/t per kWh/t].",
+          "exclusiveMinimum": 0
+        },
+        "implied_work_index_kwh_t": {
+          "type": "number",
+          "description": "The work index at which Bond's energy for the predicted size reduction equals the measured specific energy [kWh/t]; no power is predicted, because no work index of the ore is published.",
+          "exclusiveMinimum": 0
+        },
+        "mass_closure": {
+          "type": "number",
+          "description": "The sum of the product's mass fractions [dimensionless]; one to rounding."
+        },
+        "flags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The engine's flags at this point, as it words them."
+        }
+      },
+      "description": "The prediction of the product's population-balance engine at the same operating point, with the laboratory preset; nothing in it is fitted to the jaw's measurements."
+    },
+    "point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "feed_class",
+        "feed_mm",
+        "feed_mean_mm",
+        "feed_f80_mm",
+        "measured",
+        "simulation",
+        "population_balance",
+        "verdicts"
+      ],
+      "properties": {
+        "id": {
+          "enum": [
+            "63-52",
+            "31.5-26.5",
+            "16-13.2"
+          ],
+          "description": "The operating point, named by its feed class."
+        },
+        "feed_class": {
+          "enum": [
+            "63/52",
+            "31.5/26.5",
+            "16/13.2"
+          ],
+          "description": "The feed class of the paper, upper over lower sieve [mm]."
+        },
+        "feed_mm": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "description": "The lower and upper sizes of the feed class [mm].",
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "feed_mean_mm": {
+          "type": "number",
+          "description": "The arithmetic mean of the class limits [mm].",
+          "exclusiveMinimum": 0
+        },
+        "feed_f80_mm": {
+          "type": "number",
+          "description": "The 80 percent passing size of a feed uniform in diameter over the class [mm].",
+          "exclusiveMinimum": 0
+        },
+        "measured": {
+          "$ref": "#/$defs/measured",
+          "description": "The measurement."
+        },
+        "simulation": {
+          "$ref": "#/$defs/simulation",
+          "description": "The particle simulation."
+        },
+        "population_balance": {
+          "$ref": "#/$defs/population_balance",
+          "description": "The population balance."
+        },
+        "verdicts": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "simulation_vs_measured",
+            "population_balance_vs_measured",
+            "population_balance_vs_simulation"
+          ],
+          "properties": {
+            "simulation_vs_measured": {
+              "$ref": "#/$defs/verdict_set",
+              "description": "The particle simulation against the measurement."
+            },
+            "population_balance_vs_measured": {
+              "$ref": "#/$defs/verdict_set",
+              "description": "The population balance against the measurement."
+            },
+            "population_balance_vs_simulation": {
+              "$ref": "#/$defs/verdict_set",
+              "description": "The population balance against the particle simulation."
+            }
+          },
+          "description": "The verdicts of the three pairs of sides."
+        }
+      },
+      "description": "One operating point with its three sides and their verdicts."
+    }
+  }
+}
