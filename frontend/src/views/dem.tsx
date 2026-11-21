@@ -24,10 +24,14 @@ import {
   distributionOf,
   finalAttempt,
   frameAt,
+  hasPaperSimulation,
   isComplete,
   localizeNumbers,
   nearerSentence,
   openingCursor,
+  paperSentence,
+  SPREAD_NAME,
+  VERDICT_SCOPE,
   pairTitle,
   pointCallouts,
   QUANTITIES,
@@ -261,7 +265,7 @@ function usePanelHeight(): [(el: HTMLDivElement | null) => void] {
   return [ref];
 }
 
-const COLORS = { measurement: '--color-fg', simulation: '--color-accent', population_balance: '--color-accent-2', stopped: '--color-warn' } as const;
+const COLORS = { measurement: '--color-fg', simulation: '--color-accent', population_balance: '--color-accent-2', stopped: '--color-warn', paper: '--color-magenta' } as const;
 
 function Whisker({ x, lo, hi, color, at }: { x: number; lo: number; hi: number; color: string; at: (p: { x: number; y: number }) => { x: number; y: number } }) {
   const a = at({ x, y: lo });
@@ -286,8 +290,8 @@ function ComparisonChart({ series }: { series: QuantitySeries }) {
   const span = Math.max(...xs) - Math.min(...xs);
   const dx = span * 0.045;
   const half = dx + span * 0.03;
-  const xRange: [number, number] = [Math.min(...xs) - 2.5 * dx - 1, Math.max(...xs) + 2.5 * dx + 1];
-  const all = sorted.flatMap((p) => [p.measurement.hi, p.simulation.hi, p.simulation.value, p.population_balance.hi, p.population_balance.value]).filter((v): v is number => v !== null);
+  const xRange: [number, number] = [Math.min(...xs) - 3.2 * dx - 1, Math.max(...xs) + 2.5 * dx + 1];
+  const all = sorted.flatMap((p) => [p.measurement.hi, p.simulation.hi, p.simulation.value, p.population_balance.hi, p.population_balance.value, p.paper?.value ?? null]).filter((v): v is number => v !== null);
   const yMax = Math.max(...all) * 1.12;
   const mk = (side: 'simulation' | 'population_balance', stopped: boolean): { values: number[]; xv: number[] } => {
     const rows = sorted.filter((p) => p[side].value !== null && p[side].stopped === stopped);
@@ -300,6 +304,9 @@ function ComparisonChart({ series }: { series: QuantitySeries }) {
   if (sim.values.length) list.push({ id: 'simulation', label: SIDE_NAME.simulation, values: sim.values, x: sim.xv, mode: 'points', size: 9, color: COLORS.simulation });
   if (stopped.values.length) list.push({ id: 'simulation-stopped', label: { en: 'Particle simulation, product before the stop', es: 'Simulación de partículas, producto antes de la detención' }, values: stopped.values, x: stopped.xv, mode: 'points', size: 9, color: COLORS.stopped });
   if (pb.values.length) list.push({ id: 'population-balance', label: SIDE_NAME.population_balance, values: pb.values, x: pb.xv, mode: 'points', size: 9, color: COLORS.population_balance });
+  // the paper's own simulation, where the point has it: its own mark and its own legend entry, two steps left of the measurement
+  const paperRows = sorted.filter((p) => p.paper !== null);
+  if (paperRows.length) list.push({ id: 'paper', label: { en: 'The paper\u2019s own simulation', es: 'La simulación propia del artículo' }, values: paperRows.map((p) => p.paper!.value), x: paperRows.map((p) => p.x - 2 * dx), mode: 'points', size: 9, color: COLORS.paper });
   const ticks = sorted.map((p) => ({ value: p.x, label: { en: `${p.feedClass} mm`, es: `${p.feedClass} mm` } as BiText }));
   const name = pick(series.name, lang);
   const unit = pick(series.unit, lang);
@@ -360,8 +367,9 @@ function ComparisonCard({ run, q, pointId }: { run: DemRun; q: ChartQuantity; po
   const noValues = series.points.flatMap((p) => (['simulation', 'population_balance'] as const).flatMap((side) => (p[side].value === null && p[side].reason ? [`${pick(SIDE_NAME[side], lang)}, ${p.feedClass} mm: ${pick(p[side].reason as Text, lang)}`] : [])));
   const bandNote =
     q === 'p80'
-      ? t(`Shaded: the band of the reduction ratio F80/P80 (${num(series.points[0].band * 100, { digits: 2 })} percent) written as a band on P80. Bars: the spread of the population balance over the published ranges of its classification parameters, a sensitivity band and not a confidence interval.`, `Sombreado: la banda de la razón de reducción F80/P80 (${num(series.points[0].band * 100, { digits: 2 })} por ciento) escrita como banda de P80. Barras: la dispersión del balance poblacional sobre los rangos publicados de sus parámetros de clasificación, una banda de sensibilidad y no un intervalo de confianza.`)
+      ? t(`Shaded: the band of the reduction ratio F80/P80 (${num(series.points[0].band * 100, { digits: 2 })} percent) written as a band on P80. Bars: the population balance\u2019s P80 with ${SPREAD_NAME.en} (its classification parameters), a sensitivity band and not a confidence interval.`, `Sombreado: la banda de la razón de reducción F80/P80 (${num(series.points[0].band * 100, { digits: 2 })} por ciento) escrita como banda de P80. Barras: el P80 del balance poblacional con ${SPREAD_NAME.es} (sus parámetros de clasificación), una banda de sensibilidad y no un intervalo de confianza.`)
       : t(`Shaded: the measurement plus or minus the ${num(series.points[0].band * 100, { digits: 2 })} percent band. Bars: one standard error of the particle simulation over its steady window. The three sides of a point are drawn a little apart so none hides another.`, `Sombreado: la medición más o menos la banda de ${num(series.points[0].band * 100, { digits: 2 })} por ciento. Barras: un error estándar de la simulación de partículas sobre su ventana estacionaria. Los tres lados de un punto se dibujan algo separados para que ninguno oculte a otro.`);
+  const paperNote = series.points.some((p) => p.paper !== null) ? t('Magenta mark: the paper\u2019s own simulation, as context only; no verdict rests on it.', 'Marca magenta: la simulación propia del artículo, solo como contexto; ningún veredicto se apoya en ella.') : null;
   return (
     <PlotCard title={{ en: `${series.name.en} (${series.unit.en}) against the feed`, es: `${series.name.es} (${series.unit.es}) contra la alimentación` }} lane="replay" provenance="published" dataKey={stateKey}>
       <div data-comparison={q} className="cdem-comparison">
@@ -376,6 +384,11 @@ function ComparisonCard({ run, q, pointId }: { run: DemRun; q: ChartQuantity; po
           ))}
         </ul>
         <p className="caos-plot-note">{bandNote}</p>
+        {paperNote && (
+          <p className="caos-plot-note" data-paper-note="">
+            {paperNote}
+          </p>
+        )}
         {noValues.length > 0 && (
           <p className="caos-plot-note" data-no-value-reasons="">
             {t('No value (open circle): ', 'Sin valor (círculo abierto): ')}
@@ -415,8 +428,8 @@ function DistributionCard({ run, point }: { run: DemRun; point: DemPoint }) {
     { x: d.oss_mm, label: { en: `open side ${num(d.oss_mm, { digits: 3 })} mm`, es: `abertura abierta ${num(d.oss_mm, { digits: 3 })} mm` } },
   ];
   const note: BiText = {
-    en: `Cumulative passing against size, ${point.feed_class} mm feed. ${stopped ? `The particle run did not complete: its curve is the product of the mass passed before the stop. ` : ''}The particle simulation states no passing below its smallest sphere (${num(run.settings.minimum_sphere_mm, { digits: 2 })} mm), so its curve starts there. Dashed: the spread of the population balance over the published ranges of its classification parameters.`,
-    es: `Pasante acumulado contra tamaño, alimentación de ${point.feed_class} mm. ${stopped ? 'La corrida de partículas no se completó: su curva es el producto de la masa pasada antes de la detención. ' : ''}La simulación de partículas no entrega pasante bajo su esfera más pequeña (${num(run.settings.minimum_sphere_mm, { digits: 2 })} mm), así que su curva parte ahí. Segmentadas: la dispersión del balance poblacional sobre los rangos publicados de sus parámetros de clasificación.`,
+    en: `Cumulative passing against size, ${point.feed_class} mm feed. ${stopped ? `The particle run did not complete: its curve is the product of the mass passed before the stop. ` : ''}The particle simulation states no passing below its smallest sphere (${num(run.settings.minimum_sphere_mm, { digits: 2 })} mm), so its curve starts there. Dashed: the population balance with ${SPREAD_NAME.en} (its classification parameters).`,
+    es: `Pasante acumulado contra tamaño, alimentación de ${point.feed_class} mm. ${stopped ? 'La corrida de partículas no se completó: su curva es el producto de la masa pasada antes de la detención. ' : ''}La simulación de partículas no entrega pasante bajo su esfera más pequeña (${num(run.settings.minimum_sphere_mm, { digits: 2 })} mm), así que su curva parte ahí. Segmentadas: el balance poblacional con ${SPREAD_NAME.es} (sus parámetros de clasificación).`,
   };
   return (
     <PlotCard title={{ en: `Product size distribution, ${point.feed_class} mm feed`, es: `Distribución de tamaños del producto, alimentación de ${point.feed_class} mm` }} lane="replay" provenance="published" dataKey={stateKey} note={note}>
@@ -489,7 +502,7 @@ function VerdictTable({ run, point }: { run: DemRun; point: DemPoint }) {
 function VerdictCard({ run, point }: { run: DemRun; point: DemPoint }) {
   const stateKey = useWorkbenchState()?.stateKey;
   return (
-    <PlotCard title={{ en: `Verdicts, ${point.feed_class} mm feed`, es: `Veredictos, alimentación de ${point.feed_class} mm` }} lane="replay" provenance="published" dataKey={stateKey}>
+    <PlotCard title={{ en: `Verdicts, ${point.feed_class} mm feed`, es: `Veredictos, alimentación de ${point.feed_class} mm` }} lane="replay" provenance="published" dataKey={stateKey} note={hasPaperSimulation(run) ? VERDICT_SCOPE : undefined}>
       <VerdictTable run={run} point={point} />
     </PlotCard>
   );
@@ -501,6 +514,7 @@ function Sources({ run, point }: { run: DemRun; point: DemPoint }) {
   const num = useNum();
   const lang = useShellLang();
   const loc = (s: string) => localizeNumbers(s, lang);
+  const paperRow = paperSentence(point, num);
   const stateKey = useWorkbenchState()?.stateKey;
   const m = point.measured;
   const row = (term: string, def: ReactNode) => (
@@ -518,6 +532,7 @@ function Sources({ run, point }: { run: DemRun; point: DemPoint }) {
         {row(t('Paper', 'Artículo'), `${loc(run.source.paper)}; DOI ${run.source.doi}; ${loc(run.source.license)}`)}
         {row(t('Digitisation', 'Digitalización'), loc(run.source.digitised))}
         {row(t('Machine', 'Máquina'), `${run.machine.name}: ${loc(run.machine.source)}`)}
+        {paperRow && row(t('The paper\u2019s own simulation', 'La simulación propia del artículo'), loc(pick(paperRow, lang)))}
         {row(t('Particle simulation', 'Simulación de partículas'), `${run.package.name} ${run.package.version} (${run.package.backend}); ${t('seed', 'semilla')} ${run.seed}`)}
         {row(t('Ore', 'Mineral'), `${loc(run.ore.name)}; ${loc(run.ore.derivation)}`)}
         {row(t('Population balance', 'Balance poblacional'), loc(`${run.preset.capacity_model} ${run.preset.first_estimate_source} ${run.preset.ranges_source} ${run.preset.power}`))}

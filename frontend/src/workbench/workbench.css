@@ -611,3 +611,24 @@
     flex: none;
   }
 }
+
+/* The magnified crushing zone of the stage (views/demReplay.tsx Inset): a title that says it is a magnification, then the framed drawing. */
+.cdem-inset {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cdem-inset-head {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  font-size: var(--text-xs);
+  line-height: 1.25;
+  color: var(--color-fg-subtle);
+}
+
+.cdem-inset-head strong {
+  color: var(--color-fg);
+  font-weight: 600;
+}

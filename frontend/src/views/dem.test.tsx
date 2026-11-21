@@ -111,7 +111,7 @@ describe('DM-012: the view with the provider document', () => {
       for (const s of specs) {
         expect(s.unit.en.length).toBeGreaterThan(0);
         expect(['normal', 'warning', 'alarm', 'inactive']).toContain(s.state);
-        expect(s.source.en).toContain('Measured');
+        expect(s.source.en).toContain(s.id === 'p80' && p.simulation.status !== 'complete' ? 'passed before the stop' : 'Measured');
       }
     }
     const coarse = calloutSpecs(run.points[0], plain);
@@ -295,6 +295,62 @@ describe('a Spanish page writes no decimal point in the sources', () => {
     const text = textOf(block.slice(0, block.indexOf('</dl>'))).replace(/10\.3390\/\S+/g, '').replace(/\d+\.\d+\.\d+/g, '');
     // a version or a section number with two dots is not a decimal (the gate reads it the same way)
     expect((text.match(/\S*\d\.\d\S*/g) ?? []).filter((tok) => !/\d\.\d+\.\d/.test(tok))).toEqual([]);
+  });
+});
+
+describe('the paper’s own simulation, the scope of the verdicts and the spread wording', () => {
+  it('the sources state the paper’s own simulation at the point that has it, with both sources and both differences in numbers, and no agreement', () => {
+    const text = textOf(render());
+    expect(text).toContain('The paper’s own simulation');
+    expect(text).toContain('net power 0.32 kW (text, section 3.2, p. 10), 5.88 percent below the measured value');
+    expect(text).toContain('throughput 890 kW'.replace('kW', 'kg/h') + ' (Fig. 14a dashed curve at 57 mm read by eye, not digitised (about 880 to 890), p. 12), 11.4 percent above the measured value');
+    expect(text).toContain('Magenta mark: the paper’s own simulation, as context only; no verdict rests on it.');
+  });
+  it('the verdict table’s note says the verdicts are about the particle simulation of the package, not about the published study', () => {
+    expect(textOf(render())).toContain('The verdicts of this view are about the particle simulation as the package crushdem implements it, not about the published study, whose own simulation is the mark described in the comparison charts.');
+    setLang('es');
+    expect(textOf(render())).toContain('no al estudio publicado');
+  });
+  it('a point without it says nothing: no row in its sources', () => {
+    for (const id of ['31.5-26.5', '16-13.2']) {
+      const html = render({ initialPoint: id });
+      const sources = html.slice(html.indexOf('data-sources'));
+      expect(sources.slice(0, sources.indexOf('</dl>'))).not.toContain('own simulation');
+    }
+  });
+  it('a document with none anywhere draws no mark note, no sources row and no scope sentence', () => {
+    const none = copy(run);
+    for (const p of none.points) p.paper_simulation = null;
+    const text = textOf(render({}, none as DemRun));
+    expect(text).not.toContain('own simulation');
+    expect(text).not.toContain('Magenta mark');
+    expect(text).not.toContain('published study');
+  });
+  it('on a Spanish page the paper’s sources write their numbers with a comma, and its legend entry is Spanish', () => {
+    setLang('es');
+    const html = render();
+    const text = textOf(html);
+    expect(text).toContain('La simulación propia del artículo');
+    expect(text).toContain('potencia neta 0,32 kW (text, section 3,2, p. 10), 5,88 por ciento por debajo de el valor medido');
+    const src = readFileSync(new URL('./dem.tsx', import.meta.url), 'utf8');
+    expect(src).toContain("es: 'La simulación propia del artículo' }");
+  });
+  it('the spread of the population balance is named as the ranges King gives for cone crushers, never published ranges of a jaw', () => {
+    const text = textOf(render());
+    expect(text).toContain('the spread over the ranges King gives for cone crushers');
+    expect(text).not.toMatch(/published ranges|published parameter ranges/i);
+    setLang('es');
+    const es = textOf(render());
+    expect(es).toContain('la dispersión sobre los rangos que King da para chancadoras de cono');
+    expect(es).not.toMatch(/rangos publicados/i);
+  });
+  it('the stage carries a magnified inset, framed and labelled, with its own scale bar, that is left out when the stage is too short', () => {
+    const src = readFileSync(new URL('./demReplay.tsx', import.meta.url), 'utf8');
+    expect(src).toMatch(/Magnified \$\{num\(mag/);
+    expect(src).toMatch(/data-scale-bar/);
+    expect(src).toMatch(/showInset = insetH - insetHead\(pw\) >= INSET_MIN_PX/);
+    expect(src).toMatch(/inset && 'dem-inset'|'dem-inset'/);
+    expect(src).toMatch(/data-label-leaders/);
   });
 });
 

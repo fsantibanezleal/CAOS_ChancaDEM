@@ -188,9 +188,17 @@ export function stageBounds(g: DemReplay['geometry']): StageTransform['bounds'] 
   };
 }
 
+/**
+ * The crushing zone the stage magnifies [mm]: the last 80 mm above the discharge level and 12 mm below it, across 70 mm from 30 mm before
+ * the fixed plate: the closed and open edges of the swing plate (7.5 to 17.5 mm from the fixed plate) and the spheres leaving between them.
+ */
+export function insetBounds(g: DemReplay['geometry']): StageTransform['bounds'] {
+  return { xMin: g.fixed_plate_x_mm - 30, xMax: g.fixed_plate_x_mm + 40, zMin: g.discharge_z_mm - 12, zMax: g.discharge_z_mm + 80 };
+}
+
 /** The section fitted to a box of `width` by `height` pixels with `pad` pixels around it, centred, one scale on both axes. */
-export function stageTransform(g: DemReplay['geometry'], width: number, height: number, pad = 8): StageTransform {
-  const b = stageBounds(g);
+export function stageTransform(g: DemReplay['geometry'], width: number, height: number, pad = 8, bounds: StageTransform['bounds'] = stageBounds(g)): StageTransform {
+  const b = bounds;
   const scale = Math.max(0.01, Math.min((width - 2 * pad) / (b.xMax - b.xMin), (height - 2 * pad) / (b.zMax - b.zMin)));
   const w = (b.xMax - b.xMin) * scale;
   const h = (b.zMax - b.zMin) * scale;
@@ -363,6 +371,8 @@ export interface CalloutModel {
   cell: DemVerdictCell;
   /** Why there is no value or no comparison, from the document's basis; null otherwise. */
   basis: Text | null;
+  /** The product P80 of a run that did not complete is the product of the mass passed before the stop: that mass and the mass fed [kg]; null otherwise. */
+  beforeStop: { passedKg: number; fedKg: number } | null;
 }
 
 const CALLOUT_QUANTITY: Record<CalloutModel['id'], Quantity> = { throughput: 'throughput', net_power: 'net_power', p80: 'reduction_ratio' };
@@ -379,7 +389,10 @@ export function pointCallouts(p: DemPoint): CalloutModel[] {
     const cell = cellOf(p, 'simulation_vs_measured', q);
     const value = id === 'p80' ? p.simulation.p80_mm : sideValue(p, 'simulation', q);
     const measured = id === 'p80' ? p.measured.p80_mm : sideValue(p, 'measurement', q);
-    const state = verdictState(cell);
+    const stopped = !isComplete(p.simulation);
+    // a run that did not complete has no relative error and no verdict: no percentage is computed for it, and its P80 is neutral
+    const state: VerdictState = id === 'p80' && stopped ? 'not-compared' : verdictState(cell);
+    const a = finalAttempt(p.simulation);
     return {
       id,
       eyebrow: eyebrow[id],
@@ -387,10 +400,11 @@ export function pointCallouts(p: DemPoint): CalloutModel[] {
       unit: unit[id],
       decimalsOrDigits: { digits: 3 },
       measured,
-      relativeError: relativeError(value, measured),
+      relativeError: stopped ? null : relativeError(value, measured),
       state,
       cell,
       basis: cell.verdict === 'not compared' ? basisText(cell.basis, p) : null,
+      beforeStop: id === 'p80' && stopped ? { passedKg: a.mass_passed_kg, fedKg: p.simulation.mass_fed_kg } : null,
     };
   });
 }
@@ -402,6 +416,11 @@ export const signedPct = (frac: number, num: Num): string => `${frac > 0 ? '+' :
 export function calloutSource(c: CalloutModel, num: Num): Text {
   const word = verdictWord(c.state);
   const mark = VERDICT_MARK[c.state];
+  if (c.beforeStop) {
+    const passed = num(c.beforeStop.passedKg, { digits: 3 });
+    const fed = num(c.beforeStop.fedKg, { digits: 3 });
+    return { en: `P80 of the ${passed} of ${fed} kg passed before the stop; no verdict rests on this run`, es: `P80 de los ${passed} de ${fed} kg pasados antes de la detención; ningún veredicto se apoya en esta corrida` };
+  }
   if (c.measured === null) return { en: `${mark} ${word.en}`, es: `${mark} ${word.es}` };
   const m = num(c.measured, c.id === 'net_power' ? { digits: 3 } : { digits: 3 });
   if (c.value === null) return { en: `Measured ${m}; ${mark} ${word.en}: ${basisShort(c.cell.basis).en}`, es: `Medido ${m}; ${mark} ${word.es}: ${basisShort(c.cell.basis).es}` };
@@ -477,6 +496,8 @@ export interface SeriesPoint {
   measurement: SideMark;
   simulation: SideMark;
   population_balance: SideMark;
+  /** The paper's own simulation of this quantity at this point (throughput and net power only), or null. */
+  paper: { value: number; source: string } | null;
   /** The relative band of the measurement for this quantity [fraction] (the reduction ratio's for P80). */
   band: number;
 }
@@ -548,7 +569,9 @@ export function comparisonSeries(run: DemRun, q: ChartQuantity, num: Num = plain
       const v = sideValue(p, 'population_balance', vq);
       population_balance = v === null ? { ...NO_MARK, reason: basisText(pbCell.basis, p) } : { value: v, lo: null, hi: null, reason: null, stopped: false };
     }
-    return { id: p.id, feedClass: p.feed_class, x: p.feed_mean_mm, measurement, simulation, population_balance, band };
+    const ps = paperSimulation(p);
+    const pv = q === 'throughput' ? ps?.throughput : q === 'net_power' ? ps?.netPower : null;
+    return { id: p.id, feedClass: p.feed_class, x: p.feed_mean_mm, measurement, simulation, population_balance, paper: pv ? { value: pv.value, source: pv.source } : null, band };
   });
   return { quantity: q, unit: CHART_UNIT[q], name: CHART_NAME[q], points };
 }
@@ -573,7 +596,8 @@ export function nearer(p: DemPoint, q: ChartQuantity): Nearer {
   const b = q === 'p80' ? sideP80(p, 'population_balance') : sideValue(p, 'population_balance', vq);
   const sp = relativeError(s, m);
   const bp = relativeError(b, m);
-  const simulationPct = sp === null ? null : Math.abs(sp) * 100;
+  // a run that did not complete is compared with nothing: no relative difference is computed for its product either
+  const simulationPct = sp === null || !isComplete(p.simulation) ? null : Math.abs(sp) * 100;
   const populationBalancePct = bp === null ? null : Math.abs(bp) * 100;
   const side = simulationPct === null || populationBalancePct === null ? null : simulationPct <= populationBalancePct ? 'simulation' : 'population_balance';
   return { side, simulationPct, populationBalancePct };
@@ -602,7 +626,7 @@ export function nearerSentence(run: DemRun, pointIndex: number, q: ChartQuantity
   const pbCell = cellOf(p, 'population_balance_vs_measured', vq);
   const status = (cell: DemVerdictCell, has: boolean): Text => {
     const st = verdictState(cell);
-    if (!has && st === 'not-compared') return { en: `states no value (${basisText(cell.basis, p).en})`, es: `no entrega valor (${basisText(cell.basis, p).es})` };
+    if (!has && st === 'not-compared') return { en: `states no value to compare (${basisText(cell.basis, p).en})`, es: `no entrega valor que comparar (${basisText(cell.basis, p).es})` };
     if (st === 'not-compared') return { en: `${STATE_CLAUSE[st].en} (${basisText(cell.basis, p).en})`, es: `${STATE_CLAUSE[st].es} (${basisText(cell.basis, p).es})` };
     return STATE_CLAUSE[st];
   };
@@ -638,6 +662,62 @@ export function nearerSentence(run: DemRun, pointIndex: number, q: ChartQuantity
     es: `${lead.es} Frente a la ${bandName.es}: simulación de partículas ${sc.es}; balance poblacional ${bc.es}.`,
   };
 }
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// The paper's own simulation: context for the reader, used in no verdict. Present at the points where the package holds a reading of it.
+// ---------------------------------------------------------------------------------------------------------------------------------
+
+export interface PaperValue {
+  value: number;
+  source: string;
+  /** The relative difference of the paper's own value against the measurement [fraction]: (paper - measured) / measured. */
+  relativeToMeasured: number | null;
+}
+
+export interface PaperSimulation {
+  throughput: PaperValue | null;
+  netPower: PaperValue | null;
+}
+
+/** The paper's own simulation at a point, with its relative differences against the measurement; null where the point has none (nothing is drawn or said for it). */
+export function paperSimulation(p: DemPoint): PaperSimulation | null {
+  const ps = p.paper_simulation;
+  if (!ps) return null;
+  const mk = (v: { value: number; source: string } | null, measured: number): PaperValue | null => (v ? { value: v.value, source: v.source, relativeToMeasured: relativeError(v.value, measured) } : null);
+  return { throughput: mk(ps.throughput_kg_h, p.measured.throughput_kg_h.value), netPower: mk(ps.net_power_kw, p.measured.net_power_kw.value) };
+}
+
+/** Whether any point of the document carries the paper's own simulation. */
+export const hasPaperSimulation = (run: DemRun): boolean => run.points.some((p) => paperSimulation(p) !== null);
+
+/** The sentence of the sources: each value with its source and its difference against the measurement, in numbers and with no verdict word. */
+export function paperSentence(p: DemPoint, num: Num): Text | null {
+  const ps = paperSimulation(p);
+  if (!ps) return null;
+  const dir = (f: number, en: boolean) => (f < 0 ? (en ? 'below' : 'por debajo de') : f > 0 ? (en ? 'above' : 'por encima de') : en ? 'at' : 'igual a');
+  const part = (label: Text, unit: string, v: PaperValue | null): Text | null =>
+    v === null || v.relativeToMeasured === null
+      ? null
+      : {
+          en: `${label.en} ${num(v.value, { digits: 3 })} ${unit} (${v.source}), ${num(Math.abs(v.relativeToMeasured) * 100, { digits: 3 })} percent ${dir(v.relativeToMeasured, true)} the measured value`,
+          es: `${label.es} ${num(v.value, { digits: 3 })} ${unit} (${v.source}), ${num(Math.abs(v.relativeToMeasured) * 100, { digits: 3 })} por ciento ${dir(v.relativeToMeasured, false)} el valor medido`,
+        };
+  const parts = [part({ en: 'net power', es: 'potencia neta' }, 'kW', ps.netPower), part({ en: 'throughput', es: 'capacidad' }, 'kg/h', ps.throughput)].filter((x): x is Text => x !== null);
+  if (!parts.length) return null;
+  return { en: `${parts.map((x) => x.en).join('; ')}.`, es: `${parts.map((x) => x.es).join('; ')}.` };
+}
+
+/** The sentence near the verdict table: what the verdicts are about. */
+export const VERDICT_SCOPE: Text = {
+  en: 'The verdicts of this view are about the particle simulation as the package crushdem implements it, not about the published study, whose own simulation is the mark described in the comparison charts.',
+  es: 'Los veredictos de esta vista se refieren a la simulación de partículas tal como la implementa el paquete crushdem, no al estudio publicado, cuya propia simulación es la marca descrita en los gráficos de comparación.',
+};
+
+/** What the spread of the population balance is, in the reader's words: the ranges King gives for cone crushers (the document's `preset.ranges_source` is the source text). */
+export const SPREAD_NAME: Text = {
+  en: 'the spread over the ranges King gives for cone crushers',
+  es: 'la dispersión sobre los rangos que King da para chancadoras de cono',
+};
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // The product size distribution of a point.

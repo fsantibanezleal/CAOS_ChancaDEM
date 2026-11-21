@@ -12,7 +12,7 @@
   hidden or the view unmounts, and under reduced motion it does not play and the frame at the cursor is shown.
 - The three operating points are drawn on shared axes for throughput, net power and product P80, with the measurement and its band shaded, the
   particle simulation with its standard error, the population balance (no power: no work index of the ore is published; its P80 with the
-  spread over the published parameter ranges, named a sensitivity band and not a confidence interval), a side without a value as an open circle
+  spread over the ranges King gives for cone crushers, named a sensitivity band and not a confidence interval), a side without a value as an open circle
   with its reason, and under each chart the sentence that says which side is nearer the measurement and by how many percent, with each side's
   verdict in words. Below: the product size distribution with the closed and open settings, the verdict table of the chosen point (the two
   values, the relative error, the band, the verdict in a word and a mark, whether it is resolved, the basis), and the sources, the package, the
@@ -20,3 +20,11 @@
   zero. A run that did not complete says at which stroke and why it stopped, with the spheres held and the mass passed, and shows no window
   statistic. The readiness reason of the row (partial, stale) is shown in both languages, and a document that is missing says why with nothing
   drawn.
+- The particle simulation view, follow-up: the paper's own simulation (`paper_simulation` of `dem-run` 1.1.1) is drawn as its own mark with its own
+  legend entry in the throughput and net power charts and stated in the sources with its two source strings and its two relative differences
+  against the measurement, as context only; a note near the verdict table says the verdicts are about the particle simulation of the package
+  `crushdem` and not about the published study. The product P80 of a run that did not complete is stated as the product of the mass passed
+  before the stop, with a neutral state, and no callout or sentence prints a relative difference for that run. The stage gains a magnified
+  inset of the crushing zone (the last 80 mm above the discharge level and a little below it, to its own scale bar, with the closed and open
+  settings marked), and its labels stand outside the chamber with leaders. The spread of the population balance is named as the spread over
+  the ranges King gives for cone crushers.

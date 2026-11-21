@@ -17,6 +17,7 @@ import {
   DEFAULT_SPEED,
   frameLabelText,
   frameSpheres,
+  insetBounds,
   playbackAllowed,
   sizeClass,
   sizeClassLabels,
@@ -212,7 +213,7 @@ interface Names {
   oss: string;
 }
 
-const ReplayCanvas = ({ width, height, run, point, frames, frame, tf, plate }: { width: number; height: number; run: DemRun; point: DemPoint; frames: DemFrames | null; frame: number; tf: StageTransform; plate: { x: number; z: number } }) => {
+const ReplayCanvas = ({ width, height, run, point, frames, frame, tf, plate, inset = false }: { width: number; height: number; run: DemRun; point: DemPoint; frames: DemFrames | null; frame: number; tf: StageTransform; plate: { x: number; z: number }; inset?: boolean }) => {
   const ref = useRef<HTMLCanvasElement | null>(null);
   const tokens = useThemeTokens();
   const lang = useShellLang();
@@ -255,34 +256,42 @@ const ReplayCanvas = ({ width, height, run, point, frames, frame, tf, plate }: {
       ref={ref}
       style={{ width, height, display: 'block' }}
       role="img"
-      aria-label={lang === 'es' ? 'Sección de la chancadora de mandíbula del laboratorio con las partículas del golpe elegido' : 'Section of the laboratory jaw crusher with the particles of the chosen stroke'}
-      data-chart="dem-replay"
+      aria-label={inset ? (lang === 'es' ? 'Ampliación de la zona de chancado con las partículas del golpe elegido' : 'Magnification of the crushing zone with the particles of the chosen stroke') : lang === 'es' ? 'Sección de la chancadora de mandíbula del laboratorio con las partículas del golpe elegido' : 'Section of the laboratory jaw crusher with the particles of the chosen stroke'}
+      data-chart={inset ? 'dem-inset' : 'dem-replay'}
       data-frame={frame}
       data-spheres={frames ? frameSpheres(frames, frame)[1] - frameSpheres(frames, frame)[0] : 0}
     />
   );
 };
 
-/** The labels of the section, placed so none leaves the drawing or touches another (the gate's G10), and the subjects the callouts are anchored to. */
+/**
+ * The labels of the section, placed outside the chamber so the scene never covers them: on the left of the drawn part the fixed plate and
+ * the discharge level, on its right the swing plate, the settings and the hopper, each with a leader to what it names. They are placed so
+ * none leaves the drawing or touches another (the gate's G10). Also the subjects the callouts are anchored to, on the main section.
+ */
 function sectionLabels(tf: StageTransform, point: DemPoint, run: DemRun, plate: { x: number; z: number }, width: number, height: number, names: Names, num: (v: number, o?: { digits?: number; decimals?: number }) => string): { node: ReactNode; subjects: Subject[] } {
   const r = point.simulation.replay!;
   const g = r.geometry;
   const ext = plateExtremes(r);
-  const L = new Labels(width, height);
-  const dis = tf.px(tf.bounds.xMin, g.discharge_z_mm);
+  const L = new Labels(width, height, 22);
+  const left = tf.px(tf.bounds.xMin, 0).x - 8;
+  const right = tf.px(tf.bounds.xMax, 0).x + 8;
+  const disY = tf.px(0, g.discharge_z_mm).y;
   const closedPx = tf.px(ext.closed.x, ext.closed.z);
   const openPx = tf.px(ext.open.x, ext.open.z);
-  const hop = tf.px(g.swing_pivot_mm[0], tf.bounds.zMax);
   const swingMid = tf.px((g.swing_pivot_mm[0] + plate.x) / 2, (g.swing_pivot_mm[1] + plate.z) / 2);
   const fixedMid = tf.px(g.fixed_plate_x_mm, g.fixed_plate_z_mm[1] * 0.62);
-  const labels = [
-    L.place(`${names.css} ${num(run.settings.css_mm, { digits: 3 })} mm`, closedPx.x + 12, closedPx.y + 16, 'start', { fill: TOKEN.accent, weight: 700 }),
-    L.place(`${names.oss} ${num(run.settings.oss_mm, { digits: 3 })} mm`, openPx.x + 12, openPx.y + 34, 'start', { fill: TOKEN.subtle }),
-    L.place(names.discharge, dis.x + 4, dis.y - 4, 'start', { fill: TOKEN.faint }),
-    L.place(names.fixed, fixedMid.x - 8, fixedMid.y, 'end', { fill: TOKEN.subtle }),
-    L.place(names.swing, swingMid.x + 10, swingMid.y, 'start', { fill: TOKEN.accent }),
-    L.place(names.hopper, hop.x + 6, hop.y + 12, 'start', { fill: TOKEN.faint }),
+  const hop = tf.px(g.swing_pivot_mm[0], tf.bounds.zMax - 40);
+  // each label with the point of the drawing it names
+  const items: { text: string; x: number; y: number; anchor: 'start' | 'end'; fill: string; weight?: number; to: { x: number; y: number } }[] = [
+    { text: names.fixed, x: left, y: fixedMid.y, anchor: 'end', fill: TOKEN.subtle, to: { x: fixedMid.x - 4, y: fixedMid.y } },
+    { text: names.discharge, x: left, y: disY, anchor: 'end', fill: TOKEN.faint, to: { x: tf.px(tf.bounds.xMin + 6, 0).x, y: disY } },
+    { text: names.swing, x: right, y: swingMid.y, anchor: 'start', fill: TOKEN.accent, to: { x: swingMid.x + 4, y: swingMid.y } },
+    { text: names.hopper, x: right, y: hop.y, anchor: 'start', fill: TOKEN.faint, to: { x: hop.x + 3, y: hop.y } },
+    { text: `${names.css} ${num(run.settings.css_mm, { digits: 3 })} mm`, x: right, y: closedPx.y + 4, anchor: 'start', fill: TOKEN.accent, weight: 700, to: { x: closedPx.x + 3, y: closedPx.y } },
+    { text: `${names.oss} ${num(run.settings.oss_mm, { digits: 3 })} mm`, x: right, y: openPx.y + 22, anchor: 'start', fill: TOKEN.subtle, to: { x: openPx.x + 3, y: openPx.y + 3 } },
   ];
+  const placed = items.map((it) => ({ it, p: L.place(it.text, it.x, it.y, it.anchor, { fill: it.fill, weight: it.weight }) }));
   const subjects: Subject[] = [
     { id: 'throughput', x: tf.px((g.fixed_plate_x_mm + ext.closed.x) / 2, g.discharge_z_mm).x, y: tf.px(0, g.discharge_z_mm).y },
     { id: 'net_power', x: swingMid.x, y: swingMid.y },
@@ -302,7 +311,12 @@ function sectionLabels(tf: StageTransform, point: DemPoint, run: DemRun, plate: 
         <line x1={x0} y1={y0 + 8} x2={openPx.x} y2={y0 + 8} />
         <line x1={openPx.x} y1={y0 + 5} x2={openPx.x} y2={y0 + 11} />
       </g>
-      <LabelText items={labels} />
+      <g stroke={TOKEN.faint} strokeWidth={1} strokeDasharray="2 3" fill="none" data-label-leaders="">
+        {placed.map(({ it, p }) => (
+          <line key={it.text} x1={it.anchor === 'end' ? p.x + 3 : p.x - 3} y1={p.y - 4} x2={it.to.x} y2={it.to.y} />
+        ))}
+      </g>
+      <LabelText items={placed.map(({ p }) => p)} />
     </svg>
   );
   return { node, subjects };
@@ -321,12 +335,16 @@ export const panelWidth = (stageWidth: number): number => Math.round(Math.max(13
  * swatch (the colour the spheres of that class have on the section), its range in millimetres, a bar for the number of spheres of that class
  * in this frame against the most the replay ever holds in one frame, and the count.
  */
-export function SizePanel({ width, height, point, counts, max, palette }: { width: number; height: number; point: DemPoint; counts: number[]; max: number; palette: string[] }) {
+/** The height of the size panel [px]: its title and one row per class. */
+export const SIZE_PANEL_H = 20 + SIZE_CLASSES * 18 + 6;
+
+export function SizePanel({ width, point, counts, max, palette }: { width: number; point: DemPoint; counts: number[]; max: number; palette: string[] }) {
+  const height = SIZE_PANEL_H;
   const num = useNum();
   const t = useT();
   const labels = sizeClassLabels(point.feed_mm[0], num);
   const top = 20;
-  const row = Math.max(16, Math.min(28, (height - top - 6) / SIZE_CLASSES));
+  const row = 18;
   const labelW = 64;
   const barX = 18 + labelW;
   const barMax = Math.max(8, width - barX - 40);
@@ -356,7 +374,70 @@ export function SizePanel({ width, height, point, counts, max, palette }: { widt
   );
 }
 
-/** The stage: the section with its callouts in the shell's header placement, the size panel beside it; the frame's spheres come from `frames`. */
+/** The smallest height of the inset's drawing [px]: under it the stage leaves the inset out (a stage too short to hold it says so). */
+export const INSET_MIN_PX = 90;
+const INSET_HEAD = 36;
+/** The title of a narrow inset wraps to more lines. */
+export const insetHead = (width: number): number => (width < 170 ? 54 : INSET_HEAD);
+
+/**
+ * The crushing zone magnified: the same frame, the same colours and the moving plate in the last 80 mm above the discharge level and a little
+ * below it, with its own scale bar in millimetres, the closed and open settings marked and a frame and a title that say it is a magnification.
+ * It sits below the size panel, where it covers neither the section nor a callout.
+ */
+export function Inset({ width, height, run, point, frames, frame, plate, mainScale }: { width: number; height: number; run: DemRun; point: DemPoint; frames: DemFrames | null; frame: number; plate: { x: number; z: number }; mainScale: number }) {
+  const num = useNum();
+  const t = useT();
+  const r = point.simulation.replay!;
+  const g = r.geometry;
+  const head = insetHead(width);
+  const drawH = height - head;
+  const tf = stageTransform(g, width, drawH, 4, insetBounds(g));
+  const ext = plateExtremes(r);
+  const mag = tf.scale / Math.max(1e-9, mainScale);
+  const closed = tf.px(ext.closed.x, ext.closed.z);
+  const open = tf.px(ext.open.x, ext.open.z);
+  const x0 = tf.px(g.fixed_plate_x_mm, 0).x;
+  const yDim = tf.px(0, g.discharge_z_mm - 6).y;
+  const bar = 10 * tf.scale;
+  const font = { fontFamily: 'var(--font-sans)', fontSize: 11 } as const;
+  return (
+    <div className="cdem-inset" style={{ position: 'absolute', right: 0, bottom: 0, width, height }} data-inset="" data-magnification={mag.toFixed(2)}>
+      <div className="cdem-inset-head" style={{ height: head }}>
+        <strong>{t(`Magnified ${num(mag, { digits: 2 })} times: the crushing zone`, `Ampliada ${num(mag, { digits: 2 })} veces: la zona de chancado`)}</strong>
+        <span>
+          <span style={{ color: TOKEN.accent }}>{t('closed', 'cerrada')} {num(run.settings.css_mm, { digits: 3 })} mm</span>
+          {' \u00B7 '}
+          <span style={{ color: TOKEN.subtle }}>{t('open', 'abierta')} {num(run.settings.oss_mm, { digits: 3 })} mm</span>
+        </span>
+      </div>
+      <div style={{ position: 'relative', width, height: drawH, border: `1px solid var(--color-border)`, borderRadius: 4, overflow: 'hidden' }}>
+        <ReplayCanvas width={width - 2} height={drawH - 2} run={run} point={point} frames={frames} frame={frame} tf={tf} plate={plate} inset />
+        <svg width={width - 2} height={drawH - 2} viewBox={`0 0 ${width - 2} ${drawH - 2}`} aria-hidden="true" data-chart="dem-inset-marks" style={{ position: 'absolute', left: 0, top: 0, pointerEvents: 'none' }}>
+          <g stroke={TOKEN.accent} strokeWidth={1.6} fill="none">
+            <line x1={x0} y1={yDim} x2={closed.x} y2={yDim} />
+            <line x1={x0} y1={yDim - 3} x2={x0} y2={yDim + 3} />
+            <line x1={closed.x} y1={yDim - 3} x2={closed.x} y2={yDim + 3} />
+          </g>
+          <g stroke={TOKEN.subtle} strokeWidth={1.4} fill="none">
+            <line x1={x0} y1={yDim + 8} x2={open.x} y2={yDim + 8} />
+            <line x1={open.x} y1={yDim + 5} x2={open.x} y2={yDim + 11} />
+          </g>
+          <g stroke={TOKEN.fg} strokeWidth={2} fill="none" data-scale-bar={bar.toFixed(1)}>
+            <line x1={8} y1={drawH - 12} x2={8 + bar} y2={drawH - 12} />
+            <line x1={8} y1={drawH - 15} x2={8} y2={drawH - 9} />
+            <line x1={8 + bar} y1={drawH - 15} x2={8 + bar} y2={drawH - 9} />
+          </g>
+          <text x={8 + bar + 5} y={drawH - 8} fill={TOKEN.fg} {...{ style: font }}>
+            10 mm
+          </text>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+/** The stage: the section with its callouts in the shell's header placement, the size panel and the magnified crushing zone beside it; the frame's spheres come from `frames`. */
 export function ReplayStage({ run, point, frames, frame, callouts }: { run: DemRun; point: DemPoint; frames: DemFrames | null; frame: number; callouts: CalloutSpec[] }) {
   const lang = useShellLang();
   const num = useNum();
@@ -374,12 +455,16 @@ export function ReplayStage({ run, point, frames, frame, callouts }: { run: DemR
         const cw = Math.max(80, width - pw);
         const tf = stageTransform(r.geometry, cw, height);
         const { node, subjects } = sectionLabels(tf, point, run, plate, cw, height, NAMES[lang], num);
+        // the inset takes what the size panel leaves on the right; a stage too short for it leaves it out
+        const insetH = height - SIZE_PANEL_H - 8;
+        const showInset = insetH - insetHead(pw) >= INSET_MIN_PX;
         return {
           node: (
-            <div style={{ position: 'relative', width, height }} data-dem-stage="" data-frame={frame}>
+            <div style={{ position: 'relative', width, height }} data-dem-stage="" data-frame={frame} data-inset-shown={showInset ? 'true' : 'false'}>
               <ReplayCanvas width={cw} height={height} run={run} point={point} frames={frames} frame={frame} tf={tf} plate={plate} />
               {node}
-              <SizePanel width={pw} height={height} point={point} counts={counts} max={Math.max(1, ...r.count)} palette={paletteOf(tokens)} />
+              <SizePanel width={pw} point={point} counts={counts} max={Math.max(1, ...r.count)} palette={paletteOf(tokens)} />
+              {showInset && <Inset width={pw} height={insetH} run={run} point={point} frames={frames} frame={frame} plate={plate} mainScale={tf.scale} />}
             </div>
           ),
           subjects,

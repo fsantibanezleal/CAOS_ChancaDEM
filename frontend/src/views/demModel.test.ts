@@ -20,10 +20,16 @@ import {
   decodeFrames,
   DemFramesError,
   distributionOf,
+  finalAttempt as finalAttemptOf,
   frameAt,
   frameLabel,
   localizeNumbers,
   frameLabelText,
+  hasPaperSimulation,
+  insetBounds,
+  paperSentence,
+  paperSimulation,
+  VERDICT_SCOPE,
   frameSpheres,
   nearer,
   nearerSentence,
@@ -287,7 +293,8 @@ describe('DM-012: the three callouts of a point, from the document', () => {
     // the product of the mass passed before the stop is a value, but its verdict is still not compared
     expect(p.value).toBe(middle.simulation.p80_mm);
     expect(p.state).toBe('not-compared');
-    expect(calloutSource(p, plain).en).toContain('Not compared');
+    expect(calloutSource(p, plain).en).toContain('passed before the stop');
+    expect(calloutSource(p, plain).en).not.toMatch(/Measured|%/);
   });
   it('16/13.2 mm: a verdict met inside two standard errors of its band edge is a warning, not a plain agreement', () => {
     const w = pointCallouts(fine)[1];
@@ -386,12 +393,12 @@ describe('DM-014: which side is nearer the measurement, as a sentence', () => {
   it('a point whose run did not complete: the simulation states no value and the sentence says why', () => {
     const s = nearerSentence(run, 1, 'throughput');
     expect(s.en).toContain('only the population balance states a value');
-    expect(s.en).toContain('states no value (the particle run did not complete');
-    expect(s.es).toContain('no entrega valor');
+    expect(s.en).toContain('states no value to compare (the particle run did not complete');
+    expect(s.es).toContain('no entrega valor que comparar');
   });
   it('the product P80 of a stopped run is a value whose verdict is still not compared', () => {
     const s = nearerSentence(run, 1, 'p80');
-    expect(s.en).toContain('not compared');
+    expect(s.en).toContain('particle simulation states no value to compare');
     expect(s.en).not.toContain('particle simulation within the band');
   });
   it('adversarial: a verdict turned to not met in a copy never yields a sentence of agreement, for every point and quantity, in both languages', () => {
@@ -520,4 +527,106 @@ describe('the words of the view never use the internal tier names, and carry no 
       expect(src).not.toMatch(/\bclassical\b|state of the art|state-of-the-art|\bSOTA\b|\bbeyond\b|\btier\b/i);
     });
   }
+});
+
+describe('the paper’s own simulation: context for the reader, used in no verdict', () => {
+  it('at the 63/52 mm point it carries the two values with their sources and their differences against the measurement', () => {
+    const ps = paperSimulation(coarse)!;
+    expect(ps.netPower!.value).toBe(0.32);
+    expect(ps.throughput!.value).toBe(890);
+    expect(ps.netPower!.source).toBe(coarse.paper_simulation!.net_power_kw!.source);
+    expect(ps.throughput!.source).toContain('read by eye, not digitised');
+    expect(ps.netPower!.relativeToMeasured! * 100).toBeCloseTo(-5.88, 2);
+    expect(ps.throughput!.relativeToMeasured! * 100).toBeCloseTo(11.4, 1);
+    expect(hasPaperSimulation(run)).toBe(true);
+  });
+  it('the sentence gives the numbers and the direction and never says it agrees', () => {
+    const s = paperSentence(coarse, plain)!;
+    expect(s.en).toContain('net power 0.32 kW');
+    expect(s.en).toContain('5.88 percent below the measured value');
+    expect(s.en).toContain('throughput 890 kg/h');
+    expect(s.en).toContain('percent above the measured value');
+    expect(s.es).toContain('por debajo de el valor medido');
+    expect(`${s.en} ${s.es}`).not.toMatch(AGREEMENT);
+    expect(VERDICT_SCOPE.en).toContain('not about the published study');
+    expect(VERDICT_SCOPE.es).toContain('no al estudio publicado');
+  });
+  it('a point without it has no mark, no sentence and no entry: the null case', () => {
+    expect(paperSimulation(middle)).toBeNull();
+    expect(paperSimulation(fine)).toBeNull();
+    expect(paperSentence(middle, plain)).toBeNull();
+    const q = comparisonSeries(run, 'throughput').points;
+    expect(q[0].paper).toEqual({ value: 890, source: coarse.paper_simulation!.throughput_kg_h!.source });
+    expect(q[1].paper).toBeNull();
+    expect(q[2].paper).toBeNull();
+    expect(comparisonSeries(run, 'net_power').points[0].paper!.value).toBe(0.32);
+    for (const p of comparisonSeries(run, 'p80').points) expect(p.paper).toBeNull();
+    const none = JSON.parse(JSON.stringify(run)) as Mutable<DemRun>;
+    for (const p of none.points) p.paper_simulation = null;
+    expect(hasPaperSimulation(none as DemRun)).toBe(false);
+    for (const q2 of CHART_QUANTITIES) for (const p of comparisonSeries(none as DemRun, q2).points) expect(p.paper).toBeNull();
+  });
+  it('the paper’s value is used in no verdict: changing it moves no verdict, series of the three sides or callout', () => {
+    const d = copy();
+    d.points[0].paper_simulation!.throughput_kg_h!.value = 5000;
+    expect(verdictRows(d.points[0] as DemPoint)).toEqual(verdictRows(coarse));
+    expect(pointCallouts(d.points[0] as DemPoint)).toEqual(pointCallouts(coarse));
+    expect(paperSimulation(d.points[0] as DemPoint)!.throughput!.value).toBe(5000);
+  });
+});
+
+describe('a run that did not complete: no relative difference is printed anywhere', () => {
+  const stopped = run.points.filter((p) => p.simulation.status !== 'complete');
+  it('the points that did not complete are found in the document', () => {
+    expect(stopped.map((p) => p.id)).toEqual(['31.5-26.5']);
+  });
+  for (const lang of ['en', 'es'] as const) {
+    it(`${lang}: the callouts carry no percentage and the P80 is the product of the mass passed before the stop, with a neutral state`, () => {
+      for (const p of stopped) {
+        const cs = pointCallouts(p);
+        for (const c of cs) {
+          expect(c.relativeError).toBeNull();
+          expect(calloutSource(c, plain)[lang]).not.toMatch(/[+-]?\d[\d.,]*\s?%/);
+        }
+        const p80 = cs[2];
+        expect(p80.state).toBe('not-compared');
+        expect(calloutState(p80.state)).toBe('inactive');
+        expect(p80.beforeStop).toEqual({ passedKg: finalAttemptOf(p.simulation).mass_passed_kg, fedKg: p.simulation.mass_fed_kg });
+        const src = calloutSource(p80, plain)[lang];
+        expect(src).toContain('0.306');
+        expect(src).toContain('5.99');
+        expect(src).not.toMatch(/Measured|Medido|\+91/);
+      }
+    });
+    it(`${lang}: no sentence of any chart prints a difference for the run`, () => {
+      for (const q of CHART_QUANTITIES) {
+        const i = run.points.findIndex((p) => p.simulation.status !== 'complete');
+        const n = nearer(run.points[i], q);
+        expect(n.simulationPct).toBeNull();
+        const s = nearerSentence(run, i, q)[lang];
+        expect(s).not.toContain('91.9');
+        expect(s).not.toMatch(/agree|agreement/i);
+      }
+    });
+  }
+  it('the takeaway and the verdict rows of the run print no difference either', () => {
+    expect(takeaway(middle, run.bands, plain).en).not.toMatch(/percent/);
+    for (const r of verdictRows(middle).filter((r) => r.pair === 'simulation_vs_measured')) expect(r.relativeError).toBeNull();
+  });
+});
+
+describe('the inset of the crushing zone', () => {
+  it('covers the discharge gap: the closed and open edges and the last 80 mm above the discharge level, to one scale', () => {
+    const g = coarse.simulation.replay!.geometry;
+    const b = insetBounds(g);
+    expect(b.zMin).toBeCloseTo(g.discharge_z_mm - 12, 9);
+    expect(b.zMax - g.discharge_z_mm).toBeCloseTo(80, 9);
+    expect(b.xMin).toBeLessThan(g.fixed_plate_x_mm);
+    expect(b.xMax).toBeGreaterThan(g.fixed_plate_x_mm + run.settings.oss_mm);
+    const t = stageTransform(g, 200, 220, 6, b);
+    const main = stageTransform(g, 300, 450);
+    expect(t.scale).toBeGreaterThan(2.5 * main.scale);
+    const gap = t.px(run.settings.oss_mm, 0).x - t.px(0, 0).x;
+    expect(gap / t.scale).toBeCloseTo(run.settings.oss_mm, 6);
+  });
 });
