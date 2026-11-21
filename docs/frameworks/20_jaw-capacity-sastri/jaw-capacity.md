@@ -43,9 +43,10 @@ At the critical speed the two forms meet within 0.13 percent: the printed 66.4 i
 ## The laboratory preset and the band
 
 The classification of the laboratory jaw is the literature's first estimate, not a fit to any laboratory jaw (none is
-published): $K_1 = \mathrm{CSS}$, $K_2 = \mathrm{OSS} = \mathrm{CSS} + T$, $K_3 = 2.3$ (Donovan 2003, section 2.1.2), with $K_2$ never
-below $1.05\,K_1$. Its sensitivity band is the eight corners of King (2000), Technical Notes 5, equations 5.8 to 5.10, pages 5-4
-and 5-5: $K_1 = \alpha_1 \mathrm{CSS}$ with $\alpha_1$ 0.5 to 0.95, $K_2 = \alpha_2 \mathrm{CSS}$ with $\alpha_2$ 1.7 to 3.5, exponent $n$
+published): $K_1 = \mathrm{CSS}$, $K_2 = \mathrm{OSS} = \mathrm{CSS} + T$, $K_3 = 2.3$ (Donovan 2003, section 2.1.3), with $K_2$ never
+below $1.05\,K_1$. Its sensitivity band is the eight corners of the ranges that King (2000) gives for standard and short-head Symons cone
+crushers, used for the laboratory jaw for want of published jaw values (Technical Notes 5, equations 5.8 to 5.10, pages 5-4
+and 5-5): $K_1 = \alpha_1 \mathrm{CSS}$ with $\alpha_1$ 0.5 to 0.95, $K_2 = \alpha_2 \mathrm{CSS}$ with $\alpha_2$ 1.7 to 3.5, exponent $n$
 1 to 3. The product is the engine's: the Whiten solve with the JKMRC t10 and the Austin appearance function
 ([cards 11 and 12](../11_breakage-function/breakage.md)), $t_{10}$ from the engine's specific energy at the jaw's throw.
 
@@ -105,7 +106,7 @@ document. It has no TypeScript counterpart.
 ## References
 
 - Sastri, S. R. S. (1994), Minerals and Metallurgical Processing, May 1994, pp. 80 to 85
-- King, R. P. (2000), Technical Notes 5, Crushers, equations 5.8 to 5.10
-- Donovan, J. G. (2003), PhD thesis, Virginia Tech, section 2.1.2, [handle 10919/28544](https://vtechworks.lib.vt.edu/handle/10919/28544)
+- King, R. P. (2000), Technical Notes 5, Crushers, equations 5.8 to 5.10 (the ranges are those of Symons cone crushers)
+- Donovan, J. G. (2003), PhD thesis, Virginia Tech, section 2.1.3, [handle 10919/28544](https://vtechworks.lib.vt.edu/handle/10919/28544)
 - Barrios, Jimenez-Herrera and Tavares (2020), Minerals 10(8):717, [doi:10.3390/min10080717](https://doi.org/10.3390/min10080717)
 - Tavares (2022), KONA 39, [doi:10.14356/kona.2022012](https://doi.org/10.14356/kona.2022012), equation 20

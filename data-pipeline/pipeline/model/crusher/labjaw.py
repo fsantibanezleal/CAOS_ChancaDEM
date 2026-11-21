@@ -8,8 +8,9 @@ helpers that keep the two engines equal. Standard library only, like the engine'
 
 Nothing here is fitted to the throughput, the power or the product of the laboratory jaw it is compared with: the
 capacity is Sastri's printed equations on the machine's geometry, the classification is the literature's first estimate
-(Donovan 2003, section 2.1.2: K1 equal to the closed-side setting, K2 near the open-side setting, K3 = 2.3) and its
-published ranges (King 2000, Technical Notes 5, equations 5.8 to 5.10) are the sensitivity band. No function reads a
+(Donovan 2003, section 2.1.3: K1 equal to the closed-side setting, K2 near the open-side setting, K3 = 2.3), and the
+ranges King (2000, Technical Notes 5, equations 5.8 to 5.10) gives for Symons cone crushers are the sensitivity band,
+used for want of published jaw values. No function reads a
 measured value; a test greps this file for them.
 
 Units: sizes in millimetres unless a name ends in ``_m`` (metres); throughput in t/h (``_tph``) or kg/h; speed in
@@ -51,7 +52,7 @@ NEAR_UNITY_RATIO = 1.05          # the engine's reduction-ratio floor for "negli
 FLAG_PASS_THROUGH = "CSS ≥ feed lower limit, little size reduction (pass-through regime)"
 FLAG_NEGLIGIBLE = "reduction ratio ≈ 1, negligible breakage"
 FLAG_ILL_CONDITIONED = "ill-conditioned breakage matrix near choke"
-FIRST_ESTIMATE_K3 = 2.3          # Donovan 2003, section 2.1.2: K3 about 2.3 [dimensionless]
+FIRST_ESTIMATE_K3 = 2.3          # Donovan 2003, section 2.1.3: K3 about 2.3 [dimensionless]
 KG_PER_T = 1000.0                # [kg/t]
 MM_PER_M = 1000.0                # [mm/m]
 J_PER_KG_PER_KWH_T = 3600.0      # 1 kWh/t = 3600 J/kg [J/kg per kWh/t]
@@ -177,7 +178,8 @@ OTSUKA_BARRIOS_2020 = LabJaw(gape_mm=90.0, width_mm=140.0, throw_mm=10.0, densit
 
 @dataclass(frozen=True)
 class KingRanges:
-    """The published ranges of the classification parameters of a crusher."""
+    """The ranges of the classification parameters that King (2000) gives for standard and short-head Symons cone
+    crushers; no range is published for a jaw crusher, so the laboratory jaw borrows them as a sensitivity band."""
 
     alpha1: tuple[float, float]   # K1 = alpha1 CSS, the range of alpha1 [-]
     alpha2: tuple[float, float]   # K2 = alpha2 CSS, the range of alpha2 [-]
@@ -185,11 +187,13 @@ class KingRanges:
     source: str
 
 
-# King, R. P., Technical Notes 5, Crushers (2000), equations 5.8 to 5.10, pages 5-4 and 5-5: "alpha1 varies from about 0.5
+# King, R. P., Technical Notes 5, Crushers (2000), equations 5.8 to 5.10, pages 5-4 and 5-5, "For both standard and
+# short-head Symons cone crushers": "alpha1 varies from about 0.5
 # to 0.95 and alpha2 varies from about 1.7 to 3.5. n is usually approximately 2 but can be as low as 1 and as high as 3."
 KING_RANGES = KingRanges(
     alpha1=(0.5, 0.95), alpha2=(1.7, 3.5), n=(1.0, 3.0),
-    source="King (2000), Technical Notes 5, Crushers, equations 5.8 to 5.10, pages 5-4 and 5-5",
+    source=("King (2000), Technical Notes 5, Crushers, equations 5.8 to 5.10, pages 5-4 and 5-5: the ranges given for standard "
+            "and short-head Symons cone crushers, used here for a laboratory jaw for want of published jaw values"),
 )
 
 
@@ -197,8 +201,8 @@ def lab_classification(css_mm: float, throw_mm: float, alpha1: float = 1.0, alph
                        n: float = FIRST_ESTIMATE_K3) -> Classification:
     """The laboratory classification [mm]: K1 = alpha1 CSS, K2 = OSS = CSS + throw when ``alpha2`` is None and alpha2 CSS
     otherwise, K3 = n (a dimensionless exponent), K2 floored at 1.05 K1 as the engine does. The defaults are the first
-    estimate of Donovan (2003), section 2.1.2 (K1 the closed-side setting, K2 the open-side setting, K3 = 2.3); the
-    ranges of King (2000) are ``KING_RANGES``."""
+    estimate of Donovan (2003), section 2.1.3 (K1 the closed-side setting, K2 the open-side setting, K3 = 2.3); the
+    ranges of King (2000), given for Symons cone crushers, are ``KING_RANGES``."""
     if css_mm <= 0 or throw_mm < 0:
         raise ValueError("the closed-side setting must be positive and the throw not negative")
     k1 = alpha1 * css_mm
@@ -356,7 +360,7 @@ def _extreme(values: dict[Corner, float]) -> BandExtreme:
 
 def king_band(jaw: LabJaw, d_min_mm: float, d_max_mm: float, css_mm: float, speed_rpm: float, ore_axb: float,
               sieves_mm: tuple[float, ...] = DEFAULT_BAND_SIEVES_MM) -> KingBand:
-    """The sensitivity band over the published ranges of King (2000): the evaluation at the eight corners (alpha1 0.5 and
+    """The sensitivity band over the ranges King (2000) gives for Symons cone crushers: the evaluation at the eight corners (alpha1 0.5 and
     0.95, alpha2 1.7 and 3.5, n 1 and 3) and, for P80 [mm], P50 [mm] and the fraction passing at each of ``sieves_mm``, the
     lowest and highest value with the corner (alpha1, alpha2, n) that gives each."""
     results: dict[Corner, LabJawResult] = {}

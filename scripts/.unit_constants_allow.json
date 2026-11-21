@@ -364,8 +364,8 @@
     "source": "DEFAULT_BAND_SIEVES_MM = (1.0, 2.0, 4.0, 8.0, 16.0)   # sieve apertures read for the passing band [mm]"
   },
   "data-pipeline/pipeline/model/crusher/labjaw.py::2.3": {
-    "reason": "DIMENSIONLESS: the first estimate of the classification exponent K3 (Donovan 2003, section 2.1.2).",
-    "source": "FIRST_ESTIMATE_K3 = 2.3          # Donovan 2003, section 2.1.2: K3 about 2.3 [dimensionless]"
+    "reason": "DIMENSIONLESS: the first estimate of the classification exponent K3 (Donovan 2003, section 2.1.3).",
+    "source": "FIRST_ESTIMATE_K3 = 2.3          # Donovan 2003, section 2.1.3: K3 about 2.3 [dimensionless]"
   },
   "data-pipeline/pipeline/model/crusher/labjaw.py::2.5": {
     "reason": "DIMENSIONLESS: the exponent of Sastri (1994) equation 10, K1 = 0.85 - (Fav / G)^2.5.",

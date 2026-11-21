@@ -43,7 +43,8 @@ PAPER_LICENSE = "CC BY 4.0"
 PAPER_PACKAGE_DATA = "the digitised figures are package data of crushdem (crushdem/cases/data/barrios2020_digitised.json)"
 
 # the texts of the laboratory preset; each restates the comment or docstring of data-pipeline/pipeline/model/crusher/labjaw.py that carries it
-PRESET_FIRST_ESTIMATE = "Donovan (2003), section 2.1.2: K1 equal to the closed-side setting, K2 near the open-side setting, K3 about 2.3"
+PRESET_FIRST_ESTIMATE = ("Donovan (2003), section 2.1.3: K1 equal to the closed-side setting, K2 the largest particle of the product, "
+                         "close to the open-side setting, K3 equal to 2.3")
 PRESET_CAPACITY = "Sastri (1994), equation 9, W = Vh K1 K2 K3 d, with the factors of equations 2 to 13 on the machine's geometry (the laboratory-jaw module)"
 PRESET_ORE_LINK = ("A times b is 3600 A b' over E50: the equation of the exponents of the two published t10 laws (Narayanan and Whiten 1988; "
                    "Tavares 2022, https://doi.org/10.14356/kona.2022012, equation 20), which is the product's own algebra and not a published conversion; "
