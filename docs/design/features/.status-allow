@@ -2,3 +2,4 @@
 # One line per feature folder: "<feature>: <reason>". A status other than live with no line here, or a line with no
 # reason, is a finding: a feature cannot leave the gate by relabelling itself. Reviewed with the pull request that adds
 # a line. The example workbench is live, so this file lists nothing.
+dem: the feature of release 0.15.000 is designed before its code (ADR-0075); its gates are written with its units and the status line leaves with its convergence verdict
