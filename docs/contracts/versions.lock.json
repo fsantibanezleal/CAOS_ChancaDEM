@@ -60,9 +60,9 @@
     "sha256": "66a09c59bbfd285a98f34901c506280540fa2b79de53fa86bb79dd1f4c94ab77"
   },
   "dem-run": {
-    "version": "1.1.0",
+    "version": "1.1.1",
     "schema": "docs/contracts/schemas/dem-run.schema.json",
-    "sha256": "5709a27bb0b3a43cb14504ca4303d3c899428d75b36592c8c1a2cf84f5335398"
+    "sha256": "644867cc25f421a1bd5d9184c7a88d6231daf45a9a7449071bb63b6ea8cc5922"
   },
   "readiness": {
     "version": "1.0.1",

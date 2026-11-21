@@ -81,8 +81,11 @@ State `partial`. Of the 27 verdicts, 3 are met, 13 are not met and 11 are not co
   breakage event is the engine's own rule, 0.033 times the throw (mm) times the speed (rpm) over 350, in kWh/t (0.339 kWh/t
   here), written for the plant machines and applied unchanged.
 - The result is about the particle simulation as `crushdem` 0.6.0 implements it, not a refutation of the published study: the
-  paper's own simulation agreed with its measurements (0.32 kW simulated against 0.34 kW measured, 63/52 mm, page 10), but it
-  breaks a particle at a threshold force and replaces it with a fixed progeny set, whereas `crushdem` uses the energy-based model
+  paper reports very good agreement of its own simulation with its measurements (for the 63/52 mm feed 0.32 kW simulated against
+  0.34 kW measured, page 10, which is 5.9 percent low; its simulated throughput curve of Fig. 14a reads about 890 kg/h there
+  against 799 measured, about 11 percent high by a by-eye reading). That simulation breaks a particle at a threshold force and
+  replaces it with a fixed progeny set that the paper fitted to the product of its own jaw tests (page 9), whereas `crushdem`
+  uses the energy-based model
   of Tavares with an ore derived from the paper's single-particle tests. Which of the machine's assumptions (the contact
   stiffness, the harmonic swing law, the 20 degree nip angle, the flat smooth plates) accounts for the departure is not isolated
   by this document.

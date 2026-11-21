@@ -89,7 +89,7 @@ export const ROWS: { id: string; version: string; schema: string; governs: [stri
   },
   {
     id: 'dem-run',
-    version: '1.1.0',
+    version: '1.1.1',
     schema: 'chancadem.dem.run/v1',
     governs: [
       'The particle simulation (the discrete element method of the package crushdem) on the laboratory jaw crusher at three operating points, beside the measurement and the population balance with a laboratory preset: nine verdicts per point against bands set before the runs, and one replay file of particle frames per point, with, as context that no verdict uses, what the source paper reports for its own simulation where it states it.',

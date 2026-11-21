@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "dem-run.schema.json",
   "title": "DemRun",
-  "description": "Catalog row dem-run 1.1.0: the discrete element method with particle-replacement breakage on the laboratory jaw crusher of Barrios et al. 2020 at the three operating points that have a measured throughput, net power and product, beside the measurement and the prediction of the product's population-balance engine with a laboratory preset, with the verdicts against bands set before the runs. Written by data-pipeline/pipeline/stages/dem.py to data/derived/dem/jaw-lab.json from runs of the pinned package crushdem. A function of the package version, the seed and the committed inputs: it holds no wall time and no date.",
+  "description": "Catalog row dem-run 1.1.1: the discrete element method with particle-replacement breakage on the laboratory jaw crusher of Barrios et al. 2020 at the three operating points that have a measured throughput, net power and product, beside the measurement and the prediction of the product's population-balance engine with a laboratory preset, with the verdicts against bands set before the runs. Written by data-pipeline/pipeline/stages/dem.py to data/derived/dem/jaw-lab.json from runs of the pinned package crushdem. A function of the package version, the seed and the committed inputs: it holds no wall time and no date.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -1866,12 +1866,12 @@
                       "properties": {
                         "value": {
                           "type": "number",
-                          "description": "The value the paper states, in the unit its field names."
+                          "description": "The value read from the paper, in the unit its field names."
                         },
                         "source": {
                           "type": "string",
                           "minLength": 1,
-                          "description": "Where the paper states it: the text or the figure with its page, and how it was read."
+                          "description": "Where the paper gives it: the text or the figure with its page, and how it was read."
                         }
                       }
                     },
@@ -1879,7 +1879,7 @@
                       "type": "null"
                     }
                   ],
-                  "description": "The mean net power of the paper's own simulation [kW]; null where the paper states none."
+                  "description": "The mean net power of the paper's own simulation [kW]; null where the package holds no reading of it."
                 },
                 "throughput_kg_h": {
                   "oneOf": [
@@ -1893,12 +1893,12 @@
                       "properties": {
                         "value": {
                           "type": "number",
-                          "description": "The value the paper states, in the unit its field names."
+                          "description": "The value read from the paper, in the unit its field names."
                         },
                         "source": {
                           "type": "string",
                           "minLength": 1,
-                          "description": "Where the paper states it: the text or the figure with its page, and how it was read."
+                          "description": "Where the paper gives it: the text or the figure with its page, and how it was read."
                         }
                       }
                     },
@@ -1906,7 +1906,7 @@
                       "type": "null"
                     }
                   ],
-                  "description": "The throughput of the paper's own simulation [kg/h]; null where the paper states none."
+                  "description": "The throughput of the paper's own simulation [kg/h]; null where the package holds no reading of it."
                 }
               }
             },
@@ -1914,7 +1914,7 @@
               "type": "null"
             }
           ],
-          "description": "What the source paper's own discrete element simulation gave at this point, where the paper states it: context for the reader, used in no verdict; null where the paper states nothing for this feed."
+          "description": "What the source paper's own discrete element simulation gave at this point, as far as the package holds a reading of it (the paper draws its simulated throughput and power as curves over the feed size, and gives one net power in its text): context for the reader, used in no verdict; null where the package holds no reading for this feed."
         },
         "simulation": {
           "$ref": "#/$defs/simulation",
