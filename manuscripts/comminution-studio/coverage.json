@@ -1,6 +1,6 @@
 {
   "kind": "technical-report",
-  "title_support": ["tab:bench", "fig:loo", "tab:leaky", "tab:band", "fig:physics", "tab:cases"],
+  "title_support": ["tab:bench", "fig:loo", "tab:leaky", "tab:band", "fig:physics", "tab:cases", "tab:dem-decisions", "fig:dem-points", "tab:dem-sides"],
   "methods": {
     "M1": "sec:m-feed",
     "M2": "sec:m-breakage",

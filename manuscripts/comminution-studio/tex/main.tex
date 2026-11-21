@@ -31,6 +31,7 @@
 \input{tables/numbers-labjaw}
 \input{tables/numbers-dem}
 \input{tables/numbers-lab}
+\input{tables/numbers-dem-results}
 \setlength{\parskip}{0.35em}
 \setlength{\LTcapwidth}{\textwidth}
 \renewcommand{\topfraction}{0.9}
@@ -68,7 +69,7 @@ Not peer reviewed. Source code, data and computational records: \href{https://\d
 \end{center}
 \vspace{4pt}}
 
-\title{ChancaDEM: A Crusher-Comminution Studio and a Held-Out Evaluation of Cone-Crusher Models on Ten Industrial Surveys}
+\title{ChancaDEM: A Crusher-Comminution Studio, a Held-Out Evaluation of Cone-Crusher Models on Ten Industrial Surveys, and a Comparison of a Particle Simulation and a Population Balance with Laboratory Jaw Measurements}
 \author{Felipe Santib\'a\~nez-Leal~\orcidlink{0000-0002-0150-3246}\\
 \small CAOS open-research programme, Santiago, Chile \quad (fsantibanez@gmail.com)}
 \date{}
@@ -80,27 +81,20 @@ Not peer reviewed. Source code, data and computational records: \href{https://\d
 \headerblock
 
 \begin{abstract}
-\noindent The product size, throughput and power of a cone crusher are set by the closed-side setting, the eccentric
-throw and speed, and the feed size distribution. In Chilean copper mining
-the concentrator, where crushing and grinding sit, took $55.7\%$ of the sector's electricity in 2024. ChancaDEM is an
-open studio that couples a Whiten population balance with an Andersen and Napier-Munn classification, a JKMRC $t_{10}$
-breakage function, a reduced Evertsson capacity model, Bond's power law and Morrell's size-specific energy in one engine
-in Python and TypeScript that runs in the browser, and holds it against ten measured surveys of a Metso HP500
-secondary cone crusher on itabirite iron ore (Rocha et al., 2024). Every fitted quantity is refit without the held-out
-survey, beside a constant-mean baseline, a label-shuffle control, a nested $80\%$ band and bootstrap intervals over the
-surveys. The calibrated engine reaches a held-out mean absolute percentage error of $\uqQBb\%$ ($95\%$ interval $\uqQBblo$
-to $\uqQBbhi$) on throughput and $\uqPBb\%$ ($\uqPBblo$ to $\uqPBbhi$) on power, because its Bond draw is nearly flat
-against measured values of $187$ to $355$~kW; a line on the setting reaches $\uqQLine\%$ and $\uqPLine\%$ ($\uqPLinelo$ to
-$\uqPLinehi$), and the published throughput model of Rocha et al.\ (its factor set on survey~10) $\uqQRocha\%$. CrusherBayes, the proposed Bayesian calibration
-with a Kennedy and O'Hagan structural discrepancy, reaches $\uqQCb\%$ and $\uqPCb\%$ with $80\%$
-intervals of coverage $0.80$ and $0.90$, $7\%$ and $44\%$ narrower than the calibrated engine's band; its power
-error is not distinguishable from the line's. The surveys contract the noise and the discrepancy slopes
-on the setting and on $f_{80}$, the capacity base only through the prior scale of the discrepancy, and not the
-classification and breakage scalars. A learned surrogate emulates the engine at $R^2$ from $0.979$ to $0.998$ on $2196$ independent points.
+\noindent The product size, throughput and power of a cone crusher are set by the closed-side setting, the eccentric throw and speed, and the feed size distribution. In Chilean copper mining
+the concentrator took $55.7\%$ of the sector's electricity in 2024. ChancaDEM is an open studio that couples a Whiten population balance, an Andersen and Napier-Munn classification, a JKMRC $t_{10}$
+breakage function, a reduced Evertsson capacity model, Bond's power law and Morrell's size-specific energy in one engine in Python and TypeScript that runs in the browser, and holds it against ten
+measured surveys of a Metso HP500 secondary cone crusher (Rocha et al., 2024), refitting every fitted quantity without the held-out survey and giving bootstrap intervals. The calibrated engine reaches a held-out mean absolute percentage error of $\uqQBb\%$ ($95\%$ interval $\uqQBblo$
+to $\uqQBbhi$) on throughput and $\uqPBb\%$ ($\uqPBblo$ to $\uqPBbhi$) on power, because its Bond draw is nearly flat; a line on the setting reaches $\uqQLine\%$ and $\uqPLine\%$ ($\uqPLinelo$ to
+$\uqPLinehi$). CrusherBayes, a Bayesian calibration with a Kennedy and O'Hagan structural discrepancy, reaches $\uqQCb\%$ and $\uqPCb\%$ with $80\%$
+intervals of coverage $0.80$ and $0.90$; its power error is not distinguishable from the line's. A second evaluation uses a laboratory jaw crusher (Barrios et al., 2020) at three feeds: a discrete element
+simulation with particle-replacement breakage and a population balance with a laboratory preset, neither fitted to the measurements, are compared with the measurements. The
+simulation completes two of the three batches; its net power is within a $30\%$ band at both ($-\demCoarseErrPsimAbs\%$ and $-\demFineErrPsimAbs\%$), its throughput is $\demCoarseQratio$ and $\demFineQratio$ times the measured one, its product is
+coarser, and the third batch stops with the overlap error. The population balance's throughput is $\demCoarsePbQerrAbs$, $\demMidPbQerrAbs$ and $\demFinePbQerrAbs\%$ low, and its reduction ratio is within $15\%$ at one feed.
 \end{abstract}
 
 \noindent\textbf{Keywords.} Comminution, cone crusher, population balance, Whiten model, Bond, Morrell, Bayesian
-calibration, structural discrepancy, leave-one-out validation, neural surrogate, mineral processing.
+calibration, structural discrepancy, leave-one-out validation, neural surrogate, discrete element method, particle replacement, jaw crusher, mineral processing.
 
 \input{s01-introduction}
 \input{s02-problem}

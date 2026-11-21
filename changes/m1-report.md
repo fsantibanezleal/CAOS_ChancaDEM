@@ -8,3 +8,8 @@
   until the catalog row exists), the protocol of the comparison, the notation and 13 references. `coverage.json` maps the two methods and
   the contract; the depth check names the particle-simulation method and the contract as unknown until the SDD ladder row and the catalog
   row of the release's later units exist.
+- The technical report (part B) reports the committed document of the laboratory jaw: the stage and its raw records, the three runs (two complete at the
+  second overlap limit, the middle feed stops with the package's overlap error), the three sides at each feed and the $27$ decisions (3 met, 13 not met,
+  11 not compared), the validation of the document and its runs, the discussion and the limitations, the reproducibility commands and run times, a
+  re-derived abstract, introduction, conclusions and title, the pins of torch, onnx, onnxruntime, onnxruntime-web and three, and nineteen figures. The
+  title is not yet in `product.json` and the depth check names that difference.

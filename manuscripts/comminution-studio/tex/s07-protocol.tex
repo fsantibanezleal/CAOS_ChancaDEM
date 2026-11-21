@@ -85,7 +85,7 @@ The survey evaluation is deterministic given the seed $42$, which fixes the labe
 and the leaky folds); CrusherBayes spawns one seed per
 posterior from a seed sequence started at $42$, uses that seed plus one for the predictive draws of the posterior, and its document is byte-identical whatever the number of worker
 processes. The learned models use the training seed $12345$ and the held-out seed $67890$, with torch single-threaded. The
-particle-replacement check of Section~\ref{sec:validation} uses five seeds per parcel count. Each posterior is one chain of twenty walkers;
+particle-replacement check of Section~\ref{sec:validation} uses five seeds per parcel count. The laboratory-jaw runs of Section~\ref{sec:protocol-dem} use the seed $\demSeed$. Each posterior is one chain of twenty walkers;
 its repetition is the eleven posteriors of the folds, whose convergence diagnostics are reported. The bootstrap of the held-out errors uses the seed $\uqSeed$. The measured run times, recorded on \resDate{} on a
 Windows 11 workstation with Python $\resPython$ and Node $24$, are in Table~\ref{tab:resources}: about $\resBakeMin$~minutes for the whole bake,
 of which about $\resHpMin$ are the HP500 step with the CrusherBayes sampler ($140{,}000$ log-probability evaluations per posterior, eleven
