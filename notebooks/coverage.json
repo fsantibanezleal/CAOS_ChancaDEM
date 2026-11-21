@@ -24,7 +24,10 @@
     "M14": ["04-capacity-and-power/03-morrell-size-specific-energy-against-bond.ipynb"],
     "BS-2": ["08-crusherbayes/02-sampling-the-posterior-one-fold-live.ipynb",
              "08-crusherbayes/03-crusherbayes-held-out-on-the-ten-surveys.ipynb",
-             "08-crusherbayes/04-when-the-engine-beats-a-regression.ipynb"]
+             "08-crusherbayes/04-when-the-engine-beats-a-regression.ipynb"],
+    "M15": ["09-discrete-element/03-three-answers-for-one-jaw.ipynb"],
+    "M16": ["09-discrete-element/02-particle-replacement-breakage-step-by-step.ipynb",
+            "09-discrete-element/03-three-answers-for-one-jaw.ipynb"]
   },
   "contracts": {
     "params-record": ["01-getting-started/02-case-matrix-and-replay.ipynb"],
@@ -43,14 +46,20 @@
     "anomaly-model": ["07-learned-models/02-held-out-draw-and-the-anomaly-guard.ipynb"],
     "model-metrics": ["07-learned-models/02-held-out-draw-and-the-anomaly-guard.ipynb"],
     "readiness": ["01-getting-started/02-case-matrix-and-replay.ipynb"],
-    "api": ["01-getting-started/02-case-matrix-and-replay.ipynb"]
+    "api": ["01-getting-started/02-case-matrix-and-replay.ipynb"],
+    "dem-run": ["09-discrete-element/03-three-answers-for-one-jaw.ipynb"]
   },
   "stages": {
     "evaluate": ["07-learned-models/02-held-out-draw-and-the-anomaly-guard.ipynb"],
     "export": ["01-getting-started/01-first-run.ipynb"],
     "infer": ["01-getting-started/01-first-run.ipynb"],
     "preprocess": ["01-getting-started/02-case-matrix-and-replay.ipynb"],
-    "train": ["07-learned-models/01-the-surrogate-against-the-engine.ipynb"]
+    "train": ["07-learned-models/01-the-surrogate-against-the-engine.ipynb"],
+    "dem": ["09-discrete-element/03-three-answers-for-one-jaw.ipynb"]
   },
-  "packages": {}
+  "packages": {
+    "crushdem": ["09-discrete-element/01-particles-in-a-laboratory-jaw.ipynb",
+                 "09-discrete-element/02-particle-replacement-breakage-step-by-step.ipynb",
+                 "09-discrete-element/03-three-answers-for-one-jaw.ipynb"]
+  }
 }

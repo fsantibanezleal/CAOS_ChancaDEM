@@ -1,17 +1,19 @@
 # Notebooks / Notebooks
 
-The didactic layer of ChancaDEM: the notebooks in English and their Spanish mirror, in eight topics, that teach how the
+The didactic layer of ChancaDEM: the notebooks in English and their Spanish mirror, in nine topics, that teach how the
 crusher model works, step by step and on the product's own committed data. Each one answers a question of the product's
 problem, runs the product's pipeline, and reads its figures. They import the product's methods and never define one: the
 engine, the oracles, the HP500 lane and the model bundles live in `data-pipeline/pipeline/`, which the notebooks import by
-path because the product publishes no package. The rule is CAOS_MANAGE `conventions/product-notebooks.md`, carried by the
+path because the product publishes no package of its own; the particle engine of topic 09 is the published package
+`crushdem`, which the notebooks install from PyPI. The rule is CAOS_MANAGE `conventions/product-notebooks.md`, carried by the
 template (guide: [`docs/guides/08_notebooks.md`](../docs/guides/08_notebooks.md)).
 
-La capa didáctica de ChancaDEM: los notebooks en inglés y su espejo en español, en ocho temas, que enseñan cómo funciona el
+La capa didáctica de ChancaDEM: los notebooks en inglés y su espejo en español, en nueve temas, que enseñan cómo funciona el
 modelo del chancador, paso a paso y con los datos versionados del propio producto. Cada uno responde una pregunta del
 problema del producto, corre el pipeline del producto y lee sus figuras. Importan los métodos del producto y nunca definen
 uno: el motor, los oráculos, la vía HP500 y los paquetes de modelos viven en `data-pipeline/pipeline/`, que los notebooks
-importan por su ruta porque el producto no publica un paquete.
+importan por su ruta porque el producto no publica un paquete propio; el motor de partículas del tema 09 es el paquete publicado
+`crushdem`, que los notebooks instalan desde PyPI.
 
 ## The two trees / Los dos árboles
 
@@ -39,6 +41,7 @@ se puede comprobar); cada notebook está escrito entero en el idioma de su árbo
 | `06-crushercal` | leave-one-survey-out validation, the controls and the held-out validation of the calibrated model / la validación dejando un muestreo fuera, los controles y la validación con retención del modelo calibrado |
 | `07-learned-models` | the surrogate and the autoencoder through onnxruntime, against the engine and against the plant / el sustituto y el autoencoder con onnxruntime, frente al motor y frente a la planta |
 | `08-crusherbayes` | the Bayesian calibration of the engine with a structural discrepancy: priors, the sampler run live on one fold, the held-out evidence with its kill criterion, and the exact risk that says when the engine beats a regression / la calibración bayesiana del motor con una discrepancia estructural: a priori, el muestreador corrido en vivo sobre un pliegue, la evidencia con retención con su criterio de descarte, y el riesgo exacto que dice cuándo el motor supera a una regresión |
+| `09-discrete-element` | the discrete element method with particle-replacement breakage on the laboratory jaw crusher of Barrios et al. (2020), run through the published package `crushdem`: the tests and the idea of the method, the breakage step by step and where it stops working, and three answers for one jaw (the particle simulation, the population balance with a jaw capacity model and the measurement) / el método de elementos discretos con fractura por reemplazo de partículas en el chancador de mandíbulas de laboratorio de Barrios et al. (2020), corrido con el paquete publicado `crushdem`: los ensayos y la idea del método, la fractura paso a paso y dónde deja de funcionar, y tres respuestas para un chancador (la simulación de partículas, el balance poblacional con un modelo de capacidad de mandíbulas y la medición) |
 
 Every notebook of level 2 and above has a third-level section on where its method changes or breaks and one on using it
 on the reader's own data, and every method states its equations (CAOS_MANAGE `conventions/notebook-content-bar.md`).
@@ -49,13 +52,13 @@ sobre usarlo con los datos propios del lector, y todo método declara sus ecuaci
 ## Coverage of the tool / Cobertura de la herramienta
 
 [`coverage.json`](coverage.json) maps every part of the product to the notebooks that teach it, by paths relative to a
-language tree (present in both): the sixteen methods of the SDD's method ladder (each at level 2 or above), the thirteen
-contracts of `docs/contracts/catalog.md` and the five stages of `data-pipeline/pipeline/stages/`. `product.json` declares
-no method package, so the `packages` map is empty. The ids are internal and never appear in a notebook; the map is checked
+language tree (present in both): the eighteen methods of the SDD's method ladder (each at level 2 or above), the fifteen
+contracts of `docs/contracts/catalog.md`, the six stages of `data-pipeline/pipeline/stages/` and the one method package, the
+published `crushdem` of topic 09. The ids are internal and never appear in a notebook; the map is checked
 by CAOS_MANAGE `tools/notebooks/check_notebook_depth.py`.
 
-[`coverage.json`](coverage.json) asigna cada parte del producto a los notebooks que la enseñan: los dieciséis métodos de la
-escala de métodos del SDD, los trece contratos del catálogo y las cinco etapas del pipeline.
+[`coverage.json`](coverage.json) asigna cada parte del producto a los notebooks que la enseñan: los dieciocho métodos de la
+escala de métodos del SDD, los quince contratos del catálogo, las seis etapas del pipeline y el paquete de métodos, `crushdem`.
 
 ## Run them / Correrlos
 
@@ -81,9 +84,12 @@ GitHub or in any Jupyter client (select the `.venv-notebooks` kernel to run it).
 
 `requirements.txt` pins the notebook environment exactly: numpy and matplotlib for every notebook, onnxruntime and
 jsonschema for topic 07 (the released models run in onnxruntime, and the pipeline's loader validates their contracts), then the
-runtime that executes the notebooks. `product.json` declares `method_packages: []`: the methods are the pipeline's, not a
-package's, so there is no package pin to install.
+runtime that executes the notebooks. Topic 09 adds the published particle engine, `crushdem` with its compiled kernels, and
+the numba and llvmlite releases it is pinned to (the same pins as `requirements-precompute.txt`, which the bake uses). The
+rest of the methods are the pipeline's, not a package's: the engine is still imported by path.
 
 `requirements.txt` fija exactamente el entorno: numpy y matplotlib para todos los notebooks, onnxruntime y jsonschema para el
-tema 07, y luego el entorno que ejecuta los notebooks. `product.json` declara `method_packages: []`: los métodos son los del
-pipeline, no los de un paquete, así que no hay pin de paquete que instalar.
+tema 07, y luego el entorno que ejecuta los notebooks. El tema 09 suma el motor de partículas publicado, `crushdem` con sus
+núcleos compilados, y las versiones de numba y llvmlite a que está fijado (los mismos pines de `requirements-precompute.txt`,
+que usa el cálculo fuera de línea). El resto de los métodos son los del pipeline, no los de un paquete: el motor se sigue
+importando por su ruta.
