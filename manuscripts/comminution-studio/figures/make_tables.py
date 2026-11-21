@@ -36,6 +36,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -54,6 +55,12 @@ from pipeline.model.crusher.machines import REF_THROW_MM  # noqa: E402
 from pipeline.model.sweep import RANGES  # noqa: E402
 
 DASH = "--"
+from pipeline.model.crusher.breakage import t10_of as _t10_of  # noqa: E402,F401
+import inspect  # noqa: E402
+
+from pipeline.model.crusher.breakage import t10_of as _t10_of  # noqa: E402
+
+ENGINE_A = float(inspect.signature(_t10_of).parameters["a"].default)  # the A of the engine's t10_of, read from its code [percent]
 MACHINE_NAME = {"cone-sec": "secondary cone", "cone-tert": "tertiary cone", "cone-short-head": "short-head cone",
                 "gyratory": "gyratory", "jaw": "jaw"}
 
@@ -1232,7 +1239,7 @@ def tab_dem_parameters() -> None:
         ["Closed-side setting", r"$S$", f"{1e3 * prov['closed_side_setting_m']:g}", "mm", paper + ", Table 2"],
         ["Swing jaw throw (read as the opening of the bottom edge)", r"$T$", f"{1e3 * prov['throw_m']:g}", "mm", paper + " (reading: " + assumed + ")"],
         ["Stroke frequency", r"$f$", f"{prov['frequency_hz']:g}", "Hz", paper + ", Table 2"],
-        ["Nip angle between the plates", r"$\alpha_{\mathrm n}$", f"{prov['nip_angle_deg']:g}", "deg", assumed],
+        ["Nip angle between the plates", r"$\psi_{\mathrm n}$", f"{prov['nip_angle_deg']:g}", "deg", assumed],
         ["Plate height and length", r"$H_{\mathrm p}$, $L_{\mathrm p}$", f"{1e3 * prov['plate_height_m']:.1f} and {1e3 * prov['plate_length_m']:.1f}", "mm", "derived from the gaps and the nip angle"],
         ["Peak swing angle", r"$\theta_{\max}$", f"{prov['swing_angle_max_rad']:.5f}", "rad", "derived: the bottom edge opens by the throw"],
         ["Swing law", "", "harmonic rocking about the top pivot", "", assumed],
@@ -1278,7 +1285,7 @@ def tab_dem_parameters() -> None:
     write("tab-dem-parameters", "\n".join(lines))
     stiff = case.contact_check_fig6a(case.load_digitised())["stiffness_ratio"]
     write("numbers-dem", "\n".join([
-        f"\\newcommand{{\\demPackageVersion}}{{{crushdem.__version__}}}",
+        f"\\newcommand{{\\demPackageVersion}}{{{'.'.join(str(int(x)) for x in crushdem.__version__.split('.'))}}}",
         f"\\newcommand{{\\demStiffRatio}}{{{stiff:.1f}}}",
         f"\\newcommand{{\\demSigmaData}}{{{der['variance_from_data']:.2f}}}",
         f"\\newcommand{{\\demPhiFree}}{{{der['free_three_class_fit']['phi']:.2f}}}",
@@ -1296,7 +1303,7 @@ def tab_lab_measured() -> None:
     for fc in ("63/52", "31.5/26.5", "16/13.2"):
         m = case.measured(fc)
         rows.append([tex(fc), f"{num(m.throughput_kg_h, 1)} $\\pm$ {num(m.throughput_noise_kg_h, 1)}",
-                     f"{num(m.net_power_kw, 4)} $\\pm$ {num(m.net_power_noise_kw, 4)}",
+                     num(m.net_power_kw, 4) if fc == "63/52" else f"{num(m.net_power_kw, 4)} $\\pm$ {num(m.net_power_noise_kw, 4)}",
                      f"{num(m.product['noise_pct_max'], 2)} and {num(m.product['noise_pct_rms'], 2)}"])
     write("tab-lab-measured", tabular("@{}l r r r@{}", ["Feed class (mm)", "Throughput (kg/h)", "Net power (kW)",
                                                         "Product, largest and rms pass difference (points)"], rows))
@@ -1385,9 +1392,10 @@ def tab_dem_results() -> None:
         srows.append([nm, "throughput (kg/h)", _v(m["throughput_kg_h"], 1), _pm(s["throughput_kg_h"], s["throughput_se_kg_h"], 0), _v(b["throughput_kg_h"], 0)])
         srows.append(["", "net power (kW)", _v(m["net_power_kw"], 3), _pm(s["net_power_kw"], s["net_power_se_kw"], 3), DASH])
         srows.append(["", "specific energy (J/kg)", _v(m["specific_energy_j_kg"], 0), _v(s["specific_energy_j_kg"], 0), DASH])
-        srows.append(["", "$P_{80}$ (mm)", _v(m["p80_mm"], 2), _v(s["p80_mm"], 2), _rng(b["p80_mm"], band["p80_mm"], 2)])
-        srows.append(["", "$P_{50}$ (mm)", _v(m["p50_mm"], 2), _v(s["p50_mm"], 2), _rng(b["p50_mm"], band["p50_mm"], 2)])
-        srows.append(["", "reduction ratio", _v(m["reduction_ratio"], 2), _v(s["reduction_ratio"], 2), _rng(b["reduction_ratio"], band["reduction_ratio"], 2)])
+        dag = "" if s["status"] == "complete" else r"$^{\dagger}$"
+        srows.append(["", "$P_{80}$ (mm)", _v(m["p80_mm"], 2), _v(s["p80_mm"], 2) + dag, _rng(b["p80_mm"], band["p80_mm"], 2)])
+        srows.append(["", "$P_{50}$ (mm)", _v(m["p50_mm"], 2), _v(s["p50_mm"], 2) + dag, _rng(b["p50_mm"], band["p50_mm"], 2)])
+        srows.append(["", "reduction ratio", _v(m["reduction_ratio"], 2), _v(s["reduction_ratio"], 2) + dag, _rng(b["reduction_ratio"], band["reduction_ratio"], 2)])
     write("tab-dem-sides", tabular("@{}l l r r r@{}", ["Point (mm)", "Quantity", "Measured", "Particle simulation", "Population balance [spread]"], srows))
 
     # --- the population balance -----------------------------------------------------------------------------------------
@@ -1435,7 +1443,12 @@ def tab_dem_results() -> None:
     write("tab-dem-decisions", "\n".join(lines))
 
     # --- macros ---------------------------------------------------------------------------------------------------------
-    mac = [f"\\newcommand{{\\demDecMet}}{{{counts['met']}}}", f"\\newcommand{{\\demDecNotMet}}{{{counts['not met']}}}",
+    geo = pts[0]["simulation"]["replay"]["geometry"]
+    mac = [f"\\newcommand{{\\demPlateHeight}}{{{geo['swing_pivot_mm'][1]:.1f}}}",
+           f"\\newcommand{{\\demPbDepthMm}}{{{1e3 * pts[0]['population_balance']['capacity']['depth_m']:.1f}}}",
+           f"\\newcommand{{\\demEngineA}}{{{ENGINE_A:g}}}",
+           f"\\newcommand{{\\demOreA}}{{{d['ore']['a_max_percent']:g}}}",
+           f"\\newcommand{{\\demDecMet}}{{{counts['met']}}}", f"\\newcommand{{\\demDecNotMet}}{{{counts['not met']}}}",
            f"\\newcommand{{\\demDecNotComp}}{{{counts['not compared']}}}", f"\\newcommand{{\\demDecAll}}{{{sum(counts.values())}}}",
            f"\\newcommand{{\\demDocVersion}}{{{d['engine_version']}}}", f"\\newcommand{{\\demSeed}}{{{d['seed']}}}"]
     for p in pts:
@@ -1457,6 +1470,12 @@ def tab_dem_results() -> None:
             "Wi": (b["implied_work_index_kwh_t"], 1), "WiMeas": (m["implied_work_index_kwh_t"], 1), "Axb": (b["ore_axb"], 0), "Esub": (b["e50_j_kg"], 1),
             "SimTime": (s["simulated_s"], 1), "Steps": (None if s["steps"] is None else s["steps"] / 1e6, 2),
             "FeightyMm": (p["feed_f80_mm"], 2),
+            "PaperP": (_paper(p, "net_power_kw"), 2), "PaperQ": (_paper(p, "throughput_kg_h"), 0),
+            "PaperPerr": (None if _paper(p, "net_power_kw") is None else 100 * (_paper(p, "net_power_kw") / m["net_power_kw"] - 1), 1),
+            "PaperQerr": (None if _paper(p, "throughput_kg_h") is None else 100 * (_paper(p, "throughput_kg_h") / m["throughput_kg_h"] - 1), 0),
+            "PaperQratio": (None if _paper(p, "throughput_kg_h") is None or s["throughput_kg_h"] is None else s["throughput_kg_h"] / _paper(p, "throughput_kg_h"), 1),
+            "TtenEng": (b["t10_pct"], 2),
+            "TtenOreA": (d["ore"]["a_max_percent"] * (1 - math.exp(-(b["ore_axb"] / d["ore"]["a_max_percent"]) * b["specific_energy_kwh_t"])), 2),
             "Qratio": (None if s["throughput_kg_h"] is None else s["throughput_kg_h"] / m["throughput_kg_h"], 2),
             "Eratio": (None if s["specific_energy_j_kg"] is None else s["specific_energy_j_kg"] / m["specific_energy_j_kg"], 2),
             "Pratio": (None if s["net_power_kw"] is None else s["net_power_kw"] / m["net_power_kw"], 2),
@@ -1475,6 +1494,12 @@ def tab_dem_results() -> None:
         mac.append(f"\\newcommand{{\\dem{w}Status}}{{{s['status'].replace('_', ' ')}}}")
         mac.append(f"\\newcommand{{\\dem{w}Att}}{{{len(s['attempts'])}}}")
     write("numbers-dem-results", "\n".join(mac))
+
+
+def _paper(p: dict, key: str) -> float | None:
+    """The source paper's own simulated value at a point (contract dem-run 1.1.0), or None where the paper states none."""
+    ps = p.get("paper_simulation")
+    return None if not ps or ps.get(key) is None else ps[key]["value"]
 
 
 def _sci(x: float) -> str:

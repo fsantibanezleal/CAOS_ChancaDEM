@@ -653,7 +653,9 @@ def fig_dem_points() -> None:
             sv = s.get(key)
             if sv is not None:
                 se = s.get({"throughput_kg_h": "throughput_se_kg_h", "net_power_kw": "net_power_se_kw"}.get(key, ""), 0.0) or 0.0
-                ax.errorbar(i - 0.12, sv, yerr=se, fmt="o", color=ORANGE, ms=4.5, capsize=2.5, label="particle simulation" if i == 0 or key == "p80_mm" and i == 1 else None)
+                stopped = s["status"] != "complete"
+                ax.errorbar(i - 0.12, sv, yerr=se, fmt="o", color=ORANGE, mfc="white" if stopped else ORANGE, ms=4.5, capsize=2.5,
+                            label=("particle simulation, stopped run (hollow)" if stopped else "particle simulation") if (i == 0 or stopped) and key == "p80_mm" or (i == 0 and key != "p80_mm") else None)
             if pbk or key == "throughput_kg_h":
                 pb = p["population_balance"]
                 pv = pb["throughput_kg_h"] if key == "throughput_kg_h" else pb["p80_mm"]
