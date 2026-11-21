@@ -80,7 +80,9 @@ def test_the_readiness_exceptions_are_the_catalogs():
     config = settings()
     ready = json.loads((ROOT / "data/derived/readiness.json").read_text(encoding="utf-8"))
     not_available = {row["id"]: row["state"] for row in ready["contracts"] if row["state"] != "available"}
-    assert config["readiness_exceptions"] == not_available == {"api": "missing"}
+    # dem-run is partial since 0.15.000: the particle run of the 31.5/26.5 mm feed stops with the package's overlap error (crushdem
+    # 0.6.0), the document records it and readiness names the point; the entry leaves when a bake completes the three runs
+    assert config["readiness_exceptions"] == not_available == {"api": "missing", "dem-run": "partial"}
     assert config["readiness_excludes"] == ["readiness"] and "readiness" in catalog_rows()
 
 
