@@ -5,7 +5,7 @@
 numpy==2.4.6
 matplotlib==3.11.2
 # the released models run in onnxruntime (topic 07), and the pipeline's bundle loader validates their contracts with jsonschema
-onnxruntime==1.27.0
+onnxruntime==1.32.0
 jsonschema==4.26.0
 # the runtime that executes the notebooks (scripts/run_notebooks.py)
 nbclient==0.11.0

@@ -10,8 +10,8 @@ code has them, where it runs, tests, what it is not, references.
 | Card | Pin | Lane |
 |---|---|---|
 | [Whiten / Evertsson / Bond engine, Python and TypeScript](01_whiten-engine/whiten.md) | `data-pipeline/pipeline/model/crusher/` (canonical), `frontend/src/engine/` (live port) | offline and live |
-| [PyTorch](02_pytorch/pytorch.md) | `torch==2.12.1` (CPU) | offline (train) |
-| [ONNX, onnxruntime, onnxruntime-web](03_onnx-onnxruntime/onnx.md) | `onnx==1.22.0`, `onnxruntime==1.27.0`, `onnxruntime-web` 1.27.0 | offline export and evaluation, live inference |
+| [PyTorch](02_pytorch/pytorch.md) | `torch==2.15.0` (CPU) | offline (train) |
+| [ONNX, onnxruntime, onnxruntime-web](03_onnx-onnxruntime/onnx.md) | `onnx==1.23.2`, `onnxruntime==1.32.0`, `onnxruntime-web` 1.31.1 | offline export and evaluation, live inference |
 | [NumPy](04_numpy/numpy.md) | `numpy==2.4.6` | offline |
 
 ## Methods

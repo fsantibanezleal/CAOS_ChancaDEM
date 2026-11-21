@@ -3,8 +3,8 @@
 ## What and why
 
 ONNX is the portable model format between the offline training lane and the browser. Three pinned packages carry it:
-`onnx==1.22.0` (writes and inspects the graphs), `onnxruntime==1.27.0` (offline: the held-out evaluation runs the shipped
-graphs through it, and `quantize_dynamic` produces the int8 graph) and `onnxruntime-web` `1.27.0` (the live
+`onnx==1.23.2` (writes and inspects the graphs), `onnxruntime==1.32.0` (offline: the held-out evaluation runs the shipped
+graphs through it, and `quantize_dynamic` produces the int8 graph) and `onnxruntime-web` `1.31.1` (the live
 in-browser inference), all from `requirements-precompute.txt` and `frontend/package.json`.
 
 The committed graphs, under `data/derived/models/`:
@@ -46,11 +46,11 @@ shipped graphs.
 ## Opset
 
 Both graphs are exported with opset 17 (`OPSET` in `stages/train.py`, recorded in each contract). The exact
-compatibility of opset 17 with onnxruntime-web 1.27.0 is demonstrated by the browser tests passing on the shipped
-graphs; no compatibility table was consulted for this page (UNVERIFIED as a vendor statement).
+compatibility of opset 17 with onnxruntime-web 1.31.1 and onnxruntime 1.32.0 is demonstrated by the browser run of the
+learned views and the contract tests passing on the shipped graphs (2026-11-21); no compatibility table was consulted for this page (UNVERIFIED as a vendor statement).
 
 ## Caveats
 
 - ONNX is a transport, not a validity statement: what the model answers is judged by the held-out metrics, see the
   [surrogate card](../05_surrogate/surrogate.md).
-- Raising the onnxruntime pin requires raising the onnxruntime-web pin with it, and re-running the model evaluation.
+- The two runtimes are released on their own schedules: the newest PyPI onnxruntime is 1.32.0 while the newest npm onnxruntime-web is 1.31.1 (read 2026-11-21). Raising either pin means re-running the model evaluation and the browser check of the learned views.

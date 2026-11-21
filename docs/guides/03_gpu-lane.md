@@ -8,8 +8,8 @@ CUDA package is pinned and no driver or runtime matrix is recorded, because none
 - The canonical crusher engine is plain Python and evaluates a case in 1.5 to 2.9 ms (the lane gate's measurement,
   2026-10-27); the 27-case bake takes about 5 s.
 - The two learned models are tiny (11-64-64-32-10 and 14-16-6-16-14, a few thousand parameters), trained full-batch on
-  6430 points: `run.py models` (train and held-out evaluation) took 76 s on the CPU on the documenting workstation, with
-  `torch==2.12.1` from the CPU index and one thread.
+  6430 points: `run.py models` (train and held-out evaluation) took 59 s on the CPU on the documenting workstation (2026-11-21), with
+  `torch==2.15.0` from the CPU index and one thread.
 - The browser never needs the GPU: it runs the TypeScript engine and the ONNX graphs on WASM, single-threaded.
 
 So the models train on the CPU in minutes at most, and the committed artifacts are produced offline regardless of lane.

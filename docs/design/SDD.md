@@ -129,15 +129,15 @@ the Compare target switch) are in the docked panel (N7 of the re-check).
 Every pinned dependency of `requirements-precompute.txt` (through `data-pipeline/requirements.txt`), `requirements-dev.txt`,
 `notebooks/requirements.txt` and `frontend/package.json`, with the version installed; `scripts/check_tech_matrix.py` fails when a
 pin and this table disagree. A package.json range is recorded at the version `frontend/package-lock.json` resolves it to. The
-versions were read at the package registries on 2026-10-26 (the sizing record lists the sources). Runtimes: Python 3.13
+versions were read at the package registries on 2026-10-26 (the sizing record lists the sources); the six of the learned lane and the 3D view (torch, onnx, onnxruntime, onnxruntime-web, three, @types/three) were read again on 2026-11-21: PyPI and npm `latest`. Runtimes: Python 3.13
 (the workstation; CI uses the template's Python 3.12) and Node 24 (the workstation, CI and the Pages build alike: the engine reference is written and checked to the bit on one runtime, and Node 22 rounds one anomaly feature differently).
 
 | component | package | version | use | alternative considered |
 |---|---|---|---|---|
 | engine | numpy | 2.4.6 | the canonical crusher engine (the Whiten solve, the sieve grid, the capacity and power), the bake, CrusherCal and the notebooks | scipy.linalg for the solve, rejected: the engine ports the TypeScript LU line for line so the two engines agree to 2.3e-12 |
-| models | torch | 2.12.1 | trains the surrogate MLP and the denoising autoencoder on the CPU (`data-pipeline/run.py models`, local only) | scikit-learn MLP, rejected: no ONNX export of the same network with its standardisation and seeds |
-| models | onnx | 1.22.0 | writes the two networks as ONNX graphs and quantises the surrogate to int8 | TorchScript, rejected: the browser runs ONNX, not TorchScript |
-| models | onnxruntime | 1.27.0 | evaluates the shipped graphs held out and checks the export parity; the same release as the web's onnxruntime-web | evaluating in torch, rejected: the metrics must come from the graphs the site runs |
+| models | torch | 2.15.0 | trains the surrogate MLP and the denoising autoencoder on the CPU (`data-pipeline/run.py models`, local only) | scikit-learn MLP, rejected: no ONNX export of the same network with its standardisation and seeds |
+| models | onnx | 1.23.2 | writes the two networks as ONNX graphs and quantises the surrogate to int8 | TorchScript, rejected: the browser runs ONNX, not TorchScript |
+| models | onnxruntime | 1.32.0 | evaluates the shipped graphs held out and checks the export parity; the newest PyPI release, while the web runs the newest npm release of onnxruntime-web (1.31.1) | evaluating in torch, rejected: the metrics must come from the graphs the site runs |
 | bayes | emcee | 3.1.6 | the differential-evolution ensemble sampler of CrusherBayes (`data-pipeline/pipeline/hp500/crusherbayes.py`, the offline bake only; latest release on PyPI, 2024-04-19, MIT, read 2026-10-30) | a hand-written stretch move, rejected: a maintained, cited sampler with the integrated autocorrelation diagnostic; PyMC and NumPyro, rejected: the engine is plain Python and gradient free, and a probabilistic-programming stack would add a graph compiler for nothing |
 | notebooks | matplotlib | 3.11.2 | the figures of the notebooks | none: the notebooks need a plotting library, and the web's charts run in the browser only |
 | notebooks | nbclient | 0.11.0 | executes a notebook top to bottom in a fresh kernel (`scripts/run_notebooks.py`) | nbconvert --execute, rejected: a heavier install for the same execution |
@@ -157,8 +157,8 @@ versions were read at the package registries on 2026-10-26 (the sizing record li
 | web | katex | 0.19.1 | typeset equations on the pages | MathJax, rejected: heavier and slower to render |
 | web | lucide-react | 1.52.0 | icons | the shell's own set where it has one |
 | web | uplot | 1.6.32 | the interactive curves under the shell's `UPlotChart` | a static SVG, rejected: no hover, zoom or data table (G20) |
-| web | onnxruntime-web | 1.27.0 | runs the two ONNX graphs in the browser (WASM, single thread, the WASM served by the site) | TensorFlow.js, rejected: the models are exported to ONNX and the release must match the Python onnxruntime |
-| web | three | 0.186.1 | the 3D chamber view (a kinematic view of the chamber geometry) | a 2D drawing only, rejected: the chamber is a surface of revolution whose gap changes around the mantle; the 2D section is kept beside it |
+| web | onnxruntime-web | 1.31.1 | runs the two ONNX graphs in the browser (WASM, single thread, the WASM served by the site) | TensorFlow.js, rejected: the models are exported to ONNX and the release must match the Python onnxruntime |
+| web | three | 0.187.0 | the 3D chamber view (a kinematic view of the chamber geometry) | a 2D drawing only, rejected: the chamber is a surface of revolution whose gap changes around the mantle; the 2D section is kept beside it |
 | build | vite | 8.3.5 | bundler and dev server | webpack, rejected: slower and needs more configuration |
 | build | @vitejs/plugin-react | 6.1.1 | the React transform for vite | none |
 | build | typescript | 5.9.3 | type check of the web and the generated contract types | none |
@@ -167,7 +167,7 @@ versions were read at the package registries on 2026-10-26 (the sizing record li
 | build | @types/node | 24.19.1 | types of the build scripts and the reference writer | none |
 | build | @types/react | 19.3.0 | types of React | none |
 | build | @types/react-dom | 19.3.0 | types of React DOM | none |
-| build | @types/three | 0.186.0 | types of three.js | none |
+| build | @types/three | 0.187.0 | types of three.js | none |
 | tests | vitest | 5.0.3 | the web unit tests: contracts both ways, engine reference and parity, the model encodings, the views | jest, rejected: needs a transform for the vite config |
 | gate | playwright | 1.63.0 | the measured UI gate (`npm run gate`), local only | cypress, rejected: heavier install |
 
@@ -197,7 +197,7 @@ What each stage needs on the development workstation (Windows 11, Python 3.12.15
 - Live: `frontend/src/engine/`, the TypeScript engine the product shipped since 0.02.000, held to the Python engine by
   the shared reference `tests/fixtures/engine-reference.json` (124 operating points, the largest relative difference
   2.3e-12) and to the baked traces by `frontend/src/engine/crusher.parity.test.ts`; the two ONNX models run in the
-  browser through onnxruntime-web 1.27.0 with its WASM served by the site. The basis for the live lane is measured: the
+  browser through onnxruntime-web 1.31.1 with its WASM served by the site. The basis for the live lane is measured: the
   lane gate (`data-pipeline/pipeline/core/gate.py`) judges each case's engine time against 1500 ms and its trace against
   256 KiB, and every case is live-eligible (the canonical engine evaluates a case in 1.31 ms, the median over the 27 cases of the median of seven warmed runs, at most 1.46 ms; the largest trace is 4,127 bytes; [`measured-resources.md`](measured-resources.md)).
 

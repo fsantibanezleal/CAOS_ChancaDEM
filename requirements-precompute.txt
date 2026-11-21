@@ -1,12 +1,12 @@
 # The offline lane. Its engines are pinned in data-pipeline/requirements.txt, one exact pin per engine the research
 # chose, each with a card in docs/frameworks/ and a verified licence.
 -r data-pipeline/requirements.txt
-# The learned tier (stages/train.py trains, stages/evaluate.py scores; the web runs onnxruntime-web 1.27.0, the same
-# runtime version as onnxruntime below). torch comes from the CPU index:
-#   pip install torch==2.12.1 --index-url https://download.pytorch.org/whl/cpu
-torch==2.12.1
-onnx==1.22.0
-onnxruntime==1.27.0
+# The learned tier (stages/train.py trains, stages/evaluate.py scores; the web runs onnxruntime-web 1.31.1, the newest npm release; onnxruntime
+# below is the newest PyPI release, 1.32.0, and the graphs are checked on both). torch comes from the CPU index:
+#   pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
+torch==2.15.0
+onnx==1.23.2
+onnxruntime==1.32.0
 # CrusherBayes (data-pipeline/pipeline/hp500/crusherbayes.py): the affine-invariant ensemble sampler of the offline bake. Latest release
 # on PyPI 3.1.6 (2024-04-19, MIT; checked 2026-10-30); it needs numpy only. CI never runs the sampler (ADR-0074).
 emcee==3.1.6

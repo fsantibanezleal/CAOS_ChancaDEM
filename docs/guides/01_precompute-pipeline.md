@@ -9,7 +9,7 @@ Everything offline runs in `.venv-pipeline`, built by the setup script; nothing 
 ./scripts/setup.sh --notebooks  # or scripts/setup.ps1 -Notebooks: builds .venv-notebooks from notebooks/requirements.txt instead
 ```
 
-`requirements-precompute.txt` pins the heavy lane (torch 2.12.1 from the CPU index, onnx, onnxruntime) on top of
+`requirements-precompute.txt` pins the heavy lane (torch 2.15.0 from the CPU index, onnx, onnxruntime) on top of
 `data-pipeline/requirements.txt` (numpy). The scripts create no global install and are idempotent. The torch wheel comes from
 its own index; the install line is in the [PyTorch card](../frameworks/02_pytorch/pytorch.md). On the default device the
 environments are directory junctions into the venvs root; the scripts do not care.
