@@ -16,6 +16,8 @@
     "M12": "sec:m-ae",
     "M13": "sec:m-drift",
     "M14": "sec:m-morrell",
+    "M15": "sec:m-labjaw",
+    "M16": "sec:m-dem",
     "B-lin": "sec:m-line",
     "BS-2": "sec:m-crusherbayes"
   },
@@ -33,6 +35,7 @@
     "anomaly-model": "sec:data-anomaly",
     "model-metrics": "sec:data-metrics",
     "readiness": "sec:data-readiness",
-    "api": "sec:data-api"
+    "api": "sec:data-api",
+    "dem-run": "sec:data-dem"
   }
 }
