@@ -1,0 +1,530 @@
+// The stage of the particle-simulation view (requirement DM-012, DM-013): the laboratory jaw's section in the x-z plane, to scale, on a canvas
+// that follows its container's size and the device's pixel ratio; the fixed plate, the swing plate from its pivot to its bottom edge at the
+// frame, the hopper, the discharge level and the closed and open settings, and the spheres as circles coloured by their diameter against the
+// feed class, drawn far to near along y so depth reads. Three callouts are anchored to the scene (the discharge, the swing plate, the product
+// below the discharge) through the shell's callout stage, as the chamber's section does; the controls sit in the stage's control row, never over
+// the subject. The animation loop is the shell's (usePausedViz): it stops when the view unmounts, when the tab is hidden and, here, it never
+// starts under reduced motion.
+import { PlotCard, prefersReducedMotion, useLinkedCursor, usePausedViz, useShellLang, useThemeTokens, type BiText, type ShellToken } from '@fasl-work/caos-app-shell';
+import { useEffect, useRef, type ReactNode } from 'react';
+import type { Loaded } from '../api/artifacts';
+import type { DemRun } from '../lib/contract.types';
+import { CalloutStage, type CalloutSpec, type Subject } from './callouts';
+import {
+  advance,
+  classCounts,
+  cursorRange,
+  DEFAULT_SPEED,
+  frameLabelText,
+  frameSpheres,
+  playbackAllowed,
+  sizeClass,
+  sizeClassLabels,
+  SIZE_CLASSES,
+  SPEEDS,
+  stageTransform,
+  type DemFrames,
+  type DemPoint,
+  type DemReplay,
+  type StageTransform,
+} from './demModel';
+import { Labels, LabelText, TOKEN } from './draw';
+import { useNum, useT } from './shared';
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// The colours: shell tokens resolved for the theme, a sequential scale of the size classes between three of them.
+// ---------------------------------------------------------------------------------------------------------------------------------
+
+type Rgb = [number, number, number];
+
+/** A `#rrggbb` or `#rgb` colour as its channels; null for anything else (a canvas never draws a colour it cannot read). */
+export function parseHex(hex: string): Rgb | null {
+  const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return null;
+  const h = m[1].length === 3 ? [...m[1]].map((c) => c + c).join('') : m[1];
+  return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+}
+
+const toHex = (c: Rgb) => `#${c.map((v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('')}`;
+
+/** The `classes` colours of a sequential scale through the given stops, evenly spaced; a stop that is not a hex colour falls back to `fallback`. */
+export function sequentialScale(stops: readonly string[], classes: number, fallback = '#888888'): string[] {
+  const rgb = stops.map((s) => parseHex(s) ?? parseHex(fallback)!);
+  return Array.from({ length: classes }, (_, c) => {
+    const t = classes === 1 ? 0 : c / (classes - 1);
+    const at = t * (rgb.length - 1);
+    const i = Math.min(rgb.length - 2, Math.floor(at));
+    const f = at - i;
+    return toHex(rgb[i].map((v, k) => v + (rgb[i + 1][k] - v) * f) as Rgb);
+  });
+}
+
+/** The tokens of the sequential scale: finest spheres first, feed-sized spheres last. The same tokens in both themes, so a class keeps its place on the scale. */
+export const SCALE_TOKENS: ShellToken[] = ['--color-step-1', '--color-step-3', '--color-step-5'];
+
+export function paletteOf(tokens: Record<ShellToken, string>): string[] {
+  return sequentialScale(
+    SCALE_TOKENS.map((t) => tokens[t]),
+    SIZE_CLASSES,
+    tokens['--color-fg-subtle'],
+  );
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// The drawing of one frame.
+// ---------------------------------------------------------------------------------------------------------------------------------
+
+export interface DrawArgs {
+  tf: StageTransform;
+  geometry: DemReplay['geometry'];
+  /** The swing plate's bottom edge at this frame [mm], and at its closed and open positions. */
+  plate: { x: number; z: number };
+  closed: { x: number; z: number };
+  open: { x: number; z: number };
+  frames: DemFrames | null;
+  frame: number;
+  /** The lower size of the feed class [mm]: the colour class of a sphere is its diameter against it. */
+  feedLowMm: number;
+  palette: string[];
+  colors: { fg: string; subtle: string; faint: string; accent: string; surface: string; border: string };
+}
+
+/** The extremes of the plate's bottom edge over the replay: its closed (lowest x) and open (highest x) positions. */
+export function plateExtremes(r: Pick<DemReplay, 'plate_bottom_x_mm' | 'plate_bottom_z_mm'>): { closed: { x: number; z: number }; open: { x: number; z: number } } {
+  let lo = 0;
+  let hi = 0;
+  r.plate_bottom_x_mm.forEach((x, i) => {
+    if (x < r.plate_bottom_x_mm[lo]) lo = i;
+    if (x > r.plate_bottom_x_mm[hi]) hi = i;
+  });
+  return { closed: { x: r.plate_bottom_x_mm[lo], z: r.plate_bottom_z_mm[lo] }, open: { x: r.plate_bottom_x_mm[hi], z: r.plate_bottom_z_mm[hi] } };
+}
+
+/**
+ * Draws a frame on a 2D context whose transform is already the device's pixel ratio: the ground below the discharge level, the hopper's
+ * walls, the fixed plate, the spheres (far to near along y), the swing plate over them, and the plate's closed and open positions. Returns the
+ * spheres drawn, in the order drawn (indices into the frame), so the order is testable.
+ */
+export function drawReplay(ctx: CanvasRenderingContext2D, a: DrawArgs, size: { width: number; height: number }): number[] {
+  const { tf, geometry: g } = a;
+  ctx.clearRect(0, 0, size.width, size.height);
+  const b = tf.bounds;
+  // the ground: where a sphere has left the chamber
+  const ground = tf.px(b.xMin, g.discharge_z_mm);
+  const groundEnd = tf.px(b.xMax, b.zMin);
+  ctx.fillStyle = a.colors.faint;
+  ctx.globalAlpha = 0.12;
+  ctx.fillRect(ground.x, ground.y, groundEnd.x - ground.x, groundEnd.y - ground.y);
+  ctx.globalAlpha = 1;
+  // the hopper: walls above the plates, cropped at the top of the drawn part
+  ctx.strokeStyle = a.colors.faint;
+  ctx.lineWidth = 1.5;
+  ctx.setLineDash([5, 4]);
+  const topFixed = tf.px(g.fixed_plate_x_mm, g.fixed_plate_z_mm[1]);
+  const topEdge = tf.px(g.fixed_plate_x_mm, b.zMax);
+  const pivot = tf.px(g.swing_pivot_mm[0], g.swing_pivot_mm[1]);
+  const topRight = tf.px(g.swing_pivot_mm[0], b.zMax);
+  ctx.beginPath();
+  ctx.moveTo(topFixed.x, topFixed.y);
+  ctx.lineTo(topEdge.x, topEdge.y);
+  ctx.moveTo(pivot.x, pivot.y);
+  ctx.lineTo(topRight.x, topRight.y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // the fixed plate
+  const f0 = tf.px(g.fixed_plate_x_mm, g.fixed_plate_z_mm[0]);
+  const f1 = tf.px(g.fixed_plate_x_mm, g.fixed_plate_z_mm[1]);
+  ctx.strokeStyle = a.colors.subtle;
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(f0.x, f0.y);
+  ctx.lineTo(f1.x, f1.y);
+  ctx.stroke();
+  // the discharge level
+  ctx.strokeStyle = a.colors.faint;
+  ctx.lineWidth = 1;
+  ctx.setLineDash([3, 3]);
+  const d0 = tf.px(b.xMin, g.discharge_z_mm);
+  const d1 = tf.px(b.xMax, g.discharge_z_mm);
+  ctx.beginPath();
+  ctx.moveTo(d0.x, d0.y);
+  ctx.lineTo(d1.x, d1.y);
+  ctx.stroke();
+  // the swing plate at its closed and open positions, faint
+  for (const p of [a.closed, a.open]) {
+    const e = tf.px(p.x, p.z);
+    ctx.beginPath();
+    ctx.moveTo(pivot.x, pivot.y);
+    ctx.lineTo(e.x, e.y);
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  // the spheres, far (smallest y) to near (largest y)
+  const order: number[] = [];
+  if (a.frames) {
+    const [s0, s1] = frameSpheres(a.frames, a.frame);
+    const d = a.frames.data;
+    const idx = Array.from({ length: s1 - s0 }, (_, k) => s0 + k).sort((p, q) => d[p * 4 + 1] - d[q * 4 + 1]);
+    const ys = idx.length ? [d[idx[0] * 4 + 1], d[idx[idx.length - 1] * 4 + 1]] : [0, 1];
+    const span = Math.max(1e-9, ys[1] - ys[0]);
+    ctx.lineWidth = 0.6;
+    ctx.strokeStyle = a.colors.surface;
+    for (const s of idx) {
+      const c = tf.px(d[s * 4], d[s * 4 + 2]);
+      const r = Math.max(0.7, d[s * 4 + 3] * tf.scale);
+      ctx.globalAlpha = 0.55 + (0.45 * (d[s * 4 + 1] - ys[0])) / span;
+      ctx.fillStyle = a.palette[sizeClass(2 * d[s * 4 + 3], a.feedLowMm)];
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
+      ctx.fill();
+      if (r > 2.5) ctx.stroke();
+      order.push(s - s0);
+    }
+    ctx.globalAlpha = 1;
+  }
+  // the swing plate at this frame, over the spheres
+  const e = tf.px(a.plate.x, a.plate.z);
+  ctx.strokeStyle = a.colors.accent;
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(pivot.x, pivot.y);
+  ctx.lineTo(e.x, e.y);
+  ctx.stroke();
+  ctx.fillStyle = a.colors.accent;
+  ctx.beginPath();
+  ctx.arc(pivot.x, pivot.y, 4, 0, Math.PI * 2);
+  ctx.fill();
+  return order;
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// The canvas, its labels and its subjects.
+// ---------------------------------------------------------------------------------------------------------------------------------
+
+interface Names {
+  fixed: string;
+  swing: string;
+  hopper: string;
+  discharge: string;
+  css: string;
+  oss: string;
+}
+
+const ReplayCanvas = ({ width, height, run, point, frames, frame, tf, plate }: { width: number; height: number; run: DemRun; point: DemPoint; frames: DemFrames | null; frame: number; tf: StageTransform; plate: { x: number; z: number } }) => {
+  const ref = useRef<HTMLCanvasElement | null>(null);
+  const tokens = useThemeTokens();
+  const lang = useShellLang();
+  const r = point.simulation.replay!;
+  const ext = plateExtremes(r);
+  const palette = paletteOf(tokens);
+  useEffect(() => {
+    const canvas = ref.current;
+    if (!canvas) return;
+    const dpr = typeof window === 'undefined' ? 1 : Math.max(1, window.devicePixelRatio || 1);
+    const w = Math.max(1, Math.floor(width * dpr));
+    const h = Math.max(1, Math.floor(height * dpr));
+    if (canvas.width !== w) canvas.width = w;
+    if (canvas.height !== h) canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    drawReplay(
+      ctx,
+      {
+        tf,
+        geometry: r.geometry,
+        plate,
+        closed: ext.closed,
+        open: ext.open,
+        frames,
+        frame,
+        feedLowMm: point.feed_mm[0],
+        palette,
+        colors: { fg: tokens['--color-fg'], subtle: tokens['--color-fg-subtle'], faint: tokens['--color-fg-faint'], accent: tokens['--color-accent'], surface: tokens['--color-surface'], border: tokens['--color-border'] },
+      },
+      { width, height },
+    );
+    // the drawing follows the frame, the size, the theme and the language of its labels (none are on the canvas)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [frames, frame, width, height, tokens, lang, tf]);
+  void run;
+  return (
+    <canvas
+      ref={ref}
+      style={{ width, height, display: 'block' }}
+      role="img"
+      aria-label={lang === 'es' ? 'Sección de la chancadora de mandíbula del laboratorio con las partículas del golpe elegido' : 'Section of the laboratory jaw crusher with the particles of the chosen stroke'}
+      data-chart="dem-replay"
+      data-frame={frame}
+      data-spheres={frames ? frameSpheres(frames, frame)[1] - frameSpheres(frames, frame)[0] : 0}
+    />
+  );
+};
+
+/** The labels of the section, placed so none leaves the drawing or touches another (the gate's G10), and the subjects the callouts are anchored to. */
+function sectionLabels(tf: StageTransform, point: DemPoint, run: DemRun, plate: { x: number; z: number }, width: number, height: number, names: Names, num: (v: number, o?: { digits?: number; decimals?: number }) => string): { node: ReactNode; subjects: Subject[] } {
+  const r = point.simulation.replay!;
+  const g = r.geometry;
+  const ext = plateExtremes(r);
+  const L = new Labels(width, height);
+  const dis = tf.px(tf.bounds.xMin, g.discharge_z_mm);
+  const closedPx = tf.px(ext.closed.x, ext.closed.z);
+  const openPx = tf.px(ext.open.x, ext.open.z);
+  const hop = tf.px(g.swing_pivot_mm[0], tf.bounds.zMax);
+  const swingMid = tf.px((g.swing_pivot_mm[0] + plate.x) / 2, (g.swing_pivot_mm[1] + plate.z) / 2);
+  const fixedMid = tf.px(g.fixed_plate_x_mm, g.fixed_plate_z_mm[1] * 0.62);
+  const labels = [
+    L.place(`${names.css} ${num(run.settings.css_mm, { digits: 3 })} mm`, closedPx.x + 12, closedPx.y + 16, 'start', { fill: TOKEN.accent, weight: 700 }),
+    L.place(`${names.oss} ${num(run.settings.oss_mm, { digits: 3 })} mm`, openPx.x + 12, openPx.y + 34, 'start', { fill: TOKEN.subtle }),
+    L.place(names.discharge, dis.x + 4, dis.y - 4, 'start', { fill: TOKEN.faint }),
+    L.place(names.fixed, fixedMid.x - 8, fixedMid.y, 'end', { fill: TOKEN.subtle }),
+    L.place(names.swing, swingMid.x + 10, swingMid.y, 'start', { fill: TOKEN.accent }),
+    L.place(names.hopper, hop.x + 6, hop.y + 12, 'start', { fill: TOKEN.faint }),
+  ];
+  const subjects: Subject[] = [
+    { id: 'throughput', x: tf.px((g.fixed_plate_x_mm + ext.closed.x) / 2, g.discharge_z_mm).x, y: tf.px(0, g.discharge_z_mm).y },
+    { id: 'net_power', x: swingMid.x, y: swingMid.y },
+    { id: 'p80', x: tf.px(g.fixed_plate_x_mm - 18, g.discharge_z_mm).x, y: tf.px(0, g.discharge_z_mm - 10).y },
+  ];
+  // dimension ticks of the two settings at the plate's bottom edge: the gap from the fixed plate to the closed and to the open edge, to scale
+  const y0 = tf.px(0, 0).y + 8;
+  const x0 = tf.px(g.fixed_plate_x_mm, 0).x;
+  const node = (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true" data-chart="dem-replay-labels" style={{ position: 'absolute', left: 0, top: 0, pointerEvents: 'none' }}>
+      <g stroke={TOKEN.accent} strokeWidth={1.5} fill="none">
+        <line x1={x0} y1={y0} x2={closedPx.x} y2={y0} />
+        <line x1={x0} y1={y0 - 3} x2={x0} y2={y0 + 3} />
+        <line x1={closedPx.x} y1={y0 - 3} x2={closedPx.x} y2={y0 + 3} />
+      </g>
+      <g stroke={TOKEN.subtle} strokeWidth={1.2} fill="none">
+        <line x1={x0} y1={y0 + 8} x2={openPx.x} y2={y0 + 8} />
+        <line x1={openPx.x} y1={y0 + 5} x2={openPx.x} y2={y0 + 11} />
+      </g>
+      <LabelText items={labels} />
+    </svg>
+  );
+  return { node, subjects };
+}
+
+export const NAMES: Record<'en' | 'es', Names> = {
+  en: { fixed: 'fixed plate', swing: 'swing plate', hopper: 'hopper (cropped)', discharge: 'discharge level', css: 'closed', oss: 'open' },
+  es: { fixed: 'placa fija', swing: 'placa móvil', hopper: 'tolva (recortada)', discharge: 'nivel de descarga', css: 'cerrada', oss: 'abierta' },
+};
+
+/** The width the size panel takes beside the section [px]: a third of the stage, at least 150 and at most 230. */
+export const panelWidth = (stageWidth: number): number => Math.round(Math.max(130, Math.min(230, stageWidth * 0.36)));
+
+/**
+ * The size panel: the legend of the colour scale and the mix of the frame in one drawing. One row per size class, finest first: its
+ * swatch (the colour the spheres of that class have on the section), its range in millimetres, a bar for the number of spheres of that class
+ * in this frame against the most the replay ever holds in one frame, and the count.
+ */
+export function SizePanel({ width, height, point, counts, max, palette }: { width: number; height: number; point: DemPoint; counts: number[]; max: number; palette: string[] }) {
+  const num = useNum();
+  const t = useT();
+  const labels = sizeClassLabels(point.feed_mm[0], num);
+  const top = 20;
+  const row = Math.max(16, Math.min(28, (height - top - 6) / SIZE_CLASSES));
+  const labelW = 64;
+  const barX = 18 + labelW;
+  const barMax = Math.max(8, width - barX - 40);
+  const font = { fontFamily: 'var(--font-sans)', fontSize: 11 } as const;
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={t('Spheres of the frame by diameter', 'Esferas del cuadro por diámetro')} data-legend="size" data-chart="dem-size-panel" style={{ position: 'absolute', right: 0, top: 0 }}>
+      <text x={4} y={13} fill={TOKEN.subtle} fontWeight={600} {...{ style: font }}>
+        {t('Diameter (mm)', 'Diámetro (mm)')}
+      </text>
+      {labels.map((label, c) => {
+        const y = top + c * row + row / 2;
+        const len = max > 0 ? Math.max(counts[c] > 0 ? 2 : 0, (counts[c] / max) * barMax) : 0;
+        return (
+          <g key={c} data-class={c} data-count={counts[c]}>
+            <circle cx={9} cy={y} r={5} fill={palette[c]} stroke={TOKEN.border} strokeWidth={1} />
+            <text x={18} y={y + 4} fill={TOKEN.fg} {...{ style: font }}>
+              {label}
+            </text>
+            <rect x={barX} y={y - 5} width={len} height={10} fill={palette[c]} rx={2} />
+            <text x={barX + len + 4} y={y + 4} fill={TOKEN.subtle} {...{ style: font }}>
+              {counts[c]}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
+/** The stage: the section with its callouts in the shell's header placement, the size panel beside it; the frame's spheres come from `frames`. */
+export function ReplayStage({ run, point, frames, frame, callouts }: { run: DemRun; point: DemPoint; frames: DemFrames | null; frame: number; callouts: CalloutSpec[] }) {
+  const lang = useShellLang();
+  const num = useNum();
+  const tokens = useThemeTokens();
+  const r = point.simulation.replay!;
+  const k = Math.max(0, Math.min(r.frames - 1, frame));
+  const plate = { x: r.plate_bottom_x_mm[k], z: r.plate_bottom_z_mm[k] };
+  const counts = frames ? classCounts(frames, k, point.feed_mm[0]) : new Array<number>(SIZE_CLASSES).fill(0);
+  return (
+    <CalloutStage
+      label={{ en: 'Particle replay in the jaw section', es: 'Repetición de partículas en la sección de la mandíbula' }}
+      callouts={callouts}
+      draw={({ width, height }) => {
+        const pw = panelWidth(width);
+        const cw = Math.max(80, width - pw);
+        const tf = stageTransform(r.geometry, cw, height);
+        const { node, subjects } = sectionLabels(tf, point, run, plate, cw, height, NAMES[lang], num);
+        return {
+          node: (
+            <div style={{ position: 'relative', width, height }} data-dem-stage="" data-frame={frame}>
+              <ReplayCanvas width={cw} height={height} run={run} point={point} frames={frames} frame={frame} tf={tf} plate={plate} />
+              {node}
+              <SizePanel width={pw} height={height} point={point} counts={counts} max={Math.max(1, ...r.count)} palette={paletteOf(tokens)} />
+            </div>
+          ),
+          subjects,
+        };
+      }}
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------------------------------------------------------------
+// The controls: play and pause, the scrub, the speed, the keyboard.
+// ---------------------------------------------------------------------------------------------------------------------------------
+
+export interface PlayerProps {
+  point: DemPoint;
+  frame: number;
+  /** For a test or a page that knows the preference: the reduced-motion flag; otherwise the browser's. */
+  reducedMotion?: boolean;
+  /** The playback speed [strokes per second] and its change; a controlled state of the view. */
+  speed: number;
+  onSpeed: (s: number) => void;
+}
+
+/**
+ * The control row of the stage. The cursor is the shell's shared stroke cursor of the enclosing linked-view store: the slider, the keys
+ * and playback write it, and the stage, the per-stroke charts and the label read it. Playback is the shell's paused-by-default loop; under
+ * reduced motion it does not start and its button says so.
+ */
+export function ReplayControls({ point, frame, reducedMotion, speed, onSpeed }: PlayerProps) {
+  const lang = useShellLang();
+  const num = useNum();
+  const t = useT();
+  const { cursor, scrub, inputProps, markerProps } = useLinkedCursor();
+  const r = point.simulation.replay!;
+  const [lo, hi] = cursorRange(r);
+  const reduced = reducedMotion ?? prefersReducedMotion();
+  const allowed = playbackAllowed(reduced);
+  const live = useRef({ cursor: cursor ?? hi, speed });
+  live.current = { cursor: cursor ?? hi, speed };
+  const viz = usePausedViz(
+    (dt) => {
+      const next = advance(r, live.current.cursor, dt, live.current.speed);
+      live.current.cursor = next.cursor;
+      scrub(next.cursor);
+      return !next.done;
+    },
+    { autoStart: false },
+  );
+  // a new operating point or a reduced-motion preference stops the loop
+  useEffect(() => {
+    viz.pause();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [r.file, allowed]);
+  const toggle = () => {
+    if (!allowed) return;
+    if (!viz.playing && (cursor ?? hi) >= hi) scrub(lo);
+    viz.toggle();
+  };
+  const onKey = (e: { key: string; preventDefault: () => void }) => {
+    const step = 1 / r.frames_per_stroke;
+    if (e.key === ' ' || e.key === 'Spacebar') {
+      e.preventDefault();
+      toggle();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      viz.pause();
+      const at = (cursor ?? hi) + (e.key === 'ArrowLeft' ? -step : step);
+      scrub(Math.max(lo, Math.min(hi, at)));
+    }
+  };
+  const label: BiText = { en: 'Stroke cursor', es: 'Cursor de golpe' };
+  return (
+    <div className="cdem-controls" role="group" aria-label={t('Replay controls', 'Controles de la repetición')} onKeyDown={onKey} data-frame={frame} data-playing={viz.playing ? 'true' : 'false'} data-reduced-motion={reduced ? 'true' : 'false'} data-autoplay="false">
+      <button type="button" className="btn" onClick={toggle} disabled={!allowed} aria-pressed={viz.playing} title={allowed ? undefined : t('Playback is off: reduced motion is on', 'La reproducción está apagada: el movimiento reducido está activo')}>
+        {viz.playing ? t('Pause', 'Pausa') : t('Play', 'Reproducir')}
+      </button>
+      <input
+        type="range"
+        {...inputProps}
+        min={lo}
+        max={hi}
+        step={1 / r.frames_per_stroke}
+        value={cursor ?? hi}
+        aria-label={label[lang]}
+        aria-valuetext={frameLabelText(r, frame, num, lang)}
+        onChange={(e) => {
+          viz.pause();
+          inputProps.onChange(e);
+        }}
+      />
+      <span {...markerProps} data-linked-cursor-position={cursor ?? hi} className="cdem-cursor-chip" data-frame-label="" aria-live="off">
+        {frameLabelText(r, frame, num, lang)}
+      </span>
+      <label className="cdem-speed">
+        <span>{t('Speed', 'Velocidad')}</span>
+        <select value={speed} onChange={(e) => onSpeed(Number(e.target.value))} aria-label={t('Playback speed in strokes per second', 'Velocidad de reproducción en golpes por segundo')}>
+          {SPEEDS.map((s) => (
+            <option key={s} value={s}>
+              {num(s, { digits: 2 })} {s === 1 ? t('stroke/s', 'golpe/s') : t('strokes/s', 'golpes/s')}
+            </option>
+          ))}
+        </select>
+      </label>
+      {!allowed && (
+        <span className="cdem-note" data-reduced-motion-note="">
+          {t('Reduced motion: the replay does not play by itself; scrub to a stroke.', 'Movimiento reducido: la repetición no se reproduce sola; mueva el cursor a un golpe.')}
+        </span>
+      )}
+    </div>
+  );
+}
+
+export { DEFAULT_SPEED };
+
+/** The card of the stage: its title, its takeaway line as the note, and what fills it; a frames file that is loading or failed is said in the stage's place. */
+export function StageCard({ title, note, stateKey, actions, children }: { title: BiText; note: BiText; stateKey?: string; actions?: ReactNode; children: ReactNode }) {
+  return (
+    <PlotCard fill title={title} lane="replay" provenance="published" dataKey={stateKey} note={note} actions={actions}>
+      <div className="cdem-stack" data-caos-flow="">
+        {children}
+      </div>
+    </PlotCard>
+  );
+}
+
+/** What stands in the stage's place while the frames file loads or when it failed: the reason, in the reader's language. */
+export function FramesState({ frames }: { frames: Loaded<DemFrames> }) {
+  const lang = useShellLang();
+  if (frames.state === 'loading')
+    return (
+      <p className="caos-pending" data-state="loading">
+        {lang === 'es' ? 'Cargando la repetición de partículas' : 'Loading the particle replay'}
+      </p>
+    );
+  if (frames.state === 'unavailable')
+    return (
+      <p className="caos-pending" data-state="unavailable">
+        {frames.reason[lang]}
+      </p>
+    );
+  if (frames.state === 'error')
+    return (
+      <p className="caos-pending" role="alert" data-state="unavailable">
+        {lang === 'es' ? `No se pudo leer la repetición de partículas: ${frames.error}` : `The particle replay could not be read: ${frames.error}`}
+      </p>
+    );
+  return null;
+}
