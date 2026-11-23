@@ -9,10 +9,10 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { Loaded } from '../api/artifacts';
 import type { DemRun, Readiness } from '../lib/contract.types';
 import { toCallout } from './callouts';
-import { bareReason, calloutSpecs, CATEGORY, ComparisonOverlay, cursorMark, DemBody, DemUnavailable, DemUnreadable, LabNote, pointStages, Q, sideOffset, Sources, VerdictTable } from './dem';
+import { bareReason, calloutSpecs, CATEGORY, ComparisonOverlay, cursorMark, DemBody, DemUnavailable, DemUnreadable, LabNote, NoValueStrip, pointStages, Q, sideOffset, Sources, VerdictTable } from './dem';
 import { comparisonSeries, decodeFrames, frameAt, frameLabelText, nearerSentence, openingCursor, plain, type DemFrames, type DemPoint } from './demModel';
 import { FramesState, NAMES, panelWidth, plateExtremes, drawReplay, stageColumns, sphereTop } from './demReplay';
-import { decimalProblems, labelOverlapProblems, nullMarkProblems, stageShare, stageShareProblems, verdictLayoutProblems } from './dem.rules.mjs';
+import { decimalProblems, labelOverlapProblems, noValueStripProblems, nullMarkProblems, stageGeometryProblems, stageShare, stageShareProblems, verdictLayoutProblems } from './dem.rules.mjs';
 import { subOfUrl, ViewContext, type ViewCtx } from './shared';
 import { ValidationGroup } from './validation';
 
@@ -176,7 +176,7 @@ describe('DM-013: one stroke cursor for the stage and the charts, and reduced mo
     const src = readFileSync(new URL('./demReplay.tsx', import.meta.url), 'utf8');
     expect(src).toMatch(/autoStart: false/);
     expect(src).not.toMatch(/autoStart: true/);
-    expect(src).not.toMatch(/requestAnimationFrame/);
+    expect(src).not.toMatch(/request\w*Frame/);
   });
   it('adversarial: under reduced motion the play button is off, the note says so and the frame at the cursor is shown', () => {
     const html = render({ reducedMotion: true, initialCursor: 40.5 });
@@ -238,7 +238,7 @@ describe('DM-014: the comparison, the distribution, the verdicts and the sources
     }
     expect(text).toContain('Shaded: the measurement plus or minus the 10 percent band.');
     expect(text).toContain('a sensitivity band and not a confidence interval');
-    expect(text).toContain('No value (written under the axis):');
+    expect(text).toContain('No value (written under the chart):');
   });
   it('a side that states no value is named with its reason, and no sentence of any chart reads as agreement for a verdict that is not met', () => {
     expect(text).toContain('population balance, 63/52 mm: no work index of the ore is published, so the population balance states no net power');
@@ -469,7 +469,7 @@ describe('the stage: colours, labels and the drawing of a frame', () => {
     expect(src).toMatch(/devicePixelRatio/);
     expect(src).toMatch(/usePausedViz/);
     expect(src).toMatch(/CalloutStage/);
-    expect(src).not.toMatch(/setInterval|requestAnimationFrame/);
+    expect(src).not.toMatch(/setInterval|request\w*Frame/);
     expect(src).toMatch(/placement|CalloutStage/);
   });
 });
@@ -527,24 +527,42 @@ describe('B1: the verdict table keeps its summary and its verdict in view', () =
 
 describe('B2: a side with no value has no mark inside the plotting range', () => {
   const at = (p: { x: number; y: number }) => ({ x: 60 + p.x * 100, y: 300 - p.y * 0.2 });
-  const overlay = (q: 'throughput' | 'net_power' | 'p80', lang: 'en' | 'es' = 'en') => renderToStaticMarkup(<svg><ComparisonOverlay series={comparisonSeries(run, q)} at={at} lang={lang} /></svg>);
-  it('adversarial: a side with no value yields no mark inside the plotting range of the rendered overlay, only the text no value under the baseline', () => {
-    const svg = overlay('net_power');
-    const baseline = at({ x: 1, y: 0 }).y;
-    const texts = [...svg.matchAll(/<text[^>]*data-no-value="([^"]+)"[^>]*y="([\d.]+)"/g)].map((m) => ({ id: m[1], y: Number(m[2]) }));
+  const overlay = (q: 'throughput' | 'net_power' | 'p80') => renderToStaticMarkup(<svg><ComparisonOverlay series={comparisonSeries(run, q)} at={at} /></svg>);
+  const strip = (q: 'throughput' | 'net_power' | 'p80', lang: 'en' | 'es' = 'en') => renderToStaticMarkup(<NoValueStrip series={comparisonSeries(run, q)} xs={[160, 260, 360]} lang={lang} />);
+  it('adversarial: a side with no value yields no mark inside the plotting range of the rendered overlay: the overlay draws none, and the text stands in the strip under the chart', () => {
+    for (const q of ['throughput', 'net_power', 'p80'] as const) {
+      const svg = overlay(q);
+      expect(svg).not.toContain('data-no-value');
+      expect(svg).not.toContain('<circle');
+      expect(svg).not.toContain('<text');
+    }
+    const net = strip('net_power');
     // the particle simulation at 31.5/26.5 and the population balance at all three points
-    expect(texts.map((x) => x.id).sort()).toEqual(['16-13.2:population_balance', '31.5-26.5:population_balance', '31.5-26.5:simulation', '63-52:population_balance']);
-    for (const x of texts) expect(x.y).toBeGreaterThan(baseline);
-    expect(svg).not.toContain('<circle');
-    expect(svg).toContain('no value');
-    const throughput = overlay('throughput');
-    expect([...throughput.matchAll(/data-no-value="([^"]+)"/g)].map((m) => m[1])).toEqual(['31.5-26.5:simulation']);
-    expect(overlay('p80')).not.toContain('data-no-value');
+    expect([...net.matchAll(/data-no-value="([^"]+)"/g)].map((m) => m[1]).sort()).toEqual(['16-13.2:population_balance', '31.5-26.5:population_balance', '31.5-26.5:simulation', '63-52:population_balance']);
+    expect(net).toContain('no value');
+    expect(net).not.toContain('<circle');
+    expect([...strip('throughput').matchAll(/data-no-value="([^"]+)"/g)].map((m) => m[1])).toEqual(['31.5-26.5:simulation']);
+    expect(strip('p80')).toBe('');
   });
-  it('writes it in Spanish on a Spanish page, with the reason as the title', () => {
-    const svg = overlay('net_power', 'es');
-    expect(svg).toContain('sin valor');
-    expect(svg).toContain('<title>balance poblacional: no se publica un índice de trabajo');
+  it('writes the strip in Spanish with the reason as the title, one row per side so two sides at one feed never touch', () => {
+    const es = strip('net_power', 'es');
+    expect(es).toContain('sin valor');
+    expect(es).toContain('title="balance poblacional: no se publica un índice de trabajo');
+    const tops = [...es.matchAll(/data-no-value="31\.5-26\.5:(\w+)"[^>]*top:(\d+)(?:px)?/g)].map((m) => [m[1], Number(m[2])]);
+    expect(tops).toEqual([['simulation', 0], ['population_balance', 14]]);
+    expect(strip('net_power')).toContain('height:30px');
+    expect(strip('throughput')).toContain('height:16px');
+    expect(strip('net_power', 'en')).not.toBe('');
+    expect(renderToStaticMarkup(<NoValueStrip series={comparisonSeries(run, 'net_power')} xs={null} lang="en" />)).toBe('');
+  });
+  it('the strip is a row of its own under the chart and lies at the feed classes\u2019 positions', () => {
+    const net = strip('net_power');
+    const lefts = [...net.matchAll(/data-no-value="([^"]+)"[^>]*left:(\d+)px/g)].map((m) => [m[1], Number(m[2])]);
+    expect(lefts.find((l) => l[0] === '63-52:population_balance')![1]).toBe(160);
+    expect(lefts.find((l) => l[0] === '31.5-26.5:simulation')![1]).toBe(260);
+    expect(lefts.find((l) => l[0] === '16-13.2:population_balance')![1]).toBe(360);
+    const src = readFileSync(new URL('./dem.tsx', import.meta.url), 'utf8');
+    expect(src).toMatch(/<NoValueStrip series=\{series\} xs=\{xs\} lang=\{lang\} \/>/);
   });
   it('a side with a value keeps its bars: the measurement\u2019s band, the standard error and the spread are drawn at the feed class\u2019s position', () => {
     const svg = overlay('throughput');
@@ -556,7 +574,7 @@ describe('B2: a side with no value has no mark inside the plotting range', () =>
   });
   it('the legend has an entry for it, and its reasons are in the note', () => {
     const src = readFileSync(new URL('./dem.tsx', import.meta.url), 'utf8');
-    expect(src).toMatch(/id: 'no-value', label: \{ en: 'No value \(written under the axis, reason in the note\)'/);
+    expect(src).toMatch(/id: 'no-value', label: \{ en: 'No value \(written under the chart, reason in the note\)'/);
     expect(textOf(render())).toContain('population balance, 63/52 mm: no work index of the ore is published');
   });
 });
@@ -780,7 +798,93 @@ describe('DM-017: the layout rules decide from measured boxes and strings (src/v
   });
   it('the browser script hands its measurements to these rules and is run by the story checks', () => {
     const b = readFileSync(new URL('./dem.browser.mjs', import.meta.url), 'utf8');
-    for (const rule of ['verdictLayoutProblems', 'nullMarkProblems', 'labelOverlapProblems', 'stageShareProblems', 'decimalProblems']) expect(b).toContain(rule);
+    for (const rule of ['verdictLayoutProblems', 'noValueStripProblems', 'labelOverlapProblems', 'stageGeometryProblems', 'decimalProblems']) expect(b).toContain(rule);
     expect(readFileSync(new URL('../pages/story.browser.mjs', import.meta.url), 'utf8')).toContain("import('../views/dem.browser.mjs')");
+  });
+});
+
+describe('F1: the quotes of the quoted English blocks are real characters', () => {
+  const stylesheet = readFileSync(new URL('../workbench/workbench.css', import.meta.url), 'utf8');
+  const C1 = new RegExp('[\\u0080-\\u009f]');
+  it('the stylesheet quotes with the CSS escapes of U+201C and U+201D, and no stylesheet or source of the view holds a control character', () => {
+    expect(stylesheet).toMatch(/quotes: "\\201C" "\\201D";/);
+    for (const f of ['dem.tsx', 'demModel.ts', 'demReplay.tsx', 'dem.browser.mjs', 'dem.rules.mjs']) expect(readFileSync(new URL(`./${f}`, import.meta.url), 'utf8'), f).not.toMatch(C1);
+    expect(stylesheet).not.toMatch(C1);
+    expect(stylesheet).not.toMatch(/\\2[0-9a-fA-F]{2}(?![0-9a-fA-F])(?!["'])/);
+    expect(String.fromCharCode(0x201c)).toBe('\u201C');
+  });
+  it('the quoted block is a q element marked as English, whose quotes the stylesheet supplies, and no rendered text of the view holds a control character', () => {
+    for (const lang of ['en', 'es'] as const) {
+      setLang(lang);
+      for (const id of ['63-52', '31.5-26.5', '16-13.2']) expect(textOf(render({ initialPoint: id }))).not.toMatch(C1);
+    }
+    const q = renderToStaticMarkup(<Q>overlap of 0.547</Q>);
+    expect(q).toBe('<q class="cdem-quote" translate="no" lang="en">overlap of 0.547</q>');
+    expect(q).not.toMatch(C1);
+  });
+});
+
+describe('F2: the "no value" strip overlaps nothing', () => {
+  const plot = { left: 60, right: 340, top: 40, bottom: 260 };
+  const tick = { text: '63/52 mm', box: { left: 80, right: 140, top: 264, bottom: 277 } };
+  it('adversarial: a "no value" text on a tick label, on the axis title, on another or inside the plot is reported', () => {
+    const under = { id: '31.5-26.5:simulation', box: { left: 160, right: 205, top: 330, bottom: 344 } };
+    expect(noValueStripProblems([under], [tick, { text: 'Feed class', box: { left: 150, right: 230, top: 296, bottom: 310 } }], plot)).toEqual([]);
+    expect(noValueStripProblems([{ ...under, box: { ...under.box, top: 300, bottom: 314 } }], [{ text: 'Feed class', box: { left: 150, right: 230, top: 296, bottom: 310 } }], plot)[0]).toContain('overlaps "Feed class"');
+    expect(noValueStripProblems([{ ...under, box: { left: 90, right: 135, top: 266, bottom: 280 } }], [tick], plot)[0]).toContain('overlaps "63/52 mm"');
+    const second = { id: '31.5-26.5:population_balance', box: { left: 160, right: 205, top: 338, bottom: 352 } };
+    expect(noValueStripProblems([under, second], [], plot)[0]).toContain('overlap');
+    expect(noValueStripProblems([under, { ...second, box: { ...second.box, top: 346, bottom: 360 } }], [], plot)).toEqual([]);
+    expect(noValueStripProblems([{ id: 'x', box: { left: 100, right: 140, top: 200, bottom: 214 } }], [], plot)[0]).toContain('inside the plotting range');
+  });
+  it('the browser script measures the strip against the tick labels and the axis title', () => {
+    const b = readFileSync(new URL('./dem.browser.mjs', import.meta.url), 'utf8');
+    expect(b).toContain('noValueStripProblems');
+    expect(b).toContain('data-no-value');
+  });
+});
+
+describe('F3: the quantity cell is left aligned in every row', () => {
+  it('every quantity cell carries the class the stylesheet aligns left', () => {
+    const html = render();
+    const table = html.slice(html.indexOf('data-verdict-table'));
+    expect((table.match(/class="cdem-vt-qty"/g) ?? []).length).toBe(9);
+    expect(css).toMatch(/\.cdem-vt \.caos-table td\.cdem-vt-qty \{\s*text-align: left;/);
+  });
+});
+
+describe('F4: the stage is composed so the drawing is what the first screen shows', () => {
+  it('the point choice and the controls share a row, the reduced-motion note and the stored rate are one line, the takeaway and the readiness follow the card', () => {
+    const html = render({ reducedMotion: true });
+    const bar = html.slice(html.indexOf('class="cdem-stage-bar"'));
+    expect(bar.slice(0, bar.indexOf('data-stored-rate')).includes('data-point-choice')).toBe(true);
+    expect(bar.slice(0, bar.indexOf('data-stored-rate')).includes('data-linked-cursor')).toBe(true);
+    const line = html.slice(html.indexOf('data-stored-rate'));
+    const one = line.slice(0, line.indexOf('</p>'));
+    expect(one).toContain('This replay stores 12 frames per stroke');
+    expect(one).toContain('Reduced motion is on');
+    expect((html.match(/data-stored-rate/g) ?? []).length).toBe(1);
+    expect(render()).not.toContain('data-reduced-motion-note');
+    const afterCard = html.slice(html.indexOf('data-after-stage'));
+    expect(afterCard.slice(0, 600)).toContain('data-takeaway');
+    expect(afterCard.slice(0, 1200)).toContain('data-readiness="partial"');
+    expect(html.indexOf('data-after-stage')).toBeGreaterThan(html.indexOf('data-run-status'));
+  });
+  it('the callouts of the shell\u2019s anchored placement stand in the margins of the section on a desktop; on a phone the header band stays', () => {
+    const rep = readFileSync(new URL('./demReplay.tsx', import.meta.url), 'utf8');
+    expect(rep).toMatch(/<SceneCallouts items=\{items\} placement="header" \/>/);
+    expect(rep).toMatch(/size\.width >= 640 \? <WideStage/);
+    expect(rep).toMatch(/<CalloutStage/);
+    expect(stageColumns(1040, 330).wide).toBe(true);
+    expect(stageColumns(340, 400).wide).toBe(false);
+  });
+  it('adversarial: a drawing region under 40 percent, a zone or a section under 380 px, or a stage card under 60 percent is reported', () => {
+    const vp = { width: 1280, height: 800 };
+    const good = { card: { width: 1057, height: 640 }, drawing: { width: 1040, height: 420 }, section: { height: 400 }, zone: { height: 400 } };
+    expect(stageGeometryProblems(good, vp)).toEqual([]);
+    expect(stageGeometryProblems({ ...good, drawing: { width: 1040, height: 245 } }, vp)[0]).toContain('drawing region');
+    expect(stageGeometryProblems({ ...good, zone: { height: 210 } }, vp)[0]).toContain('magnified zone');
+    expect(stageGeometryProblems({ ...good, section: { height: 230 } }, vp)[0]).toContain('section');
+    expect(stageGeometryProblems({ ...good, card: { width: 640, height: 640 } }, vp)[0]).toContain('stage card');
   });
 });

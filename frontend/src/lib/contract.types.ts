@@ -1,9 +1,9 @@
 // The web side of the ChancaDEM contracts (docs/contracts/catalog.md): the case documents (case-index, case-manifest, trace),
-// the HP500 documents (hp500-backbone, hp500-loo), the two model slots (surrogate-model, anomaly-model), the model metrics, the
+// the HP500 documents (hp500-backbone, hp500-loo, hp500-crusherbayes, hp500-comparison), the two model slots (surrogate-model, anomaly-model), the model metrics, the
 // particle-simulation document (dem-run) and the readiness document. The types of the first three and of readiness are GENERATED: contract.gen.ts comes from
 // docs/contracts/api.openapi.json, whose components are the schema files of docs/contracts/schemas/ (ADR-0080 decision 2;
 // `npm run contracts:types`, checked by `npm run build`), and the names below are aliases of the generated types. The
-// OpenAPI document serves only those four documents, so the other five have no generated type: their types are inferred
+// OpenAPI document serves only those four documents, so the other eight (the four HP500 documents, the two model slots, the model metrics and dem-run) have no generated type: their types are inferred
 // from the run-time descriptors below (`Of<K>`), which is the one place their shape is written on this side. Each
 // descriptor describes the keys of a document at run time, and `satisfies` ties the generated documents' descriptors to
 // their generated type (a key added to or removed from a schema and not here fails `tsc`). contract.test.ts reads the

@@ -417,6 +417,8 @@
 /* The particle-simulation view (views/dem.tsx; catalog row dem-run). The first row is the stage and the per-stroke series, which take the
    height the panel leaves (never less than 28rem); the comparison, the distribution, the verdicts and the sources follow and scroll. */
 .cdem-dem {
+  /* the first row's height: the view sets it from the panel's size (views/dem.tsx usePanelHeight); this is its value before it is measured */
+  --cdem-main: 28rem;
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
@@ -444,15 +446,11 @@
   min-width: 0;
 }
 
-.cdem-dem-rest > .caos-views-row {
-  flex: none;
-}
-
 .cdem-labnote {
   margin: 0;
 }
 
-.cdem-points .btn {
+.cdem-pointbtn {
   white-space: normal;
   text-align: left;
 }
@@ -672,7 +670,7 @@
 
 .cdem-quote {
   font-style: normal;
-  quotes: 'C' 'D';
+  quotes: "\201C" "\201D";
 }
 
 /* The per-stroke charts side by side under the stage (a column on a phone). */
@@ -790,4 +788,53 @@
   .cdem-basis {
     max-width: none;
   }
+}
+
+/* The quantity cell of the verdict table is left aligned in every row (the first row of a group has the group's header beside it). */
+.cdem-vt .caos-table td.cdem-vt-qty {
+  text-align: left;
+}
+
+/* The strip under a comparison chart that says "no value" for a side that states none. */
+.cdem-strip {
+  font-size: var(--text-xs);
+  line-height: 14px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+@media (max-width: 899px) {
+  .cdem-vt .caos-table td.cdem-vt-qty {
+    text-align: right;
+  }
+}
+
+/* The stage card (views/dem.tsx MainRow): the point choice and the controls on one row, then one line of notes, the drawing, the status. */
+.cdem-stage-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  flex: none;
+  min-width: 0;
+}
+
+.cdem-stage-bar > .cdem-controls {
+  flex: 1 1 22rem;
+}
+
+.cdem-after-stage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.cdem-takeaway {
+  margin: 0;
+  font-size: var(--text-sm);
+}
+
+.cdem-strip-text {
+  font-variant-numeric: tabular-nums;
 }

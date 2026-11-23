@@ -18,3 +18,5 @@ export function nullMarkProblems(marks: { id: string; box: Box }[], plot: Box): 
 export function stageShareProblems(stage: { width: number; height: number }, viewport: { width: number; height: number }, min?: number): string[];
 export function stageShare(stage: { width: number; height: number }, viewport: { width: number; height: number }): number;
 export function decimalProblems(texts: { text: string; quoted: boolean }[]): string[];
+export function noValueStripProblems(strip: { id: string; box: Box }[], others: { text: string; box: Box }[], plot: Box): string[];
+export function stageGeometryProblems(m: { card: { width: number; height: number }; drawing: { width: number; height: number }; section: { height: number }; zone: { height: number } }, viewport: { width: number; height: number }, limits?: { minDrawing?: number; minHeight?: number; minCard?: number }): string[];

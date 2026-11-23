@@ -5,12 +5,14 @@
 // both languages:
 //   verdict   every column of the verdict table stands inside its card, the summary sentence is whole, and on a phone the table is restacked
 //             and does not scroll sideways (B1);
-//   null      no mark of a side without a value lies inside any plotting range of the three comparison charts (B2);
+//   null      no mark of a side without a value lies inside any plotting range of the three comparison charts, and the "no value" texts of the
+//             strip under each chart overlap no tick label, no axis title and no other text (B2, F2);
 //   ticks     no two tick labels of the comparison charts' x axes overlap (B3), read from where uPlot drew them on its canvas;
-//   stage     the replay stage's own box is at least 60 percent of the App route's viewport at 1280 by 800 (M1);
+//   stage     at 1280 by 800 the stage card is at least 60 percent of the App route's viewport, its drawing region at least 40 percent, and the
+//             section and the magnified zone at least 380 px high (M1, F4);
 //   decimals  on the Spanish page no number is written with a decimal point outside the blocks marked lang="en" (M2).
 //   node src/views/dem.browser.mjs <origin>   checks a running build on its own
-import { decimalProblems, labelOverlapProblems, nullMarkProblems, stageShare, stageShareProblems, verdictLayoutProblems } from './dem.rules.mjs';
+import { decimalProblems, labelOverlapProblems, noValueStripProblems, stageGeometryProblems, stageShare, verdictLayoutProblems } from './dem.rules.mjs';
 
 const SIZES = [
   { width: 1280, height: 800 },
@@ -82,10 +84,24 @@ async function measure(page) {
           labels.push({ text: t.t, left: r.left + left * k, right: r.left + (left + t.w) * k, top: r.top + (t.y - 10) * k, bottom: r.top + (t.y + 3) * k });
         }
       }
-      return { q: root.getAttribute('data-comparison'), plot: plot ? box(plot.getBoundingClientRect()) : null, marks, labels };
+      // every other text the chart's canvas draws below its plot (the tick labels and the axis title), as boxes in page pixels
+      const below = [];
+      const plotBottom = plot ? plot.getBoundingClientRect().bottom : 0;
+      for (const canvas of root.querySelectorAll('canvas')) {
+        const r = canvas.getBoundingClientRect();
+        const k = canvas.width ? r.width / canvas.width : 1;
+        for (const t of canvas.__demTexts ?? []) {
+          if (t.turned || r.top + t.y * k < plotBottom) continue;
+          const left = t.align === 'center' ? t.x - t.w / 2 : t.align === 'right' || t.align === 'end' ? t.x - t.w : t.x;
+          below.push({ text: t.t, box: { left: r.left + left * k, right: r.left + (left + t.w) * k, top: r.top + (t.y - 10) * k, bottom: r.top + (t.y + 3) * k } });
+        }
+      }
+      for (const el of root.querySelectorAll('[data-axis-title="x"]')) below.push({ text: el.textContent ?? 'axis title', box: box(el.getBoundingClientRect()) });
+      return { q: root.getAttribute('data-comparison'), plot: plot ? box(plot.getBoundingClientRect()) : null, marks, labels, below };
     });
     const stageCard = document.querySelector('[data-frames]')?.closest('figure.caos-plot');
     const drawing = document.querySelector('[data-dem-stage]');
+    const heightOf = (sel) => document.querySelector(sel)?.getBoundingClientRect().height ?? 0;
     const root = document.querySelector('.cdem-dem');
     const texts = [];
     if (root) {
@@ -102,6 +118,8 @@ async function measure(page) {
       charts,
       stage: stageCard ? { width: stageCard.getBoundingClientRect().width, height: stageCard.getBoundingClientRect().height } : null,
       drawing: drawing ? { width: drawing.getBoundingClientRect().width, height: drawing.getBoundingClientRect().height } : null,
+      section: { height: heightOf('[data-chart="dem-replay"]') },
+      zone: { height: heightOf('[data-chart="dem-inset"]') },
       texts,
       viewport: { width: window.innerWidth, height: window.innerHeight },
     };
@@ -132,15 +150,15 @@ export async function demChecks({ browser, base, ok }) {
             ok(m.charts.length === 3, `${where}: three comparison charts`);
             for (const c of m.charts) {
               ok(c.plot !== null, `${where}: the ${c.q} chart has its plot`);
-              if (c.plot) for (const p of nullMarkProblems(c.marks, c.plot)) ok(false, `${where}, ${c.q}: ${p}`);
+              if (c.plot) for (const p of noValueStripProblems(c.marks, c.below, c.plot)) ok(false, `${where}, ${c.q}: ${p}`);
               ok(c.labels.length >= 3, `${where}, ${c.q}: the three feed classes are labelled on the axis (${c.labels.length} labels read)`);
               for (const p of labelOverlapProblems(c.labels)) ok(false, `${where}, ${c.q}: ${p}`);
             }
             if (size.width === 1280) {
-              ok(m.stage !== null, `${where}: the replay stage is on the page`);
-              if (m.stage) {
-                for (const p of stageShareProblems(m.stage, m.viewport)) ok(false, `${where}: ${p}`);
-                shares.push({ point, theme, lang, share: stageShare(m.stage, m.viewport), drawing: m.drawing ? stageShare(m.drawing, m.viewport) : null });
+              ok(m.stage !== null && m.drawing !== null, `${where}: the replay stage is on the page`);
+              if (m.stage && m.drawing) {
+                for (const p of stageGeometryProblems({ card: m.stage, drawing: m.drawing, section: m.section, zone: m.zone }, m.viewport)) ok(false, `${where}: ${p}`);
+                shares.push({ point, theme, lang, card: stageShare(m.stage, m.viewport), drawing: stageShare(m.drawing, m.viewport), section: m.section.height, zone: m.zone.height });
               }
             }
             if (lang === 'es') for (const p of decimalProblems(m.texts)) ok(false, `${where}: ${p}`);
@@ -168,8 +186,8 @@ if (import.meta.url === `file:///${process.argv[1]?.replace(/\\/g, '/').replace(
   try {
     const out = await demChecks({ browser, base, ok });
     for (const f of failures) console.log(`FAIL ${f}`);
-    const s = out.shares.map((x) => x.share);
-    console.log(`dem.browser: ${checks} checks over ${out.combos} measured pages, ${failures.length} failed; stage share at 1280 by 800 from ${(Math.min(...s) * 100).toFixed(1)} to ${(Math.max(...s) * 100).toFixed(1)} percent of the viewport (${JSON.stringify(out.shares.map((x) => [x.point, x.theme, x.lang, Number((x.share * 100).toFixed(1)), x.drawing === null ? null : Number((x.drawing * 100).toFixed(1))]))})`);
+    const range = (key) => `${Math.min(...out.shares.map((x) => x[key])).toFixed(key === 'card' || key === 'drawing' ? 3 : 0)} to ${Math.max(...out.shares.map((x) => x[key])).toFixed(key === 'card' || key === 'drawing' ? 3 : 0)}`;
+    console.log(`dem.browser: ${checks} checks over ${out.combos} measured pages, ${failures.length} failed; at 1280 by 800 the stage card is ${range('card')}, the drawing region ${range('drawing')} of the viewport, the section ${range('section')} px and the magnified zone ${range('zone')} px high`);
     if (failures.length) process.exitCode = 1;
   } finally {
     await browser.close();

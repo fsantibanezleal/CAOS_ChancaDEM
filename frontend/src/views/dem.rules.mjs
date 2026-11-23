@@ -93,3 +93,41 @@ export function decimalProblems(texts) {
   }
   return out;
 }
+
+/**
+ * F2: the "no value" texts of a comparison chart's strip overlap no tick label, no axis title and no other "no value" text, and lie outside the
+ * plotting range.
+ * @param {{ id: string, box: Box }[]} strip the "no value" texts
+ * @param {{ text: string, box: Box }[]} others the tick labels and the axis title of the chart
+ * @param {Box} plot
+ * @returns {string[]}
+ */
+export function noValueStripProblems(strip, others, plot) {
+  const out = [];
+  const hit = (a, b) => a.left < b.right - TOL && b.left < a.right - TOL && a.top < b.bottom - TOL && b.top < a.bottom - TOL;
+  for (let i = 0; i < strip.length; i++) {
+    for (let j = i + 1; j < strip.length; j++) if (hit(strip[i].box, strip[j].box)) out.push(`the "no value" texts of ${strip[i].id} and ${strip[j].id} overlap`);
+    for (const o of others) if (hit(strip[i].box, o.box)) out.push(`the "no value" text of ${strip[i].id} overlaps "${o.text}"`);
+  }
+  out.push(...nullMarkProblems(strip, plot));
+  return out;
+}
+
+/**
+ * F4: the first screen shows the drawing. At 1280 by 800 the drawing region is at least `minDrawing` of the viewport's area, the magnified
+ * zone and the section are each at least `minHeight` px high, and the stage card is at least `minCard` of the viewport.
+ * @param {{ card: { width: number, height: number }, drawing: { width: number, height: number }, section: { height: number }, zone: { height: number } }} m
+ * @param {{ width: number, height: number }} viewport
+ * @param {{ minDrawing?: number, minHeight?: number, minCard?: number }} [limits]
+ * @returns {string[]}
+ */
+export function stageGeometryProblems(m, viewport, limits = {}) {
+  const { minDrawing = 0.4, minHeight = 380, minCard = 0.6 } = limits;
+  const out = [];
+  const share = stageShare(m.drawing, viewport);
+  if (share + 1e-9 < minDrawing) out.push(`the drawing region is ${(share * 100).toFixed(1)} percent of the viewport (${Math.round(m.drawing.width)} by ${Math.round(m.drawing.height)} px), at least ${Math.round(minDrawing * 100)} percent is required`);
+  if (m.zone.height < minHeight) out.push(`the magnified zone is ${Math.round(m.zone.height)} px high, at least ${minHeight} px is required`);
+  if (m.section.height < minHeight) out.push(`the section is ${Math.round(m.section.height)} px high, at least ${minHeight} px is required`);
+  for (const p of stageShareProblems(m.card, viewport, minCard)) out.push(p.replace('the replay stage', 'the stage card'));
+  return out;
+}

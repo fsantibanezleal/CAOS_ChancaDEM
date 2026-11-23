@@ -5,11 +5,11 @@
 // below the discharge) through the shell's callout stage, as the chamber's section does; the controls sit in the stage's control row, never over
 // the subject. The animation loop is the shell's (usePausedViz): it stops when the view unmounts, when the tab is hidden and, here, it never
 // starts under reduced motion.
-import { PlotCard, prefersReducedMotion, resolveToken, useLinkedCursor, usePausedViz, useShellLang, useThemeTokens, type BiText } from '@fasl-work/caos-app-shell';
+import { PlotCard, prefersReducedMotion, resolveToken, SceneCallouts, Stage, useLinkedCursor, usePausedViz, useShellLang, useStageSize, useThemeTokens, type BiText } from '@fasl-work/caos-app-shell';
 import { useEffect, useRef, type ReactNode } from 'react';
 import type { Loaded } from '../api/artifacts';
 import type { DemRun } from '../lib/contract.types';
-import { CalloutStage, type CalloutSpec, type Subject } from './callouts';
+import { CalloutStage, toCallout, type CalloutSpec, type Subject } from './callouts';
 import {
   advance,
   classCounts,
@@ -394,7 +394,7 @@ export function Inset({ width, height, left, run, point, frames, frame, plate, m
   const bar = 10 * tf.scale;
   const font = { fontFamily: 'var(--font-sans)', fontSize: 11, fontVariantNumeric: 'tabular-nums' } as const;
   return (
-    <div className="cdem-inset" style={left === undefined ? { position: 'absolute', right: 0, bottom: 0, width, height } : { position: 'absolute', left, top: 0, width, height }} data-inset="" data-magnification={mag.toFixed(2)}>
+    <div className="cdem-inset" style={left === undefined ? { position: 'absolute', right: 0, bottom: 0, width, height } : { position: 'absolute', left, top: 0, width, height }} data-inset="" data-magnification={String(Math.round(mag * 100) / 100)}>
       <div className="cdem-inset-head" style={{ height: head }}>
         <strong>{t(`Magnified ${num(mag, { digits: 2 })} times: the crushing zone`, `Ampliada ${num(mag, { digits: 2 })} veces: la zona de chancado`)}</strong>
         <span>
@@ -415,7 +415,7 @@ export function Inset({ width, height, left, run, point, frames, frame, plate, m
             <line x1={x0} y1={yDim + 8} x2={open.x} y2={yDim + 8} />
             <line x1={open.x} y1={yDim + 5} x2={open.x} y2={yDim + 11} />
           </g>
-          <g stroke={TOKEN.fg} strokeWidth={2} fill="none" data-scale-bar={bar.toFixed(1)}>
+          <g stroke={TOKEN.fg} strokeWidth={2} fill="none" data-scale-bar={String(Math.round(bar * 10) / 10)}>
             <line x1={8} y1={drawH - 12} x2={8 + bar} y2={drawH - 12} />
             <line x1={8} y1={drawH - 15} x2={8} y2={drawH - 9} />
             <line x1={8 + bar} y1={drawH - 15} x2={8 + bar} y2={drawH - 9} />
@@ -429,17 +429,37 @@ export function Inset({ width, height, left, run, point, frames, frame, plate, m
   );
 }
 
-/** The columns of the stage's drawing at a width [px]: the section, the magnified crushing zone and the size panel side by side on a desktop; on a phone the zone stacks under the panel. */
-export function stageColumns(width: number, height: number): { wide: boolean; panel: number; main: number; inset: number } {
+/**
+ * The columns of the stage's drawing at a width and a height [px]. Wide (640 px and more): the section with the callouts in its empty margins on
+ * the left, the magnified crushing zone beside it as the main drawing, at the full height of the region, and the size legend with its counts at
+ * the right. Narrow: the section and the size legend side by side with the callouts in the shell's header band above, and the zone stacked under
+ * the legend.
+ */
+/** The width of the column the callouts take at the left of the section on a desktop [px]. */
+export const CALLOUT_COLUMN = 212;
+
+export function stageColumns(width: number, height: number): { wide: boolean; panel: number; chamber: number; main: number; inset: number } {
   const panel = panelWidth(width);
-  if (width < 640) return { wide: false, panel, main: Math.max(80, width - panel), inset: panel };
+  if (width < 640) return { wide: false, panel, chamber: Math.max(80, width - panel), main: Math.max(80, width - panel), inset: panel };
+  // the section's column: the chamber at its scale with room for its labels on both sides, then the callouts' room on its right
+  const zRange = 560;
+  const chamber = Math.round(170 * Math.max(0.3, (height - 16) / zRange) + 2 * 92);
+  const main = chamber + CALLOUT_COLUMN;
   const drawH = height - insetHead(panel + 200);
-  const inset = Math.round(Math.max(200, Math.min(width - panel - 260, (drawH * 70) / 92 + 8)));
-  return { wide: true, panel, main: width - panel - inset - 12, inset };
+  const inset = Math.round(Math.max(220, Math.min(width - panel - main - 12, (drawH * 70) / 92 + 8)));
+  return { wide: true, panel, chamber, main: width - panel - inset - 12, inset };
 }
 
-/** The stage: the section cropped to where the spheres are, the magnified crushing zone and the size panel, with the callouts in the shell's header placement; the spheres come from `frames` at the stored frame below the cursor and the plate is interpolated at the cursor. */
-export function ReplayStage({ run, point, frames, cursor, callouts }: { run: DemRun; point: DemPoint; frames: DemFrames | null; cursor: number; callouts: CalloutSpec[] }) {
+interface StageProps {
+  run: DemRun;
+  point: DemPoint;
+  frames: DemFrames | null;
+  cursor: number;
+  callouts: CalloutSpec[];
+}
+
+/** The stage on a phone: the callouts in the shell's header band above the drawing, the zone stacked under the legend. */
+function NarrowStage({ run, point, frames, cursor, callouts }: StageProps) {
   const lang = useShellLang();
   const num = useNum();
   const palette = usePalette();
@@ -457,23 +477,77 @@ export function ReplayStage({ run, point, frames, cursor, callouts }: { run: Dem
         const tf = stageTransform(r.geometry, col.main, height, 8, bounds);
         const { node, subjects } = sectionLabels(tf, point, run, plate, col.main, height, NAMES[lang], num);
         const head = insetHead(col.inset);
-        // wide: the zone takes the height beside the section; narrow: it stacks under the size panel; a stage too short for it leaves it out
-        const insetH = col.wide ? height : height - SIZE_PANEL_H - 8;
+        // the zone stacks under the size panel; a stage too short for it leaves it out
+        const insetH = height - SIZE_PANEL_H - 8;
         const showInset = insetH - head >= INSET_MIN_PX;
-        const insetLeft = col.wide ? col.main + 6 : undefined;
         return {
           node: (
-            <div style={{ position: 'relative', width, height }} data-dem-stage="" data-frame={frame} data-layout={col.wide ? 'wide' : 'narrow'} data-inset-shown={showInset ? 'true' : 'false'}>
+            <div style={{ position: 'relative', width, height }} data-dem-stage="" data-frame={frame} data-layout="narrow" data-inset-shown={showInset ? 'true' : 'false'}>
               <ReplayCanvas width={col.main} height={height} run={run} point={point} frames={frames} frame={frame} tf={tf} plate={plate} />
               {node}
               <SizePanel width={col.panel} point={point} counts={counts} max={Math.max(1, ...r.count)} palette={palette} />
-              {showInset && <Inset width={col.inset} height={insetH} left={insetLeft} run={run} point={point} frames={frames} frame={frame} plate={plate} mainScale={tf.scale} />}
+              {showInset && <Inset width={col.inset} height={insetH} run={run} point={point} frames={frames} frame={frame} plate={plate} mainScale={tf.scale} />}
             </div>
           ),
           subjects,
         };
       }}
     />
+  );
+}
+
+/**
+ * The stage on a desktop: the whole height of the region goes to the drawing. The section stands on the left with the callouts of the shell's
+ * anchored placement in its empty margins (each with its leader to the subject it names), the magnified crushing zone is the main drawing in
+ * the middle at the full height, and the size legend with its counts is at the right.
+ */
+function WideStage({ run, point, frames, cursor, callouts }: StageProps) {
+  const lang = useShellLang();
+  const num = useNum();
+  const palette = usePalette();
+  const r = point.simulation.replay!;
+  const frame = frameBelow(r, cursor);
+  const plate = plateAt(r, cursor);
+  const counts = frames ? classCounts(frames, frame, point.feed_mm[0]) : new Array<number>(SIZE_CLASSES).fill(0);
+  const bounds = stageBounds(r.geometry, frames ? sphereTop(frames) : undefined);
+  return (
+    <Stage label={{ en: 'Particle replay in the jaw section', es: 'Repetición de partículas en la sección de la mandíbula' }}>
+      {({ width, height }) => {
+        const col = stageColumns(width, height);
+        const tf = stageTransform(r.geometry, col.chamber, height, 8, bounds);
+        const { node, subjects } = sectionLabels(tf, point, run, plate, col.chamber, height, NAMES[lang], num);
+        // the callouts are a column at the left of the section, in the shell's header placement: the cards stack, and each leader runs to the
+        // column's right edge at the height of the subject it names (the shell has no side placement, so the leader ends at the section's edge)
+        const items = callouts.map((c) => {
+          const sub = subjects.find((q) => q.id === c.id);
+          return toCallout(c, { x: 1, y: sub ? sub.y / Math.max(1, height) : 0.75 }, lang);
+        });
+        const left = CALLOUT_COLUMN;
+        return (
+          <div style={{ position: 'relative', width, height }} data-dem-stage="" data-frame={frame} data-layout="wide" data-inset-shown="true">
+            <div className="cdem-callout-host" style={{ position: 'absolute', left: 0, top: 0, width: CALLOUT_COLUMN, height }} data-callouts-wide="">
+              <SceneCallouts items={items} placement="header" />
+            </div>
+            <div style={{ position: 'absolute', left, top: 0, width: col.chamber, height }}>
+              <ReplayCanvas width={col.chamber} height={height} run={run} point={point} frames={frames} frame={frame} tf={tf} plate={plate} />
+              {node}
+            </div>
+            <Inset width={col.inset} height={height} left={left + col.chamber + 6} run={run} point={point} frames={frames} frame={frame} plate={plate} mainScale={tf.scale} />
+            <SizePanel width={col.panel} point={point} counts={counts} max={Math.max(1, ...r.count)} palette={palette} />
+          </div>
+        );
+      }}
+    </Stage>
+  );
+}
+
+/** The stage: the wide arrangement on a desktop, the stacked one on a phone; the spheres come from `frames` at the stored frame below the cursor and the plate is interpolated at the cursor. */
+export function ReplayStage(props: StageProps) {
+  const [ref, size] = useStageSize();
+  return (
+    <div ref={ref} style={{ width: '100%', height: '100%', minWidth: 0, minHeight: 0 }}>
+      {size.width > 0 && size.height > 0 && (size.width >= 640 ? <WideStage {...props} /> : <NarrowStage {...props} />)}
+    </div>
   );
 }
 
@@ -571,19 +645,20 @@ export function ReplayControls({ point, frame, reducedMotion, speed, onSpeed }: 
           ))}
         </select>
       </label>
-      {!allowed && (
-        <span className="cdem-note" data-reduced-motion-note="">
-          {t('Reduced motion is on: the replay does not play; step with the slider or the arrow keys.', 'Movimiento reducido activo: la repetición no se reproduce; avance con el control deslizante o las flechas.')}
-        </span>
-      )}
     </div>
   );
 }
 
 export { DEFAULT_SPEED };
 
+/** The reason Play is off under reduced motion, said beside the controls (the view writes it in its one line of notes). */
+export const REDUCED_NOTE: { en: string; es: string } = {
+  en: 'Reduced motion is on: the replay does not play; step with the slider or the arrow keys.',
+  es: 'Movimiento reducido activo: la repetición no se reproduce; avance con el control deslizante o las flechas.',
+};
+
 /** The card of the stage: its title, its takeaway line as the note, and what fills it; a frames file that is loading or failed is said in the stage's place. */
-export function StageCard({ title, note, stateKey, actions, children }: { title: BiText; note: BiText; stateKey?: string; actions?: ReactNode; children: ReactNode }) {
+export function StageCard({ title, note, stateKey, actions, children }: { title: BiText; note?: BiText; stateKey?: string; actions?: ReactNode; children: ReactNode }) {
   return (
     <PlotCard fill title={title} lane="replay" provenance="published" dataKey={stateKey} note={note} actions={actions}>
       <div className="cdem-stack" data-caos-flow="">

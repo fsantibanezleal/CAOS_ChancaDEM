@@ -61,7 +61,7 @@ import {
   type Num,
   type QuantitySeries,
 } from './demModel';
-import { FramesState, ReplayControls, ReplayStage, StageCard } from './demReplay';
+import { FramesState, REDUCED_NOTE, ReplayControls, ReplayStage, StageCard } from './demReplay';
 import { useNum, useT, useView } from './shared';
 
 const pick = (t: { en: string; es: string }, lang: 'en' | 'es'): string => t[lang];
@@ -119,7 +119,7 @@ function PointChoice({ run, pointId, onPick }: { run: DemRun; pointId: string; o
   return (
     <div className="cdem-controls cdem-points" role="group" aria-label={t('Operating point: the feed class of the test', 'Punto de operación: la clase de alimentación del ensayo')} data-point-choice="">
       {run.points.map((p) => (
-        <button key={p.id} type="button" className="btn" aria-pressed={p.id === pointId} data-point={p.id} data-run-status={p.simulation.status} onClick={() => onPick(p.id)}>
+        <button key={p.id} type="button" className="btn cdem-pointbtn" aria-pressed={p.id === pointId} data-point={p.id} data-run-status={p.simulation.status} onClick={() => onPick(p.id)}>
           {feedClassText(p.feed_class, num)} mm: {pick(runStateText(p.simulation, true), lang)}
         </button>
       ))}
@@ -264,7 +264,7 @@ function StatusLine({ run, point }: { run: DemRun; point: DemPoint }) {
   );
 }
 
-function MainRow({ run, point, frames, speed, onSpeed, reducedMotion, readiness, choice, cursor }: { run: DemRun; point: DemPoint; frames: Loaded<DemFrames>; speed: number; onSpeed: (s: number) => void; reducedMotion?: boolean; readiness: ReactNode; choice: ReactNode; cursor: number | null }) {
+function MainRow({ run, point, frames, speed, onSpeed, reducedMotion, choice, cursor }: { run: DemRun; point: DemPoint; frames: Loaded<DemFrames>; speed: number; onSpeed: (s: number) => void; reducedMotion?: boolean; choice: ReactNode; cursor: number | null }) {
   const lang = useShellLang();
   const num = useNum();
   const stateKey = useWorkbenchState()?.stateKey;
@@ -278,14 +278,17 @@ function MainRow({ run, point, frames, speed, onSpeed, reducedMotion, readiness,
     );
   }
   const frame = frameBelow(r, at);
-  const line = takeaway(point, run.bands, num);
   const ready = frames.state === 'ready' ? frames.data : null;
+  const reduced = reducedMotion ?? prefersReducedMotion();
   return (
-    <StageCard title={{ en: 'Laboratory jaw, not the selected case: particle replay', es: 'Mandíbula de laboratorio, no el caso elegido: repetición de partículas' }} note={line} stateKey={stateKey}>
-      {choice}
-      <ReplayControls point={point} frame={frame} reducedMotion={reducedMotion} speed={speed} onSpeed={onSpeed} />
-      <p className="cdem-status" data-stored-rate="">
+    <StageCard title={{ en: 'Laboratory jaw, not the selected case: particle replay', es: 'Mandíbula de laboratorio, no el caso elegido: repetición de partículas' }} stateKey={stateKey}>
+      <div className="cdem-stage-bar">
+        {choice}
+        <ReplayControls point={point} frame={frame} reducedMotion={reducedMotion} speed={speed} onSpeed={onSpeed} />
+      </div>
+      <p className="cdem-status" data-stored-rate="" data-reduced-motion-note={reduced ? '' : undefined}>
         {pick(storedRateText(r), lang)}
+        {reduced ? ` ${pick(REDUCED_NOTE, lang)}` : ''}
       </p>
       {frames.state === 'loading' || frames.state === 'unavailable' || frames.state === 'error' ? (
         <FramesState frames={frames} />
@@ -295,8 +298,21 @@ function MainRow({ run, point, frames, speed, onSpeed, reducedMotion, readiness,
         </div>
       )}
       <StatusLine run={run} point={point} />
-      {readiness}
     </StageCard>
+  );
+}
+
+/** The takeaway sentence and the readiness line: the first block after the stage card. */
+function AfterStage({ run, point, readiness }: { run: DemRun; point: DemPoint; readiness: ReactNode }) {
+  const lang = useShellLang();
+  const num = useNum();
+  return (
+    <div className="cdem-after-stage" data-after-stage="">
+      <p className="cdem-takeaway" data-takeaway="">
+        {pick(takeaway(point, run.bands, num), lang)}
+      </p>
+      {readiness}
+    </div>
   );
 }
 
@@ -359,14 +375,20 @@ export const sideOffset = (side: 'measurement' | 'simulation' | 'population_bala
 export const CATEGORY = { dx: 0.17, half: 0.3 } as const;
 
 /**
- * What the comparison draws over the chart, in the plot's own scales (`at` maps a data point to pixels): the measurement's band shaded, the
- * standard error of the particle simulation and the spread of the population balance as bars, and, for a side that states no value, the text
- * "no value" at its feed class in a strip under the axis, in the colour of the side, with its reason as the title. A side with no value has no
- * mark inside the plotting range: the strip lies below the baseline (`yStrip` pixels under it).
+ * What the comparison draws over the chart, in the plot's own scales (`at` maps a data point to pixels): the measurement's band shaded and the
+ * standard error of the particle simulation and the spread of the population balance as bars. A side that states no value has no mark here at
+ * all: it is written in the strip under the chart (NoValueStrip), at the horizontal position of its feed class, which this overlay reports
+ * (`onXs`, in pixels of the layer, the same left edge as the strip).
  */
-export function ComparisonOverlay({ series, at, lang, yStrip = 36 }: { series: QuantitySeries; at: At; lang: 'en' | 'es'; yStrip?: number }) {
+export function ComparisonOverlay({ series, at, onXs }: { series: QuantitySeries; at: At; onXs?: (xs: number[]) => void }) {
   const rows = series.points.map((p, i) => ({ p, c: i + 1 }));
-  const base = at({ x: 1, y: 0 }).y;
+  const xs = rows.map(({ c }) => at({ x: c, y: 0 }).x);
+  const key = xs.map((v) => String(Math.round(v * 10) / 10)).join(",");
+  useEffect(() => {
+    onXs?.(xs);
+    // reported when the positions change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
   return (
     <g data-comparison-overlay={series.quantity}>
       {rows.map(({ p, c }) => {
@@ -380,24 +402,41 @@ export function ComparisonOverlay({ series, at, lang, yStrip = 36 }: { series: Q
         <g key={`w${p.id}`}>
           {p.simulation.lo !== null && p.simulation.hi !== null && <Whisker x={c + sideOffset('simulation', CATEGORY.dx)} lo={p.simulation.lo} hi={p.simulation.hi} color={`var(${COLORS.simulation})`} at={at} />}
           {p.population_balance.lo !== null && p.population_balance.hi !== null && <Whisker x={c + sideOffset('population_balance', CATEGORY.dx)} lo={p.population_balance.lo} hi={p.population_balance.hi} color={`var(${COLORS.population_balance})`} at={at} />}
-          {(['simulation', 'population_balance'] as const).map((side, k) => {
-            const m = p[side];
-            if (m.value !== null || m.reason === null) return null;
-            const x = at({ x: c, y: 0 }).x;
-            return (
-              <text key={`n${side}`} data-no-value={`${p.id}:${side}`} x={x} y={base + yStrip + k * 13} textAnchor="middle" fontSize={11} fill={`var(${COLORS[side]})`} style={{ fontFamily: 'var(--font-sans)' }}>
-                {lang === 'es' ? 'sin valor' : 'no value'}
-                <title>{`${pick(SIDE_NAME[side], lang)}: ${pick(m.reason, lang)}`}</title>
-              </text>
-            );
-          })}
         </g>
       ))}
     </g>
   );
 }
 
-function ComparisonChart({ series }: { series: QuantitySeries }) {
+/** The sides that state no value, in the order they are written: for each feed class the particle simulation first, then the population balance. */
+export function missingSides(series: QuantitySeries): { id: string; c: number; side: 'simulation' | 'population_balance'; row: number; reason: Text }[] {
+  return series.points.flatMap((p, i) => (['simulation', 'population_balance'] as const).flatMap((side) => (p[side].value === null && p[side].reason !== null ? [{ id: `${p.id}:${side}`, c: i + 1, side, row: 0, reason: p[side].reason as Text }] : []))).map((m) => ({ ...m, row: m.side === 'simulation' ? 0 : 1 }));
+}
+
+/** The height of one row of the strip [px]. */
+export const STRIP_ROW = 14;
+
+/**
+ * The strip under a comparison chart that says "no value" for each side that states none, at the horizontal position of its feed class (`xs`,
+ * pixels from the chart's left edge) and in the colour of the side, one row per side so two sides missing at one feed never touch. It is a row
+ * of its own under the chart, so it overlaps no tick label, axis title or key, and no mark of a null lies inside the plotting range.
+ */
+export function NoValueStrip({ series, xs, lang }: { series: QuantitySeries; xs: number[] | null; lang: 'en' | 'es' }) {
+  const miss = missingSides(series);
+  if (!miss.length || !xs) return null;
+  const rows = Math.max(...miss.map((m) => m.row)) + 1;
+  return (
+    <div className="cdem-strip" data-no-value-strip={series.quantity} style={{ position: 'relative', height: rows * STRIP_ROW + 2 }}>
+      {miss.map((m) => (
+        <span key={m.id} className="cdem-strip-text" data-no-value={m.id} title={`${pick(SIDE_NAME[m.side], lang)}: ${pick(m.reason, lang)}`} style={{ position: 'absolute', left: xs[m.c - 1], top: m.row * STRIP_ROW, transform: 'translateX(-50%)', color: `var(${COLORS[m.side]})` }}>
+          {lang === 'es' ? 'sin valor' : 'no value'}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function ComparisonChart({ series, onXs }: { series: QuantitySeries; onXs: (xs: number[]) => void }) {
   const lang = useShellLang();
   const num = useNum();
   const pts = series.points.map((p, i) => ({ ...p, c: i + 1 }));
@@ -421,13 +460,13 @@ function ComparisonChart({ series }: { series: QuantitySeries }) {
   if (paperRows.length) list.push({ id: 'paper', label: { en: 'The paper’s own simulation', es: 'La simulación propia del artículo' }, values: paperRows.map((p) => p.paper!.value), x: paperRows.map((p) => p.c - 2 * CATEGORY.dx), mode: 'points', size: 9, color: COLORS.paper });
   // a side with no value has no mark in the plot: its legend entry has no values, and the text "no value" stands at its feed class under the axis
   const anyMissing = pts.some((p) => (['simulation', 'population_balance'] as const).some((side) => p[side].value === null && p[side].reason !== null));
-  if (anyMissing) list.push({ id: 'no-value', label: { en: 'No value (written under the axis, reason in the note)', es: 'Sin valor (escrito bajo el eje, motivo en la nota)' }, values: pts.map(() => null), mode: 'points', size: 6, color: '--color-fg-faint' });
+  if (anyMissing) list.push({ id: 'no-value', label: { en: 'No value (written under the chart, reason in the note)', es: 'Sin valor (escrito bajo el gráfico, motivo en la nota)' }, values: pts.map(() => null), mode: 'points', size: 6, color: '--color-fg-faint' });
   const ticks = pts.map((p) => ({ value: p.c, label: { en: `${feedClassText(p.feedClass, num)} mm`, es: `${feedClassText(p.feedClass, num)} mm` } as BiText }));
   const name = pick(series.name, lang);
   const unit = pick(series.unit, lang);
   const bandPct = num(series.points[0].band * 100, { digits: 2 });
   return (
-    <ChartCallouts callouts={[]} points={[]} frame={{ x: xRange, y: [0, yMax] }} overlay={(at) => <ComparisonOverlay series={series} at={at} lang={lang} />}>
+    <ChartCallouts callouts={[]} points={[]} frame={{ x: xRange, y: [0, yMax] }} overlay={(at) => <ComparisonOverlay series={series} at={at} onXs={onXs} />}>
       <UPlotChart
         title={{ en: `${series.name.en} by feed class`, es: `${series.name.es} por clase de alimentación` }}
         height="fill"
@@ -446,6 +485,7 @@ function ComparisonCard({ run, q, pointId }: { run: DemRun; q: ChartQuantity; po
   const stateKey = useWorkbenchState()?.stateKey;
   const series = comparisonSeries(run, q, num);
   const t = (en: string, es: string) => (lang === 'es' ? es : en);
+  const [xs, setXs] = useState<number[] | null>(null);
   const noValues = series.points.flatMap((p) => (['simulation', 'population_balance'] as const).flatMap((side) => (p[side].value === null && p[side].reason ? [`${pick(SIDE_NAME[side], lang)}, ${feedClassText(p.feedClass, num)} mm: ${pick(p[side].reason as Text, lang)}`] : [])));
   const bandNote =
     q === 'p80'
@@ -456,8 +496,9 @@ function ComparisonCard({ run, q, pointId }: { run: DemRun; q: ChartQuantity; po
     <PlotCard title={{ en: `${series.name.en} (${series.unit.en}) against the feed`, es: `${series.name.es} (${series.unit.es}) contra la alimentación` }} lane="replay" provenance="published" dataKey={stateKey}>
       <div data-comparison={q} className="cdem-comparison">
         <div className="cdem-comparison-chart">
-          <ComparisonChart series={series} />
+          <ComparisonChart series={series} onXs={setXs} />
         </div>
+        <NoValueStrip series={series} xs={xs} lang={lang} />
         <ul className="cdem-sentences" data-sentences={q}>
           {run.points.map((p, i) => (
             <li key={p.id} data-point={p.id} aria-current={p.id === pointId ? 'true' : undefined}>
@@ -473,7 +514,7 @@ function ComparisonCard({ run, q, pointId }: { run: DemRun; q: ChartQuantity; po
         )}
         {noValues.length > 0 && (
           <p className="caos-plot-note" data-no-value-reasons="">
-            {t('No value (written under the axis): ', 'Sin valor (escrito bajo el eje): ')}
+            {t('No value (written under the chart): ', 'Sin valor (escrito bajo el gráfico): ')}
             {noValues.join('; ')}.
           </p>
         )}
@@ -563,7 +604,7 @@ export function VerdictTable({ run, point }: { run: DemRun; point: DemPoint }) {
                     {pick(pairTitle(r.pair), lang)}
                   </th>
                 )}
-                <td data-label={head[1]}>{pick(QUANTITY_NAME[r.quantity], lang)}</td>
+                <td data-label={head[1]} className="cdem-vt-qty">{pick(QUANTITY_NAME[r.quantity], lang)}</td>
                 <td data-label={head[2]} className="cdem-vt-verdict">
                   <span aria-hidden="true">{VERDICT_MARK[r.state]} </span>
                   {pick(verdictWord(r.state), lang)}
@@ -731,11 +772,11 @@ export function DemBody({ run, readiness, frames, initialPoint, initialCursor, r
                   onSpeed={setSpeed}
                   reducedMotion={reducedMotion}
                   cursor={cursor}
-                  readiness={readiness !== undefined ? <NoteLine view={view} lang={lang} /> : null}
                   choice={<PointChoice run={run} pointId={point.id} onPick={choosePoint} />}
                 />
               </div>
               <div className="cdem-dem-rest cdem-reveal" data-on={on(2)}>
+                <AfterStage run={run} point={point} readiness={readiness !== undefined ? <NoteLine view={view} lang={lang} /> : null} />
                 <LabNote run={run} />
                 {cursor !== null && <SeriesCard point={point} cursor={cursor} onPick={(stroke) => scrub(cursorOfStrokeIndex(point.simulation, point.simulation.series.stroke.indexOf(stroke)) ?? stroke)} />}
               </div>
