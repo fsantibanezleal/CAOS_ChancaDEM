@@ -8,9 +8,7 @@
 //   node scripts/check_story_mode.mjs            serves dist/ on a free loopback port
 //   node scripts/check_story_mode.mjs <origin>   checks a running build (a preview or a deployed origin)
 import assert from 'node:assert/strict';
-import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { createServer } from 'node:net';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -30,37 +28,26 @@ if (!Array.isArray(declared) || declared.length === 0 || declared.some((r, i) =>
 }
 const { chromium } = await import('playwright');
 
-let serverProcess;
-let base = process.argv[2] ? process.argv[2].replace(/\/+$/, '') : null;
-if (!base) {
-  const portServer = createServer();
-  await new Promise((resolve, reject) => { portServer.once('error', reject); portServer.listen(0, '127.0.0.1', resolve); });
-  const address = portServer.address();
-  if (!address || typeof address === 'string') throw new Error('Could not allocate the story smoke server port');
-  const port = address.port;
-  await new Promise((resolve) => portServer.close(resolve));
-  base = `http://127.0.0.1:${port}`;
-  serverProcess = spawn(process.execPath, [join(here, 'serve.mjs'), '--host', '127.0.0.1', '--port', String(port)], { cwd: join(here, '..'), stdio: 'ignore' });
-  let ready = false;
-  for (let attempt = 0; attempt < 60; attempt += 1) {
-    if (serverProcess.exitCode !== null) throw new Error(`Story smoke server exited with ${serverProcess.exitCode}`);
-    try { const response = await fetch(base); if (response.ok) { ready = true; break; } } catch { /* wait for startup */ }
-    await new Promise((resolve) => setTimeout(resolve, 250));
-  }
-  if (!ready) { serverProcess.kill(); throw new Error('Story smoke server did not become ready'); }
-}
-const basePath = new URL(base).pathname.replace(/\/+$/, '');
-/** The route a link or a URL addresses, without the origin, the base path and the query. */
-const routeOf = (href) => {
-  const path = new URL(href, `${base}/`).pathname.replace(/\/+$/, '') || '/';
-  return basePath && path.startsWith(basePath) ? path.slice(basePath.length) || '/' : path;
-};
-
-const errors = [];
-// the check talks only to a loopback server: no proxy resolution, which on a machine that auto-detects its proxy stalls the first
-// request of every new browser context about 21 s (CAOS_ChancaDEM 0.13.000, CAOS_MANAGE shell known defect 69)
-const browser = await chromium.launch({ headless: true, args: ['--no-proxy-server'] });
+let server;
+let browser;
 try {
+  let base = process.argv[2] ? process.argv[2].replace(/\/+$/, '') : null;
+  if (!base) {
+    const { servePages } = await import('@fasl-work/caos-app-shell/serve');
+    server = await servePages(join(here, '..', 'dist'), process.env.VITE_BASE || '/', 0);
+    base = server.url.replace(/\/+$/, '');
+  }
+  const basePath = new URL(base).pathname.replace(/\/+$/, '');
+  /** The route a link or a URL addresses, without the origin, the base path and the query. */
+  const routeOf = (href) => {
+    const path = new URL(href, `${base}/`).pathname.replace(/\/+$/, '') || '/';
+    return basePath && path.startsWith(basePath) ? path.slice(basePath.length) || '/' : path;
+  };
+
+  const errors = [];
+  // the check talks only to a loopback server: no proxy resolution, which on a machine that auto-detects its proxy stalls the first
+  // request of every new browser context about 21 s (CAOS_ChancaDEM 0.13.000, CAOS_MANAGE shell known defect 69)
+  browser = await chromium.launch({ headless: true, args: ['--no-proxy-server'] });
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   page.on('pageerror', (error) => errors.push(error.message));
   for (const route of declared) {
@@ -90,6 +77,9 @@ try {
   assert.deepEqual(errors, [], 'no uncaught page errors');
   console.log(`check_story_mode: ${declared.length} declared story steps (${declared.join(', ')}): each renders its numbered step and links every step directly; reader input pauses playback; the exit returns to the App with its state.`);
 } finally {
-  await browser.close();
-  serverProcess?.kill();
+  try {
+    await browser?.close();
+} finally {
+    await server?.close();
+  }
 }
