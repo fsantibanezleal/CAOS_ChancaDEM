@@ -528,7 +528,7 @@ describe('B1: the verdict table keeps its summary and its verdict in view', () =
 describe('B2: a side with no value has no mark inside the plotting range', () => {
   const at = (p: { x: number; y: number }) => ({ x: 60 + p.x * 100, y: 300 - p.y * 0.2 });
   const overlay = (q: 'throughput' | 'net_power' | 'p80') => renderToStaticMarkup(<svg><ComparisonOverlay series={comparisonSeries(run, q)} at={at} /></svg>);
-  it('adversarial: a side with no value yields no mark inside the plotting range of the rendered overlay: the overlay draws none, and the text stands in the strip under the chart', () => {
+  it('adversarial: a side with no value yields no mark inside the plotting range of the rendered overlay: the overlay draws nothing for it, no mark and no text of its own', () => {
     for (const q of ['throughput', 'net_power', 'p80'] as const) {
       const svg = overlay(q);
       expect(svg).not.toContain('data-no-value');
