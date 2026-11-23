@@ -418,7 +418,7 @@ export const CATEGORY = { dx: 0.17, half: 0.3 } as const;
 /**
  * What the comparison draws over the chart, in the plot's own scales (`at` maps a data point to pixels): the measurement's band shaded and the
  * standard error of the particle simulation and the spread of the population balance as bars. A side that states no value has no mark here at
- * all: it is said in words as the chart's own axis note (noValueNote), directly under the tick labels and above the key.
+ * all: it is said in words in the chart's own note (noValueNote), a line of its own under the chart.
  */
 export function ComparisonOverlay({ series, at }: { series: QuantitySeries; at: At }) {
   const rows = series.points.map((p, i) => ({ p, c: i + 1 }));
@@ -526,7 +526,7 @@ function ComparisonCard({ run, q, pointId }: { run: DemRun; q: ChartQuantity; po
         )}
         {noValues.length > 0 && (
           <p className="caos-plot-note" data-no-value-reasons="">
-            {t('No value (said under the tick labels): ', 'Sin valor (dicho bajo las marcas del eje): ')}
+            {t('No value (the line under the chart): ', 'Sin valor (la línea bajo el gráfico): ')}
             {noValues.join('; ')}.
           </p>
         )}

@@ -238,7 +238,7 @@ describe('DM-014: the comparison, the distribution, the verdicts and the sources
     }
     expect(text).toContain('Shaded: the measurement plus or minus the 10 percent band.');
     expect(text).toContain('a sensitivity band and not a confidence interval');
-    expect(text).toContain('No value (said under the tick labels):');
+    expect(text).toContain('No value (the line under the chart):');
   });
   it('a side that states no value is named with its reason, and no sentence of any chart reads as agreement for a verdict that is not met', () => {
     expect(text).toContain('population balance, 63/52 mm: no work index of the ore is published, so the population balance states no net power');
@@ -545,7 +545,7 @@ describe('B2: a side with no value has no mark inside the plotting range', () =>
     expect(src).not.toContain("id: 'no-value'");
     expect(src).not.toContain('NoValueStrip');
     expect(textOf(render())).toContain('population balance, 63/52 mm: no work index of the ore is published');
-    expect(textOf(render())).toContain('No value (said under the tick labels):');
+    expect(textOf(render())).toContain('No value (the line under the chart):');
   });
   it('a side with a value keeps its bars: the measurement band, the standard error and the spread are drawn at the feed class position', () => {
     const svg = overlay('throughput');
