@@ -71,7 +71,7 @@ const run = JSON.parse(readFileSync(new URL('jaw-lab.json', provider), 'utf8')) 
 type Mutable<T> = { -readonly [K in keyof T]: Mutable<T[K]> };
 const copy = (): Mutable<DemRun> => JSON.parse(JSON.stringify(run)) as Mutable<DemRun>;
 const bytesOf = (p: DemPoint): ArrayBuffer => {
-  const b = readFileSync(new URL(`${p.simulation.replay!.file.replace(/^dem\//, '')}`, provider));
+  const b = readFileSync(new URL(`${p.simulation.replay!.file.slice('dem/'.length)}`, provider));
   return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer;
 };
 const [coarse, middle, fine] = run.points;
@@ -130,7 +130,7 @@ describe('DM-010 on the web side: the replay file decodes to the recorded frames
     expect(f.data[2]).toBeCloseTo(e.z_range_mm[1], 3);
     const src = readFileSync(new URL('./demModel.ts', import.meta.url), 'utf8');
     expect(src).toMatch(/getUint16\(at, true\)/);
-    expect(src).not.toMatch(/new Uint16Array\(/);
+    expect(src).not.toContain('new Uint16Array(');
   });
 });
 

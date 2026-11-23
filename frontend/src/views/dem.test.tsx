@@ -9,10 +9,10 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { Loaded } from '../api/artifacts';
 import type { DemRun, Readiness } from '../lib/contract.types';
 import { toCallout } from './callouts';
-import { bareReason, calloutSpecs, CATEGORY, ComparisonOverlay, cursorMark, DemBody, DemUnavailable, DemUnreadable, LabNote, NoValueStrip, pointStages, Q, sideOffset, Sources, VerdictTable } from './dem';
+import { bareReason, calloutSpecs, windowLabelSide, CATEGORY, ComparisonOverlay, cursorMark, DemBody, DemUnavailable, DemUnreadable, LabNote, NoValueStrip, pointStages, Q, sideOffset, Sources, VerdictTable } from './dem';
 import { comparisonSeries, decodeFrames, frameAt, frameLabelText, nearerSentence, openingCursor, plain, type DemFrames, type DemPoint } from './demModel';
 import { FramesState, NAMES, panelWidth, plateExtremes, drawReplay, stageColumns, sphereTop } from './demReplay';
-import { decimalProblems, labelOverlapProblems, noValueStripProblems, nullMarkProblems, stageGeometryProblems, stageShare, stageShareProblems, verdictLayoutProblems } from './dem.rules.mjs';
+import { chartOverlapProblems, decimalProblems, labelOverlapProblems, noValueStripProblems, nullMarkProblems, stageGeometryProblems, stageShare, stageShareProblems, verdictLayoutProblems } from './dem.rules.mjs';
 import { subOfUrl, ViewContext, type ViewCtx } from './shared';
 import { ValidationGroup } from './validation';
 
@@ -24,7 +24,7 @@ type Mutable<T> = { -readonly [K in keyof T]: Mutable<T[K]> };
 const copy = <T,>(v: T): Mutable<T> => JSON.parse(JSON.stringify(v)) as Mutable<T>;
 const framesOf = (p: DemPoint): Loaded<DemFrames> => {
   const r = p.simulation.replay!;
-  const b = readFileSync(new URL(`dem/${r.file.replace(/^dem\//, '')}`, provider));
+  const b = readFileSync(new URL(`dem/${r.file.slice('dem/'.length)}`, provider));
   return { state: 'ready', data: decodeFrames(b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer, r) };
 };
 const setLang = (lang: 'en' | 'es') => {
@@ -160,7 +160,7 @@ describe('DM-013: one stroke cursor for the stage and the charts, and reduced mo
   it('a cursor chosen on a chart is the stage’s cursor: the page writes both from the one linked-view store of the view', () => {
     const src = readFileSync(new URL('./dem.tsx', import.meta.url), 'utf8');
     expect(src).toMatch(/useLinkedCursor\(\)/);
-    expect(src).toMatch(/onPick=\{\(stroke\) => scrub\(cursorOfStrokeIndex\(/);
+    expect(src).toContain('onPick={(stroke) => scrub(cursorOfStrokeIndex(');
     expect(src).toMatch(/onPick=\{pick\}/);
     expect(src).toMatch(/marks=\{marks\}/);
     expect(cursorMark(37.5).x).toBe(37.5);
@@ -350,7 +350,7 @@ describe('the paper’s own simulation, the scope of the verdicts and the spread
   });
   it('the stage carries a magnified inset, framed and labelled, with its own scale bar, that is left out when the stage is too short', () => {
     const src = readFileSync(new URL('./demReplay.tsx', import.meta.url), 'utf8');
-    expect(src).toMatch(/Magnified \$\{num\(mag/);
+    expect(src).toContain('Magnified ${num(mag');
     expect(src).toMatch(/data-scale-bar/);
     expect(src).toMatch(/showInset = insetH - head >= INSET_MIN_PX/);
     expect(src).toMatch(/inset && 'dem-inset'|'dem-inset'/);
@@ -583,7 +583,7 @@ describe('B3: the three feed classes are equally spaced categories labelled with
   it('the positions are 1, 2 and 3 with the sides a fixed step apart, so no two labels can meet', () => {
     const src = readFileSync(new URL('./dem.tsx', import.meta.url), 'utf8');
     expect(src).toMatch(/const pts = series\.points\.map\(\(p, i\) => \(\{ \.\.\.p, c: i \+ 1 \}\)\)/);
-    expect(src).toMatch(/ticks = pts\.map\(\(p\) => \(\{ value: p\.c, label:/);
+    expect(src).toContain('ticks = pts.map((p) => ({ value: p.c, label:');
     expect(src).toMatch(/xRange: \[number, number\] = \[0\.45, 3\.55\]/);
     expect(CATEGORY.dx * 2).toBeLessThan(CATEGORY.half * 2);
     expect(sideOffset('simulation', CATEGORY.dx)).toBeCloseTo(-0.17, 9);
@@ -638,7 +638,7 @@ describe('M3: colour by meaning', () => {
     expect(src).toMatch(/id: 'held'.*color: '--color-fg-subtle'/);
     expect(src).not.toMatch(/color: '--color-(good|warn|bad)'/);
     const rep = readFileSync(new URL('./demReplay.tsx', import.meta.url), 'utf8');
-    expect(rep).toMatch(/SIZE_TOKENS\.map\(\(t\) => resolveToken\(t/);
+    expect(rep).toContain('SIZE_TOKENS.map((t) => resolveToken(t');
     expect(rep).not.toMatch(/--color-step/);
   });
 });
@@ -679,7 +679,7 @@ describe('M5: a change of operating point is a staged transition, instant under 
   });
   it('the view runs it on a change of point and passes the reduced-motion preference', () => {
     const src = readFileSync(new URL('./dem.tsx', import.meta.url), 'utf8');
-    expect(src).toMatch(/runStagedTransition\(pointStages\(setStep\), \{ reducedMotion: reducedMotion \?\? prefersReducedMotion\(\)/);
+    expect(src).toContain('runStagedTransition(pointStages(setStep), { reducedMotion: reducedMotion ?? prefersReducedMotion()');
     expect(src).toMatch(/setStep\(0\);\s*setPointId\(id\)/);
     expect(css).toMatch(/\.cdem-reveal\[data-on='false'\] \{\s*opacity: 0;/);
   });
@@ -810,7 +810,8 @@ describe('F1: the quotes of the quoted English blocks are real characters', () =
     expect(stylesheet).toMatch(/quotes: "\\201C" "\\201D";/);
     for (const f of ['dem.tsx', 'demModel.ts', 'demReplay.tsx', 'dem.browser.mjs', 'dem.rules.mjs']) expect(readFileSync(new URL(`./${f}`, import.meta.url), 'utf8'), f).not.toMatch(C1);
     expect(stylesheet).not.toMatch(C1);
-    expect(stylesheet).not.toMatch(/\\2[0-9a-fA-F]{2}(?![0-9a-fA-F])(?!["'])/);
+    // every backslash of the stylesheet starts one of the two quote escapes and nothing else
+    expect(stylesheet.split(String.fromCharCode(92)).slice(1).map((piece) => piece.slice(0, 4))).toEqual(['201C', '201D']);
     expect(String.fromCharCode(0x201c)).toBe('\u201C');
   });
   it('the quoted block is a q element marked as English, whose quotes the stylesheet supplies, and no rendered text of the view holds a control character', () => {
@@ -886,5 +887,36 @@ describe('F4: the stage is composed so the drawing is what the first screen show
     expect(stageGeometryProblems({ ...good, zone: { height: 210 } }, vp)[0]).toContain('magnified zone');
     expect(stageGeometryProblems({ ...good, section: { height: 230 } }, vp)[0]).toContain('section');
     expect(stageGeometryProblems({ ...good, card: { width: 640, height: 640 } }, vp)[0]).toContain('stage card');
+  });
+});
+
+describe('F5: the two per-stroke charts stack on a phone, each with its own box', () => {
+  it('adversarial: two chart roots whose boxes overlap are reported, with both named; disjoint ones pass', () => {
+    const power = { id: 'series#0', box: { left: 16, right: 374, top: 1957, bottom: 2340 } };
+    const mass = { id: 'series#1', box: { left: 16, right: 374, top: 2225, bottom: 2428 } };
+    const p = chartOverlapProblems([power, mass]);
+    expect(p).toHaveLength(1);
+    expect(p[0]).toContain('series#0');
+    expect(p[0]).toContain('series#1');
+    expect(chartOverlapProblems([power, { ...mass, box: { ...mass.box, top: 2350, bottom: 2640 } }])).toEqual([]);
+    expect(chartOverlapProblems([power, { ...mass, box: { left: 400, right: 780, top: 1957, bottom: 2340 } }])).toEqual([]);
+    expect(chartOverlapProblems([power, mass, { id: 'c', box: { left: 0, right: 390, top: 2300, bottom: 2500 } }])).toHaveLength(3);
+  });
+  it('the stacked cells keep the floor of the callout host under the first chart, so the first chart cannot spill over the second', () => {
+    expect(css).toMatch(/\.cdem-series-cell \{\s*height: auto;\s*min-height: 27rem;/);
+    expect(css).toContain('min-height: max(26rem');
+  });
+  it('the window label stands at the inside edge of the band farther from the cursor, so it never sits under the cursor label', () => {
+    expect(windowLabelSide(36.5, 65.5, 37)).toBe('right');
+    expect(windowLabelSide(36.5, 65.5, 65)).toBe('left');
+    expect(windowLabelSide(36.5, 65.5, 55)).toBe('left');
+    const src = readFileSync(new URL('./dem.tsx', import.meta.url), 'utf8');
+    expect(src).toMatch(/data-window-label=\{side\}/);
+    expect(src).toMatch(/cursor=\{cursor\} label=/);
+  });
+  it('the browser script measures every chart root of the view at both sizes for the three points', () => {
+    const b = readFileSync(new URL('./dem.browser.mjs', import.meta.url), 'utf8');
+    expect(b).toContain('chartOverlapProblems');
+    expect(b).toContain(".cdem-dem .uplot");
   });
 });

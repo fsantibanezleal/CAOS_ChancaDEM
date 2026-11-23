@@ -75,6 +75,23 @@ export function stageShareProblems(stage, viewport, min = 0.6) {
 export const stageShare = (stage, viewport) => (stage.width * stage.height) / (viewport.width * viewport.height);
 
 /**
+ * F5: no two chart roots of the view overlap: every pair of boxes (the `.uplot` roots, each with its plot, tick labels, axis title, key and hint) is disjoint.
+ * @param {{ id: string, box: Box }[]} roots
+ * @returns {string[]}
+ */
+export function chartOverlapProblems(roots) {
+  const out = [];
+  for (let i = 0; i < roots.length; i++) {
+    for (let j = i + 1; j < roots.length; j++) {
+      const a = roots[i].box;
+      const b = roots[j].box;
+      if (a.left < b.right - TOL && b.left < a.right - TOL && a.top < b.bottom - TOL && b.top < a.bottom - TOL) out.push(`the chart ${roots[i].id} (${Math.round(a.top)} to ${Math.round(a.bottom)} px) and the chart ${roots[j].id} (${Math.round(b.top)} to ${Math.round(b.bottom)} px) overlap`);
+    }
+  }
+  return out;
+}
+
+/**
  * M2: on the Spanish page no number is written with a decimal point outside the blocks marked as the document's or the package's own English
  * words. A version or a section number with two dots, a DOI and a thousands group (2.167) are not decimals (the shell's gate reads them the same way).
  * @param {{ text: string, quoted: boolean }[]} texts the text nodes of the view with whether each is inside a block marked lang="en"

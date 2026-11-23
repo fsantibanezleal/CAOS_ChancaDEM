@@ -160,14 +160,14 @@ describe('the particle-simulation document and its replay files', () => {
     expect(asked.some((u) => u.includes('jaw-lab.json'))).toBe(false);
   });
   it('a replay file is fetched under the release version and decoded to its frames, with the length of the document', async () => {
-    const asked = binaryHost({ 'readiness.json': readiness(row('dem-run', 'partial')) }, { [coarse.file]: { body: framesBytes(coarse.file.replace(/^dem\//, '')) } });
+    const asked = binaryHost({ 'readiness.json': readiness(row('dem-run', 'partial')) }, { [coarse.file]: { body: framesBytes(coarse.file.slice('dem/'.length)) } });
     const f = await loadDemFrames(index(files), coarse);
     expect(f.frames).toBe(coarse.frames);
     expect(f.offsets[f.frames]).toBe(coarse.spheres);
     expect(asked.find((u) => u.includes('.frames.bin'))).toMatch(/\/data\/dem\/jaw-lab-63-52\.frames\.bin\?v=test-version$/);
   });
   it('adversarial: a file of another length than the document names is refused with both lengths, and nothing is decoded', async () => {
-    const short = framesBytes(coarse.file.replace(/^dem\//, '')).slice(0, 1000);
+    const short = framesBytes(coarse.file.slice('dem/'.length)).slice(0, 1000);
     binaryHost({ 'readiness.json': readiness(row('dem-run', 'partial')) }, { [coarse.file]: { body: short } });
     const e = await loadDemFrames(index(files), coarse).catch((x: unknown) => x);
     expect(e).toBeInstanceOf(ArtifactError);
@@ -181,7 +181,7 @@ describe('the particle-simulation document and its replay files', () => {
     await expect(loadDemFrames(index(files), coarse)).rejects.toThrow(/jaw-lab-63-52\.frames\.bin: HTTP 404/);
   });
   it('adversarial: a file the index does not declare is never asked for', async () => {
-    const asked = binaryHost({ 'readiness.json': readiness(row('dem-run', 'partial')) }, { [coarse.file]: { body: framesBytes(coarse.file.replace(/^dem\//, '')) } });
+    const asked = binaryHost({ 'readiness.json': readiness(row('dem-run', 'partial')) }, { [coarse.file]: { body: framesBytes(coarse.file.slice('dem/'.length)) } });
     const e = await loadDemFrames(index(['dem/jaw-lab.json']), coarse).catch((x: unknown) => x);
     expect(e).toBeInstanceOf(ArtifactUnavailable);
     expect(asked.some((u) => u.includes('.frames.bin'))).toBe(false);

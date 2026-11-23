@@ -177,7 +177,7 @@ function StrokeSeries({ point, cursor, onPick }: { point: DemPoint; cursor: numb
           callouts={[]}
           points={[]}
           frame={{ x: x.range, y: [pLo, pHi] }}
-          overlay={w ? (at) => <WindowBand at={at} from={w.first_stroke - 0.5} to={w.last_stroke + 0.5} yTop={pHi} yBottom={pLo} label={lang === 'es' ? 'ventana estacionaria' : 'steady window'} /> : undefined}
+          overlay={w ? (at) => <WindowBand at={at} from={w.first_stroke - 0.5} to={w.last_stroke + 0.5} yTop={pHi} yBottom={pLo} cursor={cursor} label={lang === 'es' ? 'ventana estacionaria' : 'steady window'} /> : undefined}
         >
           <UPlotChart
             title={{ en: 'Plate power per stroke, with the steady window', es: 'Potencia de la placa por golpe, con la ventana estacionaria' }}
@@ -215,13 +215,19 @@ function StrokeSeries({ point, cursor, onPick }: { point: DemPoint; cursor: numb
 }
 
 /** The steady window shaded behind a per-stroke chart: a band from stroke `from` to `to` over the plot's height, with its name. */
-function WindowBand({ at, from, to, yTop, yBottom, label }: { at: (p: { x: number; y: number }) => { x: number; y: number }; from: number; to: number; yTop: number; yBottom: number; label: string }) {
+export function windowLabelSide(from: number, to: number, cursor: number): 'left' | 'right' {
+  // the label stands at the inside edge of the band that is farther from the cursor, so it never sits under the cursor's own label
+  return cursor < (from + to) / 2 ? 'right' : 'left';
+}
+
+function WindowBand({ at, from, to, yTop, yBottom, cursor, label }: { at: (p: { x: number; y: number }) => { x: number; y: number }; from: number; to: number; yTop: number; yBottom: number; cursor: number; label: string }) {
   const a = at({ x: from, y: yTop });
   const b = at({ x: to, y: yBottom });
+  const side = windowLabelSide(from, to, cursor);
   return (
     <g data-window-band="" data-window-from={from} data-window-to={to}>
       <rect x={Math.min(a.x, b.x)} y={Math.min(a.y, b.y)} width={Math.abs(b.x - a.x)} height={Math.abs(b.y - a.y)} fill="color-mix(in oklab, var(--color-accent) 12%, transparent)" stroke="var(--color-accent)" strokeWidth={1} strokeDasharray="4 3" />
-      <text x={Math.min(a.x, b.x) + 4} y={Math.max(a.y, b.y) - 6} fontSize={11} fill="var(--color-fg-subtle)" style={{ fontFamily: 'var(--font-sans)' }}>
+      <text data-window-label={side} x={side === 'right' ? Math.max(a.x, b.x) - 4 : Math.min(a.x, b.x) + 4} y={Math.min(a.y, b.y) + 26} textAnchor={side === 'right' ? 'end' : 'start'} fontSize={11} fill="var(--color-fg-subtle)" style={{ fontFamily: 'var(--font-sans)' }}>
         {label}
       </text>
     </g>

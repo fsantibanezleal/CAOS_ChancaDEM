@@ -12,7 +12,7 @@
 //             section and the magnified zone at least 380 px high (M1, F4);
 //   decimals  on the Spanish page no number is written with a decimal point outside the blocks marked lang="en" (M2).
 //   node src/views/dem.browser.mjs <origin>   checks a running build on its own
-import { decimalProblems, labelOverlapProblems, noValueStripProblems, stageGeometryProblems, stageShare, verdictLayoutProblems } from './dem.rules.mjs';
+import { chartOverlapProblems, decimalProblems, labelOverlapProblems, noValueStripProblems, stageGeometryProblems, stageShare, verdictLayoutProblems } from './dem.rules.mjs';
 
 const SIZES = [
   { width: 1280, height: 800 },
@@ -99,6 +99,8 @@ async function measure(page) {
       for (const el of root.querySelectorAll('[data-axis-title="x"]')) below.push({ text: el.textContent ?? 'axis title', box: box(el.getBoundingClientRect()) });
       return { q: root.getAttribute('data-comparison'), plot: plot ? box(plot.getBoundingClientRect()) : null, marks, labels, below };
     });
+    // every chart root of the view, each with its plot, tick labels, axis title, key and hint
+    const roots = [...document.querySelectorAll('.cdem-dem .uplot')].map((el, i) => ({ id: `${el.closest('[data-stroke-series]') ? 'series' : el.closest('[data-comparison]') ? 'comparison' : el.closest('[data-distribution]') ? 'distribution' : 'chart'}#${i}`, box: box(el.getBoundingClientRect()) }));
     const stageCard = document.querySelector('[data-frames]')?.closest('figure.caos-plot');
     const drawing = document.querySelector('[data-dem-stage]');
     const heightOf = (sel) => document.querySelector(sel)?.getBoundingClientRect().height ?? 0;
@@ -116,6 +118,7 @@ async function measure(page) {
     return {
       verdict,
       charts,
+      roots,
       stage: stageCard ? { width: stageCard.getBoundingClientRect().width, height: stageCard.getBoundingClientRect().height } : null,
       drawing: drawing ? { width: drawing.getBoundingClientRect().width, height: drawing.getBoundingClientRect().height } : null,
       section: { height: heightOf('[data-chart="dem-replay"]') },
@@ -128,6 +131,7 @@ async function measure(page) {
 
 export async function demChecks({ browser, base, ok }) {
   const shares = [];
+  const boxes = [];
   let combos = 0;
   for (const size of SIZES) {
     for (const theme of ['dark', 'light']) {
@@ -148,6 +152,9 @@ export async function demChecks({ browser, base, ok }) {
             ok(m.verdict !== null, `${where}: the verdict table is on the page`);
             if (m.verdict) for (const p of verdictLayoutProblems(m.verdict)) ok(false, `${where}: ${p}`);
             ok(m.charts.length === 3, `${where}: three comparison charts`);
+            ok(m.roots.length >= 6, `${where}: the charts of the view are on the page (${m.roots.length})`);
+            for (const p of chartOverlapProblems(m.roots)) ok(false, `${where}: ${p}`);
+            boxes.push({ point, size: `${size.width}x${size.height}`, lang, roots: m.roots.filter((r) => r.id.startsWith('series')).map((r) => [Math.round(r.box.top), Math.round(r.box.bottom)]) });
             for (const c of m.charts) {
               ok(c.plot !== null, `${where}: the ${c.q} chart has its plot`);
               if (c.plot) for (const p of noValueStripProblems(c.marks, c.below, c.plot)) ok(false, `${where}, ${c.q}: ${p}`);
@@ -169,7 +176,7 @@ export async function demChecks({ browser, base, ok }) {
       }
     }
   }
-  return { combos, shares };
+  return { combos, shares, boxes };
 }
 
 if (import.meta.url === `file:///${process.argv[1]?.replace(/\\/g, '/').replace(/^\//, '')}`) {
@@ -186,6 +193,7 @@ if (import.meta.url === `file:///${process.argv[1]?.replace(/\\/g, '/').replace(
   try {
     const out = await demChecks({ browser, base, ok });
     for (const f of failures) console.log(`FAIL ${f}`);
+    if (process.env.DEM_BOXES === '1') console.log(JSON.stringify(out.boxes));
     const range = (key) => `${Math.min(...out.shares.map((x) => x[key])).toFixed(key === 'card' || key === 'drawing' ? 3 : 0)} to ${Math.max(...out.shares.map((x) => x[key])).toFixed(key === 'card' || key === 'drawing' ? 3 : 0)}`;
     console.log(`dem.browser: ${checks} checks over ${out.combos} measured pages, ${failures.length} failed; at 1280 by 800 the stage card is ${range('card')}, the drawing region ${range('drawing')} of the viewport, the section ${range('section')} px and the magnified zone ${range('zone')} px high`);
     if (failures.length) process.exitCode = 1;

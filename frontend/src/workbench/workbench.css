@@ -728,9 +728,10 @@
   .cdem-series-row {
     flex-direction: column;
   }
+  /* each chart of the stacked pair has its whole box: the callout host under the first chart keeps 26 rem (callouts.tsx, the shell's floor), so the cell does too */
   .cdem-series-cell {
     height: auto;
-    min-height: 16rem;
+    min-height: 27rem;
   }
   /* The table restacked: one block per quantity, each cell with its label, nothing scrolled sideways. */
   .cdem-vt .cdem-tablewrap {
