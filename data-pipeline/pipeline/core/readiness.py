@@ -54,7 +54,7 @@ T_NO_SURROGATE = ("No released surrogate; the engine itself answers.",
 T_NO_ANOMALY = ("No released autoencoder; the envelope gate answers.",
                 "No hay un autocodificador publicado; responde la compuerta de envolvente.")
 T_NO_DEM = ("The particle simulation was not baked in this build.", "La simulación de partículas no se generó en esta versión.")
-T_DEM_PARTIAL = ("{n} of {total} particle runs did not complete.", "Corridas de partículas sin completar: {n} de {total}.")
+T_DEM_PARTIAL = ("{n} of {total} particle runs did not complete.", "Hay {n} de {total} corridas de partículas sin completar.")
 T_NO_METRICS = ("The models were not evaluated in this build.", "Los modelos no se evaluaron en esta versión.")
 T_API = ("The API lane is dormant; the site reads the committed documents.",
          "La API está inactiva; el sitio lee los documentos versionados.")

@@ -87,7 +87,7 @@ match wins:
 | hp500-backbone, hp500-loo, hp500-crusherbayes, hp500-comparison | the document is absent | `missing` | null | The HP500 validation was not baked in this build. | La validación HP500 no se generó en esta versión. |
 | dem-run | the document `data/derived/dem/jaw-lab.json` is absent | `missing` | null | The particle simulation was not baked in this build. | La simulación de partículas no se generó en esta versión. |
 | hp500-backbone, hp500-loo, hp500-crusherbayes, hp500-comparison, model-metrics, dem-run | the document's `engine_version` differs from `VERSION` | `stale` | `real` | Baked by {engine_version}; the product is {version}. | Generado por {engine_version}; el producto es {version}. |
-| dem-run | the document's `state` is `partial` | `partial` | `real` | {n} of {total} particle runs did not complete. | Corridas de partículas sin completar: {n} de {total}. |
+| dem-run | the document's `state` is `partial` | `partial` | `real` | {n} of {total} particle runs did not complete. | Hay {n} de {total} corridas de partículas sin completar. |
 | surrogate-model | `data/derived/models/surrogate.json` or a graph it names is absent, fails its schema or its sha256 | `training` | `baseline` | No released surrogate; the engine itself answers. | No hay un sustituto publicado; responde el propio motor. |
 | anomaly-model | `data/derived/models/psd-ae.json` or its graph is absent, fails its schema or its sha256 | `training` | `baseline` | No released autoencoder; the envelope gate answers. | No hay un autocodificador publicado; responde la compuerta de envolvente. |
 | model-metrics | the document is absent | `missing` | null | The models were not evaluated in this build. | Los modelos no se evaluaron en esta versión. |
