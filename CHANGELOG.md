@@ -4,6 +4,76 @@ All notable changes to ChancaDEM are documented here. Versions follow `MAJOR.MIN
 `X.XX.XXX`. The project stays on `0.x` while the physics constants are illustrative / pending calibration to
 open industrial data.
 
+## [0.15.000] · 2026-11-24
+
+### Added
+
+- The discrete element method is a method the product runs. The bake command `data-pipeline/run.py dem` runs the laboratory jaw crusher
+  of Barrios et al. 2020 (https://doi.org/10.3390/min10080717, CC BY 4.0) at the three operating points of that paper that have a
+  measured throughput, net power and product (the feed classes 63/52, 31.5/26.5 and 16/13.2 mm at 6.0 Hz and a 7.5 mm closed side,
+  6 kg batches, seed 1) through the published package `crushdem` 0.6.0, and writes the document of the new catalog row `dem-run`
+  1.1.1 (`data/derived/dem/jaw-lab.json`): the measurement, the particle simulation and the population balance at each point, nine
+  verdicts per point against bands set before any run (throughput 10 percent, net power 30 percent, reduction ratio 15 percent), the
+  source paper's own simulated values as context that no verdict uses, and one replay file of particle frames per point (16-bit
+  spheres, thinned to 1.5 MB). The product holds no particle engine of its own. A run that does not complete is recorded as the
+  package leaves it, with no window statistic and every verdict that needs one `not compared`; the document's state is then
+  `partial` and readiness names the points.
+- The result, stated as it is: of 27 verdicts 3 are met, 13 are not met and 11 are not compared. The particle simulation completes
+  at the coarse and the fine feed and stops with the package's overlap error at the middle feed. Where it completes, its net power
+  is inside the band (0.301 kW against the measured 0.34 kW, and 0.111 kW against 0.135 kW, the second not resolved by the
+  package's own rule) and its throughput and reduction ratio are not (2167 kg/h against 799 kg/h, 2464 kg/h against 1220 kg/h; 4.17
+  against 8.60, 1.02 against 1.99). The population balance, with nothing fitted to the jaw, is outside the throughput band at the
+  three feeds (31.5, 11.8 and 28.2 percent low) and inside the reduction-ratio band at the middle feed only; it states no power,
+  because no work index of the ore is published.
+- A laboratory-jaw module of the Python engine (`pipeline/model/crusher/labjaw.py`): the jaw capacity model of Sastri (1994) held
+  to its Table 2, the first estimate of the classification parameters (Donovan 2003) with the ranges King (2000) gives for Symons
+  cone crushers as a sensitivity band, a narrow feed class evaluated through the engine's own breakage and Whiten solve, Bond's
+  energy per unit of work index, and the link from the ore's fracture energies to A times b. No plant machine, learned-model
+  encoding or TypeScript engine changes.
+- The view `Particle simulation` in the App's Validation group: the replay of the selected feed as the stage (the section of the
+  jaw cropped to the spheres, the crushing zone magnified as the main drawing, the spheres coloured by size class, the swing plate
+  interpolated between the stored frames, three callouts read from the document), a stroke cursor that moves the replay and the two
+  per-stroke charts together, the three feeds on shared axes for throughput, net power and product P80 with the measurement's band,
+  the simulation's standard error, the population balance's spread and the paper's own simulated values as context, the product
+  size distribution, the table of the nine verdicts of the feed under the document's counts, and the sources quoted from the
+  document. A side with no value is never drawn as a mark, a verdict that is not met or not compared is never worded as agreement,
+  and the view says the readiness reason when the document is missing, stale or partial.
+- The notebook set gains its ninth topic, `09-discrete-element`, three notebooks in English and in Spanish (26 per language):
+  `01-particles-in-a-laboratory-jaw`, `02-particle-replacement-breakage-step-by-step` and `03-three-answers-for-one-jaw`. The live
+  runs are small (at most 1 kg, a few strokes); the full-size runs are read from the committed document.
+- The Methodology gains a topic on the particle simulation and the comparison on the laboratory jaw (English and Spanish), with the
+  result read from the document and the package's own disclosure of its ore choices; the framework card on the discrete element
+  method is rewritten as the method the product runs, a card on the jaw capacity model is added, and the Implementation page lists
+  the stage, the package and the contract.
+- The technical report covers the release: the method sections on the discrete element method with particle replacement and on the
+  laboratory-jaw evaluation of the population balance, the data source and the contract `dem-run`, the protocol, the results with
+  the 27 decisions, the validation, the discussion and the limitations. Its title is now "ChancaDEM: A Crusher-Comminution Studio,
+  a Held-Out Evaluation of Cone-Crusher Models on Ten Industrial Surveys, and a Comparison of a Particle Simulation and a
+  Population Balance with Laboratory Jaw Measurements" (`product.json` and the README carry it).
+- Gates: the readiness states of `dem-run` (missing, stale, partial, available); a units domain for the laboratory machine, held in
+  the bake and in `scripts/check_artifacts.py`, which also checks each replay file's bytes and sha256 digest; the feature `dem`
+  (DM-001 to DM-018) with an adversarial test per requirement; a browser check of the view's layout on the built site
+  (`frontend/src/views/dem.browser.mjs`, run by `npm run check:story` with the story checks), whose rules are tested on planted
+  measurements.
+
+### Changed
+
+- The raw run records of the particle simulation are kept outside the repository (`--runs`, or `CAOS_DATA_ROOT/chancadem/dem-runs`),
+  keyed by the point, the settings, the package version and the bytes of the installed package, so a later bake of the same inputs
+  does not run the simulation again (about 70 minutes in three processes). The simulation never runs in CI or in the
+  browser.
+- The case-index contract steps to 1.1.0 (a widening): the `files` pattern admits `.bin`, and the index lists the replay files the
+  particle-simulation document names, so the build copies them to `public/data/dem/`.
+- Own pins moved to their current release: torch 2.15.0, onnx 1.23.2, onnxruntime 1.32.0 (Python), onnxruntime-web 1.31.1, three
+  0.187.0 and @types/three 0.187.0 (web); the committed models load and answer unchanged in both runtimes, and a retraining on the
+  new pins reproduces every held-out metric. New pins of the bake: `crushdem[jit]` 0.6.0, `numba` 0.68.1, `llvmlite` 0.50.0.
+- The sentences that called the discrete element method a frontier the product only cites are rewritten (Methodology, Introduction,
+  README, the design document's non-goals); `product.json` names `crushdem` as the product's method package.
+- The Spanish readiness sentence of a partial particle-simulation document reads right for any count of runs.
+- Template 0.15.015 and shell 0.26.3 adopted (from 0.15.014 and 0.26.2): the story check serves its own preview at the configured
+  mount, and the shell brings the configurable Focus stage, view state restored from the URL, stage geometry from the layout box and
+  callouts drawn once measured.
+
 ## [0.14.000] · 2026-11-20
 
 ### Added
