@@ -21,3 +21,9 @@ export function decimalProblems(texts: { text: string; quoted: boolean }[]): str
 export function noValueStripProblems(strip: { id: string; box: Box }[], others: { text: string; box: Box }[], plot: Box): string[];
 export function stageGeometryProblems(m: { card: { width: number; height: number }; drawing: { width: number; height: number }; section: { height: number }; zone: { height: number } }, viewport: { width: number; height: number }, limits?: { minDrawing?: number; minHeight?: number; minCard?: number }): string[];
 export function chartOverlapProblems(roots: { id: string; box: Box }[]): string[];
+export function leaderProblems(leaders: { id: string; end: { x: number; y: number }; box: Box }[], tol?: number, minGap?: number): string[];
+export function luminance(hex: string): number;
+export function contrast(a: string, b: string): number;
+export function classContrastProblems(colours: string[], background: string, min?: number): string[];
+export function axisNoteProblems(note: Box, ticks: { text: string; box: Box }[], maxGap?: number): string[];
+export function stageTimesProblems(times: number[], minGap?: number): string[];

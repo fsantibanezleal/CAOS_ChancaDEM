@@ -104,7 +104,10 @@ export function decimalProblems(texts) {
     for (const m of t.text.matchAll(/(?<![\w.,/:@#])(\d+)\.(\d+)(?![\w@]|\.\d|\/[A-Za-z])/g)) {
       // a thousands group of the Spanish locale (1 to 3 digits, not starting with 0, then groups of exactly 3) is not a decimal
       const token = t.text.slice(m.index).match(/^\d+(?:\.\d+)+/)?.[0] ?? m[0];
-      if (/^[1-9]\d{0,2}(\.\d{3})+$/.test(token)) continue;
+      const after = t.text.slice(m.index + token.length);
+      // 1.234 kW is a decimal (the values of this view in kW, mm, kg, s and % never reach a thousand); 2.167 kg/h is a thousands group
+      const smallUnit = /^\s*(?:kW|mm|kg(?!\/)|s|%)(?![A-Za-z])/.test(after);
+      if (/^[1-9]\d{0,2}(\.\d{3})+$/.test(token) && !smallUnit) continue;
       out.push(`"${t.text.trim().slice(0, 60)}" writes ${m[0]} with a decimal point`);
     }
   }
@@ -146,5 +149,92 @@ export function stageGeometryProblems(m, viewport, limits = {}) {
   if (m.zone.height < minHeight) out.push(`the magnified zone is ${Math.round(m.zone.height)} px high, at least ${minHeight} px is required`);
   if (m.section.height < minHeight) out.push(`the section is ${Math.round(m.section.height)} px high, at least ${minHeight} px is required`);
   for (const p of stageShareProblems(m.card, viewport, minCard)) out.push(p.replace('the replay stage', 'the stage card'));
+  return out;
+}
+
+/**
+ * R1: the end of every callout's leader lies inside its subject's drawn box (or within `tol` px of it), and no two leader ends are closer than
+ * `minGap` px.
+ * @param {{ id: string, end: { x: number, y: number }, box: Box }[]} leaders
+ * @param {number} [tol]
+ * @param {number} [minGap]
+ * @returns {string[]}
+ */
+export function leaderProblems(leaders, tol = 4, minGap = 20) {
+  const out = [];
+  for (const l of leaders) {
+    const inside = l.end.x >= l.box.left - tol && l.end.x <= l.box.right + tol && l.end.y >= l.box.top - tol && l.end.y <= l.box.bottom + tol;
+    if (!inside) out.push(`the leader of "${l.id}" ends at (${Math.round(l.end.x)}, ${Math.round(l.end.y)}), outside its subject (${Math.round(l.box.left)} to ${Math.round(l.box.right)} by ${Math.round(l.box.top)} to ${Math.round(l.box.bottom)})`);
+  }
+  for (let i = 0; i < leaders.length; i++) {
+    for (let j = i + 1; j < leaders.length; j++) {
+      const d = Math.hypot(leaders[i].end.x - leaders[j].end.x, leaders[i].end.y - leaders[j].end.y);
+      if (d < minGap) out.push(`the leaders of "${leaders[i].id}" and "${leaders[j].id}" end ${d.toFixed(1)} px apart, at least ${minGap} px is required`);
+    }
+  }
+  return out;
+}
+
+/** The WCAG relative luminance of a `#rrggbb` colour. */
+export function luminance(hex) {
+  const c = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+}
+
+/** The WCAG contrast ratio of two `#rrggbb` colours. */
+export function contrast(a, b) {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+/**
+ * R2: every class of the size scale is at `min` to 1 or more against the stage's background (WCAG 1.4.11), and the classes are ordered in
+ * lightness (strictly, in one direction) in the theme.
+ * @param {string[]} colours the six classes, finest first, as `#rrggbb`
+ * @param {string} background the stage's background as `#rrggbb`
+ * @param {number} [min]
+ * @returns {string[]}
+ */
+export function classContrastProblems(colours, background, min = 3) {
+  const out = [];
+  colours.forEach((c, i) => {
+    const k = contrast(c, background);
+    if (k + 1e-9 < min) out.push(`the size class ${i} (${c}) has a contrast of ${k.toFixed(2)} to 1 against ${background}, at least ${min} to 1 is required`);
+  });
+  const l = colours.map(luminance);
+  const up = l.every((v, i) => i === 0 || v > l[i - 1]);
+  const down = l.every((v, i) => i === 0 || v < l[i - 1]);
+  if (!up && !down) out.push('the size classes are not ordered in lightness');
+  return out;
+}
+
+/**
+ * R3: the note that says which sides state no value stands directly under the tick labels: it overlaps no tick label and its top is at most
+ * `maxGap` px under the lowest tick label's bottom.
+ * @param {Box} note
+ * @param {{ text: string, box: Box }[]} ticks
+ * @param {number} [maxGap]
+ * @returns {string[]}
+ */
+export function axisNoteProblems(note, ticks, maxGap = 40) {
+  const out = [];
+  const low = Math.max(...ticks.map((t) => t.box.bottom));
+  for (const t of ticks) if (note.left < t.box.right - TOL && t.box.left < note.right - TOL && note.top < t.box.bottom - TOL && t.box.top < note.bottom - TOL) out.push(`the note of the missing sides overlaps the tick label "${t.text}"`);
+  if (note.top < low - TOL) out.push('the note of the missing sides stands above the lowest tick label');
+  if (note.top - low > maxGap) out.push(`the note of the missing sides stands ${Math.round(note.top - low)} px under the tick labels, at most ${maxGap} px is required`);
+  return out;
+}
+
+/**
+ * R5: a change of operating point has three steps at their own times: the stage, then the per-stroke series, then the rest, each at least
+ * `minGap` ms after the one before.
+ * @param {number[]} times the times, in ms from the click, at which the stage, the series and the rest were shown
+ * @param {number} [minGap]
+ * @returns {string[]}
+ */
+export function stageTimesProblems(times, minGap = 200) {
+  const out = [];
+  if (times.length !== 3) return [`${times.length} steps were seen, three are required`];
+  for (let i = 1; i < 3; i++) if (times[i] - times[i - 1] < minGap) out.push(`step ${i + 1} came ${Math.round(times[i] - times[i - 1])} ms after step ${i}, at least ${minGap} ms is required`);
   return out;
 }

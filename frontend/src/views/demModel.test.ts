@@ -36,6 +36,7 @@ import {
   SIZE_TOKENS,
   verdictSummary,
   hasPaperSimulation,
+  noValueNote,
   insetBounds,
   paperSentence,
   paperSimulation,
@@ -242,7 +243,7 @@ describe('the colour class of a sphere by its diameter against the feed class', 
     const labels = sizeClassLabels(coarse.feed_mm[0], plain);
     expect(labels).toHaveLength(SIZE_CLASSES);
     expect(labels[0]).toBe(`< ${plain(0.1 * coarse.feed_mm[0], { digits: 2 })}`);
-    expect(labels[SIZE_CLASSES - 1].startsWith('>=')).toBe(true);
+    expect(labels[SIZE_CLASSES - 1].startsWith(String.fromCharCode(0x2265))).toBe(true);
   });
 });
 
@@ -667,9 +668,10 @@ describe('the verdict summary, the stored rate, the plate between frames, the ov
     for (const p of d.points) for (const pair of ['simulation_vs_measured', 'population_balance_vs_measured', 'population_balance_vs_simulation'] as const) for (const q of ['throughput', 'net_power', 'reduction_ratio'] as const) if (p.verdicts[pair][q].verdict === 'met') p.verdicts[pair][q].resolved = true;
     expect(verdictSummary(d as DemRun).en).not.toContain('not resolved');
   });
-  it('the plate is interpolated between the two stored frames around the cursor; the spheres stay at the stored frame below it', () => {
-    for (const p of run.points) {
+  it('a replay that stores 12 frames per stroke has its plate interpolated between the stored frames; the spheres stay at the stored frame below the cursor', () => {
+    for (const p of [coarse, middle]) {
       const r = p.simulation.replay!;
+      expect(r.frames_per_stroke).toBe(12);
       for (const i of [0, 1, Math.floor(r.frames / 2), r.frames - 1]) {
         const c = cursorOfFrame(r, i);
         expect(plateAt(r, c).x).toBeCloseTo(r.plate_bottom_x_mm[i], 9);
@@ -680,25 +682,32 @@ describe('the verdict summary, the stored rate, the plate between frames, the ov
       const mid = (cursorOfFrame(r, i) + cursorOfFrame(r, i + 1)) / 2;
       expect(plateAt(r, mid).x).toBeCloseTo((r.plate_bottom_x_mm[i] + r.plate_bottom_x_mm[i + 1]) / 2, 9);
       expect(frameBelow(r, mid)).toBe(i);
-      expect(frameBelow(r, mid + 0.4 / r.frames_per_stroke)).toBe(i);
     }
     const r = coarse.simulation.replay!;
     expect(plateAt(r, null).x).toBe(r.plate_bottom_x_mm[r.frames - 1]);
     expect(plateAt(r, -5).x).toBe(r.plate_bottom_x_mm[0]);
     expect(plateAt(r, 1e6).x).toBe(r.plate_bottom_x_mm[r.frames - 1]);
   });
-  it('the plate moves continuously at the screen\u2019s rate even at 4 frames per stroke: the step between two screen frames is a small share of the stored step', () => {
+  it('adversarial: a replay that stores fewer than 12 frames per stroke holds the plate at the stored frame, whatever the point is called', () => {
     const r = fine.simulation.replay!;
     expect(r.frames_per_stroke).toBe(4);
     const c0 = cursorOfFrame(r, 5);
-    const steps = 15;
-    const xs = Array.from({ length: steps + 1 }, (_, k) => plateAt(r, c0 + (k / steps) * (1 / r.frames_per_stroke)).x);
-    const stored = Math.abs(r.plate_bottom_x_mm[6] - r.plate_bottom_x_mm[5]);
-    for (let k = 1; k < xs.length; k++) expect(Math.abs(xs[k] - xs[k - 1])).toBeLessThanOrEqual(stored / steps + 1e-9);
+    for (let k = 0; k <= 15; k++) {
+      const c = c0 + (k / 15) * (1 / r.frames_per_stroke) * 0.99;
+      const held = plateAt(r, c);
+      expect(held.x).toBe(r.plate_bottom_x_mm[frameBelow(r, c)]);
+      expect(held.z).toBe(r.plate_bottom_z_mm[frameBelow(r, c)]);
+    }
+    // the rule reads the document, not the name: the same replay with 12 frames per stroke is interpolated
+    const renamed = { ...coarse.simulation.replay!, frames_per_stroke: 4 };
+    const c = cursorOfFrame(renamed, 3) + 0.4 / 4;
+    expect(plateAt(renamed, c).x).toBe(renamed.plate_bottom_x_mm[frameBelow(renamed, c)]);
   });
-  it('says how many frames per stroke each point stores, from the document (12, 12 and 4)', () => {
+  it('says how many frames per stroke each point stores, from the document (12, 12 and 4), and that a held plate is shown as stored', () => {
     expect(run.points.map((p) => storedRateText(p.simulation.replay!).en.match(/stores (\d+) frames/)![1])).toEqual(['12', '12', '4']);
-    expect(storedRateText(fine.simulation.replay!).es).toContain('guarda 4 cuadros por golpe');
+    expect(storedRateText(fine.simulation.replay!).es).toContain('guarda 4 cuadros por golpe; la placa y las esferas se muestran como se guardaron');
+    expect(storedRateText(fine.simulation.replay!).en).toBe('This replay stores 4 frames per stroke; the plate and the spheres are shown as stored.');
+    expect(storedRateText(coarse.simulation.replay!).en).toContain('the plate is interpolated between them');
   });
   it('m7: the status says how many strokes of the window ran above the reference overlap, which the power verdicts rest on', () => {
     expect(overlapClause(coarse.simulation, run.settings, plain)!.en).toBe('18 of the 29 strokes of the steady window ran above the reference overlap of 0.3.');
@@ -724,5 +733,36 @@ describe('the verdict summary, the stored rate, the plate between frames, the ov
   });
   it('M3: the size scale of the spheres is a set of six data tokens of the view', () => {
     expect(SIZE_TOKENS).toEqual(['--cdem-size-0', '--cdem-size-1', '--cdem-size-2', '--cdem-size-3', '--cdem-size-4', '--cdem-size-5']);
+  });
+});
+
+describe('R3: the missing sides are said in words directly under the tick labels', () => {
+  it('names each side in words with the feed classes where it states none; nothing to say for a chart whose sides all state a value', () => {
+    const es = (v: number, o?: { decimals?: number; digits?: number }) => (o?.decimals !== undefined ? v.toFixed(o.decimals) : String(v)).replace('.', ',');
+    expect(noValueNote(comparisonSeries(run, 'net_power'), plain)!.en).toBe('No value: particle simulation at 31.5/26.5 mm; population balance at 63/52 mm, 31.5/26.5 mm, 16/13.2 mm');
+    expect(noValueNote(comparisonSeries(run, 'net_power'), es)!.es).toBe('Sin valor: simulación de partículas en 31,5/26,5 mm; balance poblacional en 63/52 mm, 31,5/26,5 mm, 16/13,2 mm');
+    expect(noValueNote(comparisonSeries(run, 'throughput'), plain)!.en).toBe('No value: particle simulation at 31.5/26.5 mm');
+    expect(noValueNote(comparisonSeries(run, 'p80'), plain)).toBeNull();
+  });
+});
+
+describe('R2: the size scale reads in both themes', () => {
+  it('the classes keep their hue family across themes, a class is never navy in one theme and yellow in the other', () => {
+    const hue = (hex: string) => {
+      const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+      const mx = Math.max(r, g, b);
+      const d = mx - Math.min(r, g, b);
+      if (d === 0) return 0;
+      const h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+      return (h * 60 + 360) % 360;
+    };
+    const stylesheet = readFileSync(new URL('../workbench/workbench.css', import.meta.url), 'utf8');
+    const pick = (re: RegExp) => [...stylesheet.match(re)![1].matchAll(/--cdem-size-\d: (#[0-9a-f]{6});/g)].map((x) => x[1]);
+    const dark = pick(/:root,\s*\[data-theme='dark'\] \{\s*(--cdem-size-0[^}]*)\}/);
+    const light = pick(/\[data-theme='light'\] \{\s*(--cdem-size-0[^}]*)\}/);
+    dark.forEach((c, i) => {
+      const dh = Math.abs(hue(c) - hue(light[i]));
+      expect(Math.min(dh, 360 - dh), `class ${i}`).toBeLessThan(40);
+    });
   });
 });

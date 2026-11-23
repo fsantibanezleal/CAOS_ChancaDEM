@@ -10,9 +10,13 @@
 //   ticks     no two tick labels of the comparison charts' x axes overlap (B3), read from where uPlot drew them on its canvas;
 //   stage     at 1280 by 800 the stage card is at least 60 percent of the App route's viewport, its drawing region at least 40 percent, and the
 //             section and the magnified zone at least 380 px high (M1, F4);
+//   leaders   at 1280 by 800 the end of every callout's leader lies inside (or within 4 px of) its subject's drawn box, and no two ends are closer
+//             than 20 px (R1); classes: the six size classes are at 3 to 1 or more against the stage's background in the theme (R2); note: the
+//             sentence that says which sides state no value stands directly under the tick labels and overlaps none (R3); staged: a change of
+//             operating point shows the stage, the series and the rest at three times, 200 ms apart at least (R5);
 //   decimals  on the Spanish page no number is written with a decimal point outside the blocks marked lang="en" (M2).
 //   node src/views/dem.browser.mjs <origin>   checks a running build on its own
-import { chartOverlapProblems, decimalProblems, labelOverlapProblems, noValueStripProblems, stageGeometryProblems, stageShare, verdictLayoutProblems } from './dem.rules.mjs';
+import { axisNoteProblems, chartOverlapProblems, classContrastProblems, decimalProblems, labelOverlapProblems, leaderProblems, stageGeometryProblems, stageShare, stageTimesProblems, verdictLayoutProblems } from './dem.rules.mjs';
 
 const SIZES = [
   { width: 1280, height: 800 },
@@ -72,14 +76,15 @@ async function measure(page) {
       : null;
     const charts = [...document.querySelectorAll('[data-comparison]')].map((root) => {
       const plot = root.querySelector('.u-over');
-      const marks = [...root.querySelectorAll('[data-no-value]')].map((m) => ({ id: m.getAttribute('data-no-value'), box: box(m.getBoundingClientRect()) }));
+      // a side with no value has no mark at all: no element of the chart's overlay stands for one
+      const nullMarks = root.querySelectorAll('[data-no-value], [data-comparison-overlay] circle').length;
       // the tick labels of the x axis: the canvas texts below the plot that end in "mm" (the feed classes), as boxes in page pixels
       const labels = [];
       for (const canvas of root.querySelectorAll('canvas')) {
         const r = canvas.getBoundingClientRect();
         const k = canvas.width ? r.width / canvas.width : 1;
         for (const t of canvas.__demTexts ?? []) {
-          if (t.turned || !/mm$/.test(t.t)) continue;
+          if (t.turned || !/mm$/.test(t.t) || /^(No value|Sin valor)/.test(t.t)) continue;
           const left = t.align === 'center' ? t.x - t.w / 2 : t.align === 'right' || t.align === 'end' ? t.x - t.w : t.x;
           labels.push({ text: t.t, left: r.left + left * k, right: r.left + (left + t.w) * k, top: r.top + (t.y - 10) * k, bottom: r.top + (t.y + 3) * k });
         }
@@ -96,11 +101,42 @@ async function measure(page) {
           below.push({ text: t.t, box: { left: r.left + left * k, right: r.left + (left + t.w) * k, top: r.top + (t.y - 10) * k, bottom: r.top + (t.y + 3) * k } });
         }
       }
-      for (const el of root.querySelectorAll('[data-axis-title="x"]')) below.push({ text: el.textContent ?? 'axis title', box: box(el.getBoundingClientRect()) });
-      return { q: root.getAttribute('data-comparison'), plot: plot ? box(plot.getBoundingClientRect()) : null, marks, labels, below };
+      // the note of the missing sides: the chart's own axis title, drawn on its canvas or written under it
+      let note = null;
+      for (const el of root.querySelectorAll('[data-axis-title="x"]')) if (/^(No value|Sin valor)/.test(el.textContent ?? '')) note = box(el.getBoundingClientRect());
+      if (!note) {
+        for (const canvas of root.querySelectorAll('canvas')) {
+          const r = canvas.getBoundingClientRect();
+          const k = canvas.width ? r.width / canvas.width : 1;
+          for (const t of canvas.__demTexts ?? []) if (!t.turned && /^(No value|Sin valor)/.test(t.t)) {
+            const left = t.align === 'center' ? t.x - t.w / 2 : t.x;
+            note = { left: r.left + left * k, right: r.left + (left + t.w) * k, top: r.top + (t.y - 10) * k, bottom: r.top + (t.y + 3) * k };
+          }
+        }
+      }
+      return { q: root.getAttribute('data-comparison'), plot: plot ? box(plot.getBoundingClientRect()) : null, nullMarks, labels, below, note };
     });
     // every chart root of the view, each with its plot, tick labels, axis title, key and hint
     const roots = [...document.querySelectorAll('.cdem-dem .uplot')].map((el, i) => ({ id: `${el.closest('[data-stroke-series]') ? 'series' : el.closest('[data-comparison]') ? 'comparison' : el.closest('[data-distribution]') ? 'distribution' : 'chart'}#${i}`, box: box(el.getBoundingClientRect()) }));
+    // the leaders of the callouts and the subjects they name (page pixels); the six size classes and the stage's background
+    const leaderSvg = document.querySelector('[data-chart="dem-callout-leaders"]');
+    const sv = leaderSvg ? leaderSvg.getBoundingClientRect() : null;
+    const leaders = sv
+      ? [...leaderSvg.querySelectorAll('[data-callout-leader]')].map((l) => {
+          const id = l.getAttribute('data-callout-leader');
+          const sub = leaderSvg.querySelector(`[data-subject="${id}"]`);
+          return { id, end: { x: sv.left + Number(l.getAttribute('data-end-x')), y: sv.top + Number(l.getAttribute('data-end-y')) }, box: sub ? box(sub.getBoundingClientRect()) : null };
+        })
+      : [];
+    const css = getComputedStyle(document.documentElement);
+    const hex = (v) => {
+      const t = v.trim();
+      if (t.startsWith('#')) return t;
+      const m = t.match(/\d+/g);
+      return m ? `#${m.slice(0, 3).map((n) => Number(n).toString(16).padStart(2, '0')).join('')}` : t;
+    };
+    const classes = [0, 1, 2, 3, 4, 5].map((i) => hex(css.getPropertyValue(`--cdem-size-${i}`)));
+    const surface = hex(css.getPropertyValue('--color-surface'));
     const stageCard = document.querySelector('[data-frames]')?.closest('figure.caos-plot');
     const drawing = document.querySelector('[data-dem-stage]');
     const heightOf = (sel) => document.querySelector(sel)?.getBoundingClientRect().height ?? 0;
@@ -119,6 +155,9 @@ async function measure(page) {
       verdict,
       charts,
       roots,
+      leaders,
+      classes,
+      surface,
       stage: stageCard ? { width: stageCard.getBoundingClientRect().width, height: stageCard.getBoundingClientRect().height } : null,
       drawing: drawing ? { width: drawing.getBoundingClientRect().width, height: drawing.getBoundingClientRect().height } : null,
       section: { height: heightOf('[data-chart="dem-replay"]') },
@@ -129,9 +168,50 @@ async function measure(page) {
   });
 }
 
+/** R5: the time, from the click, at which the stage, the series and the rest are shown after a change of operating point (motion allowed). */
+async function stagedTimes(browser, base, ok) {
+  const ctx = await browser.newContext({ viewport: SIZES[0], reducedMotion: 'no-preference', colorScheme: 'dark' });
+  try {
+    const page = await ctx.newPage();
+    await page.goto(base + URL_PATH, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('[data-point-choice]', { timeout: 20000 });
+    await page.waitForSelector('[data-comparison] .u-over', { timeout: 20000 });
+    await page.waitForTimeout(600);
+    await page.evaluate(() => {
+      window.__demFlips = [];
+      const t0 = { v: 0 };
+      window.__demClick = () => {
+        t0.v = performance.now();
+        const seen = new Set();
+        const obs = new MutationObserver(() => {
+          document.querySelectorAll('.cdem-reveal').forEach((el, i) => {
+            if (el.getAttribute('data-on') === 'true' && !seen.has(i)) {
+              seen.add(i);
+              window.__demFlips.push({ i, t: performance.now() - t0.v });
+            }
+          });
+        });
+        obs.observe(document.body, { attributes: true, attributeFilter: ['data-on'], subtree: true });
+      };
+    });
+    await page.evaluate(() => window.__demClick());
+    await page.click('button[data-point="31.5-26.5"]');
+    await page.waitForTimeout(1500);
+    const flips = await page.evaluate(() => window.__demFlips);
+    const times = [0, 1, 2].map((i) => flips.find((f) => f.i === i)?.t).filter((t) => t !== undefined);
+    for (const p of stageTimesProblems(times)) ok(false, `staged change of point: ${p}`);
+    return times.map((t) => Math.round(t));
+  } finally {
+    await ctx.close();
+  }
+}
+
 export async function demChecks({ browser, base, ok }) {
   const shares = [];
   const boxes = [];
+  const gaps = [];
+  const reach = [];
+  const contrasts = [];
   let combos = 0;
   for (const size of SIZES) {
     for (const theme of ['dark', 'light']) {
@@ -157,7 +237,13 @@ export async function demChecks({ browser, base, ok }) {
             boxes.push({ point, size: `${size.width}x${size.height}`, lang, roots: m.roots.filter((r) => r.id.startsWith('series')).map((r) => [Math.round(r.box.top), Math.round(r.box.bottom)]) });
             for (const c of m.charts) {
               ok(c.plot !== null, `${where}: the ${c.q} chart has its plot`);
-              if (c.plot) for (const p of noValueStripProblems(c.marks, c.below, c.plot)) ok(false, `${where}, ${c.q}: ${p}`);
+              ok(c.nullMarks === 0, `${where}, ${c.q}: a side with no value has no mark (${c.nullMarks} found)`);
+              const missing = c.q !== 'p80';
+              ok(!missing || c.note !== null || c.q === 'throughput' || c.q === 'net_power', `${where}, ${c.q}: the note of the missing sides is on the chart`);
+              if (c.note) {
+                for (const p of axisNoteProblems(c.note, c.labels.map((l) => ({ text: l.text, box: l }))))  ok(false, `${where}, ${c.q}: ${p}`);
+                gaps.push(Math.round(c.note.top - Math.max(...c.labels.map((l) => l.bottom))));
+              }
               ok(c.labels.length >= 3, `${where}, ${c.q}: the three feed classes are labelled on the axis (${c.labels.length} labels read)`);
               for (const p of labelOverlapProblems(c.labels)) ok(false, `${where}, ${c.q}: ${p}`);
             }
@@ -168,6 +254,13 @@ export async function demChecks({ browser, base, ok }) {
                 shares.push({ point, theme, lang, card: stageShare(m.stage, m.viewport), drawing: stageShare(m.drawing, m.viewport), section: m.section.height, zone: m.zone.height });
               }
             }
+            for (const p of classContrastProblems(m.classes, m.surface)) ok(false, `${where}: ${p}`);
+            if (size.width === 1280) {
+              ok(m.leaders.length === 3 && m.leaders.every((l) => l.box), `${where}: three callout leaders with their subjects`);
+              for (const p of leaderProblems(m.leaders.filter((l) => l.box))) ok(false, `${where}: ${p}`);
+              reach.push(m.leaders.map((l) => ({ id: l.id, inside: l.box ? l.end.x >= l.box.left - 4 && l.end.x <= l.box.right + 4 && l.end.y >= l.box.top - 4 && l.end.y <= l.box.bottom + 4 : false, ends: [Math.round(l.end.x), Math.round(l.end.y)] })));
+            }
+            if (theme === 'dark' || theme === 'light') contrasts.push({ theme, ratios: m.classes.map((c) => c) });
             if (lang === 'es') for (const p of decimalProblems(m.texts)) ok(false, `${where}: ${p}`);
           }
         } finally {
@@ -176,7 +269,8 @@ export async function demChecks({ browser, base, ok }) {
       }
     }
   }
-  return { combos, shares, boxes };
+  const times = await stagedTimes(browser, base, ok);
+  return { combos, shares, boxes, gaps, reach, contrasts, times };
 }
 
 if (import.meta.url === `file:///${process.argv[1]?.replace(/\\/g, '/').replace(/^\//, '')}`) {
@@ -193,7 +287,7 @@ if (import.meta.url === `file:///${process.argv[1]?.replace(/\\/g, '/').replace(
   try {
     const out = await demChecks({ browser, base, ok });
     for (const f of failures) console.log(`FAIL ${f}`);
-    if (process.env.DEM_BOXES === '1') console.log(JSON.stringify(out.boxes));
+    if (process.env.DEM_BOXES === '1') console.log(JSON.stringify({ boxes: out.boxes, gaps: out.gaps, reach: out.reach.slice(0, 4), contrasts: out.contrasts.slice(0, 2), times: out.times }));
     const range = (key) => `${Math.min(...out.shares.map((x) => x[key])).toFixed(key === 'card' || key === 'drawing' ? 3 : 0)} to ${Math.max(...out.shares.map((x) => x[key])).toFixed(key === 'card' || key === 'drawing' ? 3 : 0)}`;
     console.log(`dem.browser: ${checks} checks over ${out.combos} measured pages, ${failures.length} failed; at 1280 by 800 the stage card is ${range('card')}, the drawing region ${range('drawing')} of the viewport, the section ${range('section')} px and the magnified zone ${range('zone')} px high`);
     if (failures.length) process.exitCode = 1;

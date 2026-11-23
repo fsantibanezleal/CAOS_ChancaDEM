@@ -139,9 +139,20 @@ export function frameBelow(r: DemReplay, cursor: number | null): number {
   return Math.max(0, Math.min(r.frames - 1, Math.floor(f + 1e-9)));
 }
 
-/** The swing plate's bottom edge at a cursor position [mm]: the two stored positions around the cursor, interpolated, so the plate moves continuously. */
+/** The least frames per stroke at which the plate is interpolated between stored frames: the machine's path is followed by 12 frames a stroke; fewer would put the plate off its path. */
+export const INTERPOLATE_FROM_FRAMES_PER_STROKE = 12;
+
+/**
+ * The swing plate's bottom edge at a cursor position [mm]. A replay that stores 12 frames per stroke or more: the two stored positions around the
+ * cursor, interpolated, so the plate moves continuously. A replay that stores fewer (the finest feed stores 4): the plate is held at the stored
+ * frame below the cursor, as the spheres are. The rule is read from the document's frames per stroke, never from the point.
+ */
 export function plateAt(r: DemReplay, cursor: number | null): { x: number; z: number } {
   const last = r.frames - 1;
+  if (r.frames_per_stroke < INTERPOLATE_FROM_FRAMES_PER_STROKE) {
+    const i = frameBelow(r, cursor);
+    return { x: r.plate_bottom_x_mm[i], z: r.plate_bottom_z_mm[i] };
+  }
   if (cursor === null || !Number.isFinite(cursor)) return { x: r.plate_bottom_x_mm[last], z: r.plate_bottom_z_mm[last] };
   const f = Math.max(0, Math.min(last, (cursor - (r.first_stroke - 1)) * r.frames_per_stroke - 1));
   const i0 = Math.floor(f);
@@ -152,10 +163,16 @@ export function plateAt(r: DemReplay, cursor: number | null): { x: number; z: nu
 
 /** The sentence under the controls: how many frames per stroke this point stores, and what is interpolated. */
 export function storedRateText(r: DemReplay): Text {
-  return {
-    en: `This replay stores ${r.frames_per_stroke} frames per stroke; the spheres are shown as stored and the plate is interpolated between them.`,
-    es: `Esta repetición guarda ${r.frames_per_stroke} cuadros por golpe; las esferas se muestran como se guardaron y la placa se interpola entre ellos.`,
-  };
+  const held = r.frames_per_stroke < INTERPOLATE_FROM_FRAMES_PER_STROKE;
+  return held
+    ? {
+        en: `This replay stores ${r.frames_per_stroke} frames per stroke; the plate and the spheres are shown as stored.`,
+        es: `Esta repetición guarda ${r.frames_per_stroke} cuadros por golpe; la placa y las esferas se muestran como se guardaron.`,
+      }
+    : {
+        en: `This replay stores ${r.frames_per_stroke} frames per stroke; the spheres are shown as stored and the plate is interpolated between them.`,
+        es: `Esta repetición guarda ${r.frames_per_stroke} cuadros por golpe; las esferas se muestran como se guardaron y la placa se interpola entre ellos.`,
+      };
 }
 
 /** The cursor a point opens at: the first stroke of the steady window for a run that has one, else the last stroke the replay holds. */
@@ -270,7 +287,7 @@ export function sizeClassLabels(feedLowMm: number, num: Num, lang: Lang = 'en'):
   const edges = SIZE_CLASS_EDGES.map((e) => e * feedLowMm);
   return Array.from({ length: SIZE_CLASSES }, (_, c) => {
     if (c === 0) return `< ${num(edges[0], { digits: 2 })}`;
-    if (c === SIZE_CLASSES - 1) return `>= ${num(edges[c - 1], { digits: 2 })}`;
+    if (c === SIZE_CLASSES - 1) return `\u2265 ${num(edges[c - 1], { digits: 2 })}`;
     return `${num(edges[c - 1], { digits: 2 })} ${lang === 'es' ? 'a' : 'to'} ${num(edges[c], { digits: 2 })}`;
   });
 }
@@ -629,6 +646,20 @@ export function comparisonSeries(run: DemRun, q: ChartQuantity, num: Num = plain
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Which side is nearer the measurement, as a sentence that never reads as agreement for a verdict that is not met.
 // ---------------------------------------------------------------------------------------------------------------------------------
+
+/** The sides that state no value, as the sentence under the axis: each side named in words with the feed classes where it states none. Null when every side states a value. */
+export function noValueNote(series: QuantitySeries, num: Num): Text | null {
+  const bySide = (side: 'simulation' | 'population_balance') => series.points.filter((p) => p[side].value === null && p[side].reason !== null).map((p) => `${feedClassText(p.feedClass, num)} mm`);
+  const parts = (['simulation', 'population_balance'] as const).flatMap((side) => {
+    const at = bySide(side);
+    return at.length === 0 ? [] : [{ side, at }];
+  });
+  if (!parts.length) return null;
+  return {
+    en: `No value: ${parts.map((p) => `${SIDE_NAME[p.side].en} at ${p.at.join(', ')}`).join('; ')}`,
+    es: `Sin valor: ${parts.map((p) => `${SIDE_NAME[p.side].es} en ${p.at.join(', ')}`).join('; ')}`,
+  };
+}
 
 export interface Nearer {
   /** The side nearer the measurement, or null when fewer than two sides state a value. */

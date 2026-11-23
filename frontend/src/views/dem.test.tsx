@@ -9,10 +9,10 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { Loaded } from '../api/artifacts';
 import type { DemRun, Readiness } from '../lib/contract.types';
 import { toCallout } from './callouts';
-import { bareReason, calloutSpecs, windowLabelSide, CATEGORY, ComparisonOverlay, cursorMark, DemBody, DemUnavailable, DemUnreadable, LabNote, NoValueStrip, pointStages, Q, sideOffset, Sources, VerdictTable } from './dem';
-import { comparisonSeries, decodeFrames, frameAt, frameLabelText, nearerSentence, openingCursor, plain, type DemFrames, type DemPoint } from './demModel';
-import { FramesState, NAMES, panelWidth, plateExtremes, drawReplay, stageColumns, sphereTop } from './demReplay';
-import { chartOverlapProblems, decimalProblems, labelOverlapProblems, noValueStripProblems, nullMarkProblems, stageGeometryProblems, stageShare, stageShareProblems, verdictLayoutProblems } from './dem.rules.mjs';
+import { bareReason, calloutSpecs, windowLabelSide, CATEGORY, ComparisonOverlay, cursorMark, DemBody, DemUnavailable, DemUnreadable, LabNote, StopMark, pointStages, Q, sideOffset, Sources, VerdictTable } from './dem';
+import { comparisonSeries, decodeFrames, frameAt, frameLabelText, nearerSentence, openingCursor, plain, sizeClassLabels, type DemFrames, type DemPoint } from './demModel';
+import { calloutTargets, FramesState, NAMES, panelWidth, plateExtremes, drawReplay, spreadHeights, stageColumns, sphereTop } from './demReplay';
+import { axisNoteProblems, chartOverlapProblems, classContrastProblems, contrast, decimalProblems, labelOverlapProblems, leaderProblems, noValueStripProblems, nullMarkProblems, stageTimesProblems, stageGeometryProblems, stageShare, stageShareProblems, verdictLayoutProblems } from './dem.rules.mjs';
 import { subOfUrl, ViewContext, type ViewCtx } from './shared';
 import { ValidationGroup } from './validation';
 
@@ -238,7 +238,7 @@ describe('DM-014: the comparison, the distribution, the verdicts and the sources
     }
     expect(text).toContain('Shaded: the measurement plus or minus the 10 percent band.');
     expect(text).toContain('a sensitivity band and not a confidence interval');
-    expect(text).toContain('No value (written under the chart):');
+    expect(text).toContain('No value (said under the tick labels):');
   });
   it('a side that states no value is named with its reason, and no sentence of any chart reads as agreement for a verdict that is not met', () => {
     expect(text).toContain('population balance, 63/52 mm: no work index of the ore is published, so the population balance states no net power');
@@ -528,7 +528,6 @@ describe('B1: the verdict table keeps its summary and its verdict in view', () =
 describe('B2: a side with no value has no mark inside the plotting range', () => {
   const at = (p: { x: number; y: number }) => ({ x: 60 + p.x * 100, y: 300 - p.y * 0.2 });
   const overlay = (q: 'throughput' | 'net_power' | 'p80') => renderToStaticMarkup(<svg><ComparisonOverlay series={comparisonSeries(run, q)} at={at} /></svg>);
-  const strip = (q: 'throughput' | 'net_power' | 'p80', lang: 'en' | 'es' = 'en') => renderToStaticMarkup(<NoValueStrip series={comparisonSeries(run, q)} xs={[160, 260, 360]} lang={lang} />);
   it('adversarial: a side with no value yields no mark inside the plotting range of the rendered overlay: the overlay draws none, and the text stands in the strip under the chart', () => {
     for (const q of ['throughput', 'net_power', 'p80'] as const) {
       const svg = overlay(q);
@@ -536,46 +535,23 @@ describe('B2: a side with no value has no mark inside the plotting range', () =>
       expect(svg).not.toContain('<circle');
       expect(svg).not.toContain('<text');
     }
-    const net = strip('net_power');
-    // the particle simulation at 31.5/26.5 and the population balance at all three points
-    expect([...net.matchAll(/data-no-value="([^"]+)"/g)].map((m) => m[1]).sort()).toEqual(['16-13.2:population_balance', '31.5-26.5:population_balance', '31.5-26.5:simulation', '63-52:population_balance']);
-    expect(net).toContain('no value');
-    expect(net).not.toContain('<circle');
-    expect([...strip('throughput').matchAll(/data-no-value="([^"]+)"/g)].map((m) => m[1])).toEqual(['31.5-26.5:simulation']);
-    expect(strip('p80')).toBe('');
+    // the bands and bars of the sides that do state a value are still drawn
+    expect((overlay('throughput').match(/data-measurement-band=/g) ?? []).length).toBe(3);
   });
-  it('writes the strip in Spanish with the reason as the title, one row per side so two sides at one feed never touch', () => {
-    const es = strip('net_power', 'es');
-    expect(es).toContain('sin valor');
-    expect(es).toContain('title="balance poblacional: no se publica un índice de trabajo');
-    const tops = [...es.matchAll(/data-no-value="31\.5-26\.5:(\w+)"[^>]*top:(\d+)(?:px)?/g)].map((m) => [m[1], Number(m[2])]);
-    expect(tops).toEqual([['simulation', 0], ['population_balance', 14]]);
-    expect(strip('net_power')).toContain('height:30px');
-    expect(strip('throughput')).toContain('height:16px');
-    expect(strip('net_power', 'en')).not.toBe('');
-    expect(renderToStaticMarkup(<NoValueStrip series={comparisonSeries(run, 'net_power')} xs={null} lang="en" />)).toBe('');
-  });
-  it('the strip is a row of its own under the chart and lies at the feed classes\u2019 positions', () => {
-    const net = strip('net_power');
-    const lefts = [...net.matchAll(/data-no-value="([^"]+)"[^>]*left:(\d+)px/g)].map((m) => [m[1], Number(m[2])]);
-    expect(lefts.find((l) => l[0] === '63-52:population_balance')![1]).toBe(160);
-    expect(lefts.find((l) => l[0] === '31.5-26.5:simulation')![1]).toBe(260);
-    expect(lefts.find((l) => l[0] === '16-13.2:population_balance')![1]).toBe(360);
+  it('the sides with no value are said in words as the chart\u2019s own axis note, in both languages, and the legend has an entry for them', () => {
     const src = readFileSync(new URL('./dem.tsx', import.meta.url), 'utf8');
-    expect(src).toMatch(/<NoValueStrip series=\{series\} xs=\{xs\} lang=\{lang\} \/>/);
+    expect(src).toContain('label: axisNote ?? { en:');
+    expect(src).toContain("label: { en: 'No value (said under the tick labels, reason in the note)'");
+    expect(src).not.toContain('NoValueStrip');
+    expect(textOf(render())).toContain('population balance, 63/52 mm: no work index of the ore is published');
+    expect(textOf(render())).toContain('No value (said under the tick labels):');
   });
-  it('a side with a value keeps its bars: the measurement\u2019s band, the standard error and the spread are drawn at the feed class\u2019s position', () => {
+  it('a side with a value keeps its bars: the measurement band, the standard error and the spread are drawn at the feed class position', () => {
     const svg = overlay('throughput');
-    expect((svg.match(/data-measurement-band=/g) ?? []).length).toBe(3);
     expect(svg).toContain('<line');
     const x = (id: string) => Number(svg.match(new RegExp(`data-measurement-band="${id}" x="([\\d.]+)"`))![1]);
     expect(x('63-52')).toBeLessThan(x('31.5-26.5'));
     expect(x('31.5-26.5')).toBeLessThan(x('16-13.2'));
-  });
-  it('the legend has an entry for it, and its reasons are in the note', () => {
-    const src = readFileSync(new URL('./dem.tsx', import.meta.url), 'utf8');
-    expect(src).toMatch(/id: 'no-value', label: \{ en: 'No value \(written under the chart, reason in the note\)'/);
-    expect(textOf(render())).toContain('population balance, 63/52 mm: no work index of the ore is published');
   });
 });
 
@@ -709,11 +685,23 @@ describe('M4, m9 and the small findings', () => {
     expect(failed).toContain('could not be read from this build. Cause: dem/jaw-lab.json: HTTP 404');
     expect(failed).not.toContain('Error:');
   });
-  it('m15 and m16: the per-stroke charts mark the stop of a run that did not complete and hint at what a click does', () => {
+  it('m15 and m16, R8, R10: the stop is a mark of its own (dashed, alarm colour, label on its own line) and the charts say what a touch does', () => {
     const src = readFileSync(new URL('./dem.tsx', import.meta.url), 'utf8');
-    expect(src).toMatch(/label: \{ en: 'run stopped', es: 'corrida detenida' \}/);
-    expect(src).toMatch(/hint=\{SERIES_HINT\}/);
-    expect(src).toMatch(/Choose a stroke on the chart to move the replay/);
+    expect(src).toContain("label={lang === 'es' ? 'corrida detenida' : 'run stopped'}");
+    expect(src).toContain('hint={SERIES_HINT}');
+    expect(src.match(/hint=\{READ_HINT\}/g)?.length).toBe(2);
+    expect(src).toContain('Choose a stroke on the chart to move the replay');
+    expect(src).toContain('Hover or touch a point to read its values');
+    expect(src).not.toContain('Hover the chart to read the values');
+  });
+  it('the stop mark stands on a line of its own, away from the cursor label, in the alarm colour with a dash', () => {
+    const at = (p: { x: number; y: number }) => ({ x: 20 + p.x * 40, y: 200 - p.y });
+    const html = renderToStaticMarkup(<svg><StopMark at={at} x={6} yTop={100} yBottom={0} label="run stopped" /></svg>);
+    expect(html).toContain('data-stop-mark="6"');
+    expect(html).toContain('stroke="var(--color-bad)"');
+    expect(html).toContain('stroke-dasharray="2 3"');
+    expect(html).toContain('run stopped');
+    expect(Number(html.match(/<text[^>]*y="([\d.]+)"/)![1])).toBe(at({ x: 6, y: 100 }).y + 40);
   });
   it('m6: the view\u2019s numbers are tabular', () => {
     expect(css).toMatch(/\.cdem-dem \{\s*font-variant-numeric: tabular-nums;/);
@@ -798,7 +786,7 @@ describe('DM-017: the layout rules decide from measured boxes and strings (src/v
   });
   it('the browser script hands its measurements to these rules and is run by the story checks', () => {
     const b = readFileSync(new URL('./dem.browser.mjs', import.meta.url), 'utf8');
-    for (const rule of ['verdictLayoutProblems', 'noValueStripProblems', 'labelOverlapProblems', 'stageGeometryProblems', 'decimalProblems']) expect(b).toContain(rule);
+    for (const rule of ['verdictLayoutProblems', 'axisNoteProblems', 'labelOverlapProblems', 'stageGeometryProblems', 'decimalProblems', 'leaderProblems', 'classContrastProblems', 'stageTimesProblems']) expect(b).toContain(rule);
     expect(readFileSync(new URL('../pages/story.browser.mjs', import.meta.url), 'utf8')).toContain("import('../views/dem.browser.mjs')");
   });
 });
@@ -825,23 +813,34 @@ describe('F1: the quotes of the quoted English blocks are real characters', () =
   });
 });
 
-describe('F2: the "no value" strip overlaps nothing', () => {
-  const plot = { left: 60, right: 340, top: 40, bottom: 260 };
-  const tick = { text: '63/52 mm', box: { left: 80, right: 140, top: 264, bottom: 277 } };
+describe('F2 and R3: the note of the missing sides overlaps nothing and stands directly under the tick labels', () => {
+  const ticks = [
+    { text: '63/52 mm', box: { left: 80, right: 140, top: 264, bottom: 277 } },
+    { text: '16/13.2 mm', box: { left: 260, right: 330, top: 264, bottom: 277 } },
+  ];
+  it('adversarial: a note on a tick label, above the lowest tick label or far under them is reported; one directly under passes', () => {
+    expect(axisNoteProblems({ left: 70, right: 330, top: 282, bottom: 296 }, ticks)).toEqual([]);
+    expect(axisNoteProblems({ left: 70, right: 330, top: 270, bottom: 284 }, ticks)[0]).toContain('overlaps the tick label');
+    expect(axisNoteProblems({ left: 70, right: 330, top: 200, bottom: 214 }, ticks).join(' ')).toContain('above the lowest tick label');
+    expect(axisNoteProblems({ left: 70, right: 330, top: 350, bottom: 364 }, ticks)[0]).toContain('73 px under the tick labels');
+  });
   it('adversarial: a "no value" text on a tick label, on the axis title, on another or inside the plot is reported', () => {
+    const plot = { left: 60, right: 340, top: 40, bottom: 260 };
     const under = { id: '31.5-26.5:simulation', box: { left: 160, right: 205, top: 330, bottom: 344 } };
-    expect(noValueStripProblems([under], [tick, { text: 'Feed class', box: { left: 150, right: 230, top: 296, bottom: 310 } }], plot)).toEqual([]);
-    expect(noValueStripProblems([{ ...under, box: { ...under.box, top: 300, bottom: 314 } }], [{ text: 'Feed class', box: { left: 150, right: 230, top: 296, bottom: 310 } }], plot)[0]).toContain('overlaps "Feed class"');
-    expect(noValueStripProblems([{ ...under, box: { left: 90, right: 135, top: 266, bottom: 280 } }], [tick], plot)[0]).toContain('overlaps "63/52 mm"');
-    const second = { id: '31.5-26.5:population_balance', box: { left: 160, right: 205, top: 338, bottom: 352 } };
-    expect(noValueStripProblems([under, second], [], plot)[0]).toContain('overlap');
-    expect(noValueStripProblems([under, { ...second, box: { ...second.box, top: 346, bottom: 360 } }], [], plot)).toEqual([]);
+    const title = { text: 'Feed class', box: { left: 150, right: 230, top: 296, bottom: 310 } };
+    expect(noValueStripProblems([under], [title], plot)).toEqual([]);
+    expect(noValueStripProblems([{ ...under, box: { ...under.box, top: 300, bottom: 314 } }], [title], plot)[0]).toContain('overlaps "Feed class"');
     expect(noValueStripProblems([{ id: 'x', box: { left: 100, right: 140, top: 200, bottom: 214 } }], [], plot)[0]).toContain('inside the plotting range');
   });
-  it('the browser script measures the strip against the tick labels and the axis title', () => {
+  it('the rules for a text under an axis still hold', () => {
+    const plot = { left: 60, right: 340, top: 40, bottom: 260 };
+    expect(noValueStripProblems([{ id: 'x', box: { left: 100, right: 140, top: 200, bottom: 214 } }], [], plot)[0]).toContain('inside the plotting range');
+    expect(nullMarkProblems([], plot)).toEqual([]);
+  });
+  it('the browser script measures the note against the tick labels', () => {
     const b = readFileSync(new URL('./dem.browser.mjs', import.meta.url), 'utf8');
-    expect(b).toContain('noValueStripProblems');
-    expect(b).toContain('data-no-value');
+    expect(b).toContain('axisNoteProblems');
+    expect(b).toContain('data-axis-title');
   });
 });
 
@@ -918,5 +917,101 @@ describe('F5: the two per-stroke charts stack on a phone, each with its own box'
     const b = readFileSync(new URL('./dem.browser.mjs', import.meta.url), 'utf8');
     expect(b).toContain('chartOverlapProblems');
     expect(b).toContain(".cdem-dem .uplot");
+  });
+});
+
+describe('R1: every callout leader reaches its subject', () => {
+  it('adversarial: a leader that ends in empty space, or two that end within 20 px of each other, are reported; a leader on its subject passes', () => {
+    const swing = { left: 100, right: 140, top: 50, bottom: 300 };
+    const gap = { left: 118, right: 150, top: 396, bottom: 412 };
+    const good = [
+      { id: 'net_power', end: { x: 120, y: 175 }, box: swing },
+      { id: 'throughput', end: { x: 134, y: 404 }, box: gap },
+    ];
+    expect(leaderProblems(good)).toEqual([]);
+    const lost = leaderProblems([{ id: 'throughput', end: { x: 427, y: 634 }, box: gap }]);
+    expect(lost).toHaveLength(1);
+    expect(lost[0]).toContain('the leader of "throughput" ends at (427, 634), outside its subject');
+    const close = leaderProblems([...good, { id: 'p80', end: { x: 134, y: 413 }, box: { left: 120, right: 150, top: 396, bottom: 420 } }]);
+    expect(close).toHaveLength(1);
+    expect(close[0]).toContain('9.0 px apart');
+  });
+  it('the targets of the three callouts are on their subjects in the drawing, 20 px or more apart, for every point and plate position', () => {
+    for (const p of run.points) {
+      const r = p.simulation.replay!;
+      const ext = plateExtremes(r);
+      const tf = { scale: 0.8, bounds: { xMin: -55, xMax: 120, zMin: -70, zMax: 470 }, px: (x: number, z: number) => ({ x: (x + 55) * 0.8, y: (470 - z) * 0.8 }) };
+      for (const i of [0, Math.floor(r.frames / 2), r.frames - 1]) {
+        const targets = calloutTargets(tf, r.geometry, { x: r.plate_bottom_x_mm[i], z: r.plate_bottom_z_mm[i] }, ext.closed);
+        expect(targets.map((x) => x.id)).toEqual(['throughput', 'net_power', 'p80']);
+        expect(leaderProblems(targets.map((x) => ({ id: x.id, end: x.end, box: x.box })), 4, 20)).toEqual([]);
+      }
+    }
+  });
+  it('the leaders that end at the column edge are kept a label height apart', () => {
+    expect(spreadHeights([300, 304, 120], 26, 400)).toEqual([300, 326, 120]);
+    const out = spreadHeights([400, 402, 404], 26, 410);
+    for (let i = 1; i < out.length; i++) expect(Math.abs(out[i] - out[i - 1])).toBeGreaterThanOrEqual(0);
+    expect(Math.max(...out)).toBeLessThanOrEqual(402);
+  });
+});
+
+describe('R2: the size classes read against the stage in both themes', () => {
+  const stylesheet = readFileSync(new URL('../workbench/workbench.css', import.meta.url), 'utf8');
+  const ramp = (re: RegExp): string[] => [...stylesheet.match(re)![1].matchAll(/--cdem-size-\d: (#[0-9a-f]{6});/g)].map((m) => m[1]);
+  const dark = ramp(/:root,\s*\[data-theme='dark'\] \{\s*(--cdem-size-0[^}]*)\}/);
+  const light = ramp(/\[data-theme='light'\] \{\s*(--cdem-size-0[^}]*)\}/);
+  it('every one of the twelve classes is at 3 to 1 or more against the stage background of its theme, ordered in lightness', () => {
+    expect(dark).toHaveLength(6);
+    expect(light).toHaveLength(6);
+    expect(classContrastProblems(dark, '#161b22')).toEqual([]);
+    expect(classContrastProblems(light, '#ffffff')).toEqual([]);
+    for (const c of dark) expect(contrast(c, '#161b22')).toBeGreaterThanOrEqual(3);
+    for (const c of light) expect(contrast(c, '#ffffff')).toBeGreaterThanOrEqual(3);
+  });
+  it('adversarial: the old light ramp (the dark one reversed, a pale yellow at the fine end) is reported', () => {
+    const old = ['#fde66a', '#cbbf6b', '#98957a', '#666a74', '#35466e', '#00224e'];
+    const p = classContrastProblems(old, '#ffffff');
+    expect(p.length).toBeGreaterThanOrEqual(2);
+    expect(p[0]).toContain('the size class 0 (#fde66a) has a contrast of 1.');
+    expect(classContrastProblems(['#2a99d4', '#2a99d4', '#2a99d4', '#2a99d4', '#2a99d4', '#2a99d4'], '#ffffff').join(' ')).toContain('not ordered in lightness');
+  });
+  it('the small spheres are outlined so a two-pixel dot is seen', () => {
+    const rep = readFileSync(new URL('./demReplay.tsx', import.meta.url), 'utf8');
+    expect(rep).toContain('ctx.strokeStyle = r > 2.5 ? a.colors.surface : a.colors.fg;');
+    expect(rep).not.toContain('if (r > 2.5) ctx.stroke();');
+  });
+});
+
+describe('R5: the three steps of a change of point come at their own times', () => {
+  it('adversarial: steps that come together, or fewer than three steps, are reported; steps 320 ms apart pass', () => {
+    expect(stageTimesProblems([20, 340, 660])).toEqual([]);
+    expect(stageTimesProblems([20, 552, 552])[0]).toContain('step 3 came 0 ms after step 2');
+    expect(stageTimesProblems([20, 552])).toEqual(['2 steps were seen, three are required']);
+    const stages = pointStages(() => undefined);
+    expect(stages.map((s) => s.durationMs)).toEqual([320, 320, 0]);
+  });
+});
+
+describe('R10: a decimal before a small unit is a decimal even where a thousands group would pass', () => {
+  it('adversarial: "1.234 kW" on a Spanish string is reported, "2.167 kg/h" is a thousands group and is not', () => {
+    expect(decimalProblems([{ text: 'consume 1.234 kW', quoted: false }])).toHaveLength(1);
+    expect(decimalProblems([{ text: 'pasa 1.234 mm', quoted: false }])).toHaveLength(1);
+    expect(decimalProblems([{ text: 'masa 1.234 kg', quoted: false }])).toHaveLength(1);
+    expect(decimalProblems([{ text: 'pasa 2.167 kg/h', quoted: false }])).toEqual([]);
+    expect(decimalProblems([{ text: 'pasa 2.167 kg/h frente a 1.220 kg/h', quoted: false }])).toEqual([]);
+    expect(decimalProblems([{ text: 'consume 1.234 kW', quoted: true }])).toEqual([]);
+  });
+});
+
+describe('R4 and R9: the verdict table headers and the size panel sign', () => {
+  it('the three text columns are left aligned under their headers on a desktop, the number columns right', () => {
+    const stylesheet = readFileSync(new URL('../workbench/workbench.css', import.meta.url), 'utf8');
+    expect(stylesheet).toContain('.cdem-vt .caos-table thead th:nth-child(3),');
+    expect(stylesheet).toMatch(/\.cdem-vt \.caos-table td\.cdem-vt-verdict \{\s*text-align: left;/);
+  });
+  it('the top class of the size panel is written with the greater-than-or-equal sign', () => {
+    expect(sizeClassLabels(52, plain, 'en')[5].charCodeAt(0)).toBe(0x2265);
+    expect(sizeClassLabels(52, plain, 'es')[5]).toBe(`${String.fromCharCode(0x2265)} 52`);
   });
 });

@@ -631,21 +631,21 @@
    neither a story-step accent nor a state colour, and the story keeps its own. */
 :root,
 [data-theme='dark'] {
-  --cdem-size-0: #3d5a99;
-  --cdem-size-1: #4f7aa8;
-  --cdem-size-2: #6c9aa0;
-  --cdem-size-3: #96b58c;
-  --cdem-size-4: #c6cf78;
-  --cdem-size-5: #fbe94a;
+  --cdem-size-0: #1174a3;
+  --cdem-size-1: #209598;
+  --cdem-size-2: #66b07b;
+  --cdem-size-3: #c8bd72;
+  --cdem-size-4: #fbceb6;
+  --cdem-size-5: #fde9ea;
 }
 
 [data-theme='light'] {
-  --cdem-size-0: #fde66a;
-  --cdem-size-1: #cbbf6b;
-  --cdem-size-2: #98957a;
-  --cdem-size-3: #666a74;
-  --cdem-size-4: #35466e;
-  --cdem-size-5: #00224e;
+  --cdem-size-0: #2a99d4;
+  --cdem-size-1: #0f8d90;
+  --cdem-size-2: #317b4a;
+  --cdem-size-3: #635e16;
+  --cdem-size-4: #763b17;
+  --cdem-size-5: #6e172b;
 }
 
 /* Numbers of the view line up (m6): the counts change every frame while playing. */
@@ -796,14 +796,6 @@
   text-align: left;
 }
 
-/* The strip under a comparison chart that says "no value" for a side that states none. */
-.cdem-strip {
-  font-size: var(--text-xs);
-  line-height: 14px;
-  white-space: nowrap;
-  pointer-events: none;
-}
-
 @media (max-width: 899px) {
   .cdem-vt .caos-table td.cdem-vt-qty {
     text-align: right;
@@ -838,4 +830,14 @@
 
 .cdem-strip-text {
   font-variant-numeric: tabular-nums;
+}
+
+/* R4: each header of the verdict table lines up with its cells: the three text columns left, the numbers right. */
+@media (min-width: 900px) {
+  .cdem-vt .caos-table thead th:nth-child(1),
+  .cdem-vt .caos-table thead th:nth-child(2),
+  .cdem-vt .caos-table thead th:nth-child(3),
+  .cdem-vt .caos-table td.cdem-vt-verdict {
+    text-align: left;
+  }
 }

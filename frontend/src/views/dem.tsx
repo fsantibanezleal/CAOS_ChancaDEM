@@ -31,6 +31,7 @@ import {
   isComplete,
   labMachine,
   nearerSentence,
+  noValueNote,
   openingCursor,
   overlapClause,
   packageMessage,
@@ -134,8 +135,8 @@ function PointChoice({ run, pointId, onPick }: { run: DemRun; pointId: string; o
 /** The stages of a change of operating point, in order: each sets how much of the view is shown (1 the stage, 2 the series, 3 everything). */
 export function pointStages(set: (step: number) => void): MotionStage[] {
   return [
-    { run: () => set(1), durationMs: 260 },
-    { run: () => set(2), durationMs: 260 },
+    { run: () => set(1), durationMs: 320 },
+    { run: () => set(2), durationMs: 320 },
     { run: () => set(3), durationMs: 0 },
   ];
 }
@@ -146,6 +147,9 @@ export function pointStages(set: (step: number) => void): MotionStage[] {
 
 /** The marker of the stroke cursor on a per-stroke chart: one vertical mark at the cursor. */
 export const cursorMark = (cursor: number): { x: number; label: BiText } => ({ x: cursor, label: { en: 'cursor', es: 'cursor' } });
+
+/** The hint under the comparison and distribution charts: it says what a touch does as well as a pointer. */
+const READ_HINT: BiText = { en: 'Hover or touch a point to read its values', es: 'Pase el cursor o toque un punto para leer sus valores' };
 
 const SERIES_HINT: BiText = { en: 'Choose a stroke on the chart to move the replay', es: 'Elija un golpe en el gráfico para mover la repetición' };
 
@@ -160,7 +164,9 @@ function StrokeSeries({ point, cursor, onPick }: { point: DemPoint; cursor: numb
   const x = { values: strokes, label: { en: 'Stroke', es: 'Golpe' }, range: [0, strokes[strokes.length - 1] + 1] as [number, number] };
   const stopAt = finalAttempt(s).stopped_during_stroke;
   // the cursor and, for a run that did not complete, the stroke it stopped in
-  const marks = [cursorMark(cursor), ...(!isComplete(s) && stopAt !== null ? [{ x: stopAt, label: { en: 'run stopped', es: 'corrida detenida' } as BiText }] : [])];
+  // the cursor is the shell's mark; the stop of a run that did not complete is the view's own (StopMark): dashed, in the alarm colour, with its label on a line of its own
+  const marks = [cursorMark(cursor)];
+  const stopMark = !isComplete(s) && stopAt !== null ? stopAt : null;
   const [pLo, pHi] = powerRange(s);
   const yMaxM = Math.max(...s.series.passed_kg, ...s.series.hold_up_kg, s.mass_fed_kg) * 1.1;
   const power: ChartSeries[] = [{ id: 'plate-power', label: { en: 'Plate power per stroke', es: 'Potencia de la placa por golpe' }, values: [...s.series.plate_power_w], color: '--color-accent', width: 2 }];
@@ -177,7 +183,12 @@ function StrokeSeries({ point, cursor, onPick }: { point: DemPoint; cursor: numb
           callouts={[]}
           points={[]}
           frame={{ x: x.range, y: [pLo, pHi] }}
-          overlay={w ? (at) => <WindowBand at={at} from={w.first_stroke - 0.5} to={w.last_stroke + 0.5} yTop={pHi} yBottom={pLo} cursor={cursor} label={lang === 'es' ? 'ventana estacionaria' : 'steady window'} /> : undefined}
+          overlay={(at) => (
+            <>
+              {w && <WindowBand at={at} from={w.first_stroke - 0.5} to={w.last_stroke + 0.5} yTop={pHi} yBottom={pLo} cursor={cursor} label={lang === 'es' ? 'ventana estacionaria' : 'steady window'} />}
+              {stopMark !== null && <StopMark at={at} x={stopMark} yTop={pHi} yBottom={pLo} label={lang === 'es' ? 'corrida detenida' : 'run stopped'} />}
+            </>
+          )}
         >
           <UPlotChart
             title={{ en: 'Plate power per stroke, with the steady window', es: 'Potencia de la placa por golpe, con la ventana estacionaria' }}
@@ -194,6 +205,12 @@ function StrokeSeries({ point, cursor, onPick }: { point: DemPoint; cursor: numb
         </ChartCallouts>
       </div>
       <div className="cdem-series-cell">
+        <ChartCallouts
+          callouts={[]}
+          points={[]}
+          frame={{ x: x.range, y: [0, yMaxM] }}
+          overlay={(at) => (stopMark !== null ? <StopMark at={at} x={stopMark} yTop={yMaxM} yBottom={0} label={lang === 'es' ? 'corrida detenida' : 'run stopped'} /> : null)}
+        >
         <UPlotChart
           title={{ en: 'Mass passed and held, with the spheres held', es: 'Masa pasada y retenida, con las esferas retenidas' }}
           height="fill"
@@ -209,6 +226,7 @@ function StrokeSeries({ point, cursor, onPick }: { point: DemPoint; cursor: numb
               : `stroke ${strokes[i]}: passed ${num(s.series.passed_kg[i], { digits: 3 })} kg; held ${s.series.held[i]} spheres (${num(s.series.hold_up_kg[i], { digits: 3 })} kg)`
           }
         />
+        </ChartCallouts>
       </div>
     </div>
   );
@@ -228,6 +246,20 @@ function WindowBand({ at, from, to, yTop, yBottom, cursor, label }: { at: (p: { 
     <g data-window-band="" data-window-from={from} data-window-to={to}>
       <rect x={Math.min(a.x, b.x)} y={Math.min(a.y, b.y)} width={Math.abs(b.x - a.x)} height={Math.abs(b.y - a.y)} fill="color-mix(in oklab, var(--color-accent) 12%, transparent)" stroke="var(--color-accent)" strokeWidth={1} strokeDasharray="4 3" />
       <text data-window-label={side} x={side === 'right' ? Math.max(a.x, b.x) - 4 : Math.min(a.x, b.x) + 4} y={Math.min(a.y, b.y) + 26} textAnchor={side === 'right' ? 'end' : 'start'} fontSize={11} fill="var(--color-fg-subtle)" style={{ fontFamily: 'var(--font-sans)' }}>
+        {label}
+      </text>
+    </g>
+  );
+}
+
+/** The stop of a run that did not complete: a dashed line in the alarm colour with its label on a line of its own, so it is told from the cursor by colour, dash and place. */
+export function StopMark({ at, x, yTop, yBottom, label }: { at: (p: { x: number; y: number }) => { x: number; y: number }; x: number; yTop: number; yBottom: number; label: string }) {
+  const a = at({ x, y: yTop });
+  const b = at({ x, y: yBottom });
+  return (
+    <g data-stop-mark={x}>
+      <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="var(--color-bad)" strokeWidth={1.6} strokeDasharray="2 3" />
+      <text x={a.x - 4} y={a.y + 40} textAnchor="end" fontSize={11} fill="var(--color-bad)" style={{ fontFamily: 'var(--font-sans)' }}>
         {label}
       </text>
     </g>
@@ -383,18 +415,10 @@ export const CATEGORY = { dx: 0.17, half: 0.3 } as const;
 /**
  * What the comparison draws over the chart, in the plot's own scales (`at` maps a data point to pixels): the measurement's band shaded and the
  * standard error of the particle simulation and the spread of the population balance as bars. A side that states no value has no mark here at
- * all: it is written in the strip under the chart (NoValueStrip), at the horizontal position of its feed class, which this overlay reports
- * (`onXs`, in pixels of the layer, the same left edge as the strip).
+ * all: it is said in words as the chart's own axis note (noValueNote), directly under the tick labels and above the key.
  */
-export function ComparisonOverlay({ series, at, onXs }: { series: QuantitySeries; at: At; onXs?: (xs: number[]) => void }) {
+export function ComparisonOverlay({ series, at }: { series: QuantitySeries; at: At }) {
   const rows = series.points.map((p, i) => ({ p, c: i + 1 }));
-  const xs = rows.map(({ c }) => at({ x: c, y: 0 }).x);
-  const key = xs.map((v) => String(Math.round(v * 10) / 10)).join(",");
-  useEffect(() => {
-    onXs?.(xs);
-    // reported when the positions change
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key]);
   return (
     <g data-comparison-overlay={series.quantity}>
       {rows.map(({ p, c }) => {
@@ -414,35 +438,7 @@ export function ComparisonOverlay({ series, at, onXs }: { series: QuantitySeries
   );
 }
 
-/** The sides that state no value, in the order they are written: for each feed class the particle simulation first, then the population balance. */
-export function missingSides(series: QuantitySeries): { id: string; c: number; side: 'simulation' | 'population_balance'; row: number; reason: Text }[] {
-  return series.points.flatMap((p, i) => (['simulation', 'population_balance'] as const).flatMap((side) => (p[side].value === null && p[side].reason !== null ? [{ id: `${p.id}:${side}`, c: i + 1, side, row: 0, reason: p[side].reason as Text }] : []))).map((m) => ({ ...m, row: m.side === 'simulation' ? 0 : 1 }));
-}
-
-/** The height of one row of the strip [px]. */
-export const STRIP_ROW = 14;
-
-/**
- * The strip under a comparison chart that says "no value" for each side that states none, at the horizontal position of its feed class (`xs`,
- * pixels from the chart's left edge) and in the colour of the side, one row per side so two sides missing at one feed never touch. It is a row
- * of its own under the chart, so it overlaps no tick label, axis title or key, and no mark of a null lies inside the plotting range.
- */
-export function NoValueStrip({ series, xs, lang }: { series: QuantitySeries; xs: number[] | null; lang: 'en' | 'es' }) {
-  const miss = missingSides(series);
-  if (!miss.length || !xs) return null;
-  const rows = Math.max(...miss.map((m) => m.row)) + 1;
-  return (
-    <div className="cdem-strip" data-no-value-strip={series.quantity} style={{ position: 'relative', height: rows * STRIP_ROW + 2 }}>
-      {miss.map((m) => (
-        <span key={m.id} className="cdem-strip-text" data-no-value={m.id} title={`${pick(SIDE_NAME[m.side], lang)}: ${pick(m.reason, lang)}`} style={{ position: 'absolute', left: xs[m.c - 1], top: m.row * STRIP_ROW, transform: 'translateX(-50%)', color: `var(${COLORS[m.side]})` }}>
-          {lang === 'es' ? 'sin valor' : 'no value'}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function ComparisonChart({ series, onXs }: { series: QuantitySeries; onXs: (xs: number[]) => void }) {
+function ComparisonChart({ series }: { series: QuantitySeries }) {
   const lang = useShellLang();
   const num = useNum();
   const pts = series.points.map((p, i) => ({ ...p, c: i + 1 }));
@@ -466,19 +462,22 @@ function ComparisonChart({ series, onXs }: { series: QuantitySeries; onXs: (xs: 
   if (paperRows.length) list.push({ id: 'paper', label: { en: 'The paper’s own simulation', es: 'La simulación propia del artículo' }, values: paperRows.map((p) => p.paper!.value), x: paperRows.map((p) => p.c - 2 * CATEGORY.dx), mode: 'points', size: 9, color: COLORS.paper });
   // a side with no value has no mark in the plot: its legend entry has no values, and the text "no value" stands at its feed class under the axis
   const anyMissing = pts.some((p) => (['simulation', 'population_balance'] as const).some((side) => p[side].value === null && p[side].reason !== null));
-  if (anyMissing) list.push({ id: 'no-value', label: { en: 'No value (written under the chart, reason in the note)', es: 'Sin valor (escrito bajo el gráfico, motivo en la nota)' }, values: pts.map(() => null), mode: 'points', size: 6, color: '--color-fg-faint' });
+  if (anyMissing) list.push({ id: 'no-value', label: { en: 'No value (said under the tick labels, reason in the note)', es: 'Sin valor (dicho bajo las marcas del eje, motivo en la nota)' }, values: pts.map(() => null), mode: 'points', size: 6, color: '--color-fg-faint' });
+  // the sides that state no value are said in words as the axis's own note, directly under the tick labels and above the key
+  const axisNote = noValueNote(series, num);
   const ticks = pts.map((p) => ({ value: p.c, label: { en: `${feedClassText(p.feedClass, num)} mm`, es: `${feedClassText(p.feedClass, num)} mm` } as BiText }));
   const name = pick(series.name, lang);
   const unit = pick(series.unit, lang);
   const bandPct = num(series.points[0].band * 100, { digits: 2 });
   return (
-    <ChartCallouts callouts={[]} points={[]} frame={{ x: xRange, y: [0, yMax] }} overlay={(at) => <ComparisonOverlay series={series} at={at} onXs={onXs} />}>
+    <ChartCallouts callouts={[]} points={[]} frame={{ x: xRange, y: [0, yMax] }} overlay={(at) => <ComparisonOverlay series={series} at={at} />}>
       <UPlotChart
         title={{ en: `${series.name.en} by feed class`, es: `${series.name.es} por clase de alimentación` }}
         height="fill"
-        x={{ values: xs, label: { en: 'Feed class', es: 'Clase de alimentación' }, ticks, range: xRange }}
+        x={{ values: xs, label: axisNote ?? { en: 'Feed class', es: 'Clase de alimentación' }, ticks, range: xRange }}
         y={{ label: series.name, unit: series.unit, range: [0, yMax], format: { digits: 3 } }}
         series={list}
+        hint={READ_HINT}
         readout={(i) => `${feedClassText(pts[i].feedClass, num)} mm: ${name} ${pts[i].measurement.value === null ? '' : `${num(pts[i].measurement.value as number, { digits: 3 })} ${unit}`}, ${lang === 'es' ? 'banda' : 'band'} ${bandPct} %`}
       />
     </ChartCallouts>
@@ -491,7 +490,6 @@ function ComparisonCard({ run, q, pointId }: { run: DemRun; q: ChartQuantity; po
   const stateKey = useWorkbenchState()?.stateKey;
   const series = comparisonSeries(run, q, num);
   const t = (en: string, es: string) => (lang === 'es' ? es : en);
-  const [xs, setXs] = useState<number[] | null>(null);
   const noValues = series.points.flatMap((p) => (['simulation', 'population_balance'] as const).flatMap((side) => (p[side].value === null && p[side].reason ? [`${pick(SIDE_NAME[side], lang)}, ${feedClassText(p.feedClass, num)} mm: ${pick(p[side].reason as Text, lang)}`] : [])));
   const bandNote =
     q === 'p80'
@@ -502,9 +500,8 @@ function ComparisonCard({ run, q, pointId }: { run: DemRun; q: ChartQuantity; po
     <PlotCard title={{ en: `${series.name.en} (${series.unit.en}) against the feed`, es: `${series.name.es} (${series.unit.es}) contra la alimentación` }} lane="replay" provenance="published" dataKey={stateKey}>
       <div data-comparison={q} className="cdem-comparison">
         <div className="cdem-comparison-chart">
-          <ComparisonChart series={series} onXs={setXs} />
+          <ComparisonChart series={series} />
         </div>
-        <NoValueStrip series={series} xs={xs} lang={lang} />
         <ul className="cdem-sentences" data-sentences={q}>
           {run.points.map((p, i) => (
             <li key={p.id} data-point={p.id} aria-current={p.id === pointId ? 'true' : undefined}>
@@ -520,7 +517,7 @@ function ComparisonCard({ run, q, pointId }: { run: DemRun; q: ChartQuantity; po
         )}
         {noValues.length > 0 && (
           <p className="caos-plot-note" data-no-value-reasons="">
-            {t('No value (written under the chart): ', 'Sin valor (escrito bajo el gráfico): ')}
+            {t('No value (said under the tick labels): ', 'Sin valor (dicho bajo las marcas del eje): ')}
             {noValues.join('; ')}.
           </p>
         )}
@@ -572,6 +569,7 @@ function DistributionCard({ run, point }: { run: DemRun; point: DemPoint }) {
           y={{ label: { en: 'Cumulative passing', es: 'Pasante acumulado' }, unit: { en: '%', es: '%' }, range: [0, 105], format: { digits: 3 } }}
           series={list}
           marks={marks}
+          hint={READ_HINT}
         />
       </div>
     </PlotCard>

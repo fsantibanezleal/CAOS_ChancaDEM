@@ -164,13 +164,15 @@ export function drawReplay(ctx: CanvasRenderingContext2D, a: DrawArgs, size: { w
     ctx.strokeStyle = a.colors.surface;
     for (const s of idx) {
       const c = tf.px(d[s * 4], d[s * 4 + 2]);
-      const r = Math.max(0.7, d[s * 4 + 3] * tf.scale);
+      const r = Math.max(1.2, d[s * 4 + 3] * tf.scale);
       ctx.globalAlpha = 0.55 + (0.45 * (d[s * 4 + 1] - ys[0])) / span;
       ctx.fillStyle = a.palette[sizeClass(2 * d[s * 4 + 3], a.feedLowMm)];
       ctx.beginPath();
       ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
       ctx.fill();
-      if (r > 2.5) ctx.stroke();
+      ctx.strokeStyle = r > 2.5 ? a.colors.surface : a.colors.fg;
+      ctx.lineWidth = r > 2.5 ? 0.6 : 0.8;
+      ctx.stroke();
       order.push(s - s0);
     }
     ctx.globalAlpha = 1;
@@ -260,7 +262,7 @@ const ReplayCanvas = ({ width, height, run, point, frames, frame, tf, plate, ins
  * the discharge level, on its right the swing plate, the settings and the hopper, each with a leader to what it names. They are placed so
  * none leaves the drawing or touches another (the gate's G10). Also the subjects the callouts are anchored to, on the main section.
  */
-function sectionLabels(tf: StageTransform, point: DemPoint, run: DemRun, plate: { x: number; z: number }, width: number, height: number, names: Names, num: (v: number, o?: { digits?: number; decimals?: number }) => string): { node: ReactNode; subjects: Subject[] } {
+function sectionLabels(tf: StageTransform, point: DemPoint, run: DemRun, plate: { x: number; z: number }, width: number, height: number, names: Names, narrow: boolean, num: (v: number, o?: { digits?: number; decimals?: number }) => string): { node: ReactNode; subjects: Subject[] } {
   const r = point.simulation.replay!;
   const g = r.geometry;
   const ext = plateExtremes(r);
@@ -276,9 +278,11 @@ function sectionLabels(tf: StageTransform, point: DemPoint, run: DemRun, plate: 
   // each label with the point of the drawing it names
   const items: { text: string; x: number; y: number; anchor: 'start' | 'end'; fill: string; weight?: number; to: { x: number; y: number } }[] = [
     { text: names.fixed, x: left, y: fixedMid.y, anchor: 'end', fill: TOKEN.subtle, to: { x: fixedMid.x - 4, y: fixedMid.y } },
-    { text: names.discharge, x: left, y: disY, anchor: 'end', fill: TOKEN.faint, to: { x: tf.px(tf.bounds.xMin + 6, 0).x, y: disY } },
+    narrow
+      ? { text: names.discharge, x: right, y: disY + 14, anchor: 'start', fill: TOKEN.faint, to: { x: tf.px(tf.bounds.xMax - 6, 0).x, y: disY } }
+      : { text: names.discharge, x: left, y: disY, anchor: 'end', fill: TOKEN.faint, to: { x: tf.px(tf.bounds.xMin + 6, 0).x, y: disY } },
     { text: names.swing, x: right, y: swingMid.y, anchor: 'start', fill: TOKEN.accent, to: { x: swingMid.x + 4, y: swingMid.y } },
-    { text: names.hopper, x: right, y: hop.y, anchor: 'start', fill: TOKEN.faint, to: { x: hop.x + 3, y: hop.y } },
+    { text: names.hopper, x: right + (narrow ? 8 : 0), y: hop.y - (narrow ? 14 : 0), anchor: 'start', fill: TOKEN.faint, to: { x: hop.x + 3, y: hop.y } },
     { text: `${names.css} ${num(run.settings.css_mm, { digits: 3 })} mm`, x: right, y: closedPx.y + 4, anchor: 'start', fill: TOKEN.accent, weight: 700, to: { x: closedPx.x + 3, y: closedPx.y } },
     { text: `${names.oss} ${num(run.settings.oss_mm, { digits: 3 })} mm`, x: right, y: openPx.y + 22, anchor: 'start', fill: TOKEN.subtle, to: { x: openPx.x + 3, y: openPx.y + 3 } },
   ];
@@ -312,6 +316,12 @@ function sectionLabels(tf: StageTransform, point: DemPoint, run: DemRun, plate: 
   );
   return { node, subjects };
 }
+
+/** The short names of the narrow stage, where a long label cannot stand clear of the walls and the callouts' leaders. */
+export const SHORT_NAMES: Record<'en' | 'es', Pick<Names, 'hopper' | 'discharge'>> = {
+  en: { hopper: 'hopper', discharge: 'discharge' },
+  es: { hopper: 'tolva', discharge: 'descarga' },
+};
 
 export const NAMES: Record<'en' | 'es', Names> = {
   en: { fixed: 'fixed plate', swing: 'swing plate', hopper: 'hopper above', discharge: 'discharge level', css: 'closed', oss: 'open' },
@@ -416,11 +426,11 @@ export function Inset({ width, height, left, run, point, frames, frame, plate, m
             <line x1={open.x} y1={yDim + 5} x2={open.x} y2={yDim + 11} />
           </g>
           <g stroke={TOKEN.fg} strokeWidth={2} fill="none" data-scale-bar={String(Math.round(bar * 10) / 10)}>
-            <line x1={8} y1={drawH - 12} x2={8 + bar} y2={drawH - 12} />
-            <line x1={8} y1={drawH - 15} x2={8} y2={drawH - 9} />
-            <line x1={8 + bar} y1={drawH - 15} x2={8 + bar} y2={drawH - 9} />
+            <line x1={8} y1={14} x2={8 + bar} y2={14} />
+            <line x1={8} y1={11} x2={8} y2={17} />
+            <line x1={8 + bar} y1={11} x2={8 + bar} y2={17} />
           </g>
-          <text x={8 + bar + 5} y={drawH - 8} fill={TOKEN.fg} {...{ style: font }}>
+          <text x={8 + bar + 5} y={18} fill={TOKEN.fg} {...{ style: font }}>
             10 mm
           </text>
         </svg>
@@ -435,6 +445,33 @@ export function Inset({ width, height, left, run, point, frames, frame, plate, m
  * the right. Narrow: the section and the size legend side by side with the callouts in the shell's header band above, and the zone stacked under
  * the legend.
  */
+export interface CalloutTarget {
+  id: 'throughput' | 'net_power' | 'p80';
+  /** Where the leader ends, in pixels of the section's canvas. */
+  end: { x: number; y: number };
+  /** The subject's drawn box, in the same pixels. */
+  box: { left: number; right: number; top: number; bottom: number };
+}
+
+/**
+ * The subjects the three callouts name and where each leader ends on them, in pixels of the section's canvas: the swing plate for the net power
+ * (its middle), the discharge gap between the fixed plate and the plate's closed edge for the throughput, and the product below the discharge for
+ * the P80 (below the level, clear of the gap by 30 mm, so two leaders never end within a label's height of each other).
+ */
+export function calloutTargets(tf: StageTransform, g: DemReplay['geometry'], plate: { x: number; z: number }, closed: { x: number; z: number }): CalloutTarget[] {
+  const gapL = tf.px(g.fixed_plate_x_mm, g.discharge_z_mm);
+  const gapR = tf.px(closed.x, g.discharge_z_mm);
+  const pivot = tf.px(g.swing_pivot_mm[0], g.swing_pivot_mm[1]);
+  const tip = tf.px(plate.x, plate.z);
+  const mid = { x: (pivot.x + tip.x) / 2, y: (pivot.y + tip.y) / 2 };
+  const below = { x: tf.px(g.fixed_plate_x_mm - 30, 0).x, y: gapL.y + 0.5 * (tf.px(0, g.discharge_z_mm - 20).y - gapL.y) };
+  return [
+    { id: 'throughput', end: { x: (gapL.x + gapR.x) / 2, y: gapL.y }, box: { left: gapL.x - 4, right: gapR.x + 4, top: gapL.y - 8, bottom: gapL.y + 8 } },
+    { id: 'net_power', end: mid, box: { left: Math.min(pivot.x, tip.x) - 5, right: Math.max(pivot.x, tip.x) + 5, top: Math.min(pivot.y, tip.y) - 5, bottom: Math.max(pivot.y, tip.y) + 5 } },
+    { id: 'p80', end: below, box: { left: below.x - 12, right: below.x + 12, top: gapL.y, bottom: tf.px(0, g.discharge_z_mm - 20).y + 4 } },
+  ];
+}
+
 /** The width of the column the callouts take at the left of the section on a desktop [px]. */
 export const CALLOUT_COLUMN = 212;
 
@@ -475,7 +512,7 @@ function NarrowStage({ run, point, frames, cursor, callouts }: StageProps) {
       draw={({ width, height }) => {
         const col = stageColumns(width, height);
         const tf = stageTransform(r.geometry, col.main, height, 8, bounds);
-        const { node, subjects } = sectionLabels(tf, point, run, plate, col.main, height, NAMES[lang], num);
+        const { node, subjects } = sectionLabels(tf, point, run, plate, col.main, height, { ...NAMES[lang], ...SHORT_NAMES[lang] }, true, num);
         const head = insetHead(col.inset);
         // the zone stacks under the size panel; a stage too short for it leaves it out
         const insetH = height - SIZE_PANEL_H - 8;
@@ -494,6 +531,19 @@ function NarrowStage({ run, point, frames, cursor, callouts }: StageProps) {
       }}
     />
   );
+}
+
+/** Heights kept at least `gap` apart in their order, inside [8, max - 8]: the callouts' leaders end at the column's edge, never within a label's height of each other. */
+export function spreadHeights(ys: number[], gap: number, max: number): number[] {
+  const order = ys.map((y, i) => ({ y, i })).sort((a, b) => a.y - b.y);
+  const out = new Array<number>(ys.length).fill(0);
+  let last = -Infinity;
+  for (const o of order) {
+    const y = Math.max(o.y, last + gap, 8);
+    out[o.i] = Math.min(y, max - 8);
+    last = out[o.i];
+  }
+  return out;
 }
 
 /**
@@ -515,14 +565,17 @@ function WideStage({ run, point, frames, cursor, callouts }: StageProps) {
       {({ width, height }) => {
         const col = stageColumns(width, height);
         const tf = stageTransform(r.geometry, col.chamber, height, 8, bounds);
-        const { node, subjects } = sectionLabels(tf, point, run, plate, col.chamber, height, NAMES[lang], num);
+        const { node } = sectionLabels(tf, point, run, plate, col.chamber, height, NAMES[lang], false, num);
         // the callouts are a column at the left of the section, in the shell's header placement: the cards stack, and each leader runs to the
         // column's right edge at the height of the subject it names (the shell has no side placement, so the leader ends at the section's edge)
-        const items = callouts.map((c) => {
-          const sub = subjects.find((q) => q.id === c.id);
-          return toCallout(c, { x: 1, y: sub ? sub.y / Math.max(1, height) : 0.75 }, lang);
-        });
+        const targets = calloutTargets(tf, r.geometry, plate, plateExtremes(r).closed);
         const left = CALLOUT_COLUMN;
+        // the shell's leader ends at the column's edge at these heights, kept a label's height apart; the view's own leader runs on from there to the subject
+        const edgeY = spreadHeights(targets.map((t) => t.end.y), 26, height);
+        const items = callouts.map((c) => {
+          const i = targets.findIndex((q) => q.id === c.id);
+          return toCallout(c, { x: 1, y: i >= 0 ? edgeY[i] / Math.max(1, height) : 0.75 }, lang);
+        });
         return (
           <div style={{ position: 'relative', width, height }} data-dem-stage="" data-frame={frame} data-layout="wide" data-inset-shown="true">
             <div className="cdem-callout-host" style={{ position: 'absolute', left: 0, top: 0, width: CALLOUT_COLUMN, height }} data-callouts-wide="">
@@ -532,6 +585,17 @@ function WideStage({ run, point, frames, cursor, callouts }: StageProps) {
               <ReplayCanvas width={col.chamber} height={height} run={run} point={point} frames={frames} frame={frame} tf={tf} plate={plate} />
               {node}
             </div>
+            <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true" data-chart="dem-callout-leaders" style={{ position: 'absolute', left: 0, top: 0, pointerEvents: 'none' }}>
+              <g stroke={TOKEN.subtle} strokeWidth={1} strokeDasharray="2 3" fill="none">
+                {targets.map((t, i) => (
+                  <g key={t.id}>
+                    <line data-callout-leader={t.id} data-end-x={Math.round((left + t.end.x) * 10) / 10} data-end-y={Math.round(t.end.y * 10) / 10} x1={CALLOUT_COLUMN} y1={edgeY[i]} x2={left + t.end.x} y2={t.end.y} />
+                    <circle cx={left + t.end.x} cy={t.end.y} r={2} fill={TOKEN.subtle} stroke="none" />
+                    <rect data-subject={t.id} x={left + t.box.left} y={t.box.top} width={t.box.right - t.box.left} height={t.box.bottom - t.box.top} stroke="none" fill="none" />
+                  </g>
+                ))}
+              </g>
+            </svg>
             <Inset width={col.inset} height={height} left={left + col.chamber + 6} run={run} point={point} frames={frames} frame={frame} plate={plate} mainScale={tf.scale} />
             <SizePanel width={col.panel} point={point} counts={counts} max={Math.max(1, ...r.count)} palette={palette} />
           </div>
