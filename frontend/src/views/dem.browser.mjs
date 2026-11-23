@@ -17,7 +17,7 @@
 //             operating point shows the stage, the series and the rest at three times, 200 ms apart at least (R5);
 //   decimals  on the Spanish page no number is written with a decimal point outside the blocks marked lang="en" (M2).
 //   node src/views/dem.browser.mjs <origin>   checks a running build on its own
-import { axisNoteProblems, chartOverlapProblems, classContrastProblems, decimalProblems, labelOverlapProblems, leaderPathProblems, leaderProblems, stageGeometryProblems, stageShare, stageTimesProblems, verdictLayoutProblems } from './dem.rules.mjs';
+import { axisNoteProblems, chartOverlapProblems, classContrastProblems, decimalProblems, labelOverlapProblems, labelShapeProblems, leaderPathProblems, leaderProblems, stageGeometryProblems, stageShare, stageTimesProblems, verdictLayoutProblems } from './dem.rules.mjs';
 
 const SIZES = [
   { width: 1280, height: 800 },
@@ -139,6 +139,14 @@ async function measure(page) {
     const cards = [...document.querySelectorAll('[data-caos-callout]')].map((el) => ({ id: el.getAttribute('data-caos-callout'), box: box(el.getBoundingClientRect()) }));
     const stageLabels = [...document.querySelectorAll('svg[data-chart="dem-replay-labels"] text')].map((el) => ({ text: el.textContent ?? '', box: box(el.getBoundingClientRect()) }));
     // the stopped run's per-stroke charts: the stop label, the series line and the cursor's line, as boxes
+    // the shapes the stage draws that a label must not cover, from the canvas's own drawing data, moved to page pixels
+    const mainCanvas = document.querySelector('canvas[data-chart="dem-replay"]');
+    let shapes = null;
+    if (mainCanvas?.getAttribute('data-shapes')) {
+      const cr = mainCanvas.getBoundingClientRect();
+      const raw = JSON.parse(mainCanvas.getAttribute('data-shapes'));
+      shapes = { circles: raw.circles.map(([x, y, r]) => [cr.left + x, cr.top + y, r]), plates: raw.plates.map(([a, b, c, d]) => [cr.left + a, cr.top + b, cr.left + c, cr.top + d]) };
+    }
     const stopLabels = [...document.querySelectorAll('[data-stop-label]')].map((el) => box(el.getBoundingClientRect()));
     const css = getComputedStyle(document.documentElement);
     const hex = (v) => {
@@ -171,6 +179,7 @@ async function measure(page) {
       cards,
       stageLabels,
       stopLabels,
+      shapes,
       classes,
       surface,
       stage: stageCard ? { width: stageCard.getBoundingClientRect().width, height: stageCard.getBoundingClientRect().height } : null,
@@ -227,6 +236,7 @@ export async function demChecks({ browser, base, ok }) {
   const gaps = [];
   const reach = [];
   const paths = [];
+  const shapeCounts = [];
   const contrasts = [];
   let combos = 0;
   for (const size of SIZES) {
@@ -276,6 +286,9 @@ export async function demChecks({ browser, base, ok }) {
               ok(m.leaders.length === 3 && m.leaders.every((l) => l.box), `${where}: three callout leaders with their subjects`);
               for (const p of leaderProblems(m.leaders.filter((l) => l.box))) ok(false, `${where}: ${p}`);
               for (const p of leaderPathProblems(m.leaders.map((l) => ({ id: l.id, points: l.points })), m.cards, m.stageLabels)) ok(false, `${where}: ${p}`);
+              ok(m.shapes !== null, `${where}: the stage exposes its drawn shapes`);
+              if (m.shapes) for (const p of labelShapeProblems(m.stageLabels, m.shapes.circles, m.shapes.plates)) ok(false, `${where}: ${p}`);
+              shapeCounts.push({ where, spheres: m.shapes ? m.shapes.circles.length : 0, labels: m.stageLabels.length, covered: m.shapes ? labelShapeProblems(m.stageLabels, m.shapes.circles, m.shapes.plates).length : -1 });
               for (const l of m.leaders) ok(l.painted === true, `${where}: the leader of "${l.id}" ends on something drawn`);
               paths.push({ where, leaders: m.leaders.map((l) => ({ id: l.id, points: l.points.map((q) => [Math.round(q.x), Math.round(q.y)]), painted: l.painted })) });
               reach.push(m.leaders.map((l) => ({ id: l.id, inside: l.box ? l.end.x >= l.box.left - 4 && l.end.x <= l.box.right + 4 && l.end.y >= l.box.top - 4 && l.end.y <= l.box.bottom + 4 : false, ends: [Math.round(l.end.x), Math.round(l.end.y)] })));
@@ -290,7 +303,7 @@ export async function demChecks({ browser, base, ok }) {
     }
   }
   const times = await stagedTimes(browser, base, ok);
-  return { combos, shares, boxes, gaps, reach, paths, contrasts, times };
+  return { combos, shares, boxes, gaps, reach, paths, shapeCounts, contrasts, times };
 }
 
 if (import.meta.url === `file:///${process.argv[1]?.replace(/\\/g, '/').replace(/^\//, '')}`) {
@@ -307,7 +320,7 @@ if (import.meta.url === `file:///${process.argv[1]?.replace(/\\/g, '/').replace(
   try {
     const out = await demChecks({ browser, base, ok });
     for (const f of failures) console.log(`FAIL ${f}`);
-    if (process.env.DEM_BOXES === '1') console.log(JSON.stringify({ boxes: out.boxes, gaps: out.gaps, reach: out.reach.slice(0, 4), paths: out.paths, contrasts: out.contrasts.slice(0, 2), times: out.times }));
+    if (process.env.DEM_BOXES === '1') console.log(JSON.stringify({ boxes: out.boxes, gaps: out.gaps, reach: out.reach.slice(0, 4), paths: out.paths, shapeCounts: out.shapeCounts, contrasts: out.contrasts.slice(0, 2), times: out.times }));
     const range = (key) => `${Math.min(...out.shares.map((x) => x[key])).toFixed(key === 'card' || key === 'drawing' ? 3 : 0)} to ${Math.max(...out.shares.map((x) => x[key])).toFixed(key === 'card' || key === 'drawing' ? 3 : 0)}`;
     console.log(`dem.browser: ${checks} checks over ${out.combos} measured pages, ${failures.length} failed; at 1280 by 800 the stage card is ${range('card')}, the drawing region ${range('drawing')} of the viewport, the section ${range('section')} px and the magnified zone ${range('zone')} px high`);
     if (failures.length) process.exitCode = 1;

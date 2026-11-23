@@ -11,8 +11,8 @@ import type { DemRun, Readiness } from '../lib/contract.types';
 import { toCallout } from './callouts';
 import { bareReason, calloutSpecs, windowLabelSide, CATEGORY, ComparisonOverlay, cursorMark, DemBody, DemUnavailable, DemUnreadable, LabNote, StopMark, pointStages, Q, sideOffset, Sources, VerdictTable } from './dem';
 import { comparisonSeries, decodeFrames, frameAt, frameLabelText, nearerSentence, openingCursor, plain, sizeClassLabels, type DemFrames, type DemPoint } from './demModel';
-import { calloutTargets, CALLOUT_COLUMN, FramesState, GUTTER, NAMES, panelWidth, plateExtremes, drawReplay, routeLeaders, stageColumns, stageRects, sphereTop, TRACK_OFFSETS } from './demReplay';
-import { axisNoteProblems, chartOverlapProblems, classContrastProblems, contrast, decimalProblems, labelOverlapProblems, leaderPathProblems, leaderProblems, noValueStripProblems, pathConflicts, nullMarkProblems, stageTimesProblems, stageGeometryProblems, stageShare, stageShareProblems, verdictLayoutProblems } from './dem.rules.mjs';
+import { calloutTargets, CALLOUT_COLUMN, FramesState, GUTTER, NAMES, panelWidth, plateExtremes, drawReplay, GUTTER_PHONE, replayShapes, routeLeaders, stageColumns, stageRects, sphereTop, TRACK_OFFSETS } from './demReplay';
+import { axisNoteProblems, chartOverlapProblems, classContrastProblems, contrast, decimalProblems, labelOverlapProblems, labelShapeProblems, leaderPathProblems, leaderProblems, noValueStripProblems, pathConflicts, nullMarkProblems, stageTimesProblems, stageGeometryProblems, stageShare, stageShareProblems, verdictLayoutProblems } from './dem.rules.mjs';
 import { subOfUrl, ViewContext, type ViewCtx } from './shared';
 import { ValidationGroup } from './validation';
 
@@ -961,12 +961,18 @@ describe('R1: every callout leader reaches its subject', () => {
     expect(wide.chamber.x).toBe(CALLOUT_COLUMN + GUTTER);
     expect(wide.chamber.x + wide.chamber.w).toBeLessThanOrEqual(wide.inset.x);
     expect(wide.inset.x + wide.inset.w).toBeLessThanOrEqual(wide.panel.x);
-    const narrow = stageRects(358, 640);
+    const narrow = stageRects(358, 864);
     expect(narrow.wide).toBe(false);
-    expect(narrow.chamber.x).toBeGreaterThanOrEqual(narrow.callouts.w);
+    // stacked: the cards, then the section at the full width, then the legend and the zone in a row
+    expect(narrow.callouts.y).toBe(0);
+    expect(narrow.chamber.y).toBeGreaterThanOrEqual(narrow.callouts.y + narrow.callouts.h);
+    expect(narrow.chamber.x).toBe(0);
+    expect(narrow.chamber.w).toBe(358);
     expect(narrow.inset.y).toBe(narrow.panel.y);
-    expect(narrow.inset.y).toBeGreaterThanOrEqual(narrow.callouts.h);
+    expect(narrow.inset.y).toBeGreaterThanOrEqual(narrow.chamber.y + narrow.chamber.h);
     expect(narrow.inset.x + narrow.inset.w).toBeLessThanOrEqual(358);
+    expect(narrow.callouts.x).toBeGreaterThanOrEqual(GUTTER_PHONE);
+    expect(narrow.inset.y + narrow.inset.h).toBeLessThanOrEqual(864);
   });
 });
 
@@ -1046,6 +1052,62 @@ describe('T1 and T6: the leaders are routed as elbows through the gutter, across
     expect(b).toContain('leaderPathProblems(');
     expect(b).toContain('ends on something drawn');
     expect(b).toContain('[data-caos-callout]');
+  });
+});
+
+describe('P1 and P2: the phone stage is stacked and no label covers a sphere or a plate line', () => {
+  const tf = { scale: 0.5, bounds: { xMin: -55, xMax: 120, zMin: -70, zMax: 470 }, px: (x: number, z: number) => ({ x: 100 + (x + 55) * 0.5, y: (470 - z) * 0.5 }) };
+  it('on the left side, each leader leaves its own card at the card’s left edge, runs down its own track in the gutter at the left and across to its subject under the cards', () => {
+    const r = run.points[0].simulation.replay!;
+    const targets = calloutTargets(tf, r.geometry, { x: r.plate_bottom_x_mm[0], z: r.plate_bottom_z_mm[0] }, plateExtremes(r).closed);
+    const cards = [20, 120, 220].map((top, k) => ({ id: ['throughput', 'net_power', 'p80'][k] as 'throughput' | 'net_power' | 'p80', x: 130, y: top + 45, box: { left: 46, right: 210, top, bottom: top + 90 } }));
+    const paths = routeLeaders(cards, targets, GUTTER_PHONE, 0, { cards: cards.map((c) => ({ id: c.id, box: c.box })) }, 'left', 320);
+    expect(leaderPathProblems(paths, cards.map((c) => ({ id: c.id, box: c.box })), [])).toEqual([]);
+    for (const path of paths) {
+      const card = cards.find((c) => c.id === path.id)!;
+      expect(path.points[1]).toEqual({ x: GUTTER_PHONE, y: card.y });
+      expect(path.points[2].x).toBeLessThan(GUTTER_PHONE);
+      const t = targets.find((q) => q.id === path.id)!;
+      const end = path.points[path.points.length - 1];
+      expect(end.y).toBeCloseTo(320 + t.end.y, 6);
+    }
+    expect(new Set(paths.map((q) => q.points[2].x)).size).toBe(3);
+  });
+  it('the shapes of a frame are its spheres as circles and the two plate lines, in the canvas pixels', () => {
+    const r = run.points[0].simulation.replay!;
+    const f = (framesOf(run.points[0]) as { data: DemFrames }).data;
+    const counts = Array.from({ length: r.frames }, (_, i) => r.count[i]);
+    const last = counts.indexOf(Math.max(...counts));
+    const shapes = replayShapes(tf, r.geometry, f, last, { x: r.plate_bottom_x_mm[last], z: r.plate_bottom_z_mm[last] });
+    expect(shapes.circles.length).toBeGreaterThan(10);
+    expect(shapes.circles.every((c) => c.length === 3 && c[2] > 0)).toBe(true);
+    expect(shapes.plates).toHaveLength(2);
+    expect(replayShapes(tf, r.geometry, null, 0, { x: 0, z: 0 }).circles).toEqual([]);
+  });
+  const box = (left: number, top: number, w: number, h: number) => ({ left, right: left + w, top, bottom: top + h });
+  it('adversarial: a label whose box covers a drawn sphere is reported with the count; one outside every sphere passes', () => {
+    const circles = [[100, 50, 10], [130, 50, 10], [300, 300, 6]];
+    expect(labelShapeProblems([{ text: 'hopper', box: box(180, 40, 60, 14) }], circles, [])).toEqual([]);
+    const hit = labelShapeProblems([{ text: 'hopper', box: box(95, 44, 60, 14) }], circles, []);
+    expect(hit).toEqual(['the label "hopper" covers 2 drawn spheres']);
+    expect(labelShapeProblems([{ text: 'one', box: box(295, 295, 4, 10) }], circles, [])).toEqual(['the label "one" covers 1 drawn sphere']);
+    // a box that only touches the circle's bounding square, not the circle, passes
+    expect(labelShapeProblems([{ text: 'corner', box: box(108, 58, 20, 10) }], [[100, 50, 10]], [])).toEqual([]);
+  });
+  it('adversarial: a label whose box lies on the fixed plate line or on the swing plate line is reported with the plate named', () => {
+    const plates = [[100, 20, 100, 300], [160, 40, 220, 260]];
+    expect(labelShapeProblems([{ text: 'fixed plate', box: box(20, 100, 60, 14) }], [], plates)).toEqual([]);
+    expect(labelShapeProblems([{ text: 'fixed plate', box: box(60, 100, 60, 14) }], [], plates)).toEqual(['the label "fixed plate" covers the fixed plate line']);
+    expect(labelShapeProblems([{ text: 'swing plate', box: box(180, 120, 60, 14) }], [], plates)).toEqual(['the label "swing plate" covers the swing plate line']);
+    // the line is 5 px thick: a box 2 px from the centre line is on it
+    expect(labelShapeProblems([{ text: 'near', box: box(102, 100, 40, 14) }], [], plates)).toEqual(['the label "near" covers the fixed plate line']);
+  });
+  it('the browser check reads the stage’s drawn shapes from its data attribute at both sizes and reports the counts', () => {
+    const b = readFileSync(new URL('./dem.browser.mjs', import.meta.url), 'utf8');
+    expect(b).toContain('labelShapeProblems(');
+    expect(b).toContain('data-shapes');
+    const rep = readFileSync(new URL('./demReplay.tsx', import.meta.url), 'utf8');
+    expect(rep).toContain('data-shapes=');
   });
 });
 

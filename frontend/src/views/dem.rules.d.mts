@@ -38,3 +38,4 @@ export interface LeaderPath {
 export function segmentHitsBox(a: Pt, b: Pt, box: Box, inset?: number): boolean;
 export function pathConflicts(paths: LeaderPath[], cards?: { id: string; box: Box }[], labels?: { text: string; box: Box }[]): number;
 export function leaderPathProblems(paths: LeaderPath[], cards: { id: string; box: Box }[], labels: { text: string; box: Box }[], skipShared?: boolean): string[];
+export function labelShapeProblems(labels: { text: string; box: Box }[], circles: number[][], plates: number[][], plateWidth?: number): string[];

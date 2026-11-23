@@ -368,3 +368,28 @@ export function leaderPathProblems(paths, cards, labels, skipShared = false) {
   }
   return out;
 }
+
+/**
+ * P2: no stage label covers its subject. The label boxes against the shapes the stage's own drawing data gives (the circle of every sphere of
+ * the frame shown, `[x, y, r]`, and the two plate lines, `[x0, y0, x1, y1]`, thick by `plateWidth`), all in one coordinate system.
+ * @param {{ text: string, box: Box }[]} labels
+ * @param {number[][]} circles
+ * @param {number[][]} plates
+ * @param {number} [plateWidth] the drawn width of a plate line [px]
+ * @returns {string[]}
+ */
+export function labelShapeProblems(labels, circles, plates, plateWidth = 5) {
+  const out = [];
+  for (const l of labels) {
+    const hit = circles.filter(([x, y, r]) => {
+      const nx = Math.max(l.box.left, Math.min(x, l.box.right));
+      const ny = Math.max(l.box.top, Math.min(y, l.box.bottom));
+      return (x - nx) ** 2 + (y - ny) ** 2 < r * r;
+    }).length;
+    if (hit > 0) out.push(`the label "${l.text}" covers ${hit} drawn sphere${hit === 1 ? '' : 's'}`);
+    plates.forEach(([x0, y0, x1, y1], i) => {
+      if (segmentHitsBox({ x: x0, y: y0 }, { x: x1, y: y1 }, l.box, -plateWidth / 2)) out.push(`the label "${l.text}" covers the ${i === 0 ? 'fixed' : 'swing'} plate line`);
+    });
+  }
+  return out;
+}

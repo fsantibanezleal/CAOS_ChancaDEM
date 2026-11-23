@@ -98,6 +98,28 @@ export function plateExtremes(r: Pick<DemReplay, 'plate_bottom_x_mm' | 'plate_bo
  * walls, the fixed plate, the spheres (far to near along y), the swing plate over them, and the plate's closed and open positions. Returns the
  * spheres drawn, in the order drawn (indices into the frame), so the order is testable.
  */
+/**
+ * The shapes a frame draws that a label must not cover, in the canvas's CSS pixels: the circle of every sphere of the frame and the two plate
+ * lines (the fixed plate, and the swing plate from its pivot to its end). The check reads them from the canvas's `data-shapes`, never from pixels.
+ */
+export function replayShapes(tf: StageTransform, g: DemReplay['geometry'], frames: DemFrames | null, frame: number, plate: { x: number; z: number }): { circles: number[][]; plates: number[][] } {
+  const circles: number[][] = [];
+  if (frames) {
+    const [s0, s1] = frameSpheres(frames, frame);
+    const d = frames.data;
+    for (let s = s0; s < s1; s++) {
+      const c = tf.px(d[s * 4], d[s * 4 + 2]);
+      circles.push([Math.round(c.x * 10) / 10, Math.round(c.y * 10) / 10, Math.round(Math.max(1.2, d[s * 4 + 3] * tf.scale) * 10) / 10]);
+    }
+  }
+  const f0 = tf.px(g.fixed_plate_x_mm, g.fixed_plate_z_mm[0]);
+  const f1 = tf.px(g.fixed_plate_x_mm, g.fixed_plate_z_mm[1]);
+  const pivot = tf.px(g.swing_pivot_mm[0], g.swing_pivot_mm[1]);
+  const e = tf.px(plate.x, plate.z);
+  const r1 = (v: number) => Math.round(v * 10) / 10;
+  return { circles, plates: [[r1(f0.x), r1(f0.y), r1(f1.x), r1(f1.y)], [r1(pivot.x), r1(pivot.y), r1(e.x), r1(e.y)]] };
+}
+
 export function drawReplay(ctx: CanvasRenderingContext2D, a: DrawArgs, size: { width: number; height: number }): number[] {
   const { tf, geometry: g } = a;
   ctx.clearRect(0, 0, size.width, size.height);
@@ -254,6 +276,7 @@ const ReplayCanvas = ({ width, height, run, point, frames, frame, tf, plate, ins
       data-chart={inset ? 'dem-inset' : 'dem-replay'}
       data-frame={frame}
       data-spheres={frames ? frameSpheres(frames, frame)[1] - frameSpheres(frames, frame)[0] : 0}
+      data-shapes={inset ? undefined : JSON.stringify(replayShapes(tf, r.geometry, frames, frame, plate))}
     />
   );
 };
@@ -486,19 +509,19 @@ export const TRACK_OFFSETS = [5, 12, 19] as const;
  * crosses nothing), down or up its own track in the gutter, and across to the subject at the height the target gives. The tracks are
  * assigned to the leaders in the order that leaves the fewest crossings and overlaps.
  */
-export function routeLeaders(cards: { id: CalloutTarget['id']; x: number; y: number }[], targets: CalloutTarget[], columnEdge: number, origin: number, boxes: { cards?: { id: string; box: Box }[]; labels?: { text: string; box: Box }[] } = {}): LeaderPath[] {
+export function routeLeaders(cards: { id: CalloutTarget['id']; x: number; y: number }[], targets: CalloutTarget[], columnEdge: number, origin: number, boxes: { cards?: { id: string; box: Box }[]; labels?: { text: string; box: Box }[] } = {}, side: 'right' | 'left' = 'right', originY = 0): LeaderPath[] {
   const build = (order: number[]): LeaderPath[] =>
     cards.map((c, k) => {
       const t = targets.find((q) => q.id === c.id)!;
-      const track = columnEdge + TRACK_OFFSETS[order[k]];
+      const track = side === 'right' ? columnEdge + TRACK_OFFSETS[order[k]] : columnEdge - TRACK_OFFSETS[order[k]];
       const endX = origin + t.end.x;
       const raw = [
         { x: c.x, y: c.y },
         { x: columnEdge, y: c.y },
         { x: track, y: c.y },
-        { x: track, y: t.approachY },
-        { x: endX, y: t.approachY },
-        { x: endX, y: t.end.y },
+        { x: track, y: originY + t.approachY },
+        { x: endX, y: originY + t.approachY },
+        { x: endX, y: originY + t.end.y },
       ];
       return { id: c.id, points: raw.filter((q, i) => i === 0 || Math.hypot(q.x - raw[i - 1].x, q.y - raw[i - 1].y) > 0.01) };
     });
@@ -537,30 +560,39 @@ export function stageColumns(width: number, height: number): { wide: boolean; pa
 
 export interface StageRects {
   wide: boolean;
-  callouts: { w: number; h: number };
-  chamber: { x: number; w: number; h: number };
+  callouts: { x: number; y: number; w: number; h: number };
+  chamber: { x: number; y: number; w: number; h: number };
   inset: { x: number; y: number; w: number; h: number };
   panel: { x: number; y: number; w: number };
 }
 
+/** The gutter at the left of a phone's stage, where the leaders run down their tracks beside the cards [px]; the cards and the section's labels stand clear of it. */
+export const GUTTER_PHONE = 22;
+/** The height the lower row of a phone's stage takes (the size legend and the magnified zone) and the least the section takes [px]. */
+export const PHONE_LOWER_H = 200;
+export const PHONE_SECTION_MIN = 300;
+
 /**
  * Where the parts of the stage stand. Wide: the callouts' column, the gutter, the section, the magnified zone and the size legend in one row at
- * the full height. Narrow: the callouts' column and the section in a top row, the size legend and the zone in a row under it.
+ * the full height. Narrow (a phone): stacked, the callout cards first, one under another (`cardsH` is the height they take once laid out), then the
+ * section at the full width with its labels outside the chamber on both sides, then the size legend and the magnified zone in a row.
  */
-export function stageRects(width: number, height: number): StageRects {
+export function stageRects(width: number, height: number, cardsH = 300): StageRects {
   const col = stageColumns(width, height);
   if (col.wide) {
     const x = CALLOUT_COLUMN + GUTTER;
-    return { wide: true, callouts: { w: CALLOUT_COLUMN, h: height }, chamber: { x, w: col.chamber, h: height }, inset: { x: x + col.chamber + 6, y: 0, w: col.inset, h: height }, panel: { x: width - col.panel, y: 0, w: col.panel } };
+    return { wide: true, callouts: { x: 0, y: 0, w: CALLOUT_COLUMN, h: height }, chamber: { x, y: 0, w: col.chamber, h: height }, inset: { x: x + col.chamber + 6, y: 0, w: col.inset, h: height }, panel: { x: width - col.panel, y: 0, w: col.panel } };
   }
-  const top = Math.max(270, Math.min(height - 190, Math.round(height * 0.58)));
-  const x = CALLOUT_COLUMN_NARROW + GUTTER_NARROW;
+  const cy = cardsH + 6;
+  const sectionH = Math.max(PHONE_SECTION_MIN, height - cy - PHONE_LOWER_H - 6);
+  const ly = cy + sectionH + 6;
   return {
     wide: false,
-    callouts: { w: CALLOUT_COLUMN_NARROW, h: top },
-    chamber: { x, w: Math.max(80, width - x), h: top },
-    inset: { x: col.panel + 8, y: top, w: Math.max(120, width - col.panel - 8), h: height - top },
-    panel: { x: 0, y: top, w: col.panel },
+    // the shell lays its compact cards (164 px) in a row where it can: the column is only as wide as one card, so they stand one under another
+    callouts: { x: GUTTER_PHONE, y: 0, w: Math.min(CALLOUT_COLUMN, width - GUTTER_PHONE), h: cardsH },
+    chamber: { x: 0, y: cy, w: width, h: sectionH },
+    inset: { x: col.panel + 8, y: ly, w: Math.max(120, width - col.panel - 8), h: PHONE_LOWER_H },
+    panel: { x: 0, y: ly, w: col.panel },
   };
 }
 
@@ -636,28 +668,34 @@ function StageBody({ run, point, frames, cursor, callouts }: StageProps) {
   return (
     <Stage label={{ en: 'Particle replay in the jaw section', es: 'Repetición de partículas en la sección de la mandíbula' }}>
       {({ width, height }) => {
-        const rect = stageRects(width, height);
+        const cardsH = callouts.every((c) => cards[c.id]) ? Math.round(Math.max(...callouts.map((c) => cards[c.id].box.bottom)) + 8) : 300;
+        const rect = stageRects(width, height, cardsH);
         const tf = stageTransform(r.geometry, rect.chamber.w, rect.chamber.h, 8, bounds);
         const targets = calloutTargets(tf, r.geometry, plate, plateExtremes(r).closed);
-        const edge = rect.callouts.w;
+        // the column's edge the leaders cross: its right edge beside the section, its left edge (the gutter side) over it
+        const edge = rect.wide ? rect.callouts.x + rect.callouts.w : rect.callouts.x;
         const origin = rect.chamber.x;
+        const originY = rect.chamber.y;
         // the runs the leaders make across the section's margin are kept free of labels
         const reserved = targets.map((t) => ({ x0: -origin, x1: t.end.x + 4, y0: t.approachY - 3, y1: t.approachY + 3 }));
-        const { node, boxes } = sectionLabels(tf, point, run, plate, rect.chamber.w, rect.chamber.h, rect.wide ? NAMES[lang] : { ...NAMES[lang], ...SHORT_NAMES[lang] }, !rect.wide, num, reserved);
+        const { node, boxes } = sectionLabels(tf, point, run, plate, rect.chamber.w, rect.chamber.h, NAMES[lang], !rect.wide, num, reserved);
         // the shell's leader runs from the card's middle out to the column's edge at the card's own height; with the cards not yet measured, at the middle
-        const items = callouts.map((c) => toCallout(c, { x: 1, y: (cards[c.id]?.y ?? rect.callouts.h / 2) / Math.max(1, rect.callouts.h) }, lang));
+        const items = callouts.map((c) => toCallout(c, { x: rect.wide ? 1 : 0, y: (cards[c.id]?.y ?? rect.callouts.h / 2) / Math.max(1, rect.callouts.h) }, lang));
         const measured = callouts.every((c) => cards[c.id]);
-        const stageLabels = boxes.map((b) => ({ text: b.text, box: { left: b.box.left + origin, right: b.box.right + origin, top: b.box.top, bottom: b.box.bottom } }));
+        const stageLabels = boxes.map((b) => ({ text: b.text, box: { left: b.box.left + origin, right: b.box.right + origin, top: b.box.top + originY, bottom: b.box.bottom + originY } }));
+        const dx = rect.callouts.x;
+        const dy = rect.callouts.y;
+        const placedCards = callouts.map((c) => (cards[c.id] ? { id: c.id, x: cards[c.id].x + dx, y: cards[c.id].y + dy, box: { left: cards[c.id].box.left + dx, right: cards[c.id].box.right + dx, top: cards[c.id].box.top + dy, bottom: cards[c.id].box.bottom + dy } } : null));
         const paths = measured
-          ? routeLeaders(callouts.map((c) => ({ id: c.id as CalloutTarget['id'], x: cards[c.id].x, y: cards[c.id].y })), targets, edge, origin, { cards: callouts.map((c) => ({ id: c.id, box: cards[c.id].box })), labels: stageLabels })
+          ? routeLeaders(placedCards.map((c) => ({ id: c!.id as CalloutTarget['id'], x: c!.x, y: c!.y })), targets, edge, origin, { cards: placedCards.map((c) => ({ id: c!.id, box: c!.box })), labels: stageLabels }, rect.wide ? 'right' : 'left', originY)
           : [];
         const showInset = rect.inset.h - insetHead(rect.inset.w) >= INSET_MIN_PX;
         return (
           <div style={{ position: 'relative', width, height }} data-dem-stage="" data-frame={frame} data-layout={rect.wide ? 'wide' : 'narrow'} data-inset-shown={showInset ? 'true' : 'false'}>
-            <div ref={setHost} className="cdem-callout-host" style={{ position: 'absolute', left: 0, top: 0, width: rect.callouts.w, height: rect.callouts.h }} data-callouts-column="">
+            <div ref={setHost} className="cdem-callout-host" style={{ position: 'absolute', left: rect.callouts.x, top: rect.callouts.y, width: rect.callouts.w, height: rect.callouts.h }} data-callouts-column="">
               <SceneCallouts items={items} placement="header" />
             </div>
-            <div style={{ position: 'absolute', left: rect.chamber.x, top: 0, width: rect.chamber.w, height: rect.chamber.h }}>
+            <div style={{ position: 'absolute', left: rect.chamber.x, top: rect.chamber.y, width: rect.chamber.w, height: rect.chamber.h }}>
               <ReplayCanvas width={rect.chamber.w} height={rect.chamber.h} run={run} point={point} frames={frames} frame={frame} tf={tf} plate={plate} />
               {node}
             </div>
@@ -671,13 +709,13 @@ function StageBody({ run, point, frames, cursor, callouts }: StageProps) {
                         <polyline
                           data-callout-leader={t.id}
                           data-end-x={Math.round((origin + t.end.x) * 10) / 10}
-                          data-end-y={Math.round(t.end.y * 10) / 10}
+                          data-end-y={Math.round((originY + t.end.y) * 10) / 10}
                           data-points={path.points.map((q) => `${Math.round(q.x * 10) / 10},${Math.round(q.y * 10) / 10}`).join(' ')}
                           points={path.points.slice(1).map((q) => `${q.x},${q.y}`).join(' ')}
                         />
                       )}
-                      <circle cx={origin + t.end.x} cy={t.end.y} r={2} fill={TOKEN.subtle} stroke="none" />
-                      <rect data-subject={t.id} x={origin + t.box.left} y={t.box.top} width={t.box.right - t.box.left} height={t.box.bottom - t.box.top} stroke="none" fill="none" />
+                      <circle cx={origin + t.end.x} cy={originY + t.end.y} r={2} fill={TOKEN.subtle} stroke="none" />
+                      <rect data-subject={t.id} x={origin + t.box.left} y={originY + t.box.top} width={t.box.right - t.box.left} height={t.box.bottom - t.box.top} stroke="none" fill="none" />
                     </g>
                   );
                 })}

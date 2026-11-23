@@ -563,6 +563,13 @@
   }
 }
 
+/* A phone's stage is stacked (the callout cards, the section, then the size legend and the magnified zone): it takes the height of all three. */
+@media (max-width: 660px) {
+  .cdem-stage-fill {
+    min-height: 54rem;
+  }
+}
+
 .cdem-sentences {
   margin: 0;
   padding-left: 1.1rem;
