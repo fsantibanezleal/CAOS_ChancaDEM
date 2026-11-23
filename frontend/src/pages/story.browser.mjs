@@ -1,4 +1,4 @@
-// ChancaDEM's own story checks in a browser, on this build (SH-005 to SH-008, SH-010), run by `npm run gate` after the base's
+// ChancaDEM's own story checks in a browser, on this build (SH-005 to SH-008, SH-010), run by `npm run check:story` after the base's
 // scripts/check_story_mode.mjs (which checks what every story owes, whatever its steps) and before the shell gate (G21). What only this
 // product's story can be asked: every step's headline and three callouts with a value, a unit and a source; a planted key press that
 // stops autoplay for good; the exit landing on the step's case, group and view, with the Operate target kept (M5 of the 0.13.000 review);

@@ -1,5 +1,5 @@
 // The layout checks of the particle-simulation view in a browser, on this build (DM-017; B1 to B3, M1 and M2 of the independent visual
-// review), run by src/pages/story.browser.mjs (`npm run check:story`, the first half of `npm run gate`) after the showcase checks. Each check
+// review), run by src/pages/story.browser.mjs (`npm run check:story`) after the showcase checks. Each check
 // measures the rendered page and hands the measured boxes and strings to the pure rules of src/views/dem.rules.mjs, which vitest tests with
 // planted inputs; nothing here holds a number of the product. For the three operating points, at 1280 by 800 and 390 by 844, in both themes and
 // both languages:
