@@ -186,7 +186,7 @@ function StrokeSeries({ point, cursor, onPick }: { point: DemPoint; cursor: numb
           overlay={(at) => (
             <>
               {w && <WindowBand at={at} from={w.first_stroke - 0.5} to={w.last_stroke + 0.5} yTop={pHi} yBottom={pLo} cursor={cursor} label={lang === 'es' ? 'ventana estacionaria' : 'steady window'} />}
-              {stopMark !== null && <StopMark at={at} x={stopMark} yTop={pHi} yBottom={pLo} label={lang === 'es' ? 'corrida detenida' : 'run stopped'} />}
+              {stopMark !== null && <StopMark at={at} x={stopMark} xMax={x.range[1]} yTop={pHi} yBottom={pLo} label={lang === 'es' ? 'corrida detenida' : 'run stopped'} />}
             </>
           )}
         >
@@ -209,7 +209,7 @@ function StrokeSeries({ point, cursor, onPick }: { point: DemPoint; cursor: numb
           callouts={[]}
           points={[]}
           frame={{ x: x.range, y: [0, yMaxM] }}
-          overlay={(at) => (stopMark !== null ? <StopMark at={at} x={stopMark} yTop={yMaxM} yBottom={0} label={lang === 'es' ? 'corrida detenida' : 'run stopped'} /> : null)}
+          overlay={(at) => (stopMark !== null ? <StopMark at={at} x={stopMark} xMax={x.range[1]} yTop={yMaxM} yBottom={0} label={lang === 'es' ? 'corrida detenida' : 'run stopped'} /> : null)}
         >
         <UPlotChart
           title={{ en: 'Mass passed and held, with the spheres held', es: 'Masa pasada y retenida, con las esferas retenidas' }}
@@ -253,13 +253,16 @@ function WindowBand({ at, from, to, yTop, yBottom, cursor, label }: { at: (p: { 
 }
 
 /** The stop of a run that did not complete: a dashed line in the alarm colour with its label on a line of its own, so it is told from the cursor by colour, dash and place. */
-export function StopMark({ at, x, yTop, yBottom, label }: { at: (p: { x: number; y: number }) => { x: number; y: number }; x: number; yTop: number; yBottom: number; label: string }) {
+export function StopMark({ at, x, xMax, yTop, yBottom, label }: { at: (p: { x: number; y: number }) => { x: number; y: number }; x: number; xMax: number; yTop: number; yBottom: number; label: string }) {
   const a = at({ x, y: yTop });
   const b = at({ x, y: yBottom });
+  // the label stands in the top margin, clear of the series and of the cursor's line: at the right of the stop line, or at its left near the plot's right edge
+  const room = at({ x: xMax, y: yTop }).x - a.x;
+  const right = room > 90;
   return (
     <g data-stop-mark={x}>
       <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="var(--color-bad)" strokeWidth={1.6} strokeDasharray="2 3" />
-      <text x={a.x - 4} y={a.y + 40} textAnchor="end" fontSize={11} fill="var(--color-bad)" style={{ fontFamily: 'var(--font-sans)' }}>
+      <text x={right ? a.x + 5 : a.x - 5} y={a.y - 5} textAnchor={right ? 'start' : 'end'} fontSize={11} fill="var(--color-bad)" data-stop-label="" style={{ fontFamily: 'var(--font-sans)' }}>
         {label}
       </text>
     </g>
@@ -460,27 +463,33 @@ function ComparisonChart({ series }: { series: QuantitySeries }) {
   // the paper's own simulation, where the point has it: its own mark and its own legend entry, two steps left of the measurement
   const paperRows = pts.filter((p) => p.paper !== null);
   if (paperRows.length) list.push({ id: 'paper', label: { en: 'The paper’s own simulation', es: 'La simulación propia del artículo' }, values: paperRows.map((p) => p.paper!.value), x: paperRows.map((p) => p.c - 2 * CATEGORY.dx), mode: 'points', size: 9, color: COLORS.paper });
-  // a side with no value has no mark in the plot: its legend entry has no values, and the text "no value" stands at its feed class under the axis
-  const anyMissing = pts.some((p) => (['simulation', 'population_balance'] as const).some((side) => p[side].value === null && p[side].reason !== null));
-  if (anyMissing) list.push({ id: 'no-value', label: { en: 'No value (said under the tick labels, reason in the note)', es: 'Sin valor (dicho bajo las marcas del eje, motivo en la nota)' }, values: pts.map(() => null), mode: 'points', size: 6, color: '--color-fg-faint' });
-  // the sides that state no value are said in words as the axis's own note, directly under the tick labels and above the key
+  // a side with no value has no mark and no key entry; the sides that state none are said in words on a line of their own under the axis title
   const axisNote = noValueNote(series, num);
   const ticks = pts.map((p) => ({ value: p.c, label: { en: `${feedClassText(p.feedClass, num)} mm`, es: `${feedClassText(p.feedClass, num)} mm` } as BiText }));
   const name = pick(series.name, lang);
   const unit = pick(series.unit, lang);
   const bandPct = num(series.points[0].band * 100, { digits: 2 });
   return (
+    <>
+    <div className="cdem-axis-chart">
     <ChartCallouts callouts={[]} points={[]} frame={{ x: xRange, y: [0, yMax] }} overlay={(at) => <ComparisonOverlay series={series} at={at} />}>
       <UPlotChart
         title={{ en: `${series.name.en} by feed class`, es: `${series.name.es} por clase de alimentación` }}
         height="fill"
-        x={{ values: xs, label: axisNote ?? { en: 'Feed class', es: 'Clase de alimentación' }, ticks, range: xRange }}
+        x={{ values: xs, label: { en: 'Feed class', es: 'Clase de alimentación' }, ticks, range: xRange }}
         y={{ label: series.name, unit: series.unit, range: [0, yMax], format: { digits: 3 } }}
         series={list}
         hint={READ_HINT}
         readout={(i) => `${feedClassText(pts[i].feedClass, num)} mm: ${name} ${pts[i].measurement.value === null ? '' : `${num(pts[i].measurement.value as number, { digits: 3 })} ${unit}`}, ${lang === 'es' ? 'banda' : 'band'} ${bandPct} %`}
       />
     </ChartCallouts>
+    </div>
+    {axisNote && (
+      <p className="cdem-axis-note" data-axis-note="">
+        {pick(axisNote, lang)}
+      </p>
+    )}
+    </>
   );
 }
 

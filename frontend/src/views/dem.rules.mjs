@@ -209,19 +209,28 @@ export function classContrastProblems(colours, background, min = 3) {
 }
 
 /**
- * R3: the note that says which sides state no value stands directly under the tick labels: it overlaps no tick label and its top is at most
- * `maxGap` px under the lowest tick label's bottom.
+ * R3 and T3: the note that says which sides state no value stands on a line of its own under the axis title: it overlaps no tick label and no
+ * title, its top is not above the title's bottom and at most `maxGap` px under it. Without a title (a chart that has none), it stands at most
+ * `maxGap` px under the lowest tick label.
  * @param {Box} note
  * @param {{ text: string, box: Box }[]} ticks
  * @param {number} [maxGap]
+ * @param {{ text: string, box: Box } | null} [title] the axis title, which stays "Feed class" or "Clase de alimentación"
  * @returns {string[]}
  */
-export function axisNoteProblems(note, ticks, maxGap = 40) {
+export function axisNoteProblems(note, ticks, maxGap = 40, title = null) {
   const out = [];
   const low = Math.max(...ticks.map((t) => t.box.bottom));
   for (const t of ticks) if (note.left < t.box.right - TOL && t.box.left < note.right - TOL && note.top < t.box.bottom - TOL && t.box.top < note.bottom - TOL) out.push(`the note of the missing sides overlaps the tick label "${t.text}"`);
   if (note.top < low - TOL) out.push('the note of the missing sides stands above the lowest tick label');
-  if (note.top - low > maxGap) out.push(`the note of the missing sides stands ${Math.round(note.top - low)} px under the tick labels, at most ${maxGap} px is required`);
+  if (title) {
+    const t = title.box;
+    if (note.left < t.right - TOL && t.left < note.right - TOL && note.top < t.bottom - TOL && t.top < note.bottom - TOL) out.push(`the note of the missing sides overlaps the axis title "${title.text}"`);
+    if (note.top < t.bottom - TOL) out.push(`the note of the missing sides is not under the axis title "${title.text}"`);
+    if (note.top - t.bottom > maxGap) out.push(`the note of the missing sides stands ${Math.round(note.top - t.bottom)} px under the axis title, at most ${maxGap} px is required`);
+  } else if (note.top - low > maxGap) {
+    out.push(`the note of the missing sides stands ${Math.round(note.top - low)} px under the tick labels, at most ${maxGap} px is required`);
+  }
   return out;
 }
 
@@ -236,5 +245,126 @@ export function stageTimesProblems(times, minGap = 200) {
   const out = [];
   if (times.length !== 3) return [`${times.length} steps were seen, three are required`];
   for (let i = 1; i < 3; i++) if (times[i] - times[i - 1] < minGap) out.push(`step ${i + 1} came ${Math.round(times[i] - times[i - 1])} ms after step ${i}, at least ${minGap} ms is required`);
+  return out;
+}
+
+/**
+ * @typedef {{ x: number, y: number }} Pt
+ * @typedef {{ id: string, points: Pt[] }} LeaderPath
+ */
+
+/**
+ * Whether the segment from a to b passes through the interior of the box, shrunk by `inset` px on every side (Liang-Barsky clipping).
+ * @param {Pt} a
+ * @param {Pt} b
+ * @param {Box} box
+ * @param {number} [inset]
+ * @returns {boolean}
+ */
+export function segmentHitsBox(a, b, box, inset = 0.5) {
+  const l = box.left + inset;
+  const r = box.right - inset;
+  const t = box.top + inset;
+  const bt = box.bottom - inset;
+  if (r <= l || bt <= t) return false;
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  let t0 = 0;
+  let t1 = 1;
+  for (const [p, q] of [[-dx, a.x - l], [dx, r - a.x], [-dy, a.y - t], [dy, bt - a.y]]) {
+    if (p === 0) {
+      if (q < 0) return false;
+    } else {
+      const k = q / p;
+      if (p < 0) t0 = Math.max(t0, k);
+      else t1 = Math.min(t1, k);
+      if (t0 > t1) return false;
+    }
+  }
+  return t1 - t0 > 1e-9;
+}
+
+/**
+ * The runs two paths share along one line: parallel horizontal or vertical segments closer than `near` px that overlap over more than 1 px.
+ * @param {LeaderPath} p
+ * @param {LeaderPath} q
+ * @param {number} [near]
+ * @returns {number}
+ */
+function sharedRuns(p, q, near = 2.5) {
+  let n = 0;
+  for (let i = 1; i < p.points.length; i++) {
+    for (let j = 1; j < q.points.length; j++) {
+      const [a, b] = [p.points[i - 1], p.points[i]];
+      const [c, d] = [q.points[j - 1], q.points[j]];
+      const horizontal = Math.abs(a.y - b.y) < 0.01 && Math.abs(c.y - d.y) < 0.01 && Math.abs(a.y - c.y) < near;
+      const vertical = Math.abs(a.x - b.x) < 0.01 && Math.abs(c.x - d.x) < 0.01 && Math.abs(a.x - c.x) < near;
+      if (horizontal && Math.min(Math.max(a.x, b.x), Math.max(c.x, d.x)) - Math.max(Math.min(a.x, b.x), Math.min(c.x, d.x)) > 1) n++;
+      if (vertical && Math.min(Math.max(a.y, b.y), Math.max(c.y, d.y)) - Math.max(Math.min(a.y, b.y), Math.min(c.y, d.y)) > 1) n++;
+    }
+  }
+  return n;
+}
+
+/**
+ * Whether two segments cross at a point inside both (a touch at an end is not a crossing).
+ * @param {Pt} a
+ * @param {Pt} b
+ * @param {Pt} c
+ * @param {Pt} d
+ * @returns {boolean}
+ */
+function segmentsCross(a, b, c, d) {
+  const o = (p, q, r) => (q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x);
+  const d1 = o(a, b, c);
+  const d2 = o(a, b, d);
+  const d3 = o(c, d, a);
+  const d4 = o(c, d, b);
+  return d1 * d2 < -1e-9 && d3 * d4 < -1e-9;
+}
+
+/**
+ * The number of conflicts among the leaders and, when given, the cards and labels: a leader crossing another leader, two leaders sharing a
+ * line, a leader passing through a card other than its own (its own only along its first run, which starts in it) or through a label box.
+ * @param {LeaderPath[]} paths
+ * @param {{ id: string, box: Box }[]} [cards]
+ * @param {{ text: string, box: Box }[]} [labels]
+ * @returns {number}
+ */
+export function pathConflicts(paths, cards = [], labels = []) {
+  let n = 0;
+  for (let i = 0; i < paths.length; i++) {
+    for (let j = i + 1; j < paths.length; j++) {
+      n += sharedRuns(paths[i], paths[j]);
+      for (let a = 1; a < paths[i].points.length; a++) for (let b = 1; b < paths[j].points.length; b++) if (segmentsCross(paths[i].points[a - 1], paths[i].points[a], paths[j].points[b - 1], paths[j].points[b])) n++;
+    }
+  }
+  return n + leaderPathProblems(paths, cards, labels, true).length;
+}
+
+/**
+ * T6: the leaders' paths, measured. No segment passes through a callout card other than its own (the own card only along the first run,
+ * which starts at its middle), none passes through a label's box, no two leaders run along one line, and every end lies on its subject.
+ * @param {LeaderPath[]} paths the polylines, from the card's middle to the end, in one coordinate system
+ * @param {{ id: string, box: Box }[]} cards the callout cards
+ * @param {{ text: string, box: Box }[]} labels the drawn labels
+ * @param {boolean} [skipShared] leave out the shared-line check (the caller counts it itself)
+ * @returns {string[]}
+ */
+export function leaderPathProblems(paths, cards, labels, skipShared = false) {
+  const out = [];
+  for (const p of paths) {
+    for (let i = 1; i < p.points.length; i++) {
+      const [a, b] = [p.points[i - 1], p.points[i]];
+      for (const c of cards) {
+        if (c.id === p.id && i === 1) continue;
+        if (segmentHitsBox(a, b, c.box)) out.push(`the leader of "${p.id}" passes through the callout card "${c.id}" on its segment ${i}`);
+      }
+      for (const l of labels) if (segmentHitsBox(a, b, l.box, 0)) out.push(`the leader of "${p.id}" crosses the label "${l.text}" on its segment ${i}`);
+    }
+  }
+  if (!skipShared) {
+    for (let i = 0; i < paths.length; i++) for (let j = i + 1; j < paths.length; j++) if (sharedRuns(paths[i], paths[j]) > 0) out.push(`the leaders of "${paths[i].id}" and "${paths[j].id}" run along one line`);
+  }
   return out;
 }

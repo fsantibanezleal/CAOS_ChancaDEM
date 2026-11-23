@@ -11,8 +11,8 @@ import type { DemRun, Readiness } from '../lib/contract.types';
 import { toCallout } from './callouts';
 import { bareReason, calloutSpecs, windowLabelSide, CATEGORY, ComparisonOverlay, cursorMark, DemBody, DemUnavailable, DemUnreadable, LabNote, StopMark, pointStages, Q, sideOffset, Sources, VerdictTable } from './dem';
 import { comparisonSeries, decodeFrames, frameAt, frameLabelText, nearerSentence, openingCursor, plain, sizeClassLabels, type DemFrames, type DemPoint } from './demModel';
-import { calloutTargets, FramesState, NAMES, panelWidth, plateExtremes, drawReplay, spreadHeights, stageColumns, sphereTop } from './demReplay';
-import { axisNoteProblems, chartOverlapProblems, classContrastProblems, contrast, decimalProblems, labelOverlapProblems, leaderProblems, noValueStripProblems, nullMarkProblems, stageTimesProblems, stageGeometryProblems, stageShare, stageShareProblems, verdictLayoutProblems } from './dem.rules.mjs';
+import { calloutTargets, CALLOUT_COLUMN, FramesState, GUTTER, NAMES, panelWidth, plateExtremes, drawReplay, routeLeaders, stageColumns, stageRects, sphereTop, TRACK_OFFSETS } from './demReplay';
+import { axisNoteProblems, chartOverlapProblems, classContrastProblems, contrast, decimalProblems, labelOverlapProblems, leaderPathProblems, leaderProblems, noValueStripProblems, pathConflicts, nullMarkProblems, stageTimesProblems, stageGeometryProblems, stageShare, stageShareProblems, verdictLayoutProblems } from './dem.rules.mjs';
 import { subOfUrl, ViewContext, type ViewCtx } from './shared';
 import { ValidationGroup } from './validation';
 
@@ -352,7 +352,7 @@ describe('the paper’s own simulation, the scope of the verdicts and the spread
     const src = readFileSync(new URL('./demReplay.tsx', import.meta.url), 'utf8');
     expect(src).toContain('Magnified ${num(mag');
     expect(src).toMatch(/data-scale-bar/);
-    expect(src).toMatch(/showInset = insetH - head >= INSET_MIN_PX/);
+    expect(src).toContain('showInset = rect.inset.h - insetHead(rect.inset.w) >= INSET_MIN_PX');
     expect(src).toMatch(/inset && 'dem-inset'|'dem-inset'/);
     expect(src).toMatch(/data-label-leaders/);
   });
@@ -468,9 +468,9 @@ describe('the stage: colours, labels and the drawing of a frame', () => {
     const src = readFileSync(new URL('./demReplay.tsx', import.meta.url), 'utf8');
     expect(src).toMatch(/devicePixelRatio/);
     expect(src).toMatch(/usePausedViz/);
-    expect(src).toMatch(/CalloutStage/);
+    expect(src).toMatch(/SceneCallouts/);
     expect(src).not.toMatch(/setInterval|request\w*Frame/);
-    expect(src).toMatch(/placement|CalloutStage/);
+    expect(src).toMatch(/placement="header"/);
   });
 });
 
@@ -538,10 +538,11 @@ describe('B2: a side with no value has no mark inside the plotting range', () =>
     // the bands and bars of the sides that do state a value are still drawn
     expect((overlay('throughput').match(/data-measurement-band=/g) ?? []).length).toBe(3);
   });
-  it('the sides with no value are said in words as the chart\u2019s own axis note, in both languages, and the legend has an entry for them', () => {
+  it('the sides with no value are said in words on a line of their own under the axis title (which stays Feed class), in both languages, and the key has no entry for them', () => {
     const src = readFileSync(new URL('./dem.tsx', import.meta.url), 'utf8');
-    expect(src).toContain('label: axisNote ?? { en:');
-    expect(src).toContain("label: { en: 'No value (said under the tick labels, reason in the note)'");
+    expect(src).toContain("label: { en: 'Feed class', es: 'Clase de alimentación' }");
+    expect(src).toContain('data-axis-note');
+    expect(src).not.toContain("id: 'no-value'");
     expect(src).not.toContain('NoValueStrip');
     expect(textOf(render())).toContain('population balance, 63/52 mm: no work index of the ore is published');
     expect(textOf(render())).toContain('No value (said under the tick labels):');
@@ -637,7 +638,7 @@ describe('M1: the stage', () => {
     expect(wide.inset).toBeGreaterThanOrEqual(200);
     const narrow = stageColumns(340, 400);
     expect(narrow.wide).toBe(false);
-    expect(narrow.inset).toBe(narrow.panel);
+    expect(narrow.panel + narrow.inset + 8).toBe(340);
   });
 });
 
@@ -696,12 +697,18 @@ describe('M4, m9 and the small findings', () => {
   });
   it('the stop mark stands on a line of its own, away from the cursor label, in the alarm colour with a dash', () => {
     const at = (p: { x: number; y: number }) => ({ x: 20 + p.x * 40, y: 200 - p.y });
-    const html = renderToStaticMarkup(<svg><StopMark at={at} x={6} yTop={100} yBottom={0} label="run stopped" /></svg>);
+    const html = renderToStaticMarkup(<svg><StopMark at={at} x={6} xMax={12} yTop={100} yBottom={0} label="run stopped" /></svg>);
     expect(html).toContain('data-stop-mark="6"');
     expect(html).toContain('stroke="var(--color-bad)"');
     expect(html).toContain('stroke-dasharray="2 3"');
     expect(html).toContain('run stopped');
-    expect(Number(html.match(/<text[^>]*y="([\d.]+)"/)![1])).toBe(at({ x: 6, y: 100 }).y + 40);
+    // T4: in the top margin (above the plot's top), at the right of the stop line while there is room for it, at its left near the plot's right edge
+    expect(Number(html.match(/<text[^>]*y="([\d.]+)"/)![1])).toBeLessThan(at({ x: 6, y: 100 }).y);
+    expect(html).toContain('text-anchor="start"');
+    expect(html).toContain(`x="${at({ x: 6, y: 100 }).x + 5}"`);
+    const near = renderToStaticMarkup(<svg><StopMark at={at} x={11.5} xMax={12} yTop={100} yBottom={0} label="run stopped" /></svg>);
+    expect(near).toContain('text-anchor="end"');
+    expect(near).toContain(`x="${at({ x: 11.5, y: 100 }).x - 5}"`);
   });
   it('m6: the view\u2019s numbers are tabular', () => {
     expect(css).toMatch(/\.cdem-dem \{\s*font-variant-numeric: tabular-nums;/);
@@ -786,7 +793,7 @@ describe('DM-017: the layout rules decide from measured boxes and strings (src/v
   });
   it('the browser script hands its measurements to these rules and is run by the story checks', () => {
     const b = readFileSync(new URL('./dem.browser.mjs', import.meta.url), 'utf8');
-    for (const rule of ['verdictLayoutProblems', 'axisNoteProblems', 'labelOverlapProblems', 'stageGeometryProblems', 'decimalProblems', 'leaderProblems', 'classContrastProblems', 'stageTimesProblems']) expect(b).toContain(rule);
+    for (const rule of ['leaderPathProblems', 'verdictLayoutProblems', 'axisNoteProblems', 'labelOverlapProblems', 'stageGeometryProblems', 'decimalProblems', 'leaderProblems', 'classContrastProblems', 'stageTimesProblems']) expect(b).toContain(rule);
     expect(readFileSync(new URL('../pages/story.browser.mjs', import.meta.url), 'utf8')).toContain("import('../views/dem.browser.mjs')");
   });
 });
@@ -840,7 +847,7 @@ describe('F2 and R3: the note of the missing sides overlaps nothing and stands d
   it('the browser script measures the note against the tick labels', () => {
     const b = readFileSync(new URL('./dem.browser.mjs', import.meta.url), 'utf8');
     expect(b).toContain('axisNoteProblems');
-    expect(b).toContain('data-axis-title');
+    expect(b).toContain('[data-axis-note]');
   });
 });
 
@@ -873,8 +880,8 @@ describe('F4: the stage is composed so the drawing is what the first screen show
   it('the callouts of the shell\u2019s anchored placement stand in the margins of the section on a desktop; on a phone the header band stays', () => {
     const rep = readFileSync(new URL('./demReplay.tsx', import.meta.url), 'utf8');
     expect(rep).toMatch(/<SceneCallouts items=\{items\} placement="header" \/>/);
-    expect(rep).toMatch(/size\.width >= 640 \? <WideStage/);
-    expect(rep).toMatch(/<CalloutStage/);
+    expect(rep).toContain('<StageBody {...props} />');
+    expect(rep).toContain('data-callouts-column');
     expect(stageColumns(1040, 330).wide).toBe(true);
     expect(stageColumns(340, 400).wide).toBe(false);
   });
@@ -948,11 +955,97 @@ describe('R1: every callout leader reaches its subject', () => {
       }
     }
   });
-  it('the leaders that end at the column edge are kept a label height apart', () => {
-    expect(spreadHeights([300, 304, 120], 26, 400)).toEqual([300, 326, 120]);
-    const out = spreadHeights([400, 402, 404], 26, 410);
-    for (let i = 1; i < out.length; i++) expect(Math.abs(out[i] - out[i - 1])).toBeGreaterThanOrEqual(0);
-    expect(Math.max(...out)).toBeLessThanOrEqual(402);
+  it('the stage rectangles: wide has the column, the gutter, the section, the zone and the legend in one row; narrow has the column and the section over the legend and the zone', () => {
+    const wide = stageRects(1040, 420);
+    expect(wide.wide).toBe(true);
+    expect(wide.chamber.x).toBe(CALLOUT_COLUMN + GUTTER);
+    expect(wide.chamber.x + wide.chamber.w).toBeLessThanOrEqual(wide.inset.x);
+    expect(wide.inset.x + wide.inset.w).toBeLessThanOrEqual(wide.panel.x);
+    const narrow = stageRects(358, 640);
+    expect(narrow.wide).toBe(false);
+    expect(narrow.chamber.x).toBeGreaterThanOrEqual(narrow.callouts.w);
+    expect(narrow.inset.y).toBe(narrow.panel.y);
+    expect(narrow.inset.y).toBeGreaterThanOrEqual(narrow.callouts.h);
+    expect(narrow.inset.x + narrow.inset.w).toBeLessThanOrEqual(358);
+  });
+});
+
+describe('T1 and T6: the leaders are routed as elbows through the gutter, across no card and no label', () => {
+  const swing = { left: 100, right: 140, top: 50, bottom: 300 };
+  void swing;
+  const cardBox = (top: number) => ({ left: 0, right: CALLOUT_COLUMN, top, bottom: top + 120 });
+  const cardsAt = [60, 200, 340].map((top, k) => ({ id: ['throughput', 'net_power', 'p80'][k] as 'throughput' | 'net_power' | 'p80', x: CALLOUT_COLUMN / 2, y: top + 60, box: cardBox(top) }));
+  const tf = { scale: 0.8, bounds: { xMin: -55, xMax: 120, zMin: -70, zMax: 470 }, px: (x: number, z: number) => ({ x: (x + 55) * 0.8, y: (470 - z) * 0.8 }) };
+  it('each leader leaves its own card at the card\u2019s height, runs down its own track in the gutter and reaches its subject; no card is crossed, no two share a line', () => {
+    for (const p of run.points) {
+      const r = p.simulation.replay!;
+      const ext = plateExtremes(r);
+      for (const i of [0, Math.floor(r.frames / 2), r.frames - 1]) {
+        const targets = calloutTargets(tf, r.geometry, { x: r.plate_bottom_x_mm[i], z: r.plate_bottom_z_mm[i] }, ext.closed);
+        const paths = routeLeaders(cardsAt, targets, CALLOUT_COLUMN, CALLOUT_COLUMN + GUTTER, { cards: cardsAt.map((c) => ({ id: c.id, box: c.box })) });
+        expect(leaderPathProblems(paths, cardsAt.map((c) => ({ id: c.id, box: c.box })), [])).toEqual([]);
+        for (const path of paths) {
+          const card = cardsAt.find((c) => c.id === path.id)!;
+          const [first, second] = path.points;
+          expect(first.y).toBe(card.y);
+          expect(second).toEqual({ x: CALLOUT_COLUMN, y: card.y });
+          const track = path.points[2].x;
+          expect(TRACK_OFFSETS.map((o) => CALLOUT_COLUMN + o)).toContain(track);
+          const end = path.points[path.points.length - 1];
+          const t = targets.find((q) => q.id === path.id)!;
+          expect(end.x).toBeCloseTo(CALLOUT_COLUMN + GUTTER + t.end.x, 6);
+          expect(end.y).toBeCloseTo(t.end.y, 6);
+        }
+        expect(new Set(paths.map((q) => q.points[2].x)).size).toBe(3);
+      }
+    }
+  });
+  it('the P80 leader ends on the discharge level, the same height as the throughput leader\u2019s end, 30 mm to its left', () => {
+    const r = run.points[0].simulation.replay!;
+    const targets = calloutTargets(tf, r.geometry, { x: r.plate_bottom_x_mm[0], z: r.plate_bottom_z_mm[0] }, plateExtremes(r).closed);
+    const t = targets.find((q) => q.id === 'throughput')!;
+    const p = targets.find((q) => q.id === 'p80')!;
+    expect(p.end.y).toBeCloseTo(t.end.y, 6);
+    expect(p.end.x).toBeCloseTo(tf.px(r.geometry.fixed_plate_x_mm - 45, 0).x, 6);
+    expect(p.approachY).toBeGreaterThan(p.end.y);
+    expect(t.approachY).toBeLessThan(t.end.y);
+  });
+  const boxOf = (left: number, top: number, w: number, h: number) => ({ left, right: left + w, top, bottom: top + h });
+  const own = { id: 'throughput', points: [{ x: 106, y: 120 }, { x: 212, y: 120 }, { x: 217, y: 120 }, { x: 217, y: 380 }, { x: 300, y: 380 }, { x: 300, y: 392 }] };
+  const cards = [{ id: 'throughput', box: boxOf(0, 60, 212, 120) }, { id: 'net_power', box: boxOf(0, 200, 212, 120) }, { id: 'p80', box: boxOf(0, 340, 212, 120) }];
+  it('adversarial: a leader that passes behind another callout card is reported with both named, one that leaves its own card and runs down the gutter passes', () => {
+    expect(leaderPathProblems([own], cards, [])).toEqual([]);
+    const behind = { id: 'throughput', points: [{ x: 106, y: 120 }, { x: 106, y: 260 }, { x: 300, y: 260 }] };
+    const problems = leaderPathProblems([behind], cards, []);
+    expect(problems.length).toBeGreaterThanOrEqual(1);
+    expect(problems[0]).toContain('the leader of "throughput" passes through the callout card "net_power"');
+  });
+  it('adversarial: a leader that crosses a label box of the drawing is reported with the label named; one that runs beside it passes', () => {
+    const labels = [{ text: 'discharge level', box: boxOf(240, 372, 90, 14) }, { text: 'hopper', box: boxOf(400, 20, 40, 14) }];
+    const problems = leaderPathProblems([own], cards, labels);
+    expect(problems.length).toBeGreaterThanOrEqual(1);
+    expect(problems[0]).toContain('crosses the label "discharge level"');
+    expect(leaderPathProblems([own], cards, [{ text: 'open 17.5 mm', box: boxOf(240, 420, 90, 14) }])).toEqual([]);
+  });
+  it('adversarial: two leaders that run along one line, or that cross, are reported; tracks a few px apart in the gutter pass', () => {
+    const shared = { id: 'p80', points: [{ x: 106, y: 400 }, { x: 212, y: 400 }, { x: 218, y: 400 }, { x: 218, y: 380 }, { x: 330, y: 380 }, { x: 330, y: 392 }] };
+    const sameLine = leaderPathProblems([own, { ...shared, points: shared.points.map((q) => ({ x: q.x === 218 ? 217 : q.x, y: q.y })) }], cards, []);
+    expect(sameLine.join(' ')).toContain('run along one line');
+    const clear = { id: 'p80', points: [{ x: 106, y: 400 }, { x: 212, y: 400 }, { x: 224, y: 400 }, { x: 224, y: 412 }, { x: 330, y: 412 }, { x: 330, y: 392 }] };
+    expect(leaderPathProblems([own, clear], cards, [])).toEqual([]);
+    expect(pathConflicts([own, shared])).toBeGreaterThanOrEqual(1);
+    const crossing = { id: 'net_power', points: [{ x: 106, y: 260 }, { x: 212, y: 260 }, { x: 212, y: 260 }, { x: 260, y: 260 }, { x: 260, y: 150 }, { x: 320, y: 150 }] };
+    expect(pathConflicts([own, crossing])).toBe(1);
+    const cut = { id: 'net_power', points: [{ x: 200, y: 300 }, { x: 240, y: 300 }, { x: 240, y: 100 }] };
+    expect(pathConflicts([{ id: 'throughput', points: [{ x: 217, y: 200 }, { x: 300, y: 200 }] }, cut])).toBe(1);
+  });
+  it('adversarial: a leader whose end is off its subject is still reported by the end rule, and the browser check measures paths, ends and the painted pixel', () => {
+    const lost = leaderProblems([{ id: 'p80', end: { x: 300, y: 500 }, box: boxOf(280, 380, 24, 12) }]);
+    expect(lost[0]).toContain('outside its subject');
+    const b = readFileSync(new URL('./dem.browser.mjs', import.meta.url), 'utf8');
+    expect(b).toContain('leaderPathProblems(');
+    expect(b).toContain('ends on something drawn');
+    expect(b).toContain('[data-caos-callout]');
   });
 });
 
@@ -975,6 +1068,23 @@ describe('R2: the size classes read against the stage in both themes', () => {
     expect(p.length).toBeGreaterThanOrEqual(2);
     expect(p[0]).toContain('the size class 0 (#fde66a) has a contrast of 1.');
     expect(classContrastProblems(['#2a99d4', '#2a99d4', '#2a99d4', '#2a99d4', '#2a99d4', '#2a99d4'], '#ffffff').join(' ')).toContain('not ordered in lightness');
+  });
+  it('T7: the light ramp ends on a dark brown, not on a red beside the alarm red, and every class keeps 3 to 1 and the order', () => {
+    const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+    const hueOf = (hex: string) => {
+      const [r, g, b] = rgb(hex);
+      const mx = Math.max(r, g, b);
+      const d = mx - Math.min(r, g, b);
+      const h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+      return (h * 60 + 360) % 360;
+    };
+    const last = light[5];
+    expect(contrast(last, '#ffffff')).toBeGreaterThanOrEqual(3);
+    const h = hueOf(last);
+    expect(h > 8 && h < 340).toBe(true);
+    expect(hueOf(light[4]) > 8 && hueOf(light[4]) < 340).toBe(true);
+    // the alarm red of the light theme is about hue 355 or 0: no class of the ramp lies within 8 degrees of it
+    for (const c of light) expect(Math.min(hueOf(c), 360 - hueOf(c))).toBeGreaterThan(8);
   });
   it('the small spheres are outlined so a two-pixel dot is seen', () => {
     const rep = readFileSync(new URL('./demReplay.tsx', import.meta.url), 'utf8');

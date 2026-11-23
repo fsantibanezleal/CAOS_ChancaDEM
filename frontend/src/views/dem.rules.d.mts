@@ -25,5 +25,16 @@ export function leaderProblems(leaders: { id: string; end: { x: number; y: numbe
 export function luminance(hex: string): number;
 export function contrast(a: string, b: string): number;
 export function classContrastProblems(colours: string[], background: string, min?: number): string[];
-export function axisNoteProblems(note: Box, ticks: { text: string; box: Box }[], maxGap?: number): string[];
+export function axisNoteProblems(note: Box, ticks: { text: string; box: Box }[], maxGap?: number, title?: { text: string; box: Box } | null): string[];
 export function stageTimesProblems(times: number[], minGap?: number): string[];
+export interface Pt {
+  x: number;
+  y: number;
+}
+export interface LeaderPath {
+  id: string;
+  points: Pt[];
+}
+export function segmentHitsBox(a: Pt, b: Pt, box: Box, inset?: number): boolean;
+export function pathConflicts(paths: LeaderPath[], cards?: { id: string; box: Box }[], labels?: { text: string; box: Box }[]): number;
+export function leaderPathProblems(paths: LeaderPath[], cards: { id: string; box: Box }[], labels: { text: string; box: Box }[], skipShared?: boolean): string[];

@@ -67,6 +67,16 @@ export class Labels {
     private readonly margin = 4,
   ) {}
 
+  /** Keeps the area free of labels (the run of a leader, say). */
+  reserve(x0: number, x1: number, y0: number, y1: number): void {
+    this.boxes.push({ x0, x1, y0, y1 });
+  }
+
+  /** The boxes of the labels placed so far, as left, right, top and bottom. */
+  get placed(): { left: number; right: number; top: number; bottom: number }[] {
+    return this.boxes.map((b) => ({ left: b.x0, right: b.x1, top: b.y0, bottom: b.y1 }));
+  }
+
   place(text: string, x: number, y: number, anchor: Placed['anchor'] = 'middle', style: { fill?: string; weight?: number } = {}): Placed {
     const px = FONT_PX;
     const w = textWidth(text, px);

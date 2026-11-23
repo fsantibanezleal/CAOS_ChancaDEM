@@ -11,12 +11,13 @@
 //   stage     at 1280 by 800 the stage card is at least 60 percent of the App route's viewport, its drawing region at least 40 percent, and the
 //             section and the magnified zone at least 380 px high (M1, F4);
 //   leaders   at 1280 by 800 the end of every callout's leader lies inside (or within 4 px of) its subject's drawn box, and no two ends are closer
-//             than 20 px (R1); classes: the six size classes are at 3 to 1 or more against the stage's background in the theme (R2); note: the
-//             sentence that says which sides state no value stands directly under the tick labels and overlaps none (R3); staged: a change of
+//             than 20 px (R1); paths (T1, T2, T6, both sizes): every leader's path, from its card's middle through the column's edge and its own track in the
+//             gutter to its subject, crosses no other callout card and no label box, shares no line with another leader, and ends on a painted pixel; classes: the six size classes are at 3 to 1 or more against the stage's background in the theme (R2); note: the
+//             sentence that says which sides state no value stands on a line of its own under the axis title, which stays "Feed class", and overlaps none (R3, T3); staged: a change of
 //             operating point shows the stage, the series and the rest at three times, 200 ms apart at least (R5);
 //   decimals  on the Spanish page no number is written with a decimal point outside the blocks marked lang="en" (M2).
 //   node src/views/dem.browser.mjs <origin>   checks a running build on its own
-import { axisNoteProblems, chartOverlapProblems, classContrastProblems, decimalProblems, labelOverlapProblems, leaderProblems, stageGeometryProblems, stageShare, stageTimesProblems, verdictLayoutProblems } from './dem.rules.mjs';
+import { axisNoteProblems, chartOverlapProblems, classContrastProblems, decimalProblems, labelOverlapProblems, leaderPathProblems, leaderProblems, stageGeometryProblems, stageShare, stageTimesProblems, verdictLayoutProblems } from './dem.rules.mjs';
 
 const SIZES = [
   { width: 1280, height: 800 },
@@ -101,33 +102,44 @@ async function measure(page) {
           below.push({ text: t.t, box: { left: r.left + left * k, right: r.left + (left + t.w) * k, top: r.top + (t.y - 10) * k, bottom: r.top + (t.y + 3) * k } });
         }
       }
-      // the note of the missing sides: the chart's own axis title, drawn on its canvas or written under it
-      let note = null;
-      for (const el of root.querySelectorAll('[data-axis-title="x"]')) if (/^(No value|Sin valor)/.test(el.textContent ?? '')) note = box(el.getBoundingClientRect());
-      if (!note) {
-        for (const canvas of root.querySelectorAll('canvas')) {
-          const r = canvas.getBoundingClientRect();
-          const k = canvas.width ? r.width / canvas.width : 1;
-          for (const t of canvas.__demTexts ?? []) if (!t.turned && /^(No value|Sin valor)/.test(t.t)) {
-            const left = t.align === 'center' ? t.x - t.w / 2 : t.x;
-            note = { left: r.left + left * k, right: r.left + (left + t.w) * k, top: r.top + (t.y - 10) * k, bottom: r.top + (t.y + 3) * k };
-          }
-        }
-      }
-      return { q: root.getAttribute('data-comparison'), plot: plot ? box(plot.getBoundingClientRect()) : null, nullMarks, labels, below, note };
+      // the note of the missing sides: a line of its own under the chart's axis title; the title is the canvas text "Feed class"
+      const noteEl = root.querySelector('[data-axis-note]');
+      const note = noteEl ? box(noteEl.getBoundingClientRect()) : null;
+      const title = below.find((t) => /^(Feed class|Clase de alimentación)$/.test(t.text)) ?? null;
+      return { q: root.getAttribute('data-comparison'), plot: plot ? box(plot.getBoundingClientRect()) : null, nullMarks, labels, below, note, title };
     });
     // every chart root of the view, each with its plot, tick labels, axis title, key and hint
     const roots = [...document.querySelectorAll('.cdem-dem .uplot')].map((el, i) => ({ id: `${el.closest('[data-stroke-series]') ? 'series' : el.closest('[data-comparison]') ? 'comparison' : el.closest('[data-distribution]') ? 'distribution' : 'chart'}#${i}`, box: box(el.getBoundingClientRect()) }));
     // the leaders of the callouts and the subjects they name (page pixels); the six size classes and the stage's background
     const leaderSvg = document.querySelector('[data-chart="dem-callout-leaders"]');
     const sv = leaderSvg ? leaderSvg.getBoundingClientRect() : null;
+    const replayCanvas = document.querySelector('canvas[data-chart="dem-replay"], [data-chart="dem-replay"] canvas, canvas[data-frame]');
+    const painted = (x, y) => {
+      if (!replayCanvas) return null;
+      const r = replayCanvas.getBoundingClientRect();
+      const k = replayCanvas.width / r.width;
+      const cx = Math.round((x - r.left) * k);
+      const cy = Math.round((y - r.top) * k);
+      const ctx = replayCanvas.getContext('2d');
+      const w = 7;
+      const d = ctx.getImageData(Math.max(0, cx - 3), Math.max(0, cy - 3), w, w).data;
+      const bg = ctx.getImageData(0, 0, 1, 1).data;
+      for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 0 && (Math.abs(d[i] - bg[0]) + Math.abs(d[i + 1] - bg[1]) + Math.abs(d[i + 2] - bg[2]) > 30 || d[i + 3] !== bg[3])) return true;
+      return false;
+    };
     const leaders = sv
       ? [...leaderSvg.querySelectorAll('[data-callout-leader]')].map((l) => {
           const id = l.getAttribute('data-callout-leader');
           const sub = leaderSvg.querySelector(`[data-subject="${id}"]`);
-          return { id, end: { x: sv.left + Number(l.getAttribute('data-end-x')), y: sv.top + Number(l.getAttribute('data-end-y')) }, box: sub ? box(sub.getBoundingClientRect()) : null };
+          const points = (l.getAttribute('data-points') ?? '').split(' ').filter(Boolean).map((q) => { const [x, y] = q.split(',').map(Number); return { x: sv.left + x, y: sv.top + y }; });
+          const end = { x: sv.left + Number(l.getAttribute('data-end-x')), y: sv.top + Number(l.getAttribute('data-end-y')) };
+          return { id, end, points, painted: painted(end.x, end.y), box: sub ? box(sub.getBoundingClientRect()) : null };
         })
       : [];
+    const cards = [...document.querySelectorAll('[data-caos-callout]')].map((el) => ({ id: el.getAttribute('data-caos-callout'), box: box(el.getBoundingClientRect()) }));
+    const stageLabels = [...document.querySelectorAll('svg[data-chart="dem-replay-labels"] text')].map((el) => ({ text: el.textContent ?? '', box: box(el.getBoundingClientRect()) }));
+    // the stopped run's per-stroke charts: the stop label, the series line and the cursor's line, as boxes
+    const stopLabels = [...document.querySelectorAll('[data-stop-label]')].map((el) => box(el.getBoundingClientRect()));
     const css = getComputedStyle(document.documentElement);
     const hex = (v) => {
       const t = v.trim();
@@ -156,6 +168,9 @@ async function measure(page) {
       charts,
       roots,
       leaders,
+      cards,
+      stageLabels,
+      stopLabels,
       classes,
       surface,
       stage: stageCard ? { width: stageCard.getBoundingClientRect().width, height: stageCard.getBoundingClientRect().height } : null,
@@ -211,6 +226,7 @@ export async function demChecks({ browser, base, ok }) {
   const boxes = [];
   const gaps = [];
   const reach = [];
+  const paths = [];
   const contrasts = [];
   let combos = 0;
   for (const size of SIZES) {
@@ -241,8 +257,9 @@ export async function demChecks({ browser, base, ok }) {
               const missing = c.q !== 'p80';
               ok(!missing || c.note !== null || c.q === 'throughput' || c.q === 'net_power', `${where}, ${c.q}: the note of the missing sides is on the chart`);
               if (c.note) {
-                for (const p of axisNoteProblems(c.note, c.labels.map((l) => ({ text: l.text, box: l }))))  ok(false, `${where}, ${c.q}: ${p}`);
-                gaps.push(Math.round(c.note.top - Math.max(...c.labels.map((l) => l.bottom))));
+                ok(c.title !== null, `${where}, ${c.q}: the axis title stays "Feed class"`);
+                for (const p of axisNoteProblems(c.note, c.labels.map((l) => ({ text: l.text, box: l })), 110, c.title))  ok(false, `${where}, ${c.q}: ${p}`);
+                gaps.push(Math.round(c.note.top - (c.title ? c.title.box.bottom : Math.max(...c.labels.map((l) => l.bottom)))));
               }
               ok(c.labels.length >= 3, `${where}, ${c.q}: the three feed classes are labelled on the axis (${c.labels.length} labels read)`);
               for (const p of labelOverlapProblems(c.labels)) ok(false, `${where}, ${c.q}: ${p}`);
@@ -255,9 +272,12 @@ export async function demChecks({ browser, base, ok }) {
               }
             }
             for (const p of classContrastProblems(m.classes, m.surface)) ok(false, `${where}: ${p}`);
-            if (size.width === 1280) {
+            {
               ok(m.leaders.length === 3 && m.leaders.every((l) => l.box), `${where}: three callout leaders with their subjects`);
               for (const p of leaderProblems(m.leaders.filter((l) => l.box))) ok(false, `${where}: ${p}`);
+              for (const p of leaderPathProblems(m.leaders.map((l) => ({ id: l.id, points: l.points })), m.cards, m.stageLabels)) ok(false, `${where}: ${p}`);
+              for (const l of m.leaders) ok(l.painted === true, `${where}: the leader of "${l.id}" ends on something drawn`);
+              paths.push({ where, leaders: m.leaders.map((l) => ({ id: l.id, points: l.points.map((q) => [Math.round(q.x), Math.round(q.y)]), painted: l.painted })) });
               reach.push(m.leaders.map((l) => ({ id: l.id, inside: l.box ? l.end.x >= l.box.left - 4 && l.end.x <= l.box.right + 4 && l.end.y >= l.box.top - 4 && l.end.y <= l.box.bottom + 4 : false, ends: [Math.round(l.end.x), Math.round(l.end.y)] })));
             }
             if (theme === 'dark' || theme === 'light') contrasts.push({ theme, ratios: m.classes.map((c) => c) });
@@ -270,7 +290,7 @@ export async function demChecks({ browser, base, ok }) {
     }
   }
   const times = await stagedTimes(browser, base, ok);
-  return { combos, shares, boxes, gaps, reach, contrasts, times };
+  return { combos, shares, boxes, gaps, reach, paths, contrasts, times };
 }
 
 if (import.meta.url === `file:///${process.argv[1]?.replace(/\\/g, '/').replace(/^\//, '')}`) {
@@ -287,7 +307,7 @@ if (import.meta.url === `file:///${process.argv[1]?.replace(/\\/g, '/').replace(
   try {
     const out = await demChecks({ browser, base, ok });
     for (const f of failures) console.log(`FAIL ${f}`);
-    if (process.env.DEM_BOXES === '1') console.log(JSON.stringify({ boxes: out.boxes, gaps: out.gaps, reach: out.reach.slice(0, 4), contrasts: out.contrasts.slice(0, 2), times: out.times }));
+    if (process.env.DEM_BOXES === '1') console.log(JSON.stringify({ boxes: out.boxes, gaps: out.gaps, reach: out.reach.slice(0, 4), paths: out.paths, contrasts: out.contrasts.slice(0, 2), times: out.times }));
     const range = (key) => `${Math.min(...out.shares.map((x) => x[key])).toFixed(key === 'card' || key === 'drawing' ? 3 : 0)} to ${Math.max(...out.shares.map((x) => x[key])).toFixed(key === 'card' || key === 'drawing' ? 3 : 0)}`;
     console.log(`dem.browser: ${checks} checks over ${out.combos} measured pages, ${failures.length} failed; at 1280 by 800 the stage card is ${range('card')}, the drawing region ${range('drawing')} of the viewport, the section ${range('section')} px and the magnified zone ${range('zone')} px high`);
     if (failures.length) process.exitCode = 1;

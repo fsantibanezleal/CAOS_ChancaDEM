@@ -521,6 +521,25 @@
   position: relative;
   min-width: 0;
   height: 280px;
+  display: flex;
+  flex-direction: column;
+}
+
+.cdem-axis-chart {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+}
+
+.cdem-axis-note {
+  flex: none;
+  margin: 0;
+  padding: 2px 4px 0;
+  font-size: var(--text-xs, 0.75rem);
+  line-height: 1.3;
+  color: var(--color-fg-subtle);
+  text-align: center;
 }
 
 .cdem-distribution {
@@ -532,6 +551,9 @@
   .cdem-comparison-chart {
     height: auto;
     min-height: 28rem;
+  }
+  .cdem-axis-chart {
+    min-height: 26rem;
   }
   .cdem-distribution {
     height: 24rem;
@@ -644,8 +666,8 @@
   --cdem-size-1: #0f8d90;
   --cdem-size-2: #317b4a;
   --cdem-size-3: #635e16;
-  --cdem-size-4: #763b17;
-  --cdem-size-5: #6e172b;
+  --cdem-size-4: #6f3a14;
+  --cdem-size-5: #3b1d10;
 }
 
 /* Numbers of the view line up (m6): the counts change every frame while playing. */

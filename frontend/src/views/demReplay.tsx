@@ -6,10 +6,10 @@
 // the subject. The animation loop is the shell's (usePausedViz): it stops when the view unmounts, when the tab is hidden and, here, it never
 // starts under reduced motion.
 import { PlotCard, prefersReducedMotion, resolveToken, SceneCallouts, Stage, useLinkedCursor, usePausedViz, useShellLang, useStageSize, useThemeTokens, type BiText } from '@fasl-work/caos-app-shell';
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import type { Loaded } from '../api/artifacts';
 import type { DemRun } from '../lib/contract.types';
-import { CalloutStage, toCallout, type CalloutSpec, type Subject } from './callouts';
+import { toCallout, type CalloutSpec } from './callouts';
 import {
   advance,
   classCounts,
@@ -33,6 +33,7 @@ import {
   type DemReplay,
   type StageTransform,
 } from './demModel';
+import { pathConflicts, type Box } from './dem.rules.mjs';
 import { Labels, LabelText, TOKEN } from './draw';
 import { useNum, useT } from './shared';
 
@@ -262,11 +263,12 @@ const ReplayCanvas = ({ width, height, run, point, frames, frame, tf, plate, ins
  * the discharge level, on its right the swing plate, the settings and the hopper, each with a leader to what it names. They are placed so
  * none leaves the drawing or touches another (the gate's G10). Also the subjects the callouts are anchored to, on the main section.
  */
-function sectionLabels(tf: StageTransform, point: DemPoint, run: DemRun, plate: { x: number; z: number }, width: number, height: number, names: Names, narrow: boolean, num: (v: number, o?: { digits?: number; decimals?: number }) => string): { node: ReactNode; subjects: Subject[] } {
+function sectionLabels(tf: StageTransform, point: DemPoint, run: DemRun, plate: { x: number; z: number }, width: number, height: number, names: Names, narrow: boolean, num: (v: number, o?: { digits?: number; decimals?: number }) => string, reserved: { x0: number; x1: number; y0: number; y1: number }[] = []): { node: ReactNode; boxes: { text: string; box: { left: number; right: number; top: number; bottom: number } }[] } {
   const r = point.simulation.replay!;
   const g = r.geometry;
   const ext = plateExtremes(r);
   const L = new Labels(width, height, 22);
+  for (const b of reserved) L.reserve(b.x0, b.x1, b.y0, b.y1);
   const left = tf.px(tf.bounds.xMin, 0).x - 8;
   const right = tf.px(tf.bounds.xMax, 0).x + 8;
   const disY = tf.px(0, g.discharge_z_mm).y;
@@ -278,20 +280,14 @@ function sectionLabels(tf: StageTransform, point: DemPoint, run: DemRun, plate: 
   // each label with the point of the drawing it names
   const items: { text: string; x: number; y: number; anchor: 'start' | 'end'; fill: string; weight?: number; to: { x: number; y: number } }[] = [
     { text: names.fixed, x: left, y: fixedMid.y, anchor: 'end', fill: TOKEN.subtle, to: { x: fixedMid.x - 4, y: fixedMid.y } },
-    narrow
-      ? { text: names.discharge, x: right, y: disY + 14, anchor: 'start', fill: TOKEN.faint, to: { x: tf.px(tf.bounds.xMax - 6, 0).x, y: disY } }
-      : { text: names.discharge, x: left, y: disY, anchor: 'end', fill: TOKEN.faint, to: { x: tf.px(tf.bounds.xMin + 6, 0).x, y: disY } },
+    // the callouts' leaders come in from the left, so the discharge level is named at the right
+    { text: names.discharge, x: right, y: disY - 6, anchor: 'start', fill: TOKEN.faint, to: { x: tf.px(tf.bounds.xMax - 6, 0).x, y: disY } },
     { text: names.swing, x: right, y: swingMid.y, anchor: 'start', fill: TOKEN.accent, to: { x: swingMid.x + 4, y: swingMid.y } },
     { text: names.hopper, x: right + (narrow ? 8 : 0), y: hop.y - (narrow ? 14 : 0), anchor: 'start', fill: TOKEN.faint, to: { x: hop.x + 3, y: hop.y } },
     { text: `${names.css} ${num(run.settings.css_mm, { digits: 3 })} mm`, x: right, y: closedPx.y + 4, anchor: 'start', fill: TOKEN.accent, weight: 700, to: { x: closedPx.x + 3, y: closedPx.y } },
     { text: `${names.oss} ${num(run.settings.oss_mm, { digits: 3 })} mm`, x: right, y: openPx.y + 22, anchor: 'start', fill: TOKEN.subtle, to: { x: openPx.x + 3, y: openPx.y + 3 } },
   ];
   const placed = items.map((it) => ({ it, p: L.place(it.text, it.x, it.y, it.anchor, { fill: it.fill, weight: it.weight }) }));
-  const subjects: Subject[] = [
-    { id: 'throughput', x: tf.px((g.fixed_plate_x_mm + ext.closed.x) / 2, g.discharge_z_mm).x, y: tf.px(0, g.discharge_z_mm).y },
-    { id: 'net_power', x: swingMid.x, y: swingMid.y },
-    { id: 'p80', x: tf.px(g.fixed_plate_x_mm - 18, g.discharge_z_mm).x, y: tf.px(0, g.discharge_z_mm - 10).y },
-  ];
   // dimension ticks of the two settings at the plate's bottom edge: the gap from the fixed plate to the closed and to the open edge, to scale
   const y0 = tf.px(0, 0).y + 8;
   const x0 = tf.px(g.fixed_plate_x_mm, 0).x;
@@ -314,7 +310,8 @@ function sectionLabels(tf: StageTransform, point: DemPoint, run: DemRun, plate: 
       <LabelText items={placed.map(({ p }) => p)} />
     </svg>
   );
-  return { node, subjects };
+  const boxes = placed.map(({ it }, i) => ({ text: it.text, box: L.placed[reserved.length + i] }));
+  return { node, boxes };
 }
 
 /** The short names of the narrow stage, where a long label cannot stand clear of the walls and the callouts' leaders. */
@@ -339,25 +336,25 @@ export const panelWidth = (stageWidth: number): number => Math.round(Math.max(13
 /** The height of the size panel [px]: its title and one row per class. */
 export const SIZE_PANEL_H = 20 + SIZE_CLASSES * 18 + 6;
 
-export function SizePanel({ width, point, counts, max, palette }: { width: number; point: DemPoint; counts: number[]; max: number; palette: string[] }) {
+export function SizePanel({ width, left = 0, top = 0, point, counts, max, palette }: { width: number; left?: number; top?: number; point: DemPoint; counts: number[]; max: number; palette: string[] }) {
   const height = SIZE_PANEL_H;
   const num = useNum();
   const t = useT();
   const lang = useShellLang();
   const labels = sizeClassLabels(point.feed_mm[0], num, lang);
-  const top = 20;
+  const head = 20;
   const row = 18;
   const labelW = 64;
   const barX = 18 + labelW;
   const barMax = Math.max(8, width - barX - 40);
   const font = { fontFamily: 'var(--font-sans)', fontSize: 11, fontVariantNumeric: 'tabular-nums' } as const;
   return (
-    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={t('Spheres of the frame by diameter', 'Esferas del cuadro por diámetro')} data-legend="size" data-chart="dem-size-panel" style={{ position: 'absolute', right: 0, top: 0 }}>
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} role="img" aria-label={t('Spheres of the frame by diameter', 'Esferas del cuadro por diámetro')} data-legend="size" data-chart="dem-size-panel" style={{ position: 'absolute', left, top }}>
       <text x={4} y={13} fill={TOKEN.subtle} fontWeight={600} {...{ style: font }}>
         {t('Diameter (mm)', 'Diámetro (mm)')}
       </text>
       {labels.map((label, c) => {
-        const y = top + c * row + row / 2;
+        const y = head + c * row + row / 2;
         const len = max > 0 ? Math.max(counts[c] > 0 ? 2 : 0, (counts[c] / max) * barMax) : 0;
         return (
           <g key={c} data-class={c} data-count={counts[c]}>
@@ -387,7 +384,7 @@ export const insetHead = (width: number): number => (width < 170 ? 54 : INSET_HE
  * below it, with its own scale bar in millimetres, the closed and open settings marked and a frame and a title that say it is a magnification.
  * It sits below the size panel, where it covers neither the section nor a callout.
  */
-export function Inset({ width, height, left, run, point, frames, frame, plate, mainScale }: { width: number; height: number; left?: number; run: DemRun; point: DemPoint; frames: DemFrames | null; frame: number; plate: { x: number; z: number }; mainScale: number }) {
+export function Inset({ width, height, left, top = 0, run, point, frames, frame, plate, mainScale }: { width: number; height: number; left?: number; top?: number; run: DemRun; point: DemPoint; frames: DemFrames | null; frame: number; plate: { x: number; z: number }; mainScale: number }) {
   const num = useNum();
   const t = useT();
   const r = point.simulation.replay!;
@@ -404,7 +401,7 @@ export function Inset({ width, height, left, run, point, frames, frame, plate, m
   const bar = 10 * tf.scale;
   const font = { fontFamily: 'var(--font-sans)', fontSize: 11, fontVariantNumeric: 'tabular-nums' } as const;
   return (
-    <div className="cdem-inset" style={left === undefined ? { position: 'absolute', right: 0, bottom: 0, width, height } : { position: 'absolute', left, top: 0, width, height }} data-inset="" data-magnification={String(Math.round(mag * 100) / 100)}>
+    <div className="cdem-inset" style={{ position: 'absolute', left, top, width, height }} data-inset="" data-magnification={String(Math.round(mag * 100) / 100)}>
       <div className="cdem-inset-head" style={{ height: head }}>
         <strong>{t(`Magnified ${num(mag, { digits: 2 })} times: the crushing zone`, `Ampliada ${num(mag, { digits: 2 })} veces: la zona de chancado`)}</strong>
         <span>
@@ -449,14 +446,17 @@ export interface CalloutTarget {
   id: 'throughput' | 'net_power' | 'p80';
   /** Where the leader ends, in pixels of the section's canvas. */
   end: { x: number; y: number };
+  /** The height at which the leader's last run arrives, in the same pixels: the end itself, or a little above or below it when the last step is a short vertical. */
+  approachY: number;
   /** The subject's drawn box, in the same pixels. */
   box: { left: number; right: number; top: number; bottom: number };
 }
 
 /**
  * The subjects the three callouts name and where each leader ends on them, in pixels of the section's canvas: the swing plate for the net power
- * (its middle), the discharge gap between the fixed plate and the plate's closed edge for the throughput, and the product below the discharge for
- * the P80 (below the level, clear of the gap by 30 mm, so two leaders never end within a label's height of each other).
+ * (its middle), the discharge gap between the fixed plate and the plate's closed edge for the throughput (arriving from above), and the
+ * discharge level to the left of the fixed plate for the P80 (arriving from below), so the two lowest leaders run on tracks 24 px apart and end
+ * 30 mm apart on the level.
  */
 export function calloutTargets(tf: StageTransform, g: DemReplay['geometry'], plate: { x: number; z: number }, closed: { x: number; z: number }): CalloutTarget[] {
   const gapL = tf.px(g.fixed_plate_x_mm, g.discharge_z_mm);
@@ -464,27 +464,104 @@ export function calloutTargets(tf: StageTransform, g: DemReplay['geometry'], pla
   const pivot = tf.px(g.swing_pivot_mm[0], g.swing_pivot_mm[1]);
   const tip = tf.px(plate.x, plate.z);
   const mid = { x: (pivot.x + tip.x) / 2, y: (pivot.y + tip.y) / 2 };
-  const below = { x: tf.px(g.fixed_plate_x_mm - 30, 0).x, y: gapL.y + 0.5 * (tf.px(0, g.discharge_z_mm - 20).y - gapL.y) };
+  const level = { x: tf.px(g.fixed_plate_x_mm - 45, 0).x, y: gapL.y };
   return [
-    { id: 'throughput', end: { x: (gapL.x + gapR.x) / 2, y: gapL.y }, box: { left: gapL.x - 4, right: gapR.x + 4, top: gapL.y - 8, bottom: gapL.y + 8 } },
-    { id: 'net_power', end: mid, box: { left: Math.min(pivot.x, tip.x) - 5, right: Math.max(pivot.x, tip.x) + 5, top: Math.min(pivot.y, tip.y) - 5, bottom: Math.max(pivot.y, tip.y) + 5 } },
-    { id: 'p80', end: below, box: { left: below.x - 12, right: below.x + 12, top: gapL.y, bottom: tf.px(0, g.discharge_z_mm - 20).y + 4 } },
+    { id: 'throughput', end: { x: (gapL.x + gapR.x) / 2, y: gapL.y }, approachY: gapL.y - 12, box: { left: gapL.x - 4, right: gapR.x + 4, top: gapL.y - 8, bottom: gapL.y + 8 } },
+    { id: 'net_power', end: mid, approachY: mid.y, box: { left: Math.min(pivot.x, tip.x) - 5, right: Math.max(pivot.x, tip.x) + 5, top: Math.min(pivot.y, tip.y) - 5, bottom: Math.max(pivot.y, tip.y) + 5 } },
+    { id: 'p80', end: level, approachY: gapL.y + 12, box: { left: level.x - 12, right: level.x + 12, top: gapL.y - 6, bottom: gapL.y + 6 } },
   ];
 }
 
-/** The width of the column the callouts take at the left of the section on a desktop [px]. */
+export interface LeaderPath {
+  id: CalloutTarget['id'];
+  /** The path from the card's middle to the end, in pixels of the stage: through the column's edge at the card's own height, along its track in the gutter, and across to the subject. */
+  points: { x: number; y: number }[];
+}
+
+/** The x offsets from the column's edge of the tracks the leaders run down in the gutter between the callout column and the drawing. */
+export const TRACK_OFFSETS = [5, 12, 19] as const;
+
+/**
+ * The leaders as elbows: from the card's middle straight out to the column's edge at the card's own height (a short horizontal run that
+ * crosses nothing), down or up its own track in the gutter, and across to the subject at the height the target gives. The tracks are
+ * assigned to the leaders in the order that leaves the fewest crossings and overlaps.
+ */
+export function routeLeaders(cards: { id: CalloutTarget['id']; x: number; y: number }[], targets: CalloutTarget[], columnEdge: number, origin: number, boxes: { cards?: { id: string; box: Box }[]; labels?: { text: string; box: Box }[] } = {}): LeaderPath[] {
+  const build = (order: number[]): LeaderPath[] =>
+    cards.map((c, k) => {
+      const t = targets.find((q) => q.id === c.id)!;
+      const track = columnEdge + TRACK_OFFSETS[order[k]];
+      const endX = origin + t.end.x;
+      const raw = [
+        { x: c.x, y: c.y },
+        { x: columnEdge, y: c.y },
+        { x: track, y: c.y },
+        { x: track, y: t.approachY },
+        { x: endX, y: t.approachY },
+        { x: endX, y: t.end.y },
+      ];
+      return { id: c.id, points: raw.filter((q, i) => i === 0 || Math.hypot(q.x - raw[i - 1].x, q.y - raw[i - 1].y) > 0.01) };
+    });
+  const perms = [[0, 1, 2], [0, 2, 1], [1, 0, 2], [1, 2, 0], [2, 0, 1], [2, 1, 0]].filter((o) => o.length >= cards.length).map((o) => o.slice(0, cards.length));
+  let best = build(perms[0]);
+  let fewest = pathConflicts(best, boxes.cards, boxes.labels);
+  for (const o of perms.slice(1)) {
+    const paths = build(o);
+    const n = pathConflicts(paths, boxes.cards, boxes.labels);
+    if (n < fewest) {
+      best = paths;
+      fewest = n;
+    }
+  }
+  return best;
+}
+
+/** The width of the column the callouts take at the left of the section on a desktop [px], and the gutter the leaders' tracks run in. */
 export const CALLOUT_COLUMN = 212;
+export const GUTTER = 28;
+/** The same on a phone, where the cards are the compact size of the shell (164 px) and the column sits beside the section. */
+export const CALLOUT_COLUMN_NARROW = 184;
+export const GUTTER_NARROW = 28;
 
 export function stageColumns(width: number, height: number): { wide: boolean; panel: number; chamber: number; main: number; inset: number } {
   const panel = panelWidth(width);
-  if (width < 640) return { wide: false, panel, chamber: Math.max(80, width - panel), main: Math.max(80, width - panel), inset: panel };
-  // the section's column: the chamber at its scale with room for its labels on both sides, then the callouts' room on its right
+  if (width < 640) return { wide: false, panel, chamber: Math.max(80, width - CALLOUT_COLUMN_NARROW - GUTTER_NARROW), main: Math.max(80, width - panel), inset: Math.max(120, width - panel - 8) };
+  // the section's column: the callouts' column, the gutter for their tracks and the chamber at its scale with room for its labels on both sides
   const zRange = 560;
   const chamber = Math.round(170 * Math.max(0.3, (height - 16) / zRange) + 2 * 92);
-  const main = chamber + CALLOUT_COLUMN;
+  const main = chamber + CALLOUT_COLUMN + GUTTER;
   const drawH = height - insetHead(panel + 200);
   const inset = Math.round(Math.max(220, Math.min(width - panel - main - 12, (drawH * 70) / 92 + 8)));
   return { wide: true, panel, chamber, main: width - panel - inset - 12, inset };
+}
+
+export interface StageRects {
+  wide: boolean;
+  callouts: { w: number; h: number };
+  chamber: { x: number; w: number; h: number };
+  inset: { x: number; y: number; w: number; h: number };
+  panel: { x: number; y: number; w: number };
+}
+
+/**
+ * Where the parts of the stage stand. Wide: the callouts' column, the gutter, the section, the magnified zone and the size legend in one row at
+ * the full height. Narrow: the callouts' column and the section in a top row, the size legend and the zone in a row under it.
+ */
+export function stageRects(width: number, height: number): StageRects {
+  const col = stageColumns(width, height);
+  if (col.wide) {
+    const x = CALLOUT_COLUMN + GUTTER;
+    return { wide: true, callouts: { w: CALLOUT_COLUMN, h: height }, chamber: { x, w: col.chamber, h: height }, inset: { x: x + col.chamber + 6, y: 0, w: col.inset, h: height }, panel: { x: width - col.panel, y: 0, w: col.panel } };
+  }
+  const top = Math.max(270, Math.min(height - 190, Math.round(height * 0.58)));
+  const x = CALLOUT_COLUMN_NARROW + GUTTER_NARROW;
+  return {
+    wide: false,
+    callouts: { w: CALLOUT_COLUMN_NARROW, h: top },
+    chamber: { x, w: Math.max(80, width - x), h: top },
+    inset: { x: col.panel + 8, y: top, w: Math.max(120, width - col.panel - 8), h: height - top },
+    panel: { x: 0, y: top, w: col.panel },
+  };
 }
 
 interface StageProps {
@@ -495,63 +572,13 @@ interface StageProps {
   callouts: CalloutSpec[];
 }
 
-/** The stage on a phone: the callouts in the shell's header band above the drawing, the zone stacked under the legend. */
-function NarrowStage({ run, point, frames, cursor, callouts }: StageProps) {
-  const lang = useShellLang();
-  const num = useNum();
-  const palette = usePalette();
-  const r = point.simulation.replay!;
-  const frame = frameBelow(r, cursor);
-  const plate = plateAt(r, cursor);
-  const counts = frames ? classCounts(frames, frame, point.feed_mm[0]) : new Array<number>(SIZE_CLASSES).fill(0);
-  const bounds = stageBounds(r.geometry, frames ? sphereTop(frames) : undefined);
-  return (
-    <CalloutStage
-      label={{ en: 'Particle replay in the jaw section', es: 'Repetición de partículas en la sección de la mandíbula' }}
-      callouts={callouts}
-      draw={({ width, height }) => {
-        const col = stageColumns(width, height);
-        const tf = stageTransform(r.geometry, col.main, height, 8, bounds);
-        const { node, subjects } = sectionLabels(tf, point, run, plate, col.main, height, { ...NAMES[lang], ...SHORT_NAMES[lang] }, true, num);
-        const head = insetHead(col.inset);
-        // the zone stacks under the size panel; a stage too short for it leaves it out
-        const insetH = height - SIZE_PANEL_H - 8;
-        const showInset = insetH - head >= INSET_MIN_PX;
-        return {
-          node: (
-            <div style={{ position: 'relative', width, height }} data-dem-stage="" data-frame={frame} data-layout="narrow" data-inset-shown={showInset ? 'true' : 'false'}>
-              <ReplayCanvas width={col.main} height={height} run={run} point={point} frames={frames} frame={frame} tf={tf} plate={plate} />
-              {node}
-              <SizePanel width={col.panel} point={point} counts={counts} max={Math.max(1, ...r.count)} palette={palette} />
-              {showInset && <Inset width={col.inset} height={insetH} run={run} point={point} frames={frames} frame={frame} plate={plate} mainScale={tf.scale} />}
-            </div>
-          ),
-          subjects,
-        };
-      }}
-    />
-  );
-}
-
-/** Heights kept at least `gap` apart in their order, inside [8, max - 8]: the callouts' leaders end at the column's edge, never within a label's height of each other. */
-export function spreadHeights(ys: number[], gap: number, max: number): number[] {
-  const order = ys.map((y, i) => ({ y, i })).sort((a, b) => a.y - b.y);
-  const out = new Array<number>(ys.length).fill(0);
-  let last = -Infinity;
-  for (const o of order) {
-    const y = Math.max(o.y, last + gap, 8);
-    out[o.i] = Math.min(y, max - 8);
-    last = out[o.i];
-  }
-  return out;
-}
-
 /**
- * The stage on a desktop: the whole height of the region goes to the drawing. The section stands on the left with the callouts of the shell's
- * anchored placement in its empty margins (each with its leader to the subject it names), the magnified crushing zone is the main drawing in
- * the middle at the full height, and the size legend with its counts is at the right.
+ * The stage: the whole height of the region goes to the drawing. The callouts are a column of the shell's cards; each leader leaves its own
+ * card at the card's height and the view's own layer carries it on as an elbow down a track in the gutter and across to the subject it names,
+ * so no leader passes over or under another card or a label. On a desktop the magnified crushing zone is the main drawing beside the section;
+ * on a phone the zone and the size legend stand in a row under the callouts and the section.
  */
-function WideStage({ run, point, frames, cursor, callouts }: StageProps) {
+function StageBody({ run, point, frames, cursor, callouts }: StageProps) {
   const lang = useShellLang();
   const num = useNum();
   const palette = usePalette();
@@ -560,44 +587,104 @@ function WideStage({ run, point, frames, cursor, callouts }: StageProps) {
   const plate = plateAt(r, cursor);
   const counts = frames ? classCounts(frames, frame, point.feed_mm[0]) : new Array<number>(SIZE_CLASSES).fill(0);
   const bounds = stageBounds(r.geometry, frames ? sphereTop(frames) : undefined);
+  // the callouts' column, set once the stage has a size (the shell renders its children only then)
+  const [host, setHost] = useState<HTMLDivElement | null>(null);
+  // the middle of each card as the shell laid it out, in pixels of the stage: the leaders leave their own card at its height
+  const [cards, setCards] = useState<Record<string, { x: number; y: number; box: Box }>>({});
+  useLayoutEffect(() => {
+    if (!host) return;
+    // measured from the host's own corner, whatever the shell nests the cards in; read again whenever the shell adds, moves or resizes a card
+    const measure = () => {
+      const o = host.getBoundingClientRect();
+      const next: Record<string, { x: number; y: number; box: Box }> = {};
+      host.querySelectorAll<HTMLElement>('[data-caos-callout]').forEach((el) => {
+        const id = el.getAttribute('data-caos-callout');
+        if (!id) return;
+        const r = el.getBoundingClientRect();
+        const box = { left: Math.round((r.left - o.left) * 10) / 10, right: Math.round((r.right - o.left) * 10) / 10, top: Math.round((r.top - o.top) * 10) / 10, bottom: Math.round((r.bottom - o.top) * 10) / 10 };
+        next[id] = { x: (box.left + box.right) / 2, y: (box.top + box.bottom) / 2, box };
+      });
+      setCards((prev) => {
+        const same = Object.keys(next).length === Object.keys(prev).length && Object.entries(next).every(([k, v]) => prev[k] && Math.abs(prev[k].x - v.x) < 0.6 && Math.abs(prev[k].y - v.y) < 0.6 && Math.abs(prev[k].box.right - v.box.right) < 0.6);
+        return same ? prev : next;
+      });
+    };
+    measure();
+    const watch = new MutationObserver(measure);
+    watch.observe(host, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class'] });
+    const size = new ResizeObserver(measure);
+    size.observe(host);
+    host.querySelectorAll('[data-caos-callout-layer], [data-caos-callout]').forEach((el) => size.observe(el));
+    host.addEventListener('transitionend', measure);
+    // the shell settles its cards over its first layout passes without a change this view can observe: read them again at once, then a few times more
+    let left = 12;
+    let timer = 0;
+    const again = () => {
+      measure();
+      host.querySelectorAll('[data-caos-callout-layer], [data-caos-callout]').forEach((el) => size.observe(el));
+      left -= 1;
+      if (left > 0) timer = window.setTimeout(again, 150);
+    };
+    timer = window.setTimeout(again, 60);
+    return () => {
+      window.clearTimeout(timer);
+      watch.disconnect();
+      size.disconnect();
+      host.removeEventListener('transitionend', measure);
+    };
+  }, [host]);
   return (
     <Stage label={{ en: 'Particle replay in the jaw section', es: 'Repetición de partículas en la sección de la mandíbula' }}>
       {({ width, height }) => {
-        const col = stageColumns(width, height);
-        const tf = stageTransform(r.geometry, col.chamber, height, 8, bounds);
-        const { node } = sectionLabels(tf, point, run, plate, col.chamber, height, NAMES[lang], false, num);
-        // the callouts are a column at the left of the section, in the shell's header placement: the cards stack, and each leader runs to the
-        // column's right edge at the height of the subject it names (the shell has no side placement, so the leader ends at the section's edge)
+        const rect = stageRects(width, height);
+        const tf = stageTransform(r.geometry, rect.chamber.w, rect.chamber.h, 8, bounds);
         const targets = calloutTargets(tf, r.geometry, plate, plateExtremes(r).closed);
-        const left = CALLOUT_COLUMN;
-        // the shell's leader ends at the column's edge at these heights, kept a label's height apart; the view's own leader runs on from there to the subject
-        const edgeY = spreadHeights(targets.map((t) => t.end.y), 26, height);
-        const items = callouts.map((c) => {
-          const i = targets.findIndex((q) => q.id === c.id);
-          return toCallout(c, { x: 1, y: i >= 0 ? edgeY[i] / Math.max(1, height) : 0.75 }, lang);
-        });
+        const edge = rect.callouts.w;
+        const origin = rect.chamber.x;
+        // the runs the leaders make across the section's margin are kept free of labels
+        const reserved = targets.map((t) => ({ x0: -origin, x1: t.end.x + 4, y0: t.approachY - 3, y1: t.approachY + 3 }));
+        const { node, boxes } = sectionLabels(tf, point, run, plate, rect.chamber.w, rect.chamber.h, rect.wide ? NAMES[lang] : { ...NAMES[lang], ...SHORT_NAMES[lang] }, !rect.wide, num, reserved);
+        // the shell's leader runs from the card's middle out to the column's edge at the card's own height; with the cards not yet measured, at the middle
+        const items = callouts.map((c) => toCallout(c, { x: 1, y: (cards[c.id]?.y ?? rect.callouts.h / 2) / Math.max(1, rect.callouts.h) }, lang));
+        const measured = callouts.every((c) => cards[c.id]);
+        const stageLabels = boxes.map((b) => ({ text: b.text, box: { left: b.box.left + origin, right: b.box.right + origin, top: b.box.top, bottom: b.box.bottom } }));
+        const paths = measured
+          ? routeLeaders(callouts.map((c) => ({ id: c.id as CalloutTarget['id'], x: cards[c.id].x, y: cards[c.id].y })), targets, edge, origin, { cards: callouts.map((c) => ({ id: c.id, box: cards[c.id].box })), labels: stageLabels })
+          : [];
+        const showInset = rect.inset.h - insetHead(rect.inset.w) >= INSET_MIN_PX;
         return (
-          <div style={{ position: 'relative', width, height }} data-dem-stage="" data-frame={frame} data-layout="wide" data-inset-shown="true">
-            <div className="cdem-callout-host" style={{ position: 'absolute', left: 0, top: 0, width: CALLOUT_COLUMN, height }} data-callouts-wide="">
+          <div style={{ position: 'relative', width, height }} data-dem-stage="" data-frame={frame} data-layout={rect.wide ? 'wide' : 'narrow'} data-inset-shown={showInset ? 'true' : 'false'}>
+            <div ref={setHost} className="cdem-callout-host" style={{ position: 'absolute', left: 0, top: 0, width: rect.callouts.w, height: rect.callouts.h }} data-callouts-column="">
               <SceneCallouts items={items} placement="header" />
             </div>
-            <div style={{ position: 'absolute', left, top: 0, width: col.chamber, height }}>
-              <ReplayCanvas width={col.chamber} height={height} run={run} point={point} frames={frames} frame={frame} tf={tf} plate={plate} />
+            <div style={{ position: 'absolute', left: rect.chamber.x, top: 0, width: rect.chamber.w, height: rect.chamber.h }}>
+              <ReplayCanvas width={rect.chamber.w} height={rect.chamber.h} run={run} point={point} frames={frames} frame={frame} tf={tf} plate={plate} />
               {node}
             </div>
             <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true" data-chart="dem-callout-leaders" style={{ position: 'absolute', left: 0, top: 0, pointerEvents: 'none' }}>
               <g stroke={TOKEN.subtle} strokeWidth={1} strokeDasharray="2 3" fill="none">
-                {targets.map((t, i) => (
-                  <g key={t.id}>
-                    <line data-callout-leader={t.id} data-end-x={Math.round((left + t.end.x) * 10) / 10} data-end-y={Math.round(t.end.y * 10) / 10} x1={CALLOUT_COLUMN} y1={edgeY[i]} x2={left + t.end.x} y2={t.end.y} />
-                    <circle cx={left + t.end.x} cy={t.end.y} r={2} fill={TOKEN.subtle} stroke="none" />
-                    <rect data-subject={t.id} x={left + t.box.left} y={t.box.top} width={t.box.right - t.box.left} height={t.box.bottom - t.box.top} stroke="none" fill="none" />
-                  </g>
-                ))}
+                {targets.map((t) => {
+                  const path = paths.find((q) => q.id === t.id);
+                  return (
+                    <g key={t.id}>
+                      {path && (
+                        <polyline
+                          data-callout-leader={t.id}
+                          data-end-x={Math.round((origin + t.end.x) * 10) / 10}
+                          data-end-y={Math.round(t.end.y * 10) / 10}
+                          data-points={path.points.map((q) => `${Math.round(q.x * 10) / 10},${Math.round(q.y * 10) / 10}`).join(' ')}
+                          points={path.points.slice(1).map((q) => `${q.x},${q.y}`).join(' ')}
+                        />
+                      )}
+                      <circle cx={origin + t.end.x} cy={t.end.y} r={2} fill={TOKEN.subtle} stroke="none" />
+                      <rect data-subject={t.id} x={origin + t.box.left} y={t.box.top} width={t.box.right - t.box.left} height={t.box.bottom - t.box.top} stroke="none" fill="none" />
+                    </g>
+                  );
+                })}
               </g>
             </svg>
-            <Inset width={col.inset} height={height} left={left + col.chamber + 6} run={run} point={point} frames={frames} frame={frame} plate={plate} mainScale={tf.scale} />
-            <SizePanel width={col.panel} point={point} counts={counts} max={Math.max(1, ...r.count)} palette={palette} />
+            {showInset && <Inset width={rect.inset.w} height={rect.inset.h} left={rect.inset.x} top={rect.inset.y} run={run} point={point} frames={frames} frame={frame} plate={plate} mainScale={tf.scale} />}
+            <SizePanel width={rect.panel.w} left={rect.panel.x} top={rect.panel.y} point={point} counts={counts} max={Math.max(1, ...r.count)} palette={palette} />
           </div>
         );
       }}
@@ -610,7 +697,7 @@ export function ReplayStage(props: StageProps) {
   const [ref, size] = useStageSize();
   return (
     <div ref={ref} style={{ width: '100%', height: '100%', minWidth: 0, minHeight: 0 }}>
-      {size.width > 0 && size.height > 0 && (size.width >= 640 ? <WideStage {...props} /> : <NarrowStage {...props} />)}
+      {size.width > 0 && size.height > 0 && <StageBody {...props} />}
     </div>
   );
 }
