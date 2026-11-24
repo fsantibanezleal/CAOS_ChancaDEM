@@ -74,8 +74,8 @@ place the two languages differ by construction. See [architecture 04](../../arch
 
 ## Tests
 
-- `tests/test_crusher_engine.py::test_python_engine_reproduces_the_reference`: every one of the 121 reference points,
-  every result field and every feature vector, within $10^{-9}$ relative. Measured on 2026-10-27 the largest relative
+- `tests/test_crusher_engine.py::test_python_engine_reproduces_the_reference`: every one of the 124 reference points,
+  every result field and every feature vector, within $10^{-9}$ relative. Measured on 2026-11-24 the largest relative
   difference over the fixture is $2.3 \times 10^{-12}$.
 - `frontend/src/engine/reference.test.ts`: the TypeScript engine against the same file.
 - `tests/test_crusher_engine.py::test_whiten_solve_conserves_mass_and_product_normalizes` and

@@ -14,11 +14,11 @@ live port. They are held equal in three places:
 
 | Gate | What it compares | Where |
 |---|---|---|
-| The shared reference | 121 operating points (each machine's reference point and its setting, throw, speed and ore variations, the 17 circuit cases, the ten surveys, and calibrated-lane edge and implausible points): every result field and every feature vector, within $10^{-9}$ relative | `tests/fixtures/engine-reference.json`; `tests/test_crusher_engine.py::test_python_engine_reproduces_the_reference` and `frontend/src/engine/reference.test.ts` |
+| The shared reference | 124 operating points (each machine's reference point and its setting, throw, speed and ore variations, the 17 circuit cases, the ten surveys, and calibrated-lane edge and implausible points): every result field and every feature vector, within $10^{-9}$ relative | `tests/fixtures/engine-reference.json`; `tests/test_crusher_engine.py::test_python_engine_reproduces_the_reference` and `frontend/src/engine/reference.test.ts` |
 | Parity with the traces | the TypeScript engine at each manifest's point against the committed trace and manifest metrics, to the six digits the trace is written with | `frontend/src/engine/crusher.parity.test.ts`, over `data/derived` and the provider tree |
 | The comparison is itself tested | a one percent change of one passing value fails the parity test; a perturbation of the reference fails the Python comparison | `crusher.parity.test.ts`; `tests/test_crusher_engine.py::test_adversarial_reference_comparison_detects_a_perturbation` |
 
-Measured on 2026-10-27 the largest relative difference between the Python engine and the fixture, over its 121 points, is
+Measured on 2026-11-24 the largest relative difference between the Python engine and the fixture, over its 124 points, is
 $2.3 \times 10^{-12}$. The fixture is written by the TypeScript side
 (`CHANCADEM_WRITE_REFERENCE=1 npx vitest run src/engine/reference.test.ts` in `frontend/`), so it is the TypeScript
 engine's output that the Python port reproduces; a deliberate change of the engine regenerates the fixture on that side
