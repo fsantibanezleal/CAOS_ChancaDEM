@@ -522,6 +522,7 @@ def numbers_drift() -> None:
 
 RESOURCE_ROWS = [("bake", r"Bake (\texttt{run.py all}: 27 cases, the four HP500 documents, index, readiness)", "workstation"),
                  ("hp500", r"HP500 step alone (\texttt{run.py hp500}: backbone, CrusherCal, the CrusherBayes sampler, the paired comparison)", "workstation"),
+                 ("dem", r"Particle document (\texttt{run.py dem}: the document and its replay files rebuilt from the stored runs)", "workstation"),
                  ("models", r"Training (\texttt{run.py models}: sweeps, two networks, export, evaluation)", "workstation, CPU"),
                  ("tests", "Python tests, the whole suite", "workstation"),
                  ("install", r"Web install (\texttt{npm ci})", "workstation, CI"),
