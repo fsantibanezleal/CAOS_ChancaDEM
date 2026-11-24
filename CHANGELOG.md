@@ -62,7 +62,13 @@ open industrial data.
   keyed by the point, the settings, the package version and the bytes of the installed package, so a later bake of the same inputs
   does not run the simulation again (about 70 minutes in three processes). The simulation never runs in CI or in the
   browser.
-- The case-index contract steps to 1.1.0 (a widening): the `files` pattern admits `.bin`, and the index lists the replay files the
+- Known erratum of the deposited technical report 0.15.000 (https://doi.org/10.5281/zenodo.24491438): it prints the contract
+  `case-index` as version 1.1.0 (its Sections 4 and 5, the table of contracts and the appendix table of the contract's fields). The
+  release's catalog gives 2.0.0 for the same schema; the step was recorded as minor until the contract-version gate, run against the
+  previous release, classed the changed pattern as breaking. The report's sources carry the correction for its next version, and the
+  committed PDF stays the deposited build.
+- The case-index contract steps to 2.0.0: the `files` pattern admits `.bin` (a document may now name a path that a consumer
+  validating against 1.0 refuses, so the step is major), and the index lists the replay files the
   particle-simulation document names, so the build copies them to `public/data/dem/`.
 - Own pins moved to their current release: torch 2.15.0, onnx 1.23.2, onnxruntime 1.32.0 (Python), onnxruntime-web 1.31.1, three
   0.187.0 and @types/three 0.187.0 (web); the committed models load and answer unchanged in both runtimes, and a retraining on the

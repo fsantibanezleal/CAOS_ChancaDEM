@@ -141,7 +141,7 @@ export interface components {
         };
         /**
          * CaseIndex
-         * @description Contract 2 (artifact), catalog row case-index 1.1.0: the flat inventory of every baked case, written by data-pipeline/pipeline/core/manifest.py build_index to data/derived/manifests/index.json. Rules the schema cannot state, checked by the producer and consumer tests: n_cases equals the number of entries, default_case is one of their case_id values, the entries are sorted by case_id, and every path in files exists under data/derived.
+         * @description Contract 2 (artifact), catalog row case-index 2.0.0: the flat inventory of every baked case, written by data-pipeline/pipeline/core/manifest.py build_index to data/derived/manifests/index.json. Rules the schema cannot state, checked by the producer and consumer tests: n_cases equals the number of entries, default_case is one of their case_id values, the entries are sorted by case_id, and every path in files exists under data/derived.
          */
         CaseIndex: {
             /**
