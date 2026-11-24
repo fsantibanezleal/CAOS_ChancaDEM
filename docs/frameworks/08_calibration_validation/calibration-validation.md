@@ -79,7 +79,9 @@ when the document is missing the case shows no band and the readiness message.
 
 ## What it is not
 
-- Not a claim of lower error than the paper's in-sample fit or than DEM. The contribution is the out-of-sample
+- Not a claim of lower error than the paper's in-sample fit or than a discrete element simulation. The product runs one, on
+  a laboratory jaw, and compares it with its population balance and a measurement ([card 07](../07_dem_pbm_landscape/dem-pbm.md));
+  it is not part of this validation. The contribution is the out-of-sample
   validation, the controls and the predictive band, delivered in the browser.
 - Not a significance test: ten surveys of one machine and one ore.
 

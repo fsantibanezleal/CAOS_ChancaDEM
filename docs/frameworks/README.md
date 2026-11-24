@@ -10,8 +10,8 @@ code has them, where it runs, tests, what it is not, references.
 | Card | Pin | Lane |
 |---|---|---|
 | [Whiten / Evertsson / Bond engine, Python and TypeScript](01_whiten-engine/whiten.md) | `data-pipeline/pipeline/model/crusher/` (canonical), `frontend/src/engine/` (live port) | offline and live |
-| [PyTorch](02_pytorch/pytorch.md) | `torch==2.12.1` (CPU) | offline (train) |
-| [ONNX, onnxruntime, onnxruntime-web](03_onnx-onnxruntime/onnx.md) | `onnx==1.22.0`, `onnxruntime==1.27.0`, `onnxruntime-web` 1.27.0 | offline export and evaluation, live inference |
+| [PyTorch](02_pytorch/pytorch.md) | `torch==2.15.0` (CPU) | offline (train) |
+| [ONNX, onnxruntime, onnxruntime-web](03_onnx-onnxruntime/onnx.md) | `onnx==1.23.2`, `onnxruntime==1.32.0`, `onnxruntime-web` 1.31.1 | offline export and evaluation, live inference |
 | [NumPy](04_numpy/numpy.md) | `numpy==2.4.6` | offline |
 
 ## Methods
@@ -23,6 +23,7 @@ code has them, where it runs, tests, what it is not, references.
 | [Classification](12_classification/classification.md) | M3 | Whiten 1972, Andersen and Napier-Munn 1988 |
 | [Whiten population balance](01_whiten-engine/whiten.md) | M4 | Whiten 1972 |
 | [Capacity](13_capacity/capacity.md) | M5 | Evertsson 2000 |
+| [Jaw capacity and the laboratory jaw](20_jaw-capacity-sastri/jaw-capacity.md) | M15 | Sastri 1994; King 2000 and Donovan 2003 for the classification preset |
 | [Regimes and nip angle](14_regimes-and-nip-angle/regimes.md) | M6 | the engine's rules |
 | [Power model](09_power_model/power-model.md) | M7 | Bond 1952; the paper's form; a documented negative |
 | [HP500 calibration](16_hp500-calibration/hp500-calibration.md) | M8 | Rocha et al. 2024 |
@@ -33,7 +34,7 @@ code has them, where it runs, tests, what it is not, references.
 | [CrusherCal](08_calibration_validation/calibration-validation.md) | M10 | leave-one-survey-out, controls, predictive band |
 | [Surrogate MLP](05_surrogate/surrogate.md) | M11 | a population-balance emulator (Koh et al. 2021 as the state of the art) |
 | [Denoising autoencoder](06_denoising-ae/denoising-ae.md) | M12 | reconstruction error as an extrapolation score |
-| [DEM landscape](07_dem_pbm_landscape/dem-pbm.md) | frontier | Cleary and Sinnott 2015, Delaney et al. 2015, Quist and Evertsson 2016 |
+| [Particle simulation (discrete element method)](07_dem_pbm_landscape/dem-pbm.md) | run offline on one laboratory jaw | crushdem 0.6.0; Barrios et al. 2020, Tavares 2022; Cleary and Sinnott 2015, Delaney et al. 2015 and Quist and Evertsson 2016 as the literature |
 
 Real-data calibration and validation anchor: Rocha et al. 2024 (Minerals 14(9):919,
 [doi:10.3390/min14090919](https://doi.org/10.3390/min14090919), CC BY 4.0), the ten HP500 surveys; Duarte et al. 2021

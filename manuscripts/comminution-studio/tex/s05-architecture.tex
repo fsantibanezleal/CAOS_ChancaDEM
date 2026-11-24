@@ -11,7 +11,7 @@ case, measures the lane of the case, checks the expected ranges and the units of
 \emph{HP500} step, which writes the backbone, the leave-one-survey-out document, the CrusherBayes document and the paired
 comparison of the held-out methods; and the readiness
 step, which computes the state of every contract from the catalog and the repository. A failing expected range or a value outside
-its unit's range stops the bake. The model step (\texttt{run.py models}) is separate because it needs torch: it draws the two
+its unit's range stops the bake. A further command, \texttt{run.py dem}, runs the laboratory-jaw simulation and writes its own document (Section~\ref{sec:arch-dem}); the release bake never simulates. The model step (\texttt{run.py models}) is separate because it needs torch: it draws the two
 Latin-hypercube sweeps, labels them with the engine, trains the surrogate and the autoencoder, exports them to ONNX, quantises the
 surrogate to int8, evaluates both through onnxruntime on the held-out draw, and refreshes the index and readiness. The bake never
 trains; it reads the released model bundles as they stand. Every random draw comes from one seeded generator factory, so a run is
@@ -27,6 +27,24 @@ the case traces, manifests and index, the four HP500 documents, the model bundle
 which the static web, the dormant interface and the notebooks read.}
 \label{fig:dataflow}
 \end{figure}
+
+\subsection{The laboratory-jaw stage and its document}\label{sec:arch-dem}
+
+A further step of the offline pipeline, \texttt{run.py dem}, produces the document of the contract \texttt{dem-run} (Section~\ref{sec:data-dem}); it is separate from the release bake because its runs take hours and the bake never simulates. The stage (\texttt{pipeline/\allowbreak{}stages/\allowbreak{}dem.py}, over the module folder \texttt{pipeline/\allowbreak{}dem/}) holds no particle engine, no ore derivation and no run control: it obtains them from the pinned package \texttt{crushdem} \demPackageVersion{} (the pin is in \texttt{requirements-precompute.txt}, with the numba version of the CPU path), and the command stops with a message that names the requirements file when the package is not installed. The module \texttt{points.py} defines the three operating points, the shared settings, the bands and the texts of the preset, each constant with its unit and its source and none read from a measurement; \texttt{runs.py} runs the points in spawned processes through the package's case with the frames recorder on (twelve frames per stroke at most) and writes each \emph{raw record} the moment its run ends; \texttt{replay.py} encodes the frames; \texttt{document.py} is a pure function of the raw records that builds the document, taking the window, the standard errors, the decisions and the resolved rule from \texttt{crushdem.comparison}.
+
+\emph{The raw records and their key.} A run takes from minutes to hours (Section~\ref{sec:repro}) and every release re-stamps every document with the product version, so a raw record is kept in the data root, in the folder \texttt{chancadem/\allowbreak{}dem-runs}, under a key that is the SHA-256 of the point, the settings, the package version and the bytes of every file of the installed package. A bake with the same key loads the record instead of running the simulation, and a different package build never matches; a record that fails to load is run again and replaced, and the log names which points ran and which were loaded. Reusing a record changes no byte of the document, which is a function of the records alone.
+
+\emph{The replay file.} The document names, for each point, a binary file of the particle frames of the final attempt: for every sphere four unsigned 16-bit little-endian integers (its $x$, $y$ and $z$ and its radius), each quantised linearly over a range that comes from the chamber's geometry and the feed class and never from the data's extremes ($x$ from $-90$ to $180$~mm, $y$ from $-140$ to $140$~mm, $z$ from $-140$ to $826.667$~mm, the radius up to $1.05$ times the feed class's largest). A sphere outside its range is an error and is never clipped. The frames are thinned to a byte budget of $1{,}500{,}000$ bytes by the largest rate that fits (from $12$ frames per stroke down to one, keeping the end of every stroke), and the document records, for each file, its byte count, its SHA-256 digest, the frame times, strokes and sphere counts, the swing plate's bottom edge and the encoding, so that a reader decodes the file with no other information (Figure~\ref{fig:dem-frame} is drawn that way). A run that does not complete is replayed up to its stop. The index of the build (\texttt{case-index} version \cver{case-index}) lists the replay files that the document names, each only when it exists, so that the web build copies them; the pattern of its \texttt{files} field admits the extension \texttt{.bin} for that purpose.
+
+\emph{Readiness, the units gate and the web.} The readiness document says \emph{missing} for \texttt{dem-run} when the document is absent, \emph{stale} when its \texttt{engine\_version} differs from the product version, \emph{partial} (naming how many runs did not complete) when a run did not, and \emph{available} otherwise, in that order of precedence. The laboratory units gate (Section~\ref{sec:val-dem}) is enforced in the stage before anything is written and over the committed document by the repository's artifact check. The simulation never runs in the browser or in continuous integration, which validates only the committed document and its replay files, and the web reads the document through one declared type, inferred from the run-time descriptor of its keys and held against the committed document in both directions by a test (Section~\ref{sec:data}).
+
+\emph{The view.} The App draws the document in its Validation group as the tab \emph{Particle simulation}, a second view of two of the purposes of the catalog's six views (the method at work, and comparison) and not a seventh row of the catalog. Its stage is the replay of the selected feed: the section of the jaw cropped to the part of the chamber that the spheres occupy, the spheres of the stored frame at the cursor coloured by size class on a scale ordered in lightness, the swing plate moved between the stored frames by interpolating its bottom edge, the crushing zone magnified with the closed and the open setting marked, and three callouts read from the document (the throughput, the net power and the product $P_{80}$ of the particle simulation, each against the measurement, with its unit and the state of its decision). On a desktop the magnified zone stands beside the section as the main drawing of the stage and the callouts are a column beside the drawing; on a phone the callouts stand above the section and the zone under the size legend.
+
+A run that did not complete says at which stroke and why it stopped, and states the $P_{80}$ of what passed before the stop with no relative difference. A stroke cursor links the stage with two per-stroke charts, the swing plate's power with the steady window shaded and the mass passed and held: scrubbing or playing the cursor moves the three together, a stroke chosen on a chart moves the replay, the controls state how many frames per stroke the file stores, and the replay does not play for a reader who prefers reduced motion.
+
+Below the stage the three feeds stand at equally spaced positions on shared axes for the throughput, the net power and the product $P_{80}$: the measurement with its band shaded (on the $P_{80}$ chart, the band of the reduction ratio written on $P_{80}$), the particle simulation with its standard error, the population balance with, on the $P_{80}$ chart, its spread over the cone-crusher ranges borrowed for the jaw, the source paper's own simulated values as a mark of their own where the document holds them, and a side that states no value written in a strip under the chart with its reason in the note, never drawn as a mark. Under each chart one sentence per feed says which side is nearer the measurement and by how much, and never words a decision that is \emph{not met} or \emph{not compared} as agreement. The product size distribution of the selected feed (the measured sieves, the particle simulation and the population balance with its spread), the table of the nine decisions of the feed under a sentence that counts the decisions of the whole document, and the sources, the package, the seed and the bands, quoted from the document, close the view.
+
+When the document is missing, stale or partial the view says the reason in the reader's language and draws only what the document holds. The layout is held by the shell's measured checks in both themes and both languages and by a browser check of the product on the built site: every column of the table of decisions inside its card, no mark of a missing value inside a plotting range, no two tick labels and no two charts overlapping, the share of the viewport the stage and its drawing take, and no decimal point in a number of the Spanish page outside the quoted English text of the document. The requirements of the view are DM-012 to DM-017 of the feature's design document, each with a test that plants its violation.
 
 \subsection{The engine in two languages}\label{sec:arch-engine}
 
@@ -51,16 +69,18 @@ because a manifest must not change between two bakes of the same inputs.
 \subsection{The web, the learned models in the browser, and the interface}\label{sec:arch-web}
 
 The site is static and is deployed to GitHub Pages; it holds no secret and calls no server. A copy step places exactly the files the
-index declares into the site, and the web's types are generated from the contract schemas. The App is a workbench on the shared
+index declares into the site, and the web's types are generated from the contract schemas for the documents the OpenAPI document serves, and inferred from
+run-time descriptors held against the committed documents for the others (Section~\ref{sec:data}). The App is a workbench on the shared
 CAOS application shell: a case selector, the six controls, and five groups of views with a context tab: System (the circuit, then the
 chamber as a two-dimensional section beside a three-dimensional kinematic view of its geometry and motion, which is not a particle
 simulation, then the nip angle against its grip limit), Product (the size distribution with the classification curve, then the
 population balance), Performance ($P_{80}$ against operating hours first, then the hours to a target against the drift rate, the
 tab ``Hours by drift'' that draws Figure~\ref{fig:drift} for the selected case, then the result, the setting
 and power responses and the variants), Learned (the two learned models) and Validation (the methods compared on the
-surveys first). Each group opens on one view of the catalog of Section~\ref{sec:arch-showcase}, and each view draws the live engine
+surveys first, then the particle simulation of the laboratory jaw of Section~\ref{sec:arch-dem}). Each group opens on one view
+of the catalog of Section~\ref{sec:arch-showcase}, and each view of the catalog draws the live engine
 and, dashed, the replay of the committed trace. The two ONNX graphs run in
-the browser through onnxruntime-web $1.27.0$, the same release as the Python onnxruntime that evaluates them, as single-threaded
+the browser through onnxruntime-web $1.31.1$, the newest npm release (the Python onnxruntime that evaluates them is $1.32.0$, the newest PyPI release, and the graphs are checked on both), as single-threaded
 WebAssembly served by the site itself, because a static host does not send the headers that threaded WebAssembly needs. Calls to one
 model are serialised, because the runtime forbids concurrent runs on one inference instance. The web encodes the inputs and decodes the outputs
 entirely from the model contracts, so a retrained model ships by replacing its contract and its graph.
@@ -76,8 +96,8 @@ The App is built around a catalog of six views, each of which answers one questi
 contracts of Section~\ref{sec:data}, and a guided story of five steps that walks a reader through them on the real surveys
 (Table~\ref{tab:views}). The catalog is fixed in the design document of the product, which names for each view its question, the
 contracts it reads, its kind of drawing, its interactions, the views it is linked to and where it is placed; the App and the story
-are built on the shared application shell \texttt{@fasl-work/\allowbreak{}caos-app-shell} $0.26.2$ over the product template
-\texttt{CAOS\_PRODUCT\_TEMPLATE} $0.15.014$, both pinned to the exact release, so that the workbench, the charts, the anchored callouts,
+are built on the shared application shell \texttt{@fasl-work/\allowbreak{}caos-app-shell} $0.26.3$ over the product template
+\texttt{CAOS\_PRODUCT\_TEMPLATE} $0.15.015$, both pinned to the exact release, so that the workbench, the charts, the anchored callouts,
 the linked-view store, the story frame and the measured layout checks come from the shell and are not re-implemented by the product.
 Every number a view or a story step shows is read from the committed artifacts or computed by the live engine from them.
 
@@ -161,22 +181,23 @@ together, on at least $80\%$, which the shell's layout check measures.
 \subsection{Resources}\label{sec:arch-resources}
 
 Table~\ref{tab:resources} gives what each stage of the pipeline needs on the development workstation (Windows 11, Python
-$\resPython$ in the pipeline environment, Node $24$, a processor with $\resThreads$ threads), measured on \resDate{} with a
+$\resPython$ in the pipeline environment, Node $24$, a processor with $\resThreads$ threads), recorded on \resDate{} with a
 process-tree monitor that polls the peak memory of the command and of every process it starts every $20$~ms. The stages ran on
-copies taken with \texttt{git archive}, in two runs: the training, the bake and the HP500 step alone in the first, on the commit
-of the release bake; the web install, build and unit tests and the Python suite in the second, on a fresh copy of the commit after
-it, which changes only tests, contract fixtures and the changelog. The workstation ran other jobs during both runs, which lengthens the wall times
-more than it changes the memory peaks; the design documentation of the product compares them with the measurement of the same
-pipeline code for the previous release. The committed artifacts were never rewritten; the disk column is the bytes of the stage's output folder in its copy, the bake's including the
-trained models. No stage needs a
-graphics processor or a network after the installation. The bake takes about $\resBakeMin$~minutes, of which the HP500 step takes about
-$\resHpMin$: the CrusherBayes sampler fixes the work at $20\times7000=140{,}000$ log-probability evaluations per posterior, each of which
+copies taken with \texttt{git archive}, in two runs: the training, the bake, the HP500 step alone and the particle document in the
+first, on the commit of the release bake; the web install, build and unit tests and the Python suite in the second, on a fresh copy
+of a later commit, which changes only notebook outputs and documentation. During the first run, on 23 November 2026, the workstation also ran the
+release's own test suite and the execution of its notebooks, which lengthens the wall times more than it changes the memory peaks:
+the release bake itself (commit \texttt{07520a2}), run alone just before that run, took $52$~minutes for the bake stage, by its own
+log. The design documentation of the product records that log line with both runs and compares them with the previous release. The committed artifacts were never rewritten; the disk column is the bytes of the stage's output folder in its copy, the bake's including the
+trained models and the committed particle document with its replay files, which the bake does not write. No stage needs a
+graphics processor or a network after the installation. In that measurement, on a workstation running other jobs, the bake took about $\resBakeMin$~minutes and the HP500 step, run on its
+own, about $\resHpMin$; the HP500 step is most of the bake: the CrusherBayes sampler fixes the work at $20\times7000=140{,}000$ log-probability evaluations per posterior, each of which
 evaluates the engine on the nine or ten training surveys of its fold, for eleven posteriors, which the step spreads over the processor's
-threads. Every other stage takes seconds to minutes. The built site is $\resSite$~MB, of which $\resWasm$~MB is the ONNX Runtime WebAssembly binary.
+threads. The particle-document row is the stage as the release runs it, rebuilding the document and its replay files from the stored runs of the data root; the three particle runs themselves take from six minutes to seventy and are timed in Section~\ref{sec:repro}. Every other stage takes seconds to minutes. The built site is $\resSite$~MB, of which $\resWasm$~MB is the ONNX Runtime WebAssembly binary.
 
 \begin{table}[!t]
 \centering
-\caption{Measured resources of each stage of the pipeline and the web on the development workstation, measured on \resDate: peak
+\caption{Measured resources of each stage of the pipeline and the web on the development workstation, recorded on \resDate: peak
 memory of the process tree, disk written and wall time. Generated from \texttt{data/\allowbreak{}resources.json} of the report, which records
 each measurement with its exit status.}
 \label{tab:resources}

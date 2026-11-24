@@ -11,6 +11,7 @@ import base64
 import importlib.util
 import json
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -369,11 +370,33 @@ def test_ci_must_run_the_static_checks_and_never_the_notebooks(repo: Path) -> No
 def test_notebook_pins_are_exact_and_in_the_sdd_table(tmp_path: Path) -> None:
     """notebooks/requirements.txt is read by the technology-matrix guard: an unpinned line, or a pin the SDD does not hold, fails."""
     sandbox = tmp_path / "t"
-    for rel in ("scripts/check_tech_matrix.py", "docs/design/SDD.md", "requirements-precompute.txt", "requirements-dev.txt", "data-pipeline/requirements.txt",
-                "notebooks/requirements.txt", "frontend/package.json", "frontend/package-lock.json", "requirements-gpu.txt", "requirements-api.txt", "pyproject.toml"):
+    for rel in ("scripts/check_tech_matrix.py", "docs/design/SDD.md", "frontend/package.json", "frontend/package-lock.json", "pyproject.toml"):
         if (ROOT / rel).is_file():
             (sandbox / rel).parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT / rel, sandbox / rel)
+
+    pending = [source for pattern in ("requirements*.txt", "data-pipeline/requirements*.txt",
+                                      "notebooks/requirements*.txt") for source in ROOT.glob(pattern)]
+    copied = set()
+    while pending:
+        source = pending.pop().resolve()
+        assert source.is_relative_to(ROOT.resolve()), "A requirement include escapes the source tree"
+        if source in copied:
+            continue
+        copied.add(source)
+        target = sandbox / source.relative_to(ROOT)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, target)
+        for line in source.read_text(encoding="utf-8").splitlines():
+            fields = shlex.split(line, comments=True)
+            if not fields:
+                continue
+            if fields[0] in ("-r", "--requirement"):
+                pending.append(source.parent / fields[1])
+            elif fields[0].startswith("--requirement="):
+                pending.append(source.parent / fields[0].partition("=")[2])
+            elif fields[0].startswith("-r"):
+                pending.append(source.parent / fields[0][2:])
 
     def tech() -> subprocess.CompletedProcess:
         return subprocess.run([sys.executable, str(sandbox / "scripts" / "check_tech_matrix.py"), str(sandbox)], capture_output=True, text=True, cwd=sandbox)
@@ -382,7 +405,9 @@ def test_notebook_pins_are_exact_and_in_the_sdd_table(tmp_path: Path) -> None:
     saved = req.read_text(encoding="utf-8")
     req.write_text(saved + "nbclient>=0.1\n", encoding="utf-8")
     assert tech().returncode == 1 and "nbclient" in tech().stdout
-    req.write_text(saved.replace("matplotlib==3.11.2", "matplotlib==3.11.1"), encoding="utf-8")
+    pin = next(line for line in saved.splitlines() if line.startswith("matplotlib=="))
+    alternate = "0.0.0" if pin.split("==", 1)[1] != "0.0.0" else "0.0.1"
+    req.write_text(saved.replace(pin, "matplotlib==" + alternate), encoding="utf-8")
     assert tech().returncode == 1 and "matplotlib" in tech().stdout
     req.write_text(saved, encoding="utf-8")
     assert CHECK.unpinned_lines(sandbox) == []

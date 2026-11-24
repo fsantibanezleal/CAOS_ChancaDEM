@@ -2,8 +2,9 @@
 // ?v=VERSION so a new release never reads an old cached file, and must answer JSON: a static host answering a
 // missing file with its HTML page would otherwise parse as an error far from the cause (failure classes 2, 9).
 import { useEffect, useState } from 'react';
-import type { AnomalyModel, CaseIndex, CaseManifest, Hp500Backbone, Hp500Comparison, Hp500CrusherBayes, Hp500Loo, ModelMetrics, SurrogateModel, Text, Trace } from '../lib/contract.types';
+import type { AnomalyModel, CaseIndex, CaseManifest, DemRun, Hp500Backbone, Hp500Comparison, Hp500CrusherBayes, Hp500Loo, ModelMetrics, SurrogateModel, Text, Trace } from '../lib/contract.types';
 import { loadReadiness, modelAnswers, rowUnavailable, unavailableRow } from '../readiness/readiness';
+import { decodeFrames, type DemFrames, type DemReplay } from '../views/demModel';
 
 export class ArtifactError extends Error {}
 
@@ -103,6 +104,7 @@ export const HP500_CRUSHERBAYES_PATH = 'hp500/crusherbayes.json';
 export const HP500_BACKBONE_PATH = 'hp500/backbone.json';
 export const HP500_COMPARISON_PATH = 'hp500/comparison.json';
 export const METRICS_PATH = 'model-metrics.json';
+export const DEM_RUN_PATH = 'dem/jaw-lab.json';
 export const SURROGATE_PATH = 'models/surrogate.json';
 export const ANOMALY_PATH = 'models/psd-ae.json';
 
@@ -116,6 +118,34 @@ export const loadHp500Comparison = (index: CaseIndex, signal?: AbortSignal) => l
 export const loadHp500Backbone = (index: CaseIndex, signal?: AbortSignal) => loadDeclared<Hp500Backbone>(index, HP500_BACKBONE_PATH, 'hp500-backbone', signal);
 /** The held-out evaluation of the two model slots (catalog row model-metrics). */
 export const loadModelMetrics = (index: CaseIndex, signal?: AbortSignal) => loadDeclared<ModelMetrics>(index, METRICS_PATH, 'model-metrics', signal);
+
+/**
+ * The particle-simulation document (catalog row dem-run): the discrete element method on the laboratory jaw crusher at three operating
+ * points, beside the measurement and the population balance. A row the readiness says is `partial` or `stale` still loads: the view
+ * shows its reason and draws what the document holds; one that is `missing` rejects with the row's reason.
+ */
+export const loadDemRun = (index: CaseIndex, signal?: AbortSignal) => loadDeclared<DemRun>(index, DEM_RUN_PATH, 'dem-run', signal);
+
+/**
+ * The replay file of one operating point, as bytes, decoded to frames. The file is named by the document (`replay.file`, under the
+ * data root) and must be declared by the case index; it is fetched only when a view asks for its point. A file of a length other than
+ * the document's `bytes`, an HTML answer and an error status are refused before any value is decoded (the host's fallback page for a
+ * missing file is never read as spheres).
+ */
+export async function loadDemFrames(index: CaseIndex, replay: DemReplay, signal?: AbortSignal): Promise<DemFrames> {
+  const rel = replay.file;
+  if (!index.files.includes(rel)) {
+    throw new ArtifactUnavailable(rel, { en: `${rel} is not available yet: the case index of this build does not declare it`, es: `${rel} aún no está disponible: el índice de casos de esta versión no lo declara` });
+  }
+  await requireAvailable(rel);
+  const res = await fetch(`${DATA}${rel}?v=${encodeURIComponent(__APP_VERSION__)}`, { signal });
+  if (!res.ok) throw new ArtifactError(`${rel}: HTTP ${res.status}`);
+  const type = res.headers.get('content-type') ?? '';
+  if (type.includes('html') || type.includes('json')) throw new ArtifactError(`${rel}: answered ${type}, not a binary file`);
+  const buffer = await res.arrayBuffer();
+  if (buffer.byteLength !== replay.bytes) throw new ArtifactError(`${rel}: ${buffer.byteLength} bytes, the document names ${replay.bytes}`);
+  return decodeFrames(buffer, replay);
+}
 
 /** A model slot: the released model's contract, or the reason the slot's baseline answers instead. */
 export type ModelSlot<T> = { answer: 'released'; contract: T } | { answer: 'baseline'; reason: Text };

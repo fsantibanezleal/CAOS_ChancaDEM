@@ -94,3 +94,73 @@ def enforce(case_id: str, predictions: dict[str, float], ranges: dict[str, tuple
     bad = blocking(check_units(case_id, predictions, ranges))
     if bad:
         raise UnitGateError(f"{case_id}: " + "; ".join(p["detail"] for p in bad))
+
+
+# --- the laboratory jaw crusher (catalog row dem-run, DM-009) -------------------------------------------------------------------
+# The domain of the laboratory machine of Barrios et al. 2020 (Table 2, p. 3), from its nameplate and geometry and never from a
+# measured result: observable kind -> (low, high, unit, why). The same widening by one full range applies (the gate is about units).
+LAB_NOMINAL_KG_H = 300.0        # the nameplate's nominal throughput [kg/h] (Table 2)
+LAB_MOTOR_KW = 2.2              # the nameplate's motor power [kW] (Table 2)
+LAB_GAPE_MM = 90.0              # the feed opening across the jaws, the gape [mm] (Table 2)
+LAB_FINEST_SIEVE_MM = 1.0       # the finest sieve of the document, the coarsest bound of a reduction ratio's denominator [mm]
+LAB_DOMAIN: dict[str, tuple[float, float, str, str]] = {
+    "throughput_kg_h": (0.0, 10.0 * LAB_NOMINAL_KG_H, "kg/h", "ten times the nameplate's nominal 300 kg/h: a laboratory jaw never passes more"),
+    "net_power_kw": (0.0, LAB_MOTOR_KW, "kW", "the 2.2 kW motor of the nameplate bounds the net power at the shaft"),
+    "size_mm": (0.0, LAB_GAPE_MM, "mm", "no particle or product size exceeds the 90 mm gape"),
+    "specific_energy_kwh_t": (0.0, 20.0, "kWh/t", "the engine's unit-error ceiling for the energy a crusher applies per tonne"),
+    "reduction_ratio": (1.0, LAB_GAPE_MM / LAB_FINEST_SIEVE_MM, "dimensionless", "F80 over P80: at least one, at most the gape over the finest sieve"),
+}
+
+
+def _lab_kind(field: str) -> str | None:
+    if field.startswith("throughput_kg_h") or field.startswith("throughput_whole_run_kg_h"):
+        return "throughput_kg_h"
+    if field.startswith("net_power_kw") or field.startswith("net_power_whole_run_kw"):
+        return "net_power_kw"
+    if field.startswith("specific_energy_kwh_t"):
+        return "specific_energy_kwh_t"
+    if field.startswith("reduction_ratio"):
+        return "reduction_ratio"
+    if field.endswith("_mm"):
+        return "size_mm"
+    return None
+
+
+def lab_observables(doc: dict) -> dict[str, tuple[str, Any]]:
+    """Every simulated and predicted value of a dem-run document that has a unit of the laboratory domain: label -> (kind, value).
+    A value that is absent (None) is not a unit error and is left out."""
+    out: dict[str, tuple[str, Any]] = {}
+
+    def take(label: str, field: str, value: Any) -> None:
+        kind = _lab_kind(field)
+        if kind is not None and value is not None:
+            out[label] = (kind, value)
+
+    for p in doc.get("points", []):
+        pid = p.get("id", "?")
+        sim = p.get("simulation", {})
+        for field in ("throughput_kg_h", "throughput_whole_run_kg_h", "net_power_kw", "net_power_whole_run_kw", "specific_energy_kwh_t",
+                      "p80_mm", "p50_mm", "largest_product_mm", "reduction_ratio"):
+            take(f"{pid}.simulation.{field}", field, sim.get(field))
+        pb = p.get("population_balance", {})
+        for field in ("throughput_kg_h", "f80_mm", "p80_mm", "p50_mm", "reduction_ratio", "specific_energy_kwh_t"):
+            take(f"{pid}.population_balance.{field}", field, pb.get(field))
+        for field, pair in (pb.get("band") or {}).items():
+            if isinstance(pair, list) and field in ("p80_mm", "p50_mm", "reduction_ratio"):
+                for i, v in enumerate(pair):
+                    take(f"{pid}.population_balance.band.{field}[{i}]", field, v)
+    return out
+
+
+def check_lab_units(doc: dict) -> list[dict]:
+    """The units-gate violations of a dem-run document (empty means pass), by the same rule as ``check_units``."""
+    observed = lab_observables(doc)
+    ranges = {label: LAB_DOMAIN[kind][:2] for label, (kind, _v) in observed.items()}
+    return check_units("dem-run", {label: v for label, (_k, v) in observed.items()}, ranges)
+
+
+def enforce_lab(doc: dict) -> None:
+    """Raise ``UnitGateError`` naming every blocking violation of a dem-run document."""
+    bad = blocking(check_lab_units(doc))
+    if bad:
+        raise UnitGateError("dem-run: " + "; ".join(p["detail"] for p in bad))

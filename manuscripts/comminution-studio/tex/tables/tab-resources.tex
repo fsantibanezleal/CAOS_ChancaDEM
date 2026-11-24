@@ -3,12 +3,13 @@
 \toprule
 Stage & Peak memory & Disk & Time & Where it runs \\
 \midrule
-Bake (\texttt{run.py all}: 27 cases, the four HP500 documents, index, readiness) & 1442 MB & 308 KB & 54.2 min & workstation \\
-HP500 step alone (\texttt{run.py hp500}: backbone, CrusherCal, the CrusherBayes sampler, the paired comparison) & 1592 MB & 31 KB & 52.3 min & workstation \\
-Training (\texttt{run.py models}: sweeps, two networks, export, evaluation) & 446 MB & 59 KB & 74.3 s & workstation, CPU \\
-Python tests, the whole suite (1714 passed, 27 skipped) & 437 MB & none & 15.6 min & workstation \\
-Web install (\texttt{npm ci}) & 639 MB & 329.0 MB & 17.3 s & workstation, CI \\
-Web build (\texttt{npm run build}) & 642 MB & 17.2 MB & 11.8 s & workstation, CI \\
-Web unit tests (562 tests in 38 files) & 3091 MB & none & 9.1 s & workstation, CI \\
+Bake (\texttt{run.py all}: 27 cases, the four HP500 documents, index, readiness) & 1426 MB & 2.5 MB & 72.5 min & workstation \\
+HP500 step alone (\texttt{run.py hp500}: backbone, CrusherCal, the CrusherBayes sampler, the paired comparison) & 1535 MB & 31 KB & 63.2 min & workstation \\
+Particle document (\texttt{run.py dem}: the document and its replay files rebuilt from the stored runs) & 93 MB & 2.2 MB & 1.7 s & workstation \\
+Training (\texttt{run.py models}: sweeps, two networks, export, evaluation) & 462 MB & 60 KB & 92.3 s & workstation, CPU \\
+Python tests, the whole suite (1835 passed, 27 skipped) & 536 MB & none & 37.0 min & workstation \\
+Web install (\texttt{npm ci}) & 600 MB & 342.8 MB & 93.5 s & workstation, CI \\
+Web build (\texttt{npm run build}) & 692 MB & 20.9 MB & 30.6 s & workstation, CI \\
+Web unit tests (769 tests in 41 files) & 3465 MB & none & 15.5 s & workstation, CI \\
 \bottomrule
 \end{tabular}

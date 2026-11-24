@@ -90,3 +90,51 @@ def test_a_file_the_index_lists_must_exist(repo):
     (repo / "data" / "derived" / "hp500" / "loo.json").unlink()
     p = check(repo)
     assert p.returncode == 1 and "declared by the index but missing" in p.stdout
+
+
+def plant_dem(r: Path, power_kw: float = 0.3, frames: bytes = b"\x01\x00" * 8) -> Path:
+    """A minimal dem-run document and its replay file in a copy of the bake (the check reads only the values it gates and the replay block)."""
+    import hashlib
+
+    derived = r / "data" / "derived" / "dem"
+    derived.mkdir(parents=True, exist_ok=True)
+    (derived / "jaw-lab-63-52.frames.bin").write_bytes(frames)
+    doc = {"points": [{"id": "63-52", "simulation": {"net_power_kw": power_kw, "throughput_kg_h": 600.0, "p80_mm": 6.0,
+                                                      "replay": {"file": "dem/jaw-lab-63-52.frames.bin", "bytes": len(frames),
+                                                                 "sha256": hashlib.sha256(frames).hexdigest()}},
+                       "population_balance": {"throughput_kg_h": 547.0, "p80_mm": 5.9}}]}
+    (derived / "jaw-lab.json").write_text(json.dumps(doc), encoding="utf-8")
+    return derived
+
+
+def test_a_particle_simulation_document_in_its_units_with_its_replay_passes(repo):
+    plant_dem(repo)
+    p = check(repo)
+    assert p.returncode == 0, p.stdout + p.stderr
+
+
+def test_adversarial_a_particle_simulation_power_in_watts_fails_the_laboratory_units_gate(repo):
+    plant_dem(repo, power_kw=300.0)
+    p = check(repo)
+    assert p.returncode == 1 and "laboratory jaw" in p.stdout and "net_power_kw" in p.stdout
+
+
+def test_adversarial_a_replay_file_changed_by_one_byte_fails_on_the_sha256_and_a_changed_size_on_the_bytes(repo):
+    derived = plant_dem(repo)
+    frames = derived / "jaw-lab-63-52.frames.bin"
+    frames.write_bytes(b"\x02\x00" + frames.read_bytes()[2:])
+    p = check(repo)
+    assert p.returncode == 1 and "sha256" in p.stdout and "byte drift" not in p.stdout
+    frames.write_bytes(frames.read_bytes() + b"\x00")
+    assert "byte drift" in check(repo).stdout
+    frames.unlink()
+    assert "missing replay file" in check(repo).stdout
+
+
+def test_a_bake_without_the_particle_simulation_passes(repo):
+    shutil.rmtree(repo / "data" / "derived" / "dem", ignore_errors=True)       # readiness says missing for dem-run: nothing else fails
+    index = repo / "data" / "derived" / "manifests" / "index.json"
+    doc = json.loads(index.read_text(encoding="utf-8"))
+    doc["files"] = [f for f in doc["files"] if not f.startswith("dem/")]       # a bake without the document does not list it
+    index.write_text(json.dumps(doc, separators=(",", ":")), encoding="utf-8")
+    assert check(repo).returncode == 0

@@ -37,4 +37,39 @@ export const METHODOLOGY: Citation[] = [
     citation: 'Foreman-Mackey, D., Hogg, D.W., Lang, D., Goodman, J. (2013). emcee: The MCMC Hammer. Publications of the Astronomical Society of the Pacific 125, 306–312. The package that implements the ensemble sampler used by the calibration.',
     doi: '10.1086/670067',
   },
+  {
+    id: 'barrios2020',
+    label: 'Barrios et al. 2020',
+    citation:
+      'Barrios, G.K., Jimenez-Herrera, N., Fuentes-Torres, S.N., Tavares, L.M. (2020). DEM Simulation of Laboratory-Scale Jaw Crushing of a Gold-Bearing Ore Using a Particle Replacement Model. Minerals 10(8), 717. Open access (CC BY 4.0): the laboratory jaw crusher (Table 2), its materials and contacts (Tables 3 and 4), the single-particle tests (Fig. 6) and the measured throughput, net power and product of three narrow feed classes (Figs. 7, 12 to 14).',
+    doi: '10.3390/min10080717',
+  },
+  {
+    id: 'crushdem',
+    label: 'crushdem 0.6.0',
+    citation:
+      'crushdem 0.6.0: a soft-sphere discrete element method for crushers, with Hertz-Mindlin contacts, the Tavares breakage model with t10 progeny and replacement, and a numba CPU reference. Python Package Index (the particle engine of the particle simulation; a separate repository).',
+    url: 'https://pypi.org/project/crushdem/0.6.0/',
+  },
+  {
+    id: 'sastri1994',
+    label: 'Sastri 1994',
+    citation:
+      'Sastri, S.R.S. (1994). Capacities and performance characteristics of jaw crushers. Minerals and Metallurgical Processing, May 1994, 80-85 (SME preprint 92-650). The jaw capacity model, equations 2 to 13 (pre-DOI; open PDF).',
+    url: 'https://www.911metallurgist.com/wp-content/uploads/2016/02/Capacities-and-Sizing-of-jaw-crushers.pdf',
+  },
+  {
+    id: 'king2000',
+    label: 'King 2000',
+    citation:
+      'King, R.P. (2000). Technical Notes 5, Crushers. Equations 5.8 to 5.10, pages 5-4 and 5-5: the classification parameters proportional to the closed-side setting, with the ranges the notes give for Symons cone crushers (open PDF).',
+    url: 'https://www.911metallurgist.com/wp-content/uploads/2017/04/Crushers.pdf',
+  },
+  {
+    id: 'donovan2003',
+    label: 'Donovan 2003',
+    citation:
+      'Donovan, J.G. (2003). Fracture Toughness Based Models for the Prediction of Power Consumption, Product Size, and Capacity of Jaw Crushers. PhD thesis, Virginia Tech. Section 2.1.3: the first estimate of the classification parameters (open access).',
+    url: 'https://vtechworks.lib.vt.edu/handle/10919/28544',
+  },
 ];

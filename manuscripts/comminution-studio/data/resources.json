@@ -1,7 +1,7 @@
 {
  "schema": "chancadem.report.resources/v1",
- "product_version": "0.14.000",
- "measured_on": "2026-11-20",
+ "product_version": "0.15.000",
+ "measured_on": "2026-11-24",
  "host": {
   "os": "Windows 11",
   "python": "3.12.15",
@@ -16,13 +16,13 @@
     "all"
    ],
    "exit": 0,
-   "seconds": 3252.97,
-   "peak_bytes": 1442054144,
-   "peak_mb": 1442.1,
+   "seconds": 4348.11,
+   "peak_bytes": 1426067456,
+   "peak_mb": 1426.1,
    "sizes": {
     "data/derived": {
-     "bytes": 308364,
-     "files": 67
+     "bytes": 2473699,
+     "files": 71
     }
    },
    "label": "bake"
@@ -34,9 +34,9 @@
     "hp500"
    ],
    "exit": 0,
-   "seconds": 3137.48,
-   "peak_bytes": 1592033280,
-   "peak_mb": 1592.0,
+   "seconds": 3791.12,
+   "peak_bytes": 1534570496,
+   "peak_mb": 1534.6,
    "sizes": {
     "data/derived/hp500": {
      "bytes": 30568,
@@ -49,15 +49,33 @@
    "command": [
     "python.exe",
     "data-pipeline/run.py",
+    "dem"
+   ],
+   "exit": 0,
+   "seconds": 1.73,
+   "peak_bytes": 93351936,
+   "peak_mb": 93.4,
+   "sizes": {
+    "data/derived/dem": {
+     "bytes": 2164725,
+     "files": 4
+    }
+   },
+   "label": "dem"
+  },
+  {
+   "command": [
+    "python.exe",
+    "data-pipeline/run.py",
     "models"
    ],
    "exit": 0,
-   "seconds": 74.28,
-   "peak_bytes": 446283776,
-   "peak_mb": 446.3,
+   "seconds": 92.35,
+   "peak_bytes": 461918208,
+   "peak_mb": 461.9,
    "sizes": {
     "data/derived/models": {
-     "bytes": 59480,
+     "bytes": 59745,
      "files": 5
     }
    },
@@ -74,12 +92,12 @@
     "<sandbox>"
    ],
    "exit": 0,
-   "seconds": 938.98,
-   "peak_bytes": 436719616,
-   "peak_mb": 436.7,
+   "seconds": 2219.14,
+   "peak_bytes": 536334336,
+   "peak_mb": 536.3,
    "sizes": {},
    "label": "tests",
-   "note": "1714 passed, 27 skipped"
+   "note": "1835 passed, 27 skipped"
   },
   {
    "command": [
@@ -87,13 +105,13 @@
     "ci"
    ],
    "exit": 0,
-   "seconds": 17.31,
-   "peak_bytes": 638693376,
-   "peak_mb": 638.7,
+   "seconds": 93.51,
+   "peak_bytes": 599572480,
+   "peak_mb": 599.6,
    "sizes": {
     "node_modules": {
-     "bytes": 329015953,
-     "files": 11509
+     "bytes": 342780475,
+     "files": 11560
     }
    },
    "label": "install"
@@ -105,13 +123,13 @@
     "build"
    ],
    "exit": 0,
-   "seconds": 11.78,
-   "peak_bytes": 642236416,
-   "peak_mb": 642.2,
+   "seconds": 30.56,
+   "peak_bytes": 692232192,
+   "peak_mb": 692.2,
    "sizes": {
     "dist": {
-     "bytes": 17223081,
-     "files": 174
+     "bytes": 20905234,
+     "files": 178
     }
    },
    "label": "build"
@@ -122,52 +140,52 @@
     "test"
    ],
    "exit": 0,
-   "seconds": 9.1,
-   "peak_bytes": 3090661376,
-   "peak_mb": 3090.7,
+   "seconds": 15.54,
+   "peak_bytes": 3465314304,
+   "peak_mb": 3465.3,
    "sizes": {},
    "label": "webtests",
-   "note": "562 tests in 38 files"
+   "note": "769 tests in 41 files"
   }
  ],
  "engine": {
   "cases": 27,
   "runs_per_case": 7,
-  "median_of_medians_ms": 1.307,
-  "max_median_ms": 1.463,
+  "median_of_medians_ms": 1.404,
+  "max_median_ms": 1.449,
   "per_case_median_ms": {
-   "CI1": 1.211,
-   "CK1": 1.225,
-   "CP1": 1.279,
-   "G01": 1.314,
-   "G02": 1.286,
-   "H01": 1.312,
-   "H02": 1.305,
-   "HP500-01": 1.302,
-   "HP500-02": 1.308,
-   "HP500-03": 1.309,
-   "HP500-04": 1.302,
-   "HP500-05": 1.307,
-   "HP500-06": 1.309,
-   "HP500-07": 1.308,
-   "HP500-08": 1.305,
-   "HP500-09": 1.301,
-   "HP500-10": 1.268,
-   "J01": 1.294,
-   "J02": 1.298,
-   "S01": 1.253,
-   "S02": 1.463,
-   "S03": 1.401,
-   "S04": 1.366,
-   "S05": 1.377,
-   "S06": 1.384,
-   "T01": 1.374,
-   "T02": 1.394
+   "CI1": 1.33,
+   "CK1": 1.3,
+   "CP1": 1.301,
+   "G01": 1.296,
+   "G02": 1.383,
+   "H01": 1.404,
+   "H02": 1.407,
+   "HP500-01": 1.402,
+   "HP500-02": 1.403,
+   "HP500-03": 1.397,
+   "HP500-04": 1.41,
+   "HP500-05": 1.4,
+   "HP500-06": 1.42,
+   "HP500-07": 1.449,
+   "HP500-08": 1.413,
+   "HP500-09": 1.409,
+   "HP500-10": 1.407,
+   "J01": 1.447,
+   "J02": 1.444,
+   "S01": 1.409,
+   "S02": 1.428,
+   "S03": 1.387,
+   "S04": 1.408,
+   "S05": 1.4,
+   "S06": 1.418,
+   "T01": 1.403,
+   "T02": 1.403
   }
  },
  "site": {
-  "bytes": 17223048,
-  "files": 174,
-  "wasm_bytes": 13479978
+  "bytes": 20905234,
+  "files": 178,
+  "wasm_bytes": 14848852
  }
 }

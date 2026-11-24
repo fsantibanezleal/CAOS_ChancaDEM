@@ -227,7 +227,11 @@ def test_adversarial_provider_product_keeps_strict_refusals_on_a_provider_free_c
         workflow.check_readiness_states(ROOT, {**strict, "readiness_exceptions": {}}, missing, ROOT)
 
 
-def test_adversarial_actual_readiness_inventory(workflow, tmp_path):
+def actual_readiness_inventory(workflow, root, stage):
+    """Read a custom provider's shipped contract; otherwise invoke the real template compute API."""
+    config = workflow.settings(root)
+    if config.get("readiness_provider"):
+        return json.loads((root / "data/derived/readiness.json").read_text(encoding="utf-8"))
     # Invoke the real compute API, preserving its genuine missing states. No engine solves.
     code = (
         "import json,sys; from pathlib import Path; from pipeline.core import readiness; "
@@ -235,15 +239,19 @@ def test_adversarial_actual_readiness_inventory(workflow, tmp_path):
         "print(json.dumps(readiness.compute(repo_root=root,derived_root=stage/'data',models_dir=stage/'models')))"
     )
     result = subprocess.run(
-        [sys.executable, "-c", code, str(ROOT), str(tmp_path)],
-        cwd=ROOT / "data-pipeline",
+        [sys.executable, "-c", code, str(root), str(stage)],
+        cwd=root / "data-pipeline",
         capture_output=True,
         text=True,
         env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
         check=False,
     )
     assert result.returncode == 0, result.stderr
-    ready = json.loads(result.stdout)
+    return json.loads(result.stdout)
+
+
+def test_adversarial_actual_readiness_inventory(workflow, tmp_path):
+    ready = actual_readiness_inventory(workflow, ROOT, tmp_path)
     config = workflow.settings(ROOT)
     strict = strict_config(config)
     if config.get("readiness_provider"):
@@ -267,6 +275,19 @@ def test_adversarial_actual_readiness_inventory(workflow, tmp_path):
             workflow.check_readiness_inventory(ROOT, strict, {**ready, "contracts": bad_rows})
     with pytest.raises(workflow.Failure, match="stale admission catalog"):
         workflow.check_readiness_inventory(ROOT, strict, {**ready, "catalog_sha256": "0" * 64})
+
+
+def test_actual_provider_inventory_does_not_import_the_template_engine(workflow, fixture_repo):
+    root, config, _ = fixture_repo
+    config["readiness_provider"] = "scripts/local/provider.py"
+    write(root / "scripts/local/workflow.json", json.dumps(config))
+    ready = {"schema": "custom.readiness/v1", "state": "available"}
+    write(root / "data/derived/readiness.json", json.dumps(ready))
+    assert not (root / "data-pipeline/pipeline").exists()
+    assert actual_readiness_inventory(workflow, root, root.parent / "stage") == ready
+    (root / "data/derived/readiness.json").unlink()
+    with pytest.raises(FileNotFoundError):
+        actual_readiness_inventory(workflow, root, root.parent / "stage")
 
 
 def test_adversarial_custom_product_provider_admits_shipped_readiness_shape(workflow, fixture_repo):
@@ -669,8 +690,8 @@ def test_adversarial_real_product_generation_admission(workflow, monkeypatch):
         pytest.skip("The template example has a separate actual five-case generation control")
     config = workflow.settings(ROOT)
     # The readiness provider runs in the primary generation environment (0.15.010); like the template's own integration
-    # control, the test resolves that environment's external root from the declared alias instead of the developer's shell.
-    runtime = (ROOT / config["primary_environment"]).resolve(strict=True)
+    # control, the test uses the workflow's actual runtime resolver, including a newly initialized external runtime without a repository alias.
+    runtime = workflow.environment_directory(ROOT, config["primary_environment"]).resolve(strict=True)
     monkeypatch.setenv("CAOS_VENVS_ROOT", str(runtime.parents[1]))
     ready = json.loads((ROOT / "data/derived/readiness.json").read_text(encoding="utf-8"))
     # the positive admission runs with the real config: under a provider (RP-032) it runs the product's checker on the shipped files
@@ -700,7 +721,7 @@ TEMPLATE_ONLY = pytest.mark.skipif(not (ROOT / ".template-source").is_file(),
 @TEMPLATE_ONLY
 def test_adversarial_real_template_generation_admission(workflow, tmp_path, monkeypatch):
     config = workflow.settings(ROOT)
-    runtime = (ROOT / config["primary_environment"]).resolve(strict=True)
+    runtime = workflow.environment_directory(ROOT, config["primary_environment"]).resolve(strict=True)
     # Keep this real-template integration test independent of the developer's
     # shell/.env while preserving the same external-runtime containment policy.
     # The declared alias resolves to <CAOS_VENVS_ROOT>/<namespace>/<runtime>.
@@ -1006,8 +1027,24 @@ def test_adversarial_inventory_count_comes_from_the_products_catalog(workflow, t
     product = planted_product(tmp_path)
     expected = catalog_ids(product) - set(workflow.settings(product).get("readiness_excludes", []))
     assert len(expected) == len(catalog_ids(ROOT) - set(workflow.settings(ROOT).get("readiness_excludes", []))) + 6
-    monkeypatch.setattr(sys.modules[__name__], "ROOT", product)
-    test_adversarial_actual_readiness_inventory(workflow, tmp_path / "derived")
+    if workflow.settings(product).get("readiness_provider"):
+        # A provider has no compute API beyond validate(root). Exercise the generic
+        # catalog inventory on an explicit fixture; never import an absent template engine.
+        config = strict_config(workflow.settings(product))
+        raw = (product / "docs/contracts/catalog.md").read_text(encoding="utf-8").encode()
+        old = json.loads((ROOT / "data/derived/readiness.json").read_text(encoding="utf-8"))
+        if not has_template_shape(old):
+            pytest.skip("Custom provider uses a different readiness shape; its validator is tested separately")
+        with pytest.raises(workflow.Failure, match="inventory"):
+            workflow.check_readiness_inventory(product, config, old)
+        ready = {"catalog_sha256": hashlib.sha256(raw).hexdigest(),
+                 "contracts": [{"id": rid, "state": "missing"} for rid in sorted(expected)]}
+        workflow.check_readiness_inventory(product, config, ready)
+        with pytest.raises(workflow.Failure, match="inventory"):
+            workflow.check_readiness_inventory(product, config, {**ready, "contracts": ready["contracts"][:-1]})
+    else:
+        monkeypatch.setattr(sys.modules[__name__], "ROOT", product)
+        test_adversarial_actual_readiness_inventory(workflow, tmp_path / "derived")
 
 
 def test_adversarial_receipt_follows_the_number_of_required_paths(workflow, fixture_repo):

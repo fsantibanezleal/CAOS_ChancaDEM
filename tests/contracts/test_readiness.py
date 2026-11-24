@@ -23,7 +23,8 @@ VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
 OLDER = VERSION.rsplit(".", 1)[0] + (".002" if VERSION.endswith(".001") else ".001")
 NO_NUMPY = ("import sys, runpy; sys.modules['numpy'] = None; path = sys.argv[1]; sys.argv = sys.argv[1:]; "
             "runpy.run_path(path, run_name='__main__')")
-DERIVED_DOCS = ("hp500/backbone.json", "hp500/loo.json", "hp500/crusherbayes.json", "hp500/comparison.json", "model-metrics.json")
+DERIVED_DOCS = ("hp500/backbone.json", "hp500/loo.json", "hp500/crusherbayes.json", "hp500/comparison.json", "model-metrics.json",
+                "dem/jaw-lab.json")   # the last is present only once the particle simulation has been baked
 
 
 def _table(section: str) -> list[list[str]]:
@@ -63,6 +64,8 @@ def repo(tmp_path: Path) -> Path:
     shutil.copytree(ROOT / "data" / "derived", r / "data" / "derived", ignore=shutil.ignore_patterns("readiness.json"))
     for rel in DERIVED_DOCS:
         path = r / "data" / "derived" / rel
+        if not path.is_file():
+            continue
         doc = json.loads(path.read_text(encoding="utf-8"))
         doc["engine_version"] = VERSION
         write_json(path, doc)
@@ -93,7 +96,8 @@ def test_committed_readiness_is_current(tmp_path):
 def test_catalog_rows_in_order_without_readiness():
     rows = readiness.parse_catalog(CATALOG.read_text(encoding="utf-8"))
     assert [r["id"] for r in rows] == ["params-record", "hp500-survey", "case-index", "case-manifest", "trace", "hp500-backbone",
-                                        "hp500-loo", "hp500-crusherbayes", "hp500-comparison", "surrogate-model", "anomaly-model", "model-metrics", "readiness", "api"]
+                                        "hp500-loo", "hp500-crusherbayes", "hp500-comparison", "surrogate-model", "anomaly-model", "model-metrics",
+                                        "dem-run", "readiness", "api"]
     assert {"id", "version", "status", "provider"} <= set(rows[0])
     doc = readiness.compute(repo_root=ROOT, derived_root=ROOT / "data" / "derived", models_dir=ROOT / "data" / "derived" / "models")
     assert [e["id"] for e in doc["contracts"]] == [r["id"] for r in rows if r["id"] != "readiness"]
@@ -103,8 +107,11 @@ def test_catalog_rows_in_order_without_readiness():
 def test_state_available(repo):
     doc = run(repo)
     for e in doc["contracts"]:
-        if e["id"] != "api":
+        if e["id"] not in ("api", "dem-run"):
             assert (e["state"], e["provenance"], e["reason"], e["missing"]) == ("available", "real", None, []), e["id"]
+    dem = derived(repo, "dem/jaw-lab.json")       # the particle simulation says what its own document says (test_adversarial_state_dem_run plants each state)
+    expected = "missing" if not dem.is_file() else ("partial" if json.loads(dem.read_text(encoding="utf-8"))["state"] == "partial" else "available")
+    assert entry(doc, "dem-run")["state"] == expected
     assert entry(doc, "api")["state"] == "missing"
     assert entry(doc, "api")["provenance"] is None
     assert entry(doc, "api")["reason"] == fill(template("always, in the static document"))
@@ -277,6 +284,37 @@ def test_state_missing_model_metrics(repo):
     assert e["reason"] == ({"en": "The models were not evaluated in this build.", "es": "Los modelos no se evaluaron en esta versión."})
 
 
+def test_adversarial_state_dem_run(repo):
+    """DM-011: missing when the document is absent, stale when its engine_version is not VERSION, partial (naming how many) when a run
+    did not complete, available otherwise; in the order of the catalog's table (absent, stale, partial)."""
+    path = derived(repo, "dem/jaw-lab.json")
+    ids = ["63-52", "31.5-26.5", "16-13.2"]
+
+    def plant(**fields) -> dict:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        write_json(path, {"engine_version": VERSION, "state": "available", "incomplete": [], "points": [{} for _ in ids], **fields})
+        return entry(run(repo), "dem-run")
+
+    path.unlink(missing_ok=True)
+    e = entry(run(repo), "dem-run")
+    assert (e["state"], e["provenance"], e["missing"]) == ("missing", None, [])
+    assert e["reason"] == fill(template("`data/derived/dem/jaw-lab.json` is absent"))
+    assert e["reason"] == {"en": "The particle simulation was not baked in this build.", "es": "La simulación de partículas no se generó en esta versión."}
+    e = plant()
+    assert (e["state"], e["provenance"], e["reason"], e["missing"]) == ("available", "real", None, [])
+    e = plant(state="partial", incomplete=[ids[2], ids[1]])
+    assert (e["state"], e["provenance"]) == ("partial", "real")
+    assert e["reason"] == fill(template("the document's `state` is `partial`"), n=2, total=3)
+    assert e["missing"] == sorted([ids[1], ids[2]])
+    e = plant(engine_version=OLDER)
+    assert (e["state"], e["provenance"], e["missing"]) == ("stale", "real", [])
+    assert e["reason"] == fill(template("the document's `engine_version` differs"), engine_version=OLDER, version=VERSION)
+    e = plant(engine_version=OLDER, state="partial", incomplete=[ids[0]])
+    assert e["state"] == "stale"                                    # stale comes before partial in the table
+    path.write_text("not json", encoding="utf-8")
+    assert entry(run(repo), "dem-run")["state"] == "missing"       # a document that cannot be read is no document
+
+
 def test_every_reason_of_the_code_is_a_reason_of_the_catalog():
     """Each template of core/readiness.py is one of the (en, es) pairs of the catalog's Missing-data table."""
     pairs = {(c[4], c[5]) for c in _table("Missing-data states") if len(c) == 6 and c[4] != "null"}
@@ -347,6 +385,7 @@ def test_run_all_writes_a_valid_readiness(tmp_path):
                 "hp500-crusherbayes", "hp500-comparison", "surrogate-model", "anomaly-model"):
         assert entry(doc, row)["state"] == "available", row
     assert entry(doc, "model-metrics")["state"] == "missing"       # run.py models writes it; the bake never trains
+    assert entry(doc, "dem-run")["state"] == "missing"             # run.py dem writes it; run_all never simulates
 
 
 def _as_product(root: Path) -> None:

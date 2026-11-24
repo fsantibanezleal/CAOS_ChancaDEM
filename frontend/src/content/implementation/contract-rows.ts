@@ -19,9 +19,9 @@ export const ROWS: { id: string; version: string; schema: string; governs: [stri
   },
   {
     id: 'case-index',
-    version: '1.0.1',
+    version: '2.0.0',
     schema: 'chancadem.index/v1',
-    governs: ['The inventory of cases, the case the App opens on and the further files the site serves.', 'El inventario de casos, el caso en que abre la App y los demás archivos que sirve el sitio.'],
+    governs: ['The inventory of cases, the case the App opens on and the further files the site serves, among them the replay files of the particle simulation.', 'El inventario de casos, el caso en que abre la App y los demás archivos que sirve el sitio, entre ellos los archivos de reproducción de la simulación de partículas.'],
     missing: ['The site build stops, since there is no site without an inventory. Older than the product: stale, shown with both versions.', 'La compilación del sitio se detiene, pues no hay sitio sin inventario. Más antiguo que el producto: desactualizado, con ambas versiones.'],
   },
   {
@@ -86,6 +86,19 @@ export const ROWS: { id: string; version: string; schema: string; governs: [stri
     schema: 'chancadem.model-metrics/v1',
     governs: ['The held-out evaluation of the two model slots.', 'La evaluación con datos retenidos de las dos ranuras de modelos.'],
     missing: ['Missing: the Benchmark model views say not available yet, never a number from an older bake.', 'Ausente: las vistas de modelos del Benchmark dicen aún no disponible, nunca un número de un precálculo anterior.'],
+  },
+  {
+    id: 'dem-run',
+    version: '1.1.1',
+    schema: 'chancadem.dem.run/v1',
+    governs: [
+      'The particle simulation (the discrete element method of the package crushdem) on the laboratory jaw crusher at three operating points, beside the measurement and the population balance with a laboratory preset: nine verdicts per point against bands set before the runs, and one replay file of particle frames per point, with, as context that no verdict uses, what the source paper reports for its own simulation where it states it.',
+      'La simulación de partículas (el método de elementos discretos del paquete crushdem) en la mandíbula de laboratorio en tres puntos de operación, junto a la medición y al balance poblacional con una configuración de laboratorio: nueve veredictos por punto contra bandas fijadas antes de las corridas, y un archivo de reproducción de cuadros de partículas por punto, con, como contexto que ningún veredicto usa, lo que el artículo fuente informa de su propia simulación donde lo declara.',
+    ],
+    missing: [
+      'Partial: a run that did not complete is recorded as it stopped, with no window statistic, and the verdicts that need one are not compared. Missing: the particle view says not available yet with the reason, never a number from an older bake.',
+      'Parcial: una corrida que no se completó se registra como se detuvo, sin estadístico de ventana, y los veredictos que lo necesitan no se comparan. Ausente: la vista de partículas dice aún no disponible con la razón, nunca un número de un precálculo anterior.',
+    ],
   },
   {
     id: 'readiness',

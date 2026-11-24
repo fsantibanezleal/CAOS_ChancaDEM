@@ -98,7 +98,7 @@
   <rect class="bx" x="626" y="256" width="238" height="70" rx="6"/>
   <text class="it l-en" x="638" y="276">Learned models in the browser</text>
   <text class="it l-es" x="638" y="276">Modelos aprendidos en el navegador</text>
-  <text class="cd mono" x="638" y="294">onnxruntime-web 1.27.0, WASM</text>
+  <text class="cd mono" x="638" y="294">onnxruntime-web 1.31.1, WASM</text>
   <text class="sub l-en" x="638" y="312">opened with the Learned group</text>
   <text class="sub l-es" x="638" y="312">se abren con el grupo Aprendido</text>
   <text class="sub l-en" x="626" y="360">A case is live only if it passes the</text>

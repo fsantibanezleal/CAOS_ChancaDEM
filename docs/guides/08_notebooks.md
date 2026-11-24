@@ -4,7 +4,7 @@ The notebooks are the product's didactic layer: they teach a reader, step by ste
 its methods work, how each one compares with the published methods, and what the methods the product proposes add. They
 import the product's methods and never re-implement them; logic that exists only in a notebook is incomplete. The
 rule is CAOS_MANAGE `conventions/product-notebooks.md`; this guide is how a product applies it, and it opens with the bar.
-ChancaDEM's set is seven topics of 18 notebooks per language, on the crusher engine and the oracles (`pipeline.oracles`).
+ChancaDEM's set is nine topics of 26 notebooks per language, on the crusher engine, the oracles (`pipeline.oracles`) and the particle engine, the published package `crushdem` (topic 09).
 
 ## The bar: a notebook is a worked lesson
 

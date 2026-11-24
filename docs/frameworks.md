@@ -13,6 +13,7 @@ them, where it runs, its tests and what it is not. The full index, with the pins
 | [12, classification](frameworks/12_classification/classification.md) | M3 Andersen and Napier-Munn K1, K2, K3 |
 | [01, Whiten engine](frameworks/01_whiten-engine/whiten.md) | M4 the population balance, and the engine as a whole |
 | [13, capacity](frameworks/13_capacity/capacity.md) | M5 the Evertsson capacity hump |
+| [20, jaw capacity](frameworks/20_jaw-capacity-sastri/jaw-capacity.md) | M15 the jaw capacity model of Sastri and the laboratory-jaw module |
 | [14, regimes and nip angle](frameworks/14_regimes-and-nip-angle/regimes.md) | M6 |
 | [09, power](frameworks/09_power_model/power-model.md) | M7 Bond and the current-based form, with the honest negative |
 | [16, HP500 calibration](frameworks/16_hp500-calibration/hp500-calibration.md) | M8 the Andersen-Whiten fit |
@@ -20,7 +21,7 @@ them, where it runs, its tests and what it is not. The full index, with the pins
 | [08, CrusherCal](frameworks/08_calibration_validation/calibration-validation.md) | M10 leave-one-survey-out validation |
 | [05, surrogate MLP](frameworks/05_surrogate/surrogate.md) | M11 |
 | [06, denoising autoencoder](frameworks/06_denoising-ae/denoising-ae.md) | M12 |
-| [07, DEM landscape](frameworks/07_dem_pbm_landscape/dem-pbm.md) | the frontier, not a method of the product |
+| [07, particle simulation](frameworks/07_dem_pbm_landscape/dem-pbm.md) | the discrete element method with particle replacement (the package crushdem), run offline on one laboratory jaw and compared with the measurement and the population balance |
 
 ## Engines
 

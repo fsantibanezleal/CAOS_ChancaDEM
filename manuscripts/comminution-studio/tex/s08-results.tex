@@ -328,7 +328,7 @@ population balance.
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=0.85\textwidth]{fig-contraction.pdf}
+\includegraphics[width=0.82\textwidth]{fig-contraction.pdf}
 \caption{Posterior over prior standard deviation of each CrusherBayes parameter for the posterior fitted to all ten surveys. Plain bars, below $0.5$
 (dashed), are contracted; dotted bars, from $0.5$ to $0.9$ (dotted line), partly contracted; hatched bars, above $0.9$, not contracted. The contraction of
 the capacity base comes from the prior scale of the discrepancy (Section~\ref{sec:results-cb}).}
@@ -469,3 +469,77 @@ $m/R=\drShare$, survey 1 is normal.
 $30\%$ above the current $P_{80}$ from the shared reference table, with the $45$~h re-set interval of one plant as reference.}
 \label{fig:drift}
 \end{figure}
+
+\subsection{The laboratory jaw: the particle simulation, the population balance and the measurement}\label{sec:results-dem}
+
+The three operating points of Section~\ref{sec:protocol-dem} were run with the particle simulation of Section~\ref{sec:m-dem} (package version \demPackageVersion, seed \demSeed, batches of $6$~kg) and evaluated with the laboratory-jaw module of Section~\ref{sec:m-labjaw}, and the two are set against the measurements of Section~\ref{sec:data-lab}. The document of the contract \texttt{dem-run} has the state \emph{partial}: two of the three runs complete and one does not. Of the $\demDecAll$ decisions (three pairs of sides, three quantities, three points), $\demDecMet$ are met, $\demDecNotMet$ are not met and $\demDecNotComp$ are not compared (Table~\ref{tab:dem-decisions}).
+
+\emph{The runs.} Table~\ref{tab:dem-runs} gives the state of each run. The $63/52$~mm run stopped with the package's overlap error at the first overlap limit ($0.3$) and completes at the second limit ($0.5$) in $\demCoarseStrokes$ strokes, with a steady window of strokes $\demCoarseWinFirst$ to $\demCoarseWinLast$ ($\demCoarseWinN$ strokes), of which $\demCoarseWinAbove$ have a largest overlap above the reference of $0.3$. The $16/13.2$~mm run stopped at the first limit and completes at the second in $\demFineStrokes$ strokes, with a window of strokes $\demFineWinFirst$ to $\demFineWinLast$, of which $\demFineWinAbove$ of $\demFineWinN$ are above the reference. The $31.5/26.5$~mm run stops with the overlap error at both limits: its last attempt ran $\demMidStrokes$ strokes, passed $\demMidPassed$~kg of the $6$~kg batch and ended with $\demMidHeld$ spheres and $\demMidHoldKg$~kg held in the chamber, after $\demMidDeferred$ progeny placements were deferred for want of room in the bed. It has no window, so none of its decisions that rests on the simulation is stated: they are not compared, with the basis that the run did not run the whole batch through. The mass balance closes to round-off in all three runs (the last row of the table). Both complete runs have a stationary power in the window (the trend of the per-stroke power is within two standard errors of zero).
+
+\begin{table}[!t]
+\centering
+\caption{The three runs of the particle simulation as the committed document records them: the attempts of the overlap ladder (limit, end, strokes), the final attempt's strokes and steps, the window, the whole-run values beside the window's, the breakage summary and the mass balance. The $31.5/26.5$~mm run ends with the overlap error at both limits and has no window. Generated from \texttt{jaw-lab.json}.}
+\label{tab:dem-runs}
+\scriptsize
+\input{tables/tab-dem-runs}
+\end{table}
+
+\emph{The three sides.} Table~\ref{tab:dem-sides} sets the measurement, the particle simulation and the population balance side by side and Figure~\ref{fig:dem-points} draws the throughput, the net power and $P_{80}$ of the three points on shared axes. At the $63/52$~mm point the simulated throughput is $\demCoarseQsim\pm\demCoarseQsimSe$~kg/h (window mean and standard error) against the measured $\demCoarseQmeas$~kg/h, a relative error of $+\demCoarseErrQsim$ percent against a band of $10$ percent: not met, and resolved, because the nearer band edge is many standard errors away. The net power is $\demCoarsePsim\pm\demCoarsePsimSe$~kW against the measured $\demCoarsePmeas$~kW, an error of $-\demCoarseErrPsimAbs$ percent against a band of $30$ percent: met, and resolved. At the $16/13.2$~mm point the throughput is $\demFineQsim\pm\demFineQsimSe$~kg/h against $\demFineQmeas$~kg/h (not met, resolved) and the net power $\demFinePsim\pm\demFinePsimSe$~kW against $\demFinePmeas$~kW, an error of $-\demFineErrPsimAbs$ percent (met, not resolved: the nearer band edge is less than two standard errors from the window mean). The whole-run mean power of the $63/52$~mm run, which the paper's unstated window may have averaged over, is $\demCoarsePwholeSim$~kW, below the window's $\demCoarsePsim$~kW (the run includes the filling and the emptying of the chamber).
+
+The source paper's own simulation drew its throughput and net power as curves over the feed size, and the package holds a reading of it at the $63/52$~mm feed only (the document holds it as context and no decision uses it). The net power is $\demCoarsePaperP$~kW, from the paper's text, against the measured $\demCoarsePmeas$~kW: $\demCoarsePaperPerr$ percent, inside the $30$ percent band this report uses, where the paper writes of ``very good agreement'' (its page 10). The throughput is about $\demCoarsePaperQ$~kg/h, read by eye from the dashed curve of its Fig.~14a, against the measured $\demCoarseQmeas$~kg/h: $+\demCoarsePaperQerr$ percent, just outside the $10$ percent band this report uses and a reading of a curve; the paper says that its simulations ``captured very well the trends'' of throughput and net power with the feed size (its page 11). The simulated throughput of this report is $\demCoarseQratio$ times the measured one and $\demCoarsePaperQratio$ times the paper's reading. The result of this report is about the particle simulation as the package \texttt{crushdem} implements it (the energy-based breakage model of Tavares with an ore derived from the paper's single-particle tests, and the contact of the paper's Tables 3 and 4); the paper's model breaks a particle at a threshold force and replaces it with a fixed progeny set, and this comparison does not refute that study.
+
+\begin{table}[!t]
+\centering
+\caption{The measurement, the particle simulation (window mean $\pm$ standard error of the strokes, with their autocorrelation) and the population balance (with the spread over the eight corners of the published ranges in brackets) at the three operating points. The population balance states no net power and no specific energy, and the $31.5/26.5$~mm run has no window, so its statistics are absent; the values marked $^{\dagger}$ are the product of the mass passed before that run stopped and are not compared. The reduction ratio uses the analytic $F_{80}$ of the feed class on every side. Generated from \texttt{jaw-lab.json}.}
+\label{tab:dem-sides}
+\scriptsize
+\input{tables/tab-dem-sides}
+\end{table}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig-dem-points.pdf}
+\caption{Throughput, net power and product $P_{80}$ at the three operating points of the laboratory jaw: the measurement (horizontal line) with its band (shaded, $10$, $30$ percent for the first two and none for $P_{80}$), the particle simulation (circle, window mean with $\pm$ one standard error; for the $31.5/26.5$~mm run, which has no window, a hollow circle in the $P_{80}$ panel only, the $P_{80}$ of the mass passed before it stopped, not compared) and the population balance (square; its $P_{80}$ with the spread over the eight corners of the published ranges as a vertical line; it states no net power). Generated from \texttt{jaw-lab.json}.}
+\label{fig:dem-points}
+\end{figure}
+
+\emph{Power, throughput and the energy per kilogram.} The simulated mean power of the two complete runs is within the band of the measured power, but the simulated throughput is $\demCoarseQratio$ and $\demFineQratio$ times the measured one. The specific energy shows what the power agreement rests on: the window's swing-plate energy per kilogram passed is $\demCoarseEsim$~J/kg against the $\demCoarseEmeas$~J/kg that the measured power over the measured throughput gives ($\demCoarseEratio$ of it) at the $63/52$~mm point, and $\demFineEsim$ against $\demFineEmeas$~J/kg ($\demFineEratio$ of it) at the $16/13.2$~mm point. Power is the product of the mass rate and the energy per kilogram, so a mass rate that is too high and an energy per kilogram that is too low give a power ratio of $\demCoarsePratio$ and $\demFinePratio$: the net-power decisions are met by compensation of two quantities that are each outside their agreement with the measurement, and the document carries both so that this can be read. The paper states no averaging window for its mean power, so the window of this report (Equation~\eqref{eq:dem-window}) is the report's choice; the whole-run power is reported beside it.
+
+\emph{The product.} Figure~\ref{fig:dem-products} draws the product size distributions. The simulated product is coarser than the measured one at both complete points: $P_{80}$ is $\demCoarseDsim$~mm against $\demCoarseDmeas$~mm at $63/52$~mm and $\demFineDsim$ against $\demFineDmeas$~mm at $16/13.2$~mm, and the reduction ratios are $\demCoarseRRsim$ against $\demCoarseRRmeas$ and $\demFineRRsim$ against $\demFineRRmeas$ (not met at both, errors of $\demCoarseErrRRsim$ and $\demFineErrRRsim$ percent against a band of $15$). At the $63/52$~mm point the product holds $\demCoarseAbove$ spheres larger than the $17.5$~mm open side, the largest $\demCoarseLargest$~mm, which leave only by overlapping a plate, while the measured product is entirely below $13.2$~mm (every size at or above that sieve passes); $\demCoarseFsim$ percent of its mass is pooled below the smallest sphere of $4$~mm. The $16/13.2$~mm feed is smaller than the open side, and its simulated reduction ratio of $\demFineRRsim$ says that almost nothing is broken: $P_{80}$ is $\demFineDsim$~mm against an analytic $F_{80}$ of $\demFineFeightyMm$~mm, where the measured product has a $P_{80}$ of $\demFineDmeas$~mm. The $31.5/26.5$~mm run's product ($P_{80}$ of $\demMidDsim$~mm) is that of the $\demMidPassed$~kg passed before it stopped and is not compared.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig-dem-products.pdf}
+\caption{Cumulative product size distribution at the three operating points: the measurement (digitised from the paper, nine sieves), the particle simulation (of the mass passed, for the $31.5/26.5$~mm run up to its stop; sizes at or below the smallest sphere of $4$~mm are not resolved and are not drawn) and the population balance with the spread over the eight corners of the published ranges (shaded). Generated from \texttt{jaw-lab.json}.}
+\label{fig:dem-products}
+\end{figure}
+
+\emph{Over the strokes.} Figure~\ref{fig:dem-series} draws the per-stroke swing-plate power and the mass passed of the three runs with the steady windows shaded. The window is the part of a run between $25$ and $75$ percent of the mass passed, and in the two complete runs the power in it is stationary; the per-stroke power of the stopped run is that of a bed that never emptied and is not interpreted. Figure~\ref{fig:dem-frame} draws one frame of the replay of each complete run in the jaw's section, decoded from its frames file, which shows the bed at the stroke in the middle of the window at the most open position of the swing plate; the replay file of the stopped run ends at its stop. The figure shows where the spheres are and says nothing about whether the simulation is right.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=\textwidth]{fig-dem-series.pdf}
+\caption{Swing-plate power per stroke (left axis) and cumulative mass passed (right axis) of the three runs; the steady window (from $25$ to $75$ percent of the mass passed) is shaded and the dotted line is the measured net power. The $31.5/26.5$~mm run stops with the overlap error after $\demMidStrokes$ strokes and has no window. Generated from \texttt{jaw-lab.json}.}
+\label{fig:dem-series}
+\end{figure}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.8\textwidth]{fig-dem-frame.pdf}
+\caption{One frame of the replay of each complete run, in the jaw's section ($x$ across the chamber, $z$ up): the spheres (drawn at their radii), the fixed plate (black), the swing plate from its pivot to its bottom edge (red) and the discharge plane (dotted). The frame is the most open position of the swing plate in the stroke at the middle of the steady window. Decoded from the frames files named by \texttt{jaw-lab.json} with the document's encoding.}
+\label{fig:dem-frame}
+\end{figure}
+
+\emph{The population balance.} Table~\ref{tab:dem-pb} gives the quantities of the laboratory-jaw evaluation at the three points. The jaw runs below its critical speed of $\labjawCrit$~rpm at its $360$ strokes per minute, so the capacity is on the low-speed branch, and the throughput falls with the feed's size through $k_{\mathrm F}$ alone. Its throughput is $\demCoarseQpb$, $\demMidQpb$ and $\demFineQpb$~kg/h against the measured $\demCoarseQmeas$, $\demMidQmeas$ and $\demFineQmeas$~kg/h, errors of $-\demCoarsePbQerrAbs$, $-\demMidPbQerrAbs$ and $-\demFinePbQerrAbs$ percent against a band of $10$ percent: not met at the three points. The reduction ratio is $\demCoarseRRpb$, $\demMidRRpb$ and $\demFineRRpb$ against $\demCoarseRRmeas$, $\demMidRRmeas$ and $\demFineRRmeas$, errors of $+\demCoarsePbRRerrAbs$, $+\demMidPbRRerrAbs$ and $-\demFinePbRRerrAbs$ percent against a band of $15$ percent: met at the $31.5/26.5$~mm point only. The measured $P_{80}$ ($\demCoarseDmeas$, $\demMidDmeas$ and $\demFineDmeas$~mm) lies inside the spread of the prediction over the published ranges at all three points ($\demCoarseDpbLo$ to $\demCoarseDpbHi$, $\demMidDpbLo$ to $\demMidDpbHi$ and $\demFineDpbLo$ to $\demFineDpbHi$~mm), which says only that the cone-crusher ranges borrowed for a jaw do not exclude the measured value; the spread is wide. The Bond factor gives no power. The work index at which Bond's energy for the measured size reduction equals the measured specific energy is $\demCoarseWiMeas$, $\demMidWiMeas$ and $\demFineWiMeas$~kWh/t at the three feeds, and at the predicted sizes $\demCoarseWi$, $\demMidWi$ and $\demFineWi$~kWh/t: a single ore would have one work index, and these numbers differ from feed to feed, so they describe the measurements and the predictions and are not a property of the ore.
+
+\begin{table}[!t]
+\centering
+\caption{The laboratory-jaw evaluation of the population balance at the three operating points: the ore link, the energy and $t_{10}$, the factors of the capacity model of Sastri, the throughput, the analytic $F_{80}$, Bond's energy per unit of work index, the work index implied by the measured specific energy at the predicted and at the measured sizes, and the flags of the engine. Generated from \texttt{jaw-lab.json}.}
+\label{tab:dem-pb}
+\scriptsize
+\input{tables/tab-dem-pb}
+\end{table}
+
+\emph{The decisions.} Table~\ref{tab:dem-decisions} lists the $\demDecAll$ decisions. Against the measurement, the particle simulation has two met decisions (the net power at the two complete points), two not met on throughput (both resolved), two not met on the reduction ratio and three not compared (those of the run that stopped), and the population balance has one met decision (the reduction ratio at $31.5/26.5$~mm), five not met and three not compared (its power decisions, whose basis is that no work index of the ore is published). Of the nine decisions of the population balance against the particle simulation, none is met, four are not met and five are not compared: the three power decisions have no work index to rest on, and the two others at the $31.5/26.5$~mm point rest on a run that stopped. The decisions that are met say that a value lies within a band set before the runs; the energy per kilogram and the product, which carry no band, are the readings that show how the particle simulation reaches them.
+
+\input{tables/tab-dem-decisions}

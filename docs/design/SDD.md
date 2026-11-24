@@ -23,10 +23,11 @@ Non-goals, each something a reader could reasonably assume:
 
 - A sizing or selection tool for a real crusher, or a digital twin of a measured plant. The synthetic machines' constants
   are illustrative of their class; only the HP500 lane is calibrated, and to one machine on one ore.
-- A discrete-element simulation. The 3D chamber is a kinematic view of the chamber geometry, its motion and the engine's
-  gradation; industrial DEM with breakage needs hours per second of operation and runs offline in the state of the art
-  (Methodology, the population-balance topic). The product's earlier work-in-progress 2-D DEM tracer was removed in
-  0.10.000 and is a backlog item, not a method of this release.
+- A particle simulation of the plant machines, or one that runs in the browser. The 3D chamber is a kinematic view of the
+  chamber geometry, its motion and the engine's gradation. The discrete element method with breakage is run offline, by
+  the bake, on one laboratory jaw crusher with published measurements (Method ladder, M16; feature `dem`); the plant
+  machines stay with the population balance, because no liner geometry of an industrial cone is public and a simulation of
+  one needs hours of computing per second of operation.
 - A grinding model. Grinding and SAG milling are another product's lane (ChargeCascade); ChancaDEM stops at the crusher
   product.
 - A backend. `app/` is a dormant read-only API; the product is a static site.
@@ -129,16 +130,19 @@ the Compare target switch) are in the docked panel (N7 of the re-check).
 Every pinned dependency of `requirements-precompute.txt` (through `data-pipeline/requirements.txt`), `requirements-dev.txt`,
 `notebooks/requirements.txt` and `frontend/package.json`, with the version installed; `scripts/check_tech_matrix.py` fails when a
 pin and this table disagree. A package.json range is recorded at the version `frontend/package-lock.json` resolves it to. The
-versions were read at the package registries on 2026-10-26 (the sizing record lists the sources). Runtimes: Python 3.13
+versions were read at the package registries on 2026-10-26 (the sizing record lists the sources); the six of the learned lane and the 3D view (torch, onnx, onnxruntime, onnxruntime-web, three, @types/three) were read again on 2026-11-21: PyPI and npm `latest`. Runtimes: Python 3.13
 (the workstation; CI uses the template's Python 3.12) and Node 24 (the workstation, CI and the Pages build alike: the engine reference is written and checked to the bit on one runtime, and Node 22 rounds one anomaly feature differently).
 
 | component | package | version | use | alternative considered |
 |---|---|---|---|---|
 | engine | numpy | 2.4.6 | the canonical crusher engine (the Whiten solve, the sieve grid, the capacity and power), the bake, CrusherCal and the notebooks | scipy.linalg for the solve, rejected: the engine ports the TypeScript LU line for line so the two engines agree to 2.3e-12 |
-| models | torch | 2.12.1 | trains the surrogate MLP and the denoising autoencoder on the CPU (`data-pipeline/run.py models`, local only) | scikit-learn MLP, rejected: no ONNX export of the same network with its standardisation and seeds |
-| models | onnx | 1.22.0 | writes the two networks as ONNX graphs and quantises the surrogate to int8 | TorchScript, rejected: the browser runs ONNX, not TorchScript |
-| models | onnxruntime | 1.27.0 | evaluates the shipped graphs held out and checks the export parity; the same release as the web's onnxruntime-web | evaluating in torch, rejected: the metrics must come from the graphs the site runs |
+| models | torch | 2.15.0 | trains the surrogate MLP and the denoising autoencoder on the CPU (`data-pipeline/run.py models`, local only) | scikit-learn MLP, rejected: no ONNX export of the same network with its standardisation and seeds |
+| models | onnx | 1.23.2 | writes the two networks as ONNX graphs and quantises the surrogate to int8 | TorchScript, rejected: the browser runs ONNX, not TorchScript |
+| models | onnxruntime | 1.32.0 | evaluates the shipped graphs held out and checks the export parity; the newest PyPI release, while the web runs the newest npm release of onnxruntime-web (1.31.1) | evaluating in torch, rejected: the metrics must come from the graphs the site runs |
 | bayes | emcee | 3.1.6 | the differential-evolution ensemble sampler of CrusherBayes (`data-pipeline/pipeline/hp500/crusherbayes.py`, the offline bake only; latest release on PyPI, 2024-04-19, MIT, read 2026-10-30) | a hand-written stretch move, rejected: a maintained, cited sampler with the integrated autocorrelation diagnostic; PyMC and NumPyro, rejected: the engine is plain Python and gradient free, and a probabilistic-programming stack would add a graph compiler for nothing |
+| particles | crushdem | 0.6.0 | the discrete element method with particle-replacement breakage on the laboratory jaw crusher of Barrios et al. 2020 (`data-pipeline/pipeline/dem`, `run.py dem`; offline, hours per bake, never in CI or the browser); the product holds no particle engine of its own (DM-002); released on PyPI as 0.6.0 (MIT licence in its metadata), installed with its `jit` extra | a particle engine written in the product, rejected: the no-internal-packages rule and DM-002 |
+| particles | numba | 0.68.1 | the compiled CPU backend of crushdem's kernels (the `jit` extra), at the release the install resolved (BSD) | the package's numpy backend, rejected: its own module note says it runs much slower than the numba path |
+| particles | llvmlite | 0.50.0 | the compiler numba needs, at the release the install resolved (BSD-2-Clause with the LLVM exception) | none: numba's own dependency |
 | notebooks | matplotlib | 3.11.2 | the figures of the notebooks | none: the notebooks need a plotting library, and the web's charts run in the browser only |
 | notebooks | nbclient | 0.11.0 | executes a notebook top to bottom in a fresh kernel (`scripts/run_notebooks.py`) | nbconvert --execute, rejected: a heavier install for the same execution |
 | notebooks | nbformat | 5.11.1 | reads and writes the notebook format | none: the format's own library |
@@ -149,7 +153,7 @@ versions were read at the package registries on 2026-10-26 (the sizing record li
 | contracts | openapi-spec-validator | 0.9.0 | validates `docs/contracts/api.openapi.json` | none: the maintained validator for OpenAPI 3.1 |
 | API | fastapi | 0.143.0 | the dormant `app/`, run by the API contract tests | flask, rejected: no response models to compare with the OpenAPI document |
 | API | httpx | 0.28.1 | the test client of the dormant `app/` | requests, rejected: FastAPI's test client needs httpx |
-| shell | @fasl-work/caos-app-shell | 0.26.2 | the shared app shell, its workbench, charts, story frame, gate (pinned exactly, ADR-0078) | a hand-rolled shell, forbidden by ADR-0078 |
+| shell | @fasl-work/caos-app-shell | 0.26.3 | the shared app shell, its workbench, charts, story frame, gate (pinned exactly, ADR-0078) | a hand-rolled shell, forbidden by ADR-0078 |
 | web | react | 19.3.0 | the UI | none: the shell requires it |
 | web | react-dom | 19.3.0 | the UI renderer | none: the shell requires it |
 | web | react-router | 8.4.0 | the routes and the forward of the old focus links | none: the shell requires it |
@@ -157,8 +161,8 @@ versions were read at the package registries on 2026-10-26 (the sizing record li
 | web | katex | 0.19.1 | typeset equations on the pages | MathJax, rejected: heavier and slower to render |
 | web | lucide-react | 1.52.0 | icons | the shell's own set where it has one |
 | web | uplot | 1.6.32 | the interactive curves under the shell's `UPlotChart` | a static SVG, rejected: no hover, zoom or data table (G20) |
-| web | onnxruntime-web | 1.27.0 | runs the two ONNX graphs in the browser (WASM, single thread, the WASM served by the site) | TensorFlow.js, rejected: the models are exported to ONNX and the release must match the Python onnxruntime |
-| web | three | 0.186.1 | the 3D chamber view (a kinematic view of the chamber geometry) | a 2D drawing only, rejected: the chamber is a surface of revolution whose gap changes around the mantle; the 2D section is kept beside it |
+| web | onnxruntime-web | 1.31.1 | runs the two ONNX graphs in the browser (WASM, single thread, the WASM served by the site) | TensorFlow.js, rejected: the models are exported to ONNX and the release must match the Python onnxruntime |
+| web | three | 0.187.0 | the 3D chamber view (a kinematic view of the chamber geometry) | a 2D drawing only, rejected: the chamber is a surface of revolution whose gap changes around the mantle; the 2D section is kept beside it |
 | build | vite | 8.3.5 | bundler and dev server | webpack, rejected: slower and needs more configuration |
 | build | @vitejs/plugin-react | 6.1.1 | the React transform for vite | none |
 | build | typescript | 5.9.3 | type check of the web and the generated contract types | none |
@@ -167,24 +171,26 @@ versions were read at the package registries on 2026-10-26 (the sizing record li
 | build | @types/node | 24.19.1 | types of the build scripts and the reference writer | none |
 | build | @types/react | 19.3.0 | types of React | none |
 | build | @types/react-dom | 19.3.0 | types of React DOM | none |
-| build | @types/three | 0.186.0 | types of three.js | none |
+| build | @types/three | 0.187.0 | types of three.js | none |
 | tests | vitest | 5.0.3 | the web unit tests: contracts both ways, engine reference and parity, the model encodings, the views | jest, rejected: needs a transform for the vite config |
 | gate | playwright | 1.63.0 | the measured UI gate (`npm run gate`), local only | cypress, rejected: heavier install |
 
 ## Resources
 
-What each stage needs on the development workstation (Windows 11, Python 3.12.15, Node 24.14.1; measured 2026-11-20 with `tools/audit/measure_stages.py` of CAOS_MANAGE on `git archive` copies of the release bake commit `958de37` and of the commit after it, `78ee928`, which changes only tests, contract fixtures and the changelog (two runs, each on a fresh copy, on a workstation that ran other jobs at the same time, which lengthens the times), each committed as one snapshot so the tests that read the repository through git run: the wall time, the peak memory of the whole process tree polled every 20 ms, and the bytes left). The commands and the raw output are in [`measured-resources.md`](measured-resources.md). No stage needs a GPU or a network after the install.
+What each stage needs on the development workstation (Windows 11, Python 3.12.15, Node 24.14.1; measured on 2026-11-23 and 2026-11-24 with `tools/audit/measure_stages.py` of CAOS_MANAGE on `git archive` copies of the release bake commit `07520a2` and of `3f1b182`, which differs from it only in re-executed notebook outputs and one README paragraph (two runs, each on a fresh copy; during the first the workstation also ran the release's own test suite and notebook execution, which lengthens the times: the release bake itself, run alone, took 52.2 min for the bake stage), each committed as one snapshot so the tests that read the repository through git run: the wall time, the peak memory of the whole process tree polled every 20 ms, and the bytes left). The commands and the raw output are in [`measured-resources.md`](measured-resources.md). No stage needs a GPU or a network after the install.
 
 | stage | memory | disk | time | where it runs |
 |---|---|---|---|---|
-| bake (`data-pipeline/run.py all`: 27 cases, the four HP500 documents, the index, readiness) | 1442 MB peak | 308 KB in `data/derived/` (308,364 bytes, 67 files), the trained models included | 54.2 min | workstation, never CI |
-| HP500 step alone (`data-pipeline/run.py hp500`: the backbone, CrusherCal, the CrusherBayes sampler, the paired comparison) | 1592 MB peak | 31 KB in `data/derived/hp500/` (30,568 bytes, 4 files) | 52.3 min | workstation, never CI |
-| training (`data-pipeline/run.py models`: the LHS sweeps of the engine, the surrogate and the autoencoder, ONNX export, held-out evaluation) | 446 MB peak | 59 KB in `data/derived/models/` (59,480 bytes, 5 files) | 74.3 s on the CPU | workstation, never CI |
-| tests (pytest, the whole suite: 1714 passed, 27 skipped) | 437 MB peak (the process tree, notebook kernels included) | temporary trees under the temp root (`--basetemp`), removed after | 15.6 min | workstation; the planted-defect suite `tests/adversarial` also runs in CI |
-| install (`npm ci`) | 639 MB peak | 329.0 MB in `node_modules` (329,015,953 bytes, 11509 files) | 17.3 s | workstation and CI web job |
-| build (`npm run build`) | 642 MB peak | 17.2 MB in `frontend/dist` (17,223,081 bytes, 174 files), of which 13.5 MB is the ONNX Runtime WASM | 11.8 s | workstation and CI web job |
-| web unit tests (`npm test`, 562 tests) | 3091 MB peak (vitest's worker pool) | none | 9.1 s | workstation and CI web job |
-| deploy payload (GitHub Pages) | none | 17.2 MB uploaded | one Pages deploy | CI after main |
+| bake (`data-pipeline/run.py all`: 27 cases, the four HP500 documents, the index, readiness) | 1426 MB peak | 309 KB written in `data/derived/` (the folder holds 2,473,699 bytes in 70 files with the trained models and the committed particle document, which the bake does not write) | 72.5 min under load, 52.2 min run alone | workstation, never CI |
+| HP500 step alone (`data-pipeline/run.py hp500`: the backbone, CrusherCal, the CrusherBayes sampler, the paired comparison) | 1535 MB peak | 31 KB in `data/derived/hp500/` (30,568 bytes, 4 files) | 63.2 min under load | workstation, never CI |
+| particle document (`data-pipeline/run.py dem` with the stored runs of the data root, as a release bake runs it) | 93 MB peak | 2.2 MB in `data/derived/dem/` (2,164,725 bytes, 4 files) | 1.7 s | workstation, never CI |
+| particle runs (`data-pipeline/run.py dem` from no stored run: the three simulations of `crushdem` in three processes) | 474 MB peak over the three processes | the same 2.2 MB, and the raw records in the data root | 67.7 min (the first bake, on a loaded workstation, 70.2 min) | workstation, never CI and never in a release bake when the records exist |
+| training (`data-pipeline/run.py models`: the LHS sweeps of the engine, the surrogate and the autoencoder, ONNX export, held-out evaluation) | 462 MB peak | 60 KB in `data/derived/models/` (59,745 bytes, 5 files) | 92.3 s on the CPU | workstation, never CI |
+| tests (pytest, the whole suite: 1835 passed, 27 skipped) | 536 MB peak (the process tree, notebook kernels and the short particle runs of the stage tests included) | temporary trees under the temp root (`--basetemp`), removed after | 37.0 min | workstation; the planted-defect suite `tests/adversarial` also runs in CI |
+| install (`npm ci`) | 600 MB peak | 342.8 MB in `node_modules` (342,780,475 bytes, 11560 files) | 93.5 s | workstation and CI web job |
+| build (`npm run build`) | 692 MB peak | 20.9 MB in `frontend/dist` (20,905,234 bytes, 178 files), of which 14.8 MB is the ONNX Runtime WASM | 30.6 s | workstation and CI web job |
+| web unit tests (`npm test`, 769 tests) | 3465 MB peak (vitest's worker pool) | none | 15.5 s | workstation and CI web job |
+| deploy payload (GitHub Pages) | none | 20.9 MB uploaded | one Pages deploy | CI after main |
 
 ## Lanes
 
@@ -197,9 +203,9 @@ What each stage needs on the development workstation (Windows 11, Python 3.12.15
 - Live: `frontend/src/engine/`, the TypeScript engine the product shipped since 0.02.000, held to the Python engine by
   the shared reference `tests/fixtures/engine-reference.json` (124 operating points, the largest relative difference
   2.3e-12) and to the baked traces by `frontend/src/engine/crusher.parity.test.ts`; the two ONNX models run in the
-  browser through onnxruntime-web 1.27.0 with its WASM served by the site. The basis for the live lane is measured: the
+  browser through onnxruntime-web 1.31.1 with its WASM served by the site. The basis for the live lane is measured: the
   lane gate (`data-pipeline/pipeline/core/gate.py`) judges each case's engine time against 1500 ms and its trace against
-  256 KiB, and every case is live-eligible (the canonical engine evaluates a case in 1.31 ms, the median over the 27 cases of the median of seven warmed runs, at most 1.46 ms; the largest trace is 4,127 bytes; [`measured-resources.md`](measured-resources.md)).
+  256 KiB, and every case is live-eligible (the canonical engine evaluates a case in 1.40 ms, the median over the 27 cases of the median of seven warmed runs, at most 1.45 ms; the largest trace is 4,127 bytes; [`measured-resources.md`](measured-resources.md)).
 
 ## Method ladder
 
@@ -225,13 +231,16 @@ criterion below holds in the TypeScript port because the shared reference holds 
 | M13 | classical | The campaign view: the closed-side setting at which the engine's P80 reaches a target, and the hours to get there at a drift rate the user supplies (the form of Ma, Fan and He 2016; no wear rate asserted) (what-if) | both engines return the same setting on a shared table of 45 rows to 1e-6 mm; the engine's P80 at the returned setting is the target; a target already exceeded, never reached, an invalid point and a non-monotone P80 give zero hours or no answer, never a guess | `tests/test_campaign.py::test_the_shared_table_is_reproduced_to_1e6_mm`, `tests/test_campaign.py::test_a_target_never_reached_below_the_ceiling_is_none`, `frontend/src/engine/campaign.test.ts`, `frontend/src/views/campaign.test.tsx` |
 | B-lin | classical | The setting-only power line: ordinary least squares of throughput and of power on the closed-side setting alone, refit without each held-out survey (the baseline every other HP500 method is held to) | it reproduces the dossier's 12.78 percent (power) and 13.67 percent (throughput) leave-one-survey-out MAPE on the ten surveys, and a survey planted with an absurd target moves every other fold and not its own | `tests/test_hp500_loo.py::test_b_lin_reproduces_the_dossier_numbers`, `tests/test_hp500_loo.py::test_adversarial_a_fold_never_sees_its_held_out_survey` |
 | M14 | sota | Morrell's size-specific crusher energy W_c = S_c K2 M_ic 4 (x2^f(x2) - x1^f(x1)) (Morrell 2009; GMSG guideline, equations B4 and B5), beside Bond, with M_ic and a no-load term fitted per fold because the ore's M_ic is not published | equation B4 is the guideline's, its result is kWh/t (kW with the throughput), S_c is applied below 1 and dropped above it; the held-out numbers (38.08 and 15.21 percent) are reported as they come, the negative M_ic of the no-load variant flagged | `tests/test_morrell.py::test_the_equation_b4_as_printed`, `tests/test_morrell.py::test_units_give_kwh_per_tonne_and_kw`, `tests/test_morrell.py::test_sc_is_applied_below_one_and_dropped_above_one`, `tests/test_hp500_loo.py::test_morrell_variants_report_the_numbers_as_they_come` |
+| M15 | classical | The laboratory-jaw module (offline, `data-pipeline/pipeline/model/crusher/labjaw.py`): the jaw capacity model of Sastri (1994), a laboratory classification preset (the first estimate of Donovan 2003 with the ranges of King 2000 as a band), a narrow feed class through the engine's own breakage and Whiten solve, Bond's energy per unit of work index and no power (the ore's work index is not published) | Sastri's Table 2 is reproduced (eight rows within 0.2 percent, the fifth within 3 percent); the capacity is continuous at the critical speed; the product closes mass, is finer than the feed and finer at a tighter setting; no constant of the module is a measured value of the jaw it is compared with; the five plant machines and the learned models' encodings are unchanged | `tests/test_labjaw.py::test_sastri_table_2_rows`, `tests/test_labjaw.py::test_capacity_is_continuous_at_the_critical_speed_and_peaks_there`, `tests/test_labjaw.py::test_the_evaluation_closes_mass_and_is_finer_than_the_feed`, `tests/test_labjaw.py::test_the_module_source_holds_no_measured_value_of_the_laboratory_jaw`, `tests/test_labjaw.py::test_the_plant_engine_holds_exactly_the_five_plant_machines` |
+| M16 | sota | The discrete element method with particle-replacement breakage (the Tavares breakage model), run offline by the bake through the published package `crushdem` on the laboratory jaw crusher of Barrios et al. 2020, at the three operating points with a measured throughput, net power and product, beside the measurement and the laboratory-jaw evaluation of the population balance (M15) | the document holds the package's own result of each point (its window statistics and its resolved rule), a run that does not complete is recorded as such and no verdict rests on it, every verdict follows its band, the inputs read no measured outcome, and a fixed-seed run is reproduced bit for bit; the verdicts are reported as they come | `tests/contracts/test_dem_run.py::test_every_verdict_follows_its_band`, `tests/test_dem_stage.py::test_a_run_that_does_not_complete_is_recorded_as_such`, `tests/test_dem_stage.py::test_no_input_reads_the_measured_outcome`, `tests/test_dem_stage.py::test_a_short_run_is_reproduced_bit_for_bit`, `tests/test_dem_stage.py::test_the_stage_takes_the_simulation_from_the_package` |
 | BS-2 | beyond | CrusherBayes: a Bayesian calibration of the engine's fitted scalars with a structural discrepancy term per target (Kennedy and O'Hagan 2001), sampled by a differential-evolution ensemble sampler, refit without each held-out survey | the kill criterion of `## Beyond the state of the art`, applied as written; the identifiability table reported in any case | `tests/test_crusher_bayes.py::test_kill_criterion_is_applied_as_written`, `tests/test_crusher_bayes.py::test_loo_refits_without_the_held_out_survey`, `tests/test_crusher_bayes.py::test_a_short_chain_is_recorded_as_not_converged_never_kept_silently`, `tests/test_crusher_bayes.py::test_the_document_is_byte_identical_and_independent_of_the_worker_count`, `tests/contracts/test_hp500_crusherbayes.py::test_crusherbayes_validates` |
 
 Landed for 0.12.000 (CAOS_MANAGE `plans/chancadem/plan-0-12-000.md`): the setting-only power line B-lin (classical),
-Morrell's size-specific energy (M14) beside Bond, and CrusherBayes (BS-2). Still being built, entering the ladder with its gate when it
-lands: discrete-element simulation with breakage (particle replacement with the Tavares
-breakage model, in the separate package `crushdem`, validated on the laboratory jaw of Barrios et al. 2020,
-https://doi.org/10.3390/min10080717).
+Morrell's size-specific energy (M14) beside Bond, and CrusherBayes (BS-2). Landed for 0.15.000 (CAOS_MANAGE
+`plans/chancadem/plan-0-15-000.md`): the laboratory-jaw module (M15) and the discrete element method with particle
+replacement (M16), run through the separate published package `crushdem` on the laboratory jaw of Barrios et al. 2020
+(https://doi.org/10.3390/min10080717) and compared there with the measurement and with the population balance. Open: a
+cone (no readable result of a laboratory cone test was found; CAOS_MANAGE `plans/chancadem/dem-plan.md`, units K1 to K4).
 
 ## Cases
 
@@ -335,7 +344,7 @@ CrusherCal (M10) is the evaluation protocol every method above is held to, not a
 ## Deploy driver
 
 GitHub Pages at chancadem.fasl-work.com: a static site with every artifact committed, no secret and no server, for a public
-repository. The measurement behind it is the lane gate (every case is live-eligible) and the site size (17.2 MB of site files, 13.5 MB of it the self-hosted ONNX Runtime WASM, and 308 KB of artifacts, [`measured-resources.md`](measured-resources.md)).
+repository. The measurement behind it is the lane gate (every case is live-eligible) and the site size (20.9 MB of site files, 14.8 MB of it the self-hosted ONNX Runtime WASM, and 2.5 MB of artifacts, 2.2 MB of them the particle document with its replay files, [`measured-resources.md`](measured-resources.md)).
 The target is written in `deploy/TARGET` and checked by `scripts/check_deploy_place.py`.
 
 ## Risks and kill criteria
@@ -364,10 +373,10 @@ The target is written in `deploy/TARGET` and checked by `scripts/check_deploy_pl
 | ADR-0054 | the committed artifacts are the evidence; the web replays them and re-runs only a light engine live | `data-pipeline/`, `docs/contracts/catalog.md`, the lane gate |
 | ADR-0057 | two contracts, named stages, lanes; the product declares no package | `data-pipeline/`, `docs/contracts/catalog.md`; `product.json` `method_packages` is `[]` |
 | ADR-0058 | architecture modal, five themed bilingual tabs | `frontend/src/architecture/`, validated by the shell on mount |
-| ADR-0069 | every promised method one vertical implementation with its acceptance criterion | the Method ladder above, each criterion with its gate; the DEM is not promised in this release |
+| ADR-0069 | every promised method one vertical implementation with its acceptance criterion | the Method ladder above, each criterion with its gate; the discrete element method is a vertical of its own from 0.15.000 (the package, the bake stage, the contract `dem-run`, the view, the notebooks) |
 | ADR-0070 | Focus mode for the App: the workbench opens the open group of a case in the full viewport; `?focus=1`, Escape or the exit button returns to the same case, group and sub-view | `frontend/src/workbench/Workbench.tsx` (`focus`), `npm run gate` with `--require-focus` (G18); the App is a workbench (`product.json` has no `app` field) |
 | ADR-0071 | the page is the viewport; one tab row; the instrument at least half the App route | the shell's `CaseWorkbench`; the gate (G5, G6) |
 | ADR-0074 | CI runs cheap checks only; training and the bake are local | `.github/workflows/ci.yml`, `scripts/check_ci_budget.py` |
 | ADR-0075 | every requirement names its gate | `docs/design/features/`, `scripts/check_sdd.py` |
-| ADR-0078 | rules live in the base | shell 0.26.2 (pinned exactly) over template 0.15.014 (`.template-version`); no product re-implements them, and on adopting 0.26.0 the product dropped its hold of the callout band (known defect 65 fixed in the shell) |
+| ADR-0078 | rules live in the base | shell 0.26.3 (pinned exactly) over template 0.15.015 (`.template-version`); no product re-implements them, and on adopting 0.26.0 the product dropped its hold of the callout band (known defect 65 fixed in the shell) |
 | ADR-0080 | contract-first parallel delivery | `docs/contracts/`, `tests/contracts/`, `frontend/src/readiness/`, `scripts/check_contracts.py`, `scripts/check_readiness.py` |
