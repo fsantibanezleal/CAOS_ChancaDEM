@@ -6,15 +6,15 @@ import product from '../../../../product.json';
 import { P, useT } from '../bi';
 
 const REPORT = product.manuscripts.find((m) => m.kind === 'technical-report')!;
-const PREPRINT = product.manuscripts.find((m) => m.kind === 'manuscript');
+const PREPRINTS = product.manuscripts.filter((m) => m.kind === 'manuscript');
 
 export function Honesty() {
   const t = useT();
   return (
     <DocSection title={{ en: 'What is exact and what is not', es: 'Qué es exacto y qué no' }} area="honesty" noRefsReason={{ en: 'States the limits of this product.', es: 'Declara los límites de este producto.' }}>
       <P
-        en="The exact part is arithmetic: the TypeScript engine reproduces the Python engine at 121 reference operating points to 1e-9 relative, and the engine meets closed forms that do not depend on its numerics (the Rosin-Rammler passing at x63 equals 1 - 1/e, the Bond energy of a reduction from F80 to P80, and the mass of every baked product equal to the feed within the solver closure). What is calibrated is one lane: the HP500 secondary cone on one ore, itabirite at Minas Rio, fitted inside a closed-side setting of 38 to 55 mm and a feed f80 of 47 to 140 mm; outside that support the engine flags the reading as extrapolation instead of answering with a confident number."
-        es="La parte exacta es aritmética: el motor en TypeScript reproduce al motor en Python en 121 puntos de operación de referencia a 1e-9 relativo, y el motor cumple formas cerradas que no dependen de su numérica (el pasante de Rosin-Rammler en x63 es igual a 1 - 1/e, la energía de Bond de una reducción de F80 a P80, y la masa de cada producto calculado igual a la de la alimentación dentro del cierre del solucionador). Lo calibrado es un solo carril: el cono secundario HP500 con un solo mineral, la itabirita de Minas Rio, ajustado dentro de un lado cerrado de 38 a 55 mm y un f80 de alimentación de 47 a 140 mm; fuera de ese soporte el motor marca la lectura como extrapolación en vez de responder con un número confiado."
+        en="The exact part is arithmetic: the TypeScript engine reproduces the Python engine at 124 reference operating points to 1e-9 relative, and the engine meets closed forms that do not depend on its numerics (the Rosin-Rammler passing at x63 equals 1 - 1/e, the Bond energy of a reduction from F80 to P80, and the mass of every baked product equal to the feed within the solver closure). What is calibrated is one lane: the HP500 secondary cone on one ore, itabirite at Minas Rio, fitted inside a closed-side setting of 38 to 55 mm and a feed f80 of 47 to 140 mm; outside that support the engine flags the reading as extrapolation instead of answering with a confident number."
+        es="La parte exacta es aritmética: el motor en TypeScript reproduce al motor en Python en 124 puntos de operación de referencia a 1e-9 relativo, y el motor cumple formas cerradas que no dependen de su numérica (el pasante de Rosin-Rammler en x63 es igual a 1 - 1/e, la energía de Bond de una reducción de F80 a P80, y la masa de cada producto calculado igual a la de la alimentación dentro del cierre del solucionador). Lo calibrado es un solo carril: el cono secundario HP500 con un solo mineral, la itabirita de Minas Rio, ajustado dentro de un lado cerrado de 38 a 55 mm y un f80 de alimentación de 47 a 140 mm; fuera de ese soporte el motor marca la lectura como extrapolación en vez de responder con un número confiado."
       />
       <P
         en="What is illustrative is everything else: the constants of the synthetic machines (the classification windows, the reference capacities and speeds, the nip geometry and the energy per nip) reproduce the direction of each effect, a tighter setting giving a finer product and a wider throw a coarser one, and not the absolute numbers of a plant. The two learned models, a surrogate network and a denoising autoencoder, emulate the engine and not a plant, and every learned view says which model answered. The 3D chamber is a kinematic view of the geometry, the motion and the gradation the engine computes, and it is not a particle simulation. The discrete element method itself is run offline, by the package crushdem, on one laboratory jaw crusher only (the Methodology topic on the particle simulation), takes about two hours of computing for its three operating points, and is neither part of the live lane nor of the plant machines."
@@ -27,12 +27,21 @@ export function Honesty() {
         </a>
         {t(' (the concept DOI, which always resolves to the latest version).', ' (el DOI de concepto, que siempre lleva a la última versión).')}
       </p>
-      {PREPRINT && (
+      {PREPRINTS.length > 0 && (
         <p>
-          {t('The preprint on CrusherBayes, the calibration this product proposes: ', 'El preprint sobre CrusherBayes, la calibración que propone este producto: ')}
-          <a href={`https://doi.org/${PREPRINT.concept_doi}`} rel="noopener noreferrer" data-preprint-doi={PREPRINT.concept_doi}>
-            doi:{PREPRINT.concept_doi}
-          </a>
+          {t('The manuscripts on CrusherBayes, the calibration this product proposes (titles in English): ', 'Los manuscritos sobre CrusherBayes, la calibración que propone este producto (títulos en inglés): ')}
+          {PREPRINTS.map((m, i) => (
+            <span key={m.concept_doi}>
+              {i > 0 ? '; ' : ''}
+              <cite lang="en" translate="no">
+                {m.title}
+              </cite>
+              {', '}
+              <a href={`https://doi.org/${m.concept_doi}`} rel="noopener noreferrer" data-preprint-doi={m.concept_doi}>
+                doi:{m.concept_doi}
+              </a>
+            </span>
+          ))}
           .
         </p>
       )}
