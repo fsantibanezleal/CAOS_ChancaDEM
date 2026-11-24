@@ -10,9 +10,9 @@
     "sha256": "becffd2eaff768ac1144db154cf6bbdea34766fa40a0a26c7350e50a73c5a12e"
   },
   "case-index": {
-    "version": "1.1.0",
+    "version": "2.0.0",
     "schema": "docs/contracts/schemas/case-index.schema.json",
-    "sha256": "84c43ec6320a38fc9f1a1966800ac7f5b6a01b076df1b41b6033ec9ef0b71cc0"
+    "sha256": "d22c58b274223968e8058b887d0db6d3617ddd343b07ef0c67883254499af79b"
   },
   "case-manifest": {
     "version": "1.1.1",

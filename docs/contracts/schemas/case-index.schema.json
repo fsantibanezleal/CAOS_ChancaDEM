@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "case-index.schema.json",
   "title": "CaseIndex",
-  "description": "Contract 2 (artifact), catalog row case-index 1.1.0: the flat inventory of every baked case, written by data-pipeline/pipeline/core/manifest.py build_index to data/derived/manifests/index.json. Rules the schema cannot state, checked by the producer and consumer tests: n_cases equals the number of entries, default_case is one of their case_id values, the entries are sorted by case_id, and every path in files exists under data/derived.",
+  "description": "Contract 2 (artifact), catalog row case-index 2.0.0: the flat inventory of every baked case, written by data-pipeline/pipeline/core/manifest.py build_index to data/derived/manifests/index.json. Rules the schema cannot state, checked by the producer and consumer tests: n_cases equals the number of entries, default_case is one of their case_id values, the entries are sorted by case_id, and every path in files exists under data/derived.",
   "type": "object",
   "additionalProperties": false,
   "required": ["schema", "engine_version", "n_cases", "default_case", "cases", "files"],

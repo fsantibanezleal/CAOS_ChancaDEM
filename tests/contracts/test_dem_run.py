@@ -271,7 +271,7 @@ def test_the_replay_file_is_the_one_the_document_names(doc_root):
     root, doc = doc_root
     index_path = root / "manifests" / "index.json"
     listed = cs.load_json(index_path)["files"] if index_path.is_file() else None
-    assert replay_errors(root, doc, listed) == []        # every replay file is listed by the index (case-index 1.1.0)
+    assert replay_errors(root, doc, listed) == []        # every replay file is listed by the index (case-index 2.0.0)
     if listed is not None:
         assert [f for f in listed if f.endswith(".bin")] == [p["simulation"]["replay"]["file"] for p in doc["points"] if p["simulation"]["replay"]]
     for p in doc["points"]:

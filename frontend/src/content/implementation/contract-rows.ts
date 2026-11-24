@@ -19,7 +19,7 @@ export const ROWS: { id: string; version: string; schema: string; governs: [stri
   },
   {
     id: 'case-index',
-    version: '1.1.0',
+    version: '2.0.0',
     schema: 'chancadem.index/v1',
     governs: ['The inventory of cases, the case the App opens on and the further files the site serves, among them the replay files of the particle simulation.', 'El inventario de casos, el caso en que abre la App y los demás archivos que sirve el sitio, entre ellos los archivos de reproducción de la simulación de partículas.'],
     missing: ['The site build stops, since there is no site without an inventory. Older than the product: stale, shown with both versions.', 'La compilación del sitio se detiene, pues no hay sitio sin inventario. Más antiguo que el producto: desactualizado, con ambas versiones.'],
