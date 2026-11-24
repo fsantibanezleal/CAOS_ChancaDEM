@@ -60,7 +60,19 @@ document and its three replay files (2,164,725 bytes), which the bake does not w
 
 ## The particle runs
 
-The three runs of the particle simulation are not part of a release bake when their raw records are in the data root. The first bake (2026-11-21, three processes, a workstation loaded by other sessions) wrote a wall-time file beside each raw record: 2,624 s for 63/52 mm, 375 s for 31.5/26.5 mm and 4,210 s for 16/13.2 mm, about 70 minutes for the three in three processes. The memory of those runs was not measured in that bake; the stage that rebuilds the document from the stored runs is in the table above.
+The three runs of the particle simulation are not part of a release bake when their raw records are in the data root. The first bake (2026-11-21, three processes, a workstation loaded by other sessions) wrote a wall-time file beside each raw record: 2,624 s for 63/52 mm, 375 s for 31.5/26.5 mm and 4,210 s for 16/13.2 mm, about 70 minutes for the three in three processes. Their cost was measured again on 2026-11-24 from 03:13: the whole stage
+from no stored run, into a sandbox copy of the derived tree in the training root, under the same monitor:
+
+```
+$ (cwd .) python.exe data-pipeline/run.py dem --output <training root>/cdem-measure/derived --runs <training root>/cdem-measure/raw --jobs 3
+demruns: exit 0, 4060.26 s, peak 474.4 MB
+```
+
+that is 67.7 min for the three runs in three processes, with a peak of 474 MB over the three processes together;
+its own wall-time files say 1,657 s, 259 s and 4,056 s. The document and the three replay files it wrote are
+byte for byte the committed ones (equal sha256 digests: `jaw-lab.json` 70,293 bytes, the replay files
+839,872, 95,688 and 1,158,872 bytes), so a bake from no stored run reproduces the release's document at
+full size, the middle feed stopping again with the overlap error at both limits.
 
 ## The engine time and the trace size (the lane gate)
 
