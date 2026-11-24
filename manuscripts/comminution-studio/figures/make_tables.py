@@ -19,6 +19,15 @@ Sources read (nothing else):
   manuscripts/comminution-studio/data/resources.json                  the measured stages (measure_resources.py)
   figures/heldout_uq.py                                               the bootstrap over surveys and the published
                                                                       throughput model of Rocha et al. (tab-uncertainty)
+  data-pipeline/pipeline/model/crusher/labjaw.py, tests/test_labjaw.py  the laboratory-jaw module and the printed Table 2 of
+                                                                      Sastri 1994 as the test holds it (tab-sastri-table2,
+                                                                      numbers-labjaw)
+  data/derived/dem/jaw-lab.json                                       the laboratory-jaw document (tab-dem-runs, tab-dem-sides, tab-dem-pb,
+                                                                      tab-dem-decisions, numbers-dem-results)
+  the installed package crushdem (crushdem.cases.barrios2020, crushdem.machines)  the laboratory jaw case: its machine, contacts,
+                                                                      ore derivation and digitised measurements
+                                                                      (tab-dem-parameters, tab-lab-measured); skipped, with the
+                                                                      committed fragments kept, when the package is not importable
 
 Run:  python manuscripts/comminution-studio/figures/make_tables.py     (any working directory; numpy only)
 """
@@ -27,6 +36,7 @@ from __future__ import annotations
 import csv
 import hashlib
 import json
+import math
 import re
 import sys
 from pathlib import Path
@@ -45,6 +55,12 @@ from pipeline.model.crusher.machines import REF_THROW_MM  # noqa: E402
 from pipeline.model.sweep import RANGES  # noqa: E402
 
 DASH = "--"
+from pipeline.model.crusher.breakage import t10_of as _t10_of  # noqa: E402,F401
+import inspect  # noqa: E402
+
+from pipeline.model.crusher.breakage import t10_of as _t10_of  # noqa: E402
+
+ENGINE_A = float(inspect.signature(_t10_of).parameters["a"].default)  # the A of the engine's t10_of, read from its code [percent]
 MACHINE_NAME = {"cone-sec": "secondary cone", "cone-tert": "tertiary cone", "cone-short-head": "short-head cone",
                 "gyratory": "gyratory", "jaw": "jaw"}
 
@@ -506,6 +522,7 @@ def numbers_drift() -> None:
 
 RESOURCE_ROWS = [("bake", r"Bake (\texttt{run.py all}: 27 cases, the four HP500 documents, index, readiness)", "workstation"),
                  ("hp500", r"HP500 step alone (\texttt{run.py hp500}: backbone, CrusherCal, the CrusherBayes sampler, the paired comparison)", "workstation"),
+                 ("dem", r"Particle document (\texttt{run.py dem}: the document and its replay files rebuilt from the stored runs)", "workstation"),
                  ("models", r"Training (\texttt{run.py models}: sweeps, two networks, export, evaluation)", "workstation, CPU"),
                  ("tests", "Python tests, the whole suite", "workstation"),
                  ("install", r"Web install (\texttt{npm ci})", "workstation, CI"),
@@ -996,7 +1013,7 @@ def schema_longtable(cid: str, version: str, schema_path: Path) -> None:
             if entered in first:
                 meaning = (meaning + " " if meaning else "") + "Its fields are those of " + field(first[entered]) + "."
             rows.append([field(name), tex(_type_of(v, defs)), breakable(tex(rng)) if rng else DASH,
-                         "yes" if k in required else "no", tex(unit) if unit else DASH, meaning or DASH])
+                         "yes" if k in required else "no", tex(unit.replace("dimensionless", "--").replace("percentage points", "points")) if unit else DASH, meaning or DASH])
             if sub is not None and entered not in first:
                 fields, req, sep, sub_chain = sub
                 if entered is not None:
@@ -1064,7 +1081,9 @@ def schemas() -> None:
 HASHED = ["data/examples/hp500-surveys.csv", "data/examples/params.csv", "data/derived/hp500/backbone.json",
           "data/derived/hp500/loo.json", "data/derived/hp500/crusherbayes.json", "data/derived/hp500/comparison.json",
           "data/derived/model-metrics.json",
-          "data/derived/models/surrogate.onnx", "data/derived/models/psd-ae.onnx", "data/derived/manifests/index.json"]
+          "data/derived/models/surrogate.onnx", "data/derived/models/psd-ae.onnx", "data/derived/manifests/index.json",
+          "data-pipeline/pipeline/model/crusher/labjaw.py", "docs/contracts/schemas/dem-run.schema.json",
+          "data/derived/dem/jaw-lab.json"]
 
 
 def hashes() -> None:
@@ -1116,6 +1135,387 @@ def parity_numbers() -> None:
     ]))
 
 
+
+# ---------------------------------------------------------------------------------------------------------------------
+# the laboratory jaw: the capacity model of Sastri (1994), the discrete element case and the measurements it is held to
+# ---------------------------------------------------------------------------------------------------------------------
+def _literal_assignments(path: Path, names: set[str]) -> dict:
+    """The literal values assigned to ``names`` at module level of a Python file, read without importing it (so the printed
+    Table 2 of Sastri 1994 stays in ONE place, tests/test_labjaw.py, and the report reads it from there)."""
+    import ast
+
+    out: dict = {}
+    for node in ast.parse(path.read_text(encoding="utf-8")).body:
+        if not isinstance(node, ast.Assign):
+            continue
+        for target in node.targets:
+            if isinstance(target, ast.Name) and target.id in names:
+                out[target.id] = ast.literal_eval(node.value)
+            elif isinstance(target, ast.Tuple) and all(isinstance(e, ast.Name) for e in target.elts):
+                keys = [e.id for e in target.elts]
+                if names.issuperset(keys):
+                    out.update(dict(zip(keys, ast.literal_eval(node.value))))
+    missing = names - out.keys()
+    if missing:
+        raise KeyError(f"{path.name} no longer assigns {sorted(missing)} as literals")
+    return out
+
+
+def tab_sastri_table2() -> None:
+    """The nine rows of Table 2 of Sastri (1994) (Hersam's laboratory jaw), recomputed by the product's laboratory-jaw module
+    against the printed column, and the numbers of the laboratory jaw of Barrios et al. that the text quotes."""
+    from pipeline.model.crusher import labjaw as lj
+
+    held = _literal_assignments(ROOT / "tests" / "test_labjaw.py",
+                                {"TABLE_2", "HERSAM_W_M", "HERSAM_D_M", "HERSAM_N_RPM", "HERSAM_S_M"})
+    rows, rels, worst, worst_row = [], [], 0.0, 0
+    for i, (t_m, t_over_g, fav_over_g, k1_printed, printed, density) in enumerate(held["TABLE_2"], 1):
+        gape = t_m / t_over_g
+        vh = lj.volumetric_capacity_m3_h(held["HERSAM_N_RPM"], held["HERSAM_W_M"], held["HERSAM_S_M"], t_m, gape, held["HERSAM_D_M"])
+        k1 = lj.feed_factor(fav_over_g * gape, gape)
+        got = vh * k1 * 1.0 * density
+        rel = 100.0 * (got - printed) / printed
+        rels.append(rel)
+        if abs(rel) > abs(worst):
+            worst, worst_row = rel, i
+        rows.append([str(i), num(1e3 * t_m, 2), num(t_over_g, 4), num(fav_over_g, 3), num(k1_printed, 3), num(k1, 3),
+                     num(density, 2), num(printed, 3), num(got, 3), num(rel, 2)])
+    head = ["Row", "$T$ (mm)", "$T/G$", r"$\bar F/G$", r"$k_{\mathrm F}$ printed", r"$k_{\mathrm F}$ computed",
+            r"$\rho_s$ (t/m$^3$)", r"$Q_{\mathrm S}$ printed (t/h)", r"$Q_{\mathrm S}$ computed (t/h)", "Difference (\\%)"]
+    write("tab-sastri-table2", tabular("@{}r r r r r r r r r r@{}", head, rows))
+    jaw = lj.OTSUKA_BARRIOS_2020
+    g, s_m, t_m = jaw.gape_mm / 1e3, 7.5e-3, jaw.throw_mm / 1e3
+    depth = lj.depth_between_jaws_m(g)
+    nc = lj.critical_speed_rpm(g, s_m, t_m, depth)
+    n_rows = len(held["TABLE_2"])
+    within = sum(1 for r in rels if abs(r) <= 0.2)
+    write("numbers-labjaw", "\n".join([
+        f"\\newcommand{{\\labjawDepth}}{{{depth:.4f}}}",
+        f"\\newcommand{{\\labjawCrit}}{{{nc:.0f}}}",
+        f"\\newcommand{{\\labjawKT}}{{{lj.throw_factor(t_m, g):.3f}}}",
+        f"\\newcommand{{\\sastriRows}}{{{n_rows}}}",
+        f"\\newcommand{{\\sastriWithin}}{{{within}}}",
+        f"\\newcommand{{\\sastriWorstRow}}{{{worst_row}}}",
+        f"\\newcommand{{\\sastriWorstPct}}{{{abs(worst):.1f}}}",
+        f"\\newcommand{{\\sastriHersamN}}{{{held['HERSAM_N_RPM']:.0f}}}",
+        f"\\newcommand{{\\sastriMatch}}{{{100 * (lj.CRITICAL_SPEED_COEF ** 2 / (lj.HIGH_SPEED_COEF * lj.G_M_S2) - 1):.2f}}}",
+    ]))
+
+
+def _crushdem():
+    try:
+        import crushdem  # noqa: F401
+        from crushdem.cases import barrios2020 as case
+        from crushdem.machines import barrios_contact_table, jaw_barrios2020
+    except ImportError as exc:  # the committed fragments stay as they are
+        print(f"crushdem is not importable ({exc}): tab-dem-parameters and tab-lab-measured are not regenerated")
+        return None
+    return case, barrios_contact_table, jaw_barrios2020
+
+
+def tab_dem_parameters() -> None:
+    """Every parameter of the discrete element model of the laboratory jaw with its value as the installed package holds it, its
+    unit and where it comes from: the paper's tables, the package's derivation of the ore from the paper's single-particle
+    tests, or an assumption."""
+    got = _crushdem()
+    if got is None:
+        return
+    case, contact_table, jaw = got
+    import crushdem
+
+    m = jaw()
+    prov = {n: v for n, v, _ in m.provenance}
+    ore, der = case.paper_ore("A", seed=1)
+    ct = contact_table()
+    ore_m, steel_m = ct.materials
+    shear = lambda mat: mat.youngs_modulus / (2.0 * (1.0 + mat.poisson))  # noqa: E731
+    paper, derived, assumed = "paper", "derived from the paper", "assumption"
+    def g(x: float) -> str:
+        mant, _, exp = f"{x:.3e}".partition("e")
+        return f"${float(mant):g}\\times10^{{{int(exp)}}}$"
+
+    rows = [
+        ["Machine", "", "", "", ""],
+        ["Feed opening, width and gap", r"$w$, $G$", f"{1e3 * prov['width_m']:g} and {1e3 * prov['top_gap_m']:g}", "mm", paper + ", Table 2"],
+        ["Closed-side setting", r"$S$", f"{1e3 * prov['closed_side_setting_m']:g}", "mm", paper + ", Table 2"],
+        ["Swing jaw throw (read as the opening of the bottom edge)", r"$T$", f"{1e3 * prov['throw_m']:g}", "mm", paper + " (reading: " + assumed + ")"],
+        ["Stroke frequency", r"$f$", f"{prov['frequency_hz']:g}", "Hz", paper + ", Table 2"],
+        ["Nip angle between the plates", r"$\psi_{\mathrm n}$", f"{prov['nip_angle_deg']:g}", "deg", assumed],
+        ["Plate height and length", r"$H_{\mathrm p}$, $L_{\mathrm p}$", f"{1e3 * prov['plate_height_m']:.1f} and {1e3 * prov['plate_length_m']:.1f}", "mm", "derived from the gaps and the nip angle"],
+        ["Peak swing angle", r"$\theta_{\max}$", f"{prov['swing_angle_max_rad']:.5f}", "rad", "derived: the bottom edge opens by the throw"],
+        ["Swing law", "", "harmonic rocking about the top pivot", "", assumed],
+        ["Contacts", "", "", "", ""],
+        ["Ore density, shear modulus, Poisson ratio", r"$\rho$, $G_{\mathrm{sh}}$, $\nu_{\mathrm P}$", f"{ore_m.density:g}, {g(shear(ore_m))}, {ore_m.poisson:g}", "kg/m$^3$, Pa, --", paper + ", Table 3"],
+        ["Steel density, shear modulus, Poisson ratio", r"$\rho$, $G_{\mathrm{sh}}$, $\nu_{\mathrm P}$", f"{steel_m.density:g}, {g(shear(steel_m))}, {steel_m.poisson:g}", "kg/m$^3$, Pa, --", paper + ", Table 3"],
+        ["Restitution, friction, rolling friction of ore on ore", r"$e_{\mathrm r}$, $\mu_{\mathrm c}$, $\mu_{\mathrm r}$", f"{ct.restitution[0][0]:g}, {ct.mu[0][0]:g}, {ct.mu_r[0][0]:g}", "--", paper + ", Table 4"],
+        ["Restitution, friction, rolling friction of steel on ore", r"$e_{\mathrm r}$, $\mu_{\mathrm c}$, $\mu_{\mathrm r}$", f"{ct.restitution[0][1]:g}, {ct.mu[0][1]:g}, {ct.mu_r[0][1]:g}", "--", paper + ", Table 4"],
+        ["Tangential damping ratio", r"$x_{\gamma,t}$", f"{ct.xt[0][0]:g}", "--", "package default"],
+        ["Ore (breakage), derived in the package from the single-particle tests of Fig.~6b", "", "", "", ""],
+        ["Fracture energy at large size", r"$E_\infty$", f"{ore.e_inf:.2f}", "J/kg", derived + ", fit to the two coarse classes"],
+        ["Size scale of the size effect", r"$d_0$", f"{1e3 * ore.d0:.1f}", "mm", derived + ", same fit"],
+        ["Size exponent", r"$\phi_E$", f"{ore.phi:g}", "--", assumed + ": the gneiss value of Tavares (2022), fixed"],
+        ["Variance of the logarithm of the fracture energy", r"$\sigma_E^2$", f"{ore.variance:g}", "--",
+         f"{derived}: the data give {der['variance_from_data']:.2f}, limited to the upper end of the range of Tavares (2022)"],
+        ["Damage coefficient", r"$\gamma_D$", f"{ore.gamma:g}", "--", assumed + ": Tavares (2022), mean of 3 to 4"],
+        ["Maximum $t_{10}$ of one event and exponent", r"$A$, $b'$", f"{ore.a_max:g}, {ore.b_prime:g}", "\\%, --", assumed + ": the gneiss row of Tavares (2022), Table 4"],
+        ["Upper truncation of the fracture energy", r"$E_{\max}/E_{50}$", r"$\infty$", "--", assumed + ": the plain lognormal"],
+        ["Smallest sphere kept", r"$d_{\min}$", f"{1e3 * ore.min_diameter:g}", "mm", assumed],
+        ["Run control", "", "", "", ""],
+        ["Time step as a fraction of the Rayleigh time of the smallest sphere", "", "0.1", "--", "package default of the case"],
+        ["Steps between services of the feed, the discharge and the breakage", "", "50", "steps", "package default"],
+        ["Overlap limits tried in turn", "", " and ".join(f"{x:g}" for x in case.OVERLAP_LADDER), "of the smaller radius", "package default of the case"],
+        ["Strokes without progress that stop a run as stalled", "", "40", "strokes", "package default of the case command"],
+        ["Largest number of strokes", "", "400", "strokes", "package default of the case command"],
+    ]
+    caption = (r"Parameters of the discrete element model of the laboratory jaw as the installed package \texttt{crushdem} holds them: the machine and "
+               "the contacts from the paper's tables, the ore derived in the package from the paper's single-particle tests (pass A of the two "
+               "digitisation passes), and the run control, each with its unit and its origin: the paper, a derivation from the paper, an "
+               "assumption or a package default. Generated from the installed package.")
+    head = r"Parameter & Symbol & Value & Unit & Origin \\"
+    lines = [r"\begingroup\scriptsize",
+             r"\begin{longtable}{@{}p{0.28\textwidth} p{0.09\textwidth} p{0.13\textwidth} p{0.10\textwidth} p{0.26\textwidth}@{}}",
+             r"\caption{" + caption + r"}\label{tab:dem-params}\\", r"\toprule", head, r"\midrule", r"\endfirsthead",
+             r"\multicolumn{5}{@{}l}{\footnotesize Table~\thetable{} (continued)}\\", r"\toprule", head, r"\midrule", r"\endhead",
+             r"\bottomrule", r"\endfoot"]
+    for r in rows:
+        if not r[1] and not r[2] and not r[3]:
+            lines.append(r"\multicolumn{5}{@{}l}{\emph{" + r[0] + r"}} \\")
+        else:
+            lines.append(" & ".join(r) + r" \\")
+    lines += [r"\end{longtable}", r"\endgroup"]
+    write("tab-dem-parameters", "\n".join(lines))
+    stiff = case.contact_check_fig6a(case.load_digitised())["stiffness_ratio"]
+    write("numbers-dem", "\n".join([
+        f"\\newcommand{{\\demPackageVersion}}{{{'.'.join(str(int(x)) for x in crushdem.__version__.split('.'))}}}",
+        f"\\newcommand{{\\demStiffRatio}}{{{stiff:.1f}}}",
+        f"\\newcommand{{\\demSigmaData}}{{{der['variance_from_data']:.2f}}}",
+        f"\\newcommand{{\\demPhiFree}}{{{der['free_three_class_fit']['phi']:.2f}}}",
+    ]))
+
+
+def tab_lab_measured() -> None:
+    """What the laboratory tests measured at the three feed classes, as the package digitised it from the figures of the paper
+    (two passes: the mean is the value, their difference the digitisation noise)."""
+    got = _crushdem()
+    if got is None:
+        return
+    case = got[0]
+    rows = []
+    for fc in ("63/52", "31.5/26.5", "16/13.2"):
+        m = case.measured(fc)
+        rows.append([tex(fc), f"{num(m.throughput_kg_h, 1)} $\\pm$ {num(m.throughput_noise_kg_h, 1)}",
+                     num(m.net_power_kw, 4) if fc == "63/52" else f"{num(m.net_power_kw, 4)} $\\pm$ {num(m.net_power_noise_kw, 4)}",
+                     f"{num(m.product['noise_pct_max'], 2)} and {num(m.product['noise_pct_rms'], 2)}"])
+    write("tab-lab-measured", tabular("@{}l r r r@{}", ["Feed class (mm)", "Throughput (kg/h)", "Net power (kW)",
+                                                        "Product, largest and rms pass difference (points)"], rows))
+    dig = case.load_digitised()
+    noise = dig["fig6b_noise"]
+    write("numbers-lab", "\n".join([
+        f"\\newcommand{{\\labFsixNoiseMax}}{{{100 * max(v['max_abs_ln_force'] for v in noise.values()):.1f}}}",
+        f"\\newcommand{{\\labFsixN}}{{{noise['63/53']['n_pairs']}}}",
+        "\\newcommand{\\labQcross}{%.0f}" % (0.5 * sum(dig["throughput_kg_h"]["cross_check_fig13a_time_mean_1_to_24_5_s"][k] for k in ("A", "B"))),
+    ]))
+
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# the committed document of the laboratory jaw (contract dem-run): data/derived/dem/jaw-lab.json
+# ---------------------------------------------------------------------------------------------------------------------
+DEM_DOC = DER / "dem" / "jaw-lab.json"
+POINT_WORD = {"63-52": "Coarse", "31.5-26.5": "Mid", "16-13.2": "Fine"}
+PAIR_NAME = {"simulation_vs_measured": "particle simulation against measurement",
+             "population_balance_vs_measured": "population balance against measurement",
+             "population_balance_vs_simulation": "population balance against particle simulation"}
+SIDE_SHORT = {"simulation_vs_measured": "sim/meas", "population_balance_vs_measured": "pb/meas", "population_balance_vs_simulation": "pb/sim"}
+QUANTITY_NAME = {"throughput": ("throughput", "kg/h", 1), "net_power": ("net power", "kW", 3), "reduction_ratio": ("reduction ratio", "--", 2)}
+
+
+def _dem() -> dict:
+    """The committed document with each measured value that carries its source reduced to the value (its digitisation noise kept
+    beside it as ``<name>_noise``)."""
+    d = _json(DEM_DOC)
+    for p in d["points"]:
+        m = p["measured"]
+        for k in list(m):
+            if isinstance(m[k], dict) and "digitisation_noise" in m[k]:
+                m[k + "_noise"] = m[k]["digitisation_noise"]
+                m[k] = m[k]["value"]
+    return d
+
+
+def _v(x: object, nd: int = 2) -> str:
+    """A value to nd decimals in math mode, or the dash for an absent one (never a made-up number)."""
+    return DASH if x is None else num(x, nd)
+
+
+def _limit_text(a: dict) -> str:
+    return f"{a['max_overlap_fraction']:g}: " + {"complete": "complete", "overlap_error": "overlap error"}.get(a["status"], a["status"]) + f" ({a['strokes']})"
+
+
+def tab_dem_results() -> None:
+    """The result tables and macros of the laboratory jaw, read from the committed document of the contract dem-run."""
+    d = _dem()
+    pts = d["points"]
+    names = {p["id"]: p["id"].replace("-", "/") for p in pts}
+    # --- the runs -------------------------------------------------------------------------------------------------------
+    head = ["Quantity"] + [r"$" + names[p["id"]] + r"$~mm" for p in pts]
+    rows = []
+
+    def row(label, fn):
+        rows.append([label] + [fn(p) for p in pts])
+
+    row("State of the final attempt", lambda p: tex(p["simulation"]["status"].replace("_", " ")))
+    row("Attempts (overlap limit: end, strokes)", lambda p: tex("; ".join(_limit_text(a) for a in p["simulation"]["attempts"])))
+    row("Strokes, steps ($10^6$) of the final attempt", lambda p: f"{p['simulation']['strokes']}, {num(p['simulation']['steps'] / 1e6, 2)}")
+    row("Simulated time (s)", lambda p: _v(p["simulation"]["simulated_s"], 2))
+    row("Mass fed and passed (kg)", lambda p: f"{num(p['simulation']['mass_fed_kg'], 3)} and {num(p['simulation']['mass_passed_kg'], 3)}")
+    row("Spheres and mass held at the end (kg)", lambda p: f"{p['simulation']['held_spheres']} and {num(p['simulation']['hold_up_kg'], 3)}")
+    row("Window (first and last stroke)", lambda p: (f"{p['simulation']['window']['first_stroke']} and {p['simulation']['window']['last_stroke']}" if p["simulation"]["window"] else DASH))
+    row("Window strokes above the reference overlap", lambda p: (str(p["simulation"]["window_strokes_above_overlap_reference"]) if p["simulation"]["window"] else DASH))
+    row("Power stationary in the window", lambda p: (num(p["simulation"]["power_trend_stationary"]) if p["simulation"]["window"] else DASH))
+    row("Whole-run throughput (kg/h)", lambda p: _v(p["simulation"]["throughput_whole_run_kg_h"], 0))
+    row("Whole-run net power (kW)", lambda p: _v(p["simulation"]["net_power_whole_run_kw"], 3))
+    row("Peak number of spheres (pool)", lambda p: f"{p['simulation']['breakage']['peak_particles']} ({p['simulation']['capacity_slots']})")
+    row("Breakage events and progeny", lambda p: f"{p['simulation']['breakage']['events']} and {p['simulation']['breakage']['progeny']}")
+    row("Placements deferred for want of room", lambda p: str(p["simulation"]["breakage"]["deferred_placements"]))
+    row("Injected and absorbed energy (J)", lambda p: f"{num(p['simulation']['breakage']['injected_energy_j'], 1)} and {num(p['simulation']['breakage']['absorbed_energy_j'], 0)}")
+    row("Fines below the smallest sphere (\\%)", lambda p: _v(p["simulation"]["fines_below_minimum_pct"], 1))
+    row("Largest product sphere (mm); spheres above the open side", lambda p: f"{num(p['simulation']['largest_product_mm'], 1)}; {p['simulation']['spheres_above_open_side']}")
+    row("Mass-balance residual (kg)", lambda p: _sci(p["simulation"]["mass_balance_residual_kg"]))
+    write("tab-dem-runs", tabular("@{}p{0.34\\textwidth} p{0.19\\textwidth} p{0.19\\textwidth} p{0.19\\textwidth}@{}", head, rows))
+
+    # --- the three sides ------------------------------------------------------------------------------------------------
+    srows = []
+    for p in pts:
+        m, s, b = p["measured"], p["simulation"], p["population_balance"]
+        band = b["band"]
+        nm = r"$" + names[p["id"]] + r"$"
+        srows.append([nm, "throughput (kg/h)", _v(m["throughput_kg_h"], 1), _pm(s["throughput_kg_h"], s["throughput_se_kg_h"], 0), _v(b["throughput_kg_h"], 0)])
+        srows.append(["", "net power (kW)", _v(m["net_power_kw"], 3), _pm(s["net_power_kw"], s["net_power_se_kw"], 3), DASH])
+        srows.append(["", "specific energy (J/kg)", _v(m["specific_energy_j_kg"], 0), _v(s["specific_energy_j_kg"], 0), DASH])
+        dag = "" if s["status"] == "complete" else r"$^{\dagger}$"
+        srows.append(["", "$P_{80}$ (mm)", _v(m["p80_mm"], 2), _v(s["p80_mm"], 2) + dag, _rng(b["p80_mm"], band["p80_mm"], 2)])
+        srows.append(["", "$P_{50}$ (mm)", _v(m["p50_mm"], 2), _v(s["p50_mm"], 2) + dag, _rng(b["p50_mm"], band["p50_mm"], 2)])
+        srows.append(["", "reduction ratio", _v(m["reduction_ratio"], 2), _v(s["reduction_ratio"], 2) + dag, _rng(b["reduction_ratio"], band["reduction_ratio"], 2)])
+    write("tab-dem-sides", tabular("@{}l l r r r@{}", ["Point (mm)", "Quantity", "Measured", "Particle simulation", "Population balance [spread]"], srows))
+
+    # --- the population balance -----------------------------------------------------------------------------------------
+    prow = []
+
+    def prow_add(label, fn):
+        prow.append([label] + [fn(p) for p in pts])
+
+    prow_add("Median fracture energy $E_{50}$ at the class mean size (J/kg)", lambda p: _v(p["population_balance"]["e50_j_kg"], 1))
+    prow_add(r"Ore competence $A\times b$", lambda p: _v(p["population_balance"]["ore_axb"], 1))
+    prow_add("Specific energy $E_{cs}$ (kWh/t) and $t_{10}$ (\\%)", lambda p: f"{num(p['population_balance']['specific_energy_kwh_t'], 3)} and {num(p['population_balance']['t10_pct'], 1)}")
+    prow_add("Feed-size factor $k_{\\mathrm F}$ and throw factor $k_{\\mathrm T}$", lambda p: f"{num(p['population_balance']['capacity']['feed_factor'], 3)} and {num(p['population_balance']['capacity']['throw_factor'], 3)}")
+    prow_add("Volume per hour $V_h$ (m$^3$/h) and critical speed (rpm)", lambda p: f"{num(p['population_balance']['capacity']['volumetric_m3_h'], 3)} and {num(p['population_balance']['capacity']['critical_speed_rpm'], 0)}")
+    prow_add("Capacity (kg/h)", lambda p: _v(p["population_balance"]["throughput_kg_h"], 0))
+    prow_add("Analytic $F_{80}$ (mm)", lambda p: _v(p["population_balance"]["f80_mm"], 2))
+    prow_add("Bond energy per unit of work index $w_{\\mathrm B}$", lambda p: _v(p["population_balance"]["bond_kwh_t_per_wi"], 4))
+    prow_add("Work index implied by the measured energy at the predicted sizes $W_i^{\\ast}$ (kWh/t)", lambda p: _v(p["population_balance"]["implied_work_index_kwh_t"], 2))
+    prow_add("Work index implied at the measured sizes (kWh/t)", lambda p: _v(p["measured"]["implied_work_index_kwh_t"], 2))
+    prow_add("Flags of the engine", lambda p: tex("; ".join(p["population_balance"]["flags"]) or "none"))
+    write("tab-dem-pb", tabular("@{}p{0.34\\textwidth} p{0.19\\textwidth} p{0.19\\textwidth} p{0.19\\textwidth}@{}", head, prow))
+
+    # --- the decisions --------------------------------------------------------------------------------------------------
+    lines = [r"\begingroup\scriptsize",
+             r"\begin{longtable}{@{}l l l r r r l p{0.17\textwidth} l@{}}",
+             r"\caption{The $27$ decisions of the laboratory jaw, read from the committed document: for each operating point, each pair of sides "
+             r"and each quantity (the bands are $10$ percent for the throughput, $30$ for the net power and $15$ for the reduction ratio RR; sides: sim is the particle simulation, meas the measurement, pb the population balance), the two values (the first side against the second), the relative error of Equation~\eqref{eq:proto-band}, the "
+             r"decision, the basis of a decision that is not compared and, for a decision that rests on a steady window, whether it is resolved (the "
+             r"nearer band edge more than two standard errors from the window mean) and that distance in standard errors. Generated from "
+             r"\texttt{jaw-lab.json}.}\label{tab:dem-decisions}\\",
+             r"\toprule", r"Point & Sides & Quantity & First & Second & Error (\%) & Decision & Basis & Resolved \\", r"\midrule", r"\endfirsthead",
+             r"\multicolumn{9}{@{}l}{\footnotesize Table~\thetable{} (continued)}\\", r"\toprule",
+             r"Point & Sides & Quantity & First & Second & Error (\%) & Decision & Basis & Resolved \\", r"\midrule", r"\endhead",
+             r"\bottomrule", r"\endfoot"]
+    counts = {"met": 0, "not met": 0, "not compared": 0}
+    for p in pts:
+        for pair, label in PAIR_NAME.items():
+            for q, (qn, unit, nd) in QUANTITY_NAME.items():
+                v = p["verdicts"][pair][q]
+                counts[v["verdict"]] += 1
+                res = DASH if v["resolved"] is None else ("yes" if v["resolved"] else "no") + (f" ({num(v['edge_distance_se'], 1)})" if v["edge_distance_se"] is not None else "")
+                lines.append(" & ".join([r"$" + names[p["id"]] + r"$", SIDE_SHORT[pair], {"throughput": "throughput", "net_power": "power", "reduction_ratio": "RR"}[q], _v(v["first"], nd), _v(v["second"], nd),
+                                         _v(None if v["relative_error"] is None else 100 * v["relative_error"], 1),
+                                         tex(v["verdict"].replace("verdict", "decision")), tex((v["basis"] or "").replace("_", " ")) or DASH, res]) + r" \\")
+    lines += [r"\end{longtable}", r"\endgroup"]
+    write("tab-dem-decisions", "\n".join(lines))
+
+    # --- macros ---------------------------------------------------------------------------------------------------------
+    geo = pts[0]["simulation"]["replay"]["geometry"]
+    mac = [f"\\newcommand{{\\demPlateHeight}}{{{geo['swing_pivot_mm'][1]:.1f}}}",
+           f"\\newcommand{{\\demPbDepthMm}}{{{1e3 * pts[0]['population_balance']['capacity']['depth_m']:.1f}}}",
+           f"\\newcommand{{\\demEngineA}}{{{ENGINE_A:g}}}",
+           f"\\newcommand{{\\demOreA}}{{{d['ore']['a_max_percent']:g}}}",
+           f"\\newcommand{{\\demDecMet}}{{{counts['met']}}}", f"\\newcommand{{\\demDecNotMet}}{{{counts['not met']}}}",
+           f"\\newcommand{{\\demDecNotComp}}{{{counts['not compared']}}}", f"\\newcommand{{\\demDecAll}}{{{sum(counts.values())}}}",
+           f"\\newcommand{{\\demDocVersion}}{{{d['engine_version']}}}", f"\\newcommand{{\\demSeed}}{{{d['seed']}}}"]
+    for p in pts:
+        w = POINT_WORD[p["id"]]
+        m, s, b = p["measured"], p["simulation"], p["population_balance"]
+        vs, vp = p["verdicts"]["simulation_vs_measured"], p["verdicts"]["population_balance_vs_measured"]
+        pairs = {
+            "Qsim": (s["throughput_kg_h"], 0), "QsimSe": (s["throughput_se_kg_h"], 0), "Qmeas": (m["throughput_kg_h"], 0), "Qpb": (b["throughput_kg_h"], 0),
+            "Psim": (s["net_power_kw"], 3), "PsimSe": (s["net_power_se_kw"], 3), "Pmeas": (m["net_power_kw"], 3),
+            "RRsim": (s["reduction_ratio"], 2), "RRmeas": (m["reduction_ratio"], 2), "RRpb": (b["reduction_ratio"], 2),
+            "Dsim": (s["p80_mm"], 1), "Dmeas": (m["p80_mm"], 1), "Dpb": (b["p80_mm"], 1), "DpbLo": (b["band"]["p80_mm"][0], 1), "DpbHi": (b["band"]["p80_mm"][1], 1),
+            "Fsim": (s["fines_below_minimum_pct"], 1), "Esim": (s["specific_energy_j_kg"], 0), "Emeas": (m["specific_energy_j_kg"], 0),
+            "Strokes": (s["strokes"], 0), "WinFirst": (s["window"]["first_stroke"] if s["window"] else None, 0),
+            "WinLast": (s["window"]["last_stroke"] if s["window"] else None, 0), "WinN": (s["window"]["strokes"] if s["window"] else None, 0),
+            "WinAbove": (s["window_strokes_above_overlap_reference"], 0), "Held": (s["held_spheres"], 0), "HoldKg": (s["hold_up_kg"], 2),
+            "Passed": (s["mass_passed_kg"], 2), "Peak": (s["breakage"]["peak_particles"], 0), "Events": (s["breakage"]["events"], 0),
+            "Deferred": (s["breakage"]["deferred_placements"], 0), "Above": (s["spheres_above_open_side"], 0), "Largest": (s["largest_product_mm"], 1),
+            "QwholeSim": (s["throughput_whole_run_kg_h"], 0), "PwholeSim": (s["net_power_whole_run_kw"], 3), "Slots": (s["capacity_slots"], 0),
+            "Wi": (b["implied_work_index_kwh_t"], 1), "WiMeas": (m["implied_work_index_kwh_t"], 1), "Axb": (b["ore_axb"], 0), "Esub": (b["e50_j_kg"], 1),
+            "SimTime": (s["simulated_s"], 1), "Steps": (None if s["steps"] is None else s["steps"] / 1e6, 2),
+            "FeightyMm": (p["feed_f80_mm"], 2),
+            "PaperP": (_paper(p, "net_power_kw"), 2), "PaperQ": (_paper(p, "throughput_kg_h"), 0),
+            "PaperPerr": (None if _paper(p, "net_power_kw") is None else 100 * (_paper(p, "net_power_kw") / m["net_power_kw"] - 1), 1),
+            "PaperQerr": (None if _paper(p, "throughput_kg_h") is None else 100 * (_paper(p, "throughput_kg_h") / m["throughput_kg_h"] - 1), 0),
+            "PaperQratio": (None if _paper(p, "throughput_kg_h") is None or s["throughput_kg_h"] is None else s["throughput_kg_h"] / _paper(p, "throughput_kg_h"), 1),
+            "TtenEng": (b["t10_pct"], 2),
+            "TtenOreA": (d["ore"]["a_max_percent"] * (1 - math.exp(-(b["ore_axb"] / d["ore"]["a_max_percent"]) * b["specific_energy_kwh_t"])), 2),
+            "Qratio": (None if s["throughput_kg_h"] is None else s["throughput_kg_h"] / m["throughput_kg_h"], 2),
+            "Eratio": (None if s["specific_energy_j_kg"] is None else s["specific_energy_j_kg"] / m["specific_energy_j_kg"], 2),
+            "Pratio": (None if s["net_power_kw"] is None else s["net_power_kw"] / m["net_power_kw"], 2),
+            "PbQerrAbs": (None if vp["throughput"]["relative_error"] is None else abs(100 * vp["throughput"]["relative_error"]), 1),
+            "PbRRerrAbs": (None if vp["reduction_ratio"]["relative_error"] is None else abs(100 * vp["reduction_ratio"]["relative_error"]), 1),
+            "ErrPsimAbs": (None if vs["net_power"]["relative_error"] is None else abs(100 * vs["net_power"]["relative_error"]), 1),
+            "ErrQsim": (None if vs["throughput"]["relative_error"] is None else 100 * vs["throughput"]["relative_error"], 0),
+            "ErrPsim": (None if vs["net_power"]["relative_error"] is None else 100 * vs["net_power"]["relative_error"], 1),
+            "ErrRRsim": (None if vs["reduction_ratio"]["relative_error"] is None else 100 * vs["reduction_ratio"]["relative_error"], 1),
+            "ErrQpb": (None if vp["throughput"]["relative_error"] is None else 100 * vp["throughput"]["relative_error"], 1),
+            "ErrRRpb": (None if vp["reduction_ratio"]["relative_error"] is None else 100 * vp["reduction_ratio"]["relative_error"], 1),
+        }
+        for k, (val, nd) in pairs.items():
+            if val is not None:
+                mac.append(f"\\newcommand{{\\dem{w}{k}}}{{{val:.{nd}f}}}")
+        mac.append(f"\\newcommand{{\\dem{w}Status}}{{{s['status'].replace('_', ' ')}}}")
+        mac.append(f"\\newcommand{{\\dem{w}Att}}{{{len(s['attempts'])}}}")
+    write("numbers-dem-results", "\n".join(mac))
+
+
+def _paper(p: dict, key: str) -> float | None:
+    """The source paper's own simulated value at a point (contract dem-run 1.1.0), or None where the paper states none."""
+    ps = p.get("paper_simulation")
+    return None if not ps or ps.get(key) is None else ps[key]["value"]
+
+
+def _sci(x: float) -> str:
+    mant, _, exp = f"{x:.1e}".partition("e")
+    return f"${float(mant):g}\\times10^{{{int(exp)}}}$"
+
+
+def _pm(v: object, se: object, nd: int) -> str:
+    return DASH if v is None else f"{num(v, nd)} $\\pm$ {num(se, nd)}"
+
+
+def _rng(v: object, rng: list, nd: int) -> str:
+    return f"{num(v, nd)} [{num(rng[0], nd)}, {num(rng[1], nd)}]"
+
+
 if __name__ == "__main__":
     parity_numbers()
     tab_surveys()
@@ -1142,5 +1542,9 @@ if __name__ == "__main__":
     tab_anomaly()
     tab_contracts()
     schemas()
+    tab_sastri_table2()
+    tab_dem_parameters()
+    tab_lab_measured()
+    tab_dem_results()
     hashes()
     print("tables written to", OUT)

@@ -1,4 +1,4 @@
-// ChancaDEM's own story checks in a browser, on this build (SH-005 to SH-008, SH-010), run by `npm run gate` after the base's
+// ChancaDEM's own story checks in a browser, on this build (SH-005 to SH-008, SH-010), run by `npm run check:story` after the base's
 // scripts/check_story_mode.mjs (which checks what every story owes, whatever its steps) and before the shell gate (G21). What only this
 // product's story can be asked: every step's headline and three callouts with a value, a unit and a source; a planted key press that
 // stops autoplay for good; the exit landing on the step's case, group and view, with the Operate target kept (M5 of the 0.13.000 review);
@@ -183,8 +183,12 @@ try {
   // comparison readable on a phone, one chart per view, the 3D parts selected both ways
   const { showcaseChecks } = await import('../views/showcase.browser.mjs');
   const drawn = await showcaseChecks({ browser, base, ok });
+  // the particle-simulation view's layout (src/views/dem.browser.mjs): the verdict table in its card, no mark of a null in a plotting range,
+  // no overlapping tick labels, the stage's share of the viewport, no decimal point on the Spanish page outside the quoted English
+  const { demChecks } = await import('../views/dem.browser.mjs');
+  const dem = await demChecks({ browser, base, ok });
   console.log(
-    `story.browser: ${storyChecks} checks on ${steps.length} steps (${steps.join(', ')}): headlines, callouts, exits with their view and target, the opening states, the pause on a key press, the two-way selection, the survey scrubber and reduced motion; ${checks - storyChecks} drawing checks (worst anchor ${drawn.worstAnchorPx?.toFixed(1)} px): anchors, staged step changes, cut eyebrows and values, method labels, one chart per view, the table header, the panel's scroll cue and the 3D parts.`,
+    `story.browser: ${storyChecks} checks on ${steps.length} steps (${steps.join(', ')}): headlines, callouts, exits with their view and target, the opening states, the pause on a key press, the two-way selection, the survey scrubber and reduced motion; ${checks - storyChecks} drawing checks (worst anchor ${drawn.worstAnchorPx?.toFixed(1)} px): anchors, staged step changes, cut eyebrows and values, method labels, one chart per view, the table header, the panel's scroll cue and the 3D parts; the particle view's layout on ${dem.combos} measured pages.`,
   );
 } finally {
   await browser.close();

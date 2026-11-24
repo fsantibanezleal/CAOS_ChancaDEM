@@ -8,6 +8,7 @@ import { Breakage } from '../content/methodology/breakage';
 import { Calibrated, Whiten } from '../content/methodology/classification';
 import { Autoencoder, Surrogate } from '../content/methodology/learned';
 import { Capacity, Power } from '../content/methodology/machine';
+import { ParticleJaw } from '../content/methodology/particles';
 import { Size } from '../content/methodology/size';
 import { CrusherBayes, Morrell } from '../content/methodology/newmethods';
 import { CrusherCal } from '../content/methodology/validation';
@@ -33,6 +34,7 @@ export function Methodology() {
             tabs: [
               { id: 'whiten', label: t('Whiten and the balance', 'Whiten y el balance'), content: <Whiten /> },
               { id: 'calibrated', label: t('Calibrated HP500 fit', 'Ajuste HP500 calibrado'), content: <Calibrated /> },
+              { id: 'particles', label: t('Particle simulation', 'Simulación de partículas'), content: <ParticleJaw /> },
             ],
           },
           {

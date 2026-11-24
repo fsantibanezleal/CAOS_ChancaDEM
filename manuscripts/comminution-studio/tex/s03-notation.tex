@@ -30,16 +30,21 @@ and a quantity fitted on them carries the subscript $-i$. A standardised variabl
 standard deviation of the training surveys of the fold. In CrusherBayes, $\boldsymbol\theta$ is the vector of the eight
 engine scalars and the two noise scales, and $\mathbf d_t$ the three discrepancy coefficients of target $t$.
 
-\begin{table}[!t]
-\centering
+\begingroup\footnotesize
+\begin{longtable}{@{}p{0.27\textwidth} p{0.49\textwidth} p{0.17\textwidth}@{}}
 \caption{Notation. Every symbol used in the equations of the report, its meaning and its unit; a dash marks a
-dimensionless quantity. Symbols local to one derivation are defined where they appear.}
-\label{tab:notation}
-\footnotesize
-\begin{tabular}{@{}l p{0.62\textwidth} l@{}}
+dimensionless quantity. Symbols local to one derivation are defined where they appear. The symbols of the discrete element model and of the laboratory-jaw capacity model are the last rows; where a letter already has a meaning above (shear modulus against gape, the $K$ of the capacity factors against the $K$ of the classification), the later symbol carries a subscript or another letter.}\label{tab:notation}\\
 \toprule
 Symbol & Meaning & Unit \\
 \midrule
+\endfirsthead
+\multicolumn{3}{@{}l}{\footnotesize Table~\thetable{} (continued)}\\
+\toprule
+Symbol & Meaning & Unit \\
+\midrule
+\endhead
+\bottomrule
+\endfoot
 $K$, $k$ & number of size classes ($28$) and class index, coarse to fine & -- \\
 $e_k$, $\bar d_k$ & upper edge and geometric mid-size of class $k$ & mm \\
 $\mathbf f$, $\mathbf p$ & feed and product mass per class (each sums to one) & -- \\
@@ -89,6 +94,36 @@ $a_{k,i}$, $I^{(b)}$, $B$ & absolute percentage error of method $k$ at survey $i
 $\star$, $d_{k,i}$, $\bar d_k$ & recommended method; paired difference to it at survey $i$, and its mean & --, points, points \\
 $W_k$, $p_{\mathrm{better},k}$ & surveys the recommended method wins against $k$; share of resamples in which it is better & --, -- \\
 $\ell_k$, $u_k$, $N$ & lower and upper end of the $95\%$ interval of $\bar d_k$; a number of surveys & points, points, -- \\
-\bottomrule
-\end{tabular}
-\end{table}
+$\mathbf q_i$, $\mathbf v_i$, $\boldsymbol\omega_i$ & position, velocity and spin of sphere $i$ in the discrete element model & m, m/s, rad/s \\
+$m_i$, $R_i$, $I_i$ & mass, radius and moment of inertia $\tfrac25m_iR_i^2$ of sphere $i$ (the symbol $R$ without a subscript is the room of the drift projection) & kg, m, kg\,m$^2$ \\
+$\rho$ & density of a material (sphere, wall) & kg/m$^3$ \\
+$Y$, $\nu_{\mathrm P}$, $G_{\mathrm{sh}}$ & Young's modulus, Poisson ratio and shear modulus of a contact material & Pa, --, Pa \\
+$Y^{\ast}$, $G^{\ast}_{\mathrm{sh}}$, $R^{\ast}$, $m^{\ast}$ & effective modulus, shear modulus, radius and mass of a contact & Pa, Pa, m, kg \\
+$\delta_{\mathrm c}$, $v_{\mathrm n}$, $\mathbf v_{\mathrm t}$ & contact overlap, normal and tangential relative velocity of the contact points & m, m/s, m/s \\
+$F^{\mathrm n}$, $\mathbf F^{\mathrm t}$, $\boldsymbol\xi$ & normal force, tangential force and accumulated tangential displacement of a contact & N, N, m \\
+$e_{\mathrm r}$, $\alpha(e_{\mathrm r})$, $\eta_{\mathrm n}$, $\eta_{\mathrm t}$ & coefficient of restitution, its damping function (Tsuji et al.), normal and tangential damping constants & --, --, N\,s/m, N\,s/m \\
+$\mu_{\mathrm c}$, $\mu_{\mathrm r}$, $x_{\gamma,t}$ & Coulomb coefficient, rolling coefficient and tangential damping ratio & --, --, -- \\
+$\Delta t$, $\Delta t_{\mathrm{Ray}}$, $\tau$ & time step, Rayleigh time of a sphere and stroke period $1/f$ & s, s, s \\
+$f$, $\theta(t)$, $\theta_{\max}$ & stroke frequency of the swing jaw, its rocking angle and the peak of that angle & Hz, rad, rad \\
+$P_w$, $\bar P_w$, $\mathbf v_w$ & power a wall delivers to the bed, its mean over whole strokes and the wall's velocity at a contact & W, W, m/s \\
+$E_{\mathrm f}$, $E$, $E_{\mathrm k}$ & specific fracture energy of a sphere, specific energy of a collision and of an event & J/kg \\
+$P(E)$, $E_{50}$, $E_{\max}$, $\sigma_E^2$ & breakage probability, median and upper truncation of the fracture energy, variance of its logarithm & --, J/kg, J/kg, -- \\
+$E_{\infty}$, $d_0$, $\phi_E$ & large-size fracture energy, size scale and exponent of the size effect $E_{50}(d)$ & J/kg, mm, -- \\
+$D$ (Section~\ref{sec:m-dem}), $\gamma_D$, $\chi$ & damage of a sphere, damage coefficient and share of the contact energy a sphere absorbs & --, --, -- \\
+$A$, $b'$, $\alpha_n$, $\beta_n$, $t_n$ & maximum $t_{10}$ of one event (the engine's own $A$ is $A_{\mathrm e}$), its exponent, parameters of the incomplete-beta family and cumulative progeny passing $1/n$ of the parent size & \%, --, --, --, \% \\
+$Z$, $W^{\mathrm{ld}}_i$ & contact modulus $Y/(1-\nu_{\mathrm P}^2)$ and loading work of sphere $i$ since the last service & Pa, J \\
+$d_{\min}$, $o_{\max}$ & smallest sphere kept; overlap limit as a fraction of the smaller radius & mm, -- \\
+$M_k$, $M$, $k_a$, $k_b$ & cumulative mass passed after stroke $k$, its total, and the strokes that bound the steady window & kg, kg, -- \\
+$r_1$, $n_{\mathrm{eff}}$, $\mathrm{se}$, $z$ & lag-1 autocorrelation of the per-stroke power, effective number of strokes, standard error and distance of the nearer band edge in standard errors & --, --, W or kg/h, -- \\
+$G$, $w$, $D$ (Section~\ref{sec:m-labjaw}), $S$, $T$ & gape, jaw width, depth between the jaws, closed-side setting and throw of a jaw in the capacity model of Sastri (metres there) & m \\
+$V_h$, $a$, $N_c$ & volume per hour, height of the falling prism and critical speed of that model & m$^3$/h, m, rpm \\
+$Q_{\mathrm S}$, $k_{\mathrm F}$, $k_{\mathrm T}$, $k_{\mathrm M}$, $\rho_{\mathrm s}$ & capacity, feed-size, throw and material factors of Sastri (his $W$, $K_1$, $K_2$, $K_3$) and true density & t/h, --, --, --, t/m$^3$ \\
+$\bar F$, $d_{\mathrm l}$, $d_{\mathrm u}$ & average feed size, lower and upper sieve of a narrow feed class & mm \\
+$X$, $X_{\mathrm m}$, $\varepsilon$, $b_{\mathrm{band}}$ & value of the first side and of the second side (measurement or particle simulation) of a comparison, their relative error and the relative band & any, any, --, -- \\
+$\mathrm{RR}$ & reduction ratio $F_{80}/P_{80}$ with the analytic $F_{80}$ of the feed class & -- \\
+$n_{\mathrm s}$, $s_{\bar P}$ & whole number of strokes of an average; standard deviation of the per-stroke power of the window & --, W \\
+$H_{\mathrm p}$, $L_{\mathrm p}$, $\psi_{\mathrm n}$ & height and length of the swing and fixed plates of the particle model, and the nip angle between them & mm, mm, deg \\
+$\alpha_1$, $\alpha_2$ & ratios of $K_1$ and $K_2$ to the closed-side setting in the ranges of King & -- \\
+$w_{\mathrm B}$, $W_i^{\ast}$, $E_{\mathrm m}$ & Bond energy per unit of work index, the work index a measured energy implies and a measured specific energy & kWh/t per kWh/t, kWh/t, kWh/t \\
+\end{longtable}
+\endgroup

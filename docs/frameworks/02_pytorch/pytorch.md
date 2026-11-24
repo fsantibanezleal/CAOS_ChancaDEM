@@ -1,4 +1,4 @@
-# PyTorch (`torch==2.12.1`, CPU)
+# PyTorch (`torch==2.15.0`, CPU)
 
 ## What and why
 
@@ -13,13 +13,13 @@ imports torch.
 ## Install
 
 ```
-pip install torch==2.12.1 --index-url https://download.pytorch.org/whl/cpu
+pip install torch==2.15.0 --index-url https://download.pytorch.org/whl/cpu
 pip install -r requirements-precompute.txt
 ```
 
 `scripts/setup.sh` and `scripts/setup.ps1` build `.venv-pipeline` from `requirements-precompute.txt` and
-`requirements-dev.txt`; the file pins `torch==2.12.1`, `onnx==1.22.0` and `onnxruntime==1.27.0`. The environment
-documenting this page reports Python 3.13.14 and torch 2.12.1+cpu.
+`requirements-dev.txt`; the file pins `torch==2.15.0`, `onnx==1.23.2` and `onnxruntime==1.32.0`. The environment
+that last ran it (2026-11-21) reports Python 3.12.10 and torch 2.15.0+cpu.
 
 ## Usage
 

@@ -283,6 +283,146 @@
     "reason": "DIMENSIONLESS: the unit magnitude whose sign is copied in the JavaScript-compatible division.",
     "source": "return math.copysign(math.inf, a) * math.copysign(1.0, b)"
   },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::0.0": {
+    "reason": "DIMENSIONLESS: the floor of Sastri's feed-size factor K1 (equation 10), a factor that multiplies a capacity and cannot be negative; and the value of a cumulative mass fraction below a class's lower limit. Comparable to no measured quantity.",
+    "source": "return max(0.0, K1_FEED_OFFSET - (mean_feed_m / gape_m) ** K1_FEED_EXP)"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::0.21": {
+    "reason": "IN METRES: the intercept of Sastri (1994) equation 13, D = 0.21 + 1.8 G, the vertical depth between the jaws for a gape of 0.25 m or more.",
+    "source": "DEPTH_LARGE_GAPE_INTERCEPT_M = 0.21   # equation 13: D = 0.21 + 1.8 G [m]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::0.25": {
+    "reason": "IN METRES: the gape at which Sastri (1994) switches from equation 12 to equation 13 for the depth between the jaws. DIMENSIONLESS where it is the exponent one quarter of the analytic F80 of a class, the fourth root of a cumulative mass in d^4.",
+    "source": "DEPTH_GAPE_SWITCH_M = 0.25       # equations 12 and 13 switch at this gape [m]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::0.5": {
+    "reason": "DIMENSIONLESS: the lower end of King's (2000) range of alpha1 = K1 / CSS (0.5 to 0.95), and the cumulative mass fraction of the median size P50.",
+    "source": "PASSING_FRACTION_P50 = 0.5       # the median point of a size distribution [fraction]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::0.8": {
+    "reason": "DIMENSIONLESS: the cumulative mass fraction of an 80 percent passing size (F80, P80).",
+    "source": "PASSING_FRACTION_F80 = 0.8       # the 80 percent passing point of a size distribution [fraction]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::0.85": {
+    "reason": "DIMENSIONLESS: the offset of Sastri (1994) equation 10, K1 = 0.85 - (Fav / G)^2.5, a factor on the capacity.",
+    "source": "K1_FEED_OFFSET = 0.85            # equation 10: K1 = 0.85 - (Fav / G)^2.5 [dimensionless]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::0.95": {
+    "reason": "DIMENSIONLESS: the upper end of King's (2000) range of alpha1 = K1 / CSS (0.5 to 0.95), a ratio of two sizes in millimetres.",
+    "source": "alpha1=(0.5, 0.95), alpha2=(1.7, 3.5), n=(1.0, 3.0),"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::1.0": {
+    "reason": "DIMENSIONLESS: Sastri's material factor K3 for harder materials; the first estimate alpha1 = K1 / CSS of Donovan (2003); the lower end of King's range of the exponent n; the value of a cumulative mass fraction at or above a class's upper limit; and the unit throughput and unit work index at which the engine's Bond form returns kWh/t per unit of work index. IN MILLIMETRES where it is the 1 mm sieve of the default band sieves.",
+    "source": "mean_feed_m: float, density_t_m3: float, k3: float = 1.0, depth_m: float | None = None) -> JawCapacity:"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::1.05": {
+    "reason": "DIMENSIONLESS: the engine's own floor of K2 over K1 (the classification module's), and its reduction-ratio threshold of negligible breakage; ratios of two sizes in millimetres.",
+    "source": "K2_FLOOR_OVER_K1 = 1.05          # the engine's floor: K2 is never below 1.05 K1 [dimensionless]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::1.15": {
+    "reason": "DIMENSIONLESS: the exponent of Sastri (1994) equation 12, D = 3.25 G^1.15, with G and D in metres.",
+    "source": "DEPTH_SMALL_GAPE_EXP = 1.15      # equation 12 [dimensionless]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::1.7": {
+    "reason": "DIMENSIONLESS: the lower end of King's (2000) range of alpha2 = K2 / CSS (1.7 to 3.5), a ratio of two sizes in millimetres.",
+    "source": "alpha1=(0.5, 0.95), alpha2=(1.7, 3.5), n=(1.0, 3.0),"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::1.8": {
+    "reason": "DIMENSIONLESS: the slope of Sastri (1994) equation 13, D = 0.21 + 1.8 G, metres of depth per metre of gape.",
+    "source": "DEPTH_LARGE_GAPE_SLOPE = 1.8     # equation 13 [dimensionless]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::1.92": {
+    "reason": "DIMENSIONLESS: the coefficient of Sastri (1994) equation 11, K2 = 1.92 x 10^(-6.5 T / G), the throw factor on the capacity.",
+    "source": "K2_COEF = 1.92                   # equation 11: K2 = 1.92 x 10^(-6.5 T / G) [dimensionless]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::10.0": {
+    "reason": "IN kWh/t PER UNIT OF WORK INDEX TIMES THE SQUARE ROOT OF A MICROMETRE: the coefficient of Bond's law W = 10 Wi (1 / sqrt(P80) - 1 / sqrt(F80)), sizes in micrometres. IN MILLIMETRES where it is the 10 mm throw of the Otsuka laboratory jaw (Barrios et al. 2020, Table 2).",
+    "source": "BOND_COEF = 10.0                 # Bond (1952): W = 10 Wi (1 / sqrt(P80) - 1 / sqrt(F80)), sizes in micrometres [kWh/t]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::1000.0": {
+    "reason": "CONVERSION: kilograms per tonne (throughput t/h to kg/h) and millimetres per metre (the machine's lengths in mm to Sastri's metres).",
+    "source": "KG_PER_T = 1000.0                # [kg/t]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::1000000.0": {
+    "reason": "DIMENSIONLESS: the engine's limit on the conditioning proxy of the Whiten matrix (I - B C), above which the solve is flagged ill conditioned.",
+    "source": "COND_LIMIT = 1e6                 # the engine's conditioning limit of the Whiten matrix [dimensionless]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::140.0": {
+    "reason": "IN MILLIMETRES: the jaw width of the Otsuka laboratory jaw crusher (feed opening 140 x 90 mm, Barrios et al. 2020, Table 2).",
+    "source": "OTSUKA_BARRIOS_2020 = LabJaw(gape_mm=90.0, width_mm=140.0, throw_mm=10.0, density_t_m3=2.70, material_k3=1.0)"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::16.0": {
+    "reason": "IN MILLIMETRES: a sieve aperture of the default sieves the passing band is read at.",
+    "source": "DEFAULT_BAND_SIEVES_MM = (1.0, 2.0, 4.0, 8.0, 16.0)   # sieve apertures read for the passing band [mm]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::1e-09": {
+    "reason": "DIMENSIONLESS: the relative tolerance within which a sieve edge of the engine's grid equals a class limit (the grid's edges carry float rounding, 16 mm is stored as 15.999999999999996).",
+    "source": "EDGE_TOL = 1e-9                 # relative tolerance for a sieve edge to equal a class limit (float rounding of the grid"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::2.0": {
+    "reason": "IN MILLIMETRES: a sieve aperture of the default sieves the passing band is read at.",
+    "source": "DEFAULT_BAND_SIEVES_MM = (1.0, 2.0, 4.0, 8.0, 16.0)   # sieve apertures read for the passing band [mm]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::2.3": {
+    "reason": "DIMENSIONLESS: the first estimate of the classification exponent K3 (Donovan 2003, section 2.1.3).",
+    "source": "FIRST_ESTIMATE_K3 = 2.3          # Donovan 2003, section 2.1.3: K3 about 2.3 [dimensionless]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::2.5": {
+    "reason": "DIMENSIONLESS: the exponent of Sastri (1994) equation 10, K1 = 0.85 - (Fav / G)^2.5.",
+    "source": "K1_FEED_EXP = 2.5                # equation 10 [dimensionless]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::2.7": {
+    "reason": "IN t/m3: the true density of the ore of Barrios et al. 2020 (Table 3: 2700 kg/m3).",
+    "source": "OTSUKA_BARRIOS_2020 = LabJaw(gape_mm=90.0, width_mm=140.0, throw_mm=10.0, density_t_m3=2.70, material_k3=1.0)"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::3.0": {
+    "reason": "DIMENSIONLESS: the upper end of King's (2000) range of the classification exponent n (1 to 3).",
+    "source": "alpha1=(0.5, 0.95), alpha2=(1.7, 3.5), n=(1.0, 3.0),"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::3.25": {
+    "reason": "IN m^(-0.15): the coefficient of Sastri (1994) equation 12, D = 3.25 G^1.15, with G and D in metres.",
+    "source": "DEPTH_SMALL_GAPE_COEF = 3.25     # equation 12: D = 3.25 G^1.15, G and D in metres [m^(-0.15)]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::3.5": {
+    "reason": "DIMENSIONLESS: the upper end of King's (2000) range of alpha2 = K2 / CSS (1.7 to 3.5).",
+    "source": "alpha1=(0.5, 0.95), alpha2=(1.7, 3.5), n=(1.0, 3.0),"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::3600.0": {
+    "reason": "CONVERSION: joules per kilogram in one kWh/t, used to bring the median fracture energy E50 [J/kg] to the energy basis of the JKMRC t10 law [kWh/t].",
+    "source": "J_PER_KG_PER_KWH_T = 3600.0      # 1 kWh/t = 3600 J/kg [J/kg per kWh/t]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::4.0": {
+    "reason": "IN MILLIMETRES: a sieve aperture of the default sieves the passing band is read at.",
+    "source": "DEFAULT_BAND_SIEVES_MM = (1.0, 2.0, 4.0, 8.0, 16.0)   # sieve apertures read for the passing band [mm]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::450.0": {
+    "reason": "IN s2 rpm2: the coefficient of Sastri (1994) equation 4, a = 450 g / N^2: the free fall of the material during half a stroke, (30 s rpm / N)^2 / 2 times g, with N in rpm and a in metres.",
+    "source": "HIGH_SPEED_COEF = 450.0          # equation 4: a = 450 g / N^2, half the square of 30 s rpm (the half stroke) [s2 rpm2]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::6.5": {
+    "reason": "DIMENSIONLESS: the exponent coefficient of Sastri (1994) equation 11, which multiplies the ratio T / G of two lengths.",
+    "source": "K2_EXP_PER_RATIO = 6.5           # equation 11, multiplies T / G [dimensionless]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::60.0": {
+    "reason": "CONVERSION: minutes per hour, strokes per minute to strokes per hour in Sastri (1994) equations 5 and 6 (capacity in m3/h).",
+    "source": "MIN_PER_H = 60.0                 # equations 5 and 6: strokes per minute to strokes per hour [min/h]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::66.4": {
+    "reason": "IN rpm TIMES THE SQUARE ROOT OF A METRE: the coefficient of Sastri (1994) equation 8, Nc = 66.4 {[G - (S + T)] / (D T)}^0.5, the square root of 450 g with g = 9.81 m/s2.",
+    "source": "CRITICAL_SPEED_COEF = 66.4       # equation 8, the square root of 450 g [rpm m^0.5]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::8.0": {
+    "reason": "IN MILLIMETRES: a sieve aperture of the default sieves the passing band is read at.",
+    "source": "DEFAULT_BAND_SIEVES_MM = (1.0, 2.0, 4.0, 8.0, 16.0)   # sieve apertures read for the passing band [mm]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::9.81": {
+    "reason": "IN m/s2: the gravitational acceleration of Sastri (1994) equation 4.",
+    "source": "G_M_S2 = 9.81                    # gravitational acceleration, equation 4 [m/s2]"
+  },
+  "data-pipeline/pipeline/model/crusher/labjaw.py::90.0": {
+    "reason": "IN MILLIMETRES: the gape of the Otsuka laboratory jaw crusher (feed opening 140 x 90 mm, Barrios et al. 2020, Table 2).",
+    "source": "OTSUKA_BARRIOS_2020 = LabJaw(gape_mm=90.0, width_mm=140.0, throw_mm=10.0, density_t_m3=2.70, material_k3=1.0)"
+  },
   "data-pipeline/pipeline/model/crusher/linalg.py::0.0": {
     "reason": "DIMENSIONLESS: the zero initial value of a solution vector component (the unit of the system it solves).",
     "source": "z = [0.0] * n"

@@ -1,0 +1,5 @@
+# Guided-story preview mount
+
+The check invokes the same published `servePages` implementation as the preview entry point and measures the URL returned by that server. The configured `VITE_BASE` belongs to that local server, including project Pages and nested mount paths. An explicit supplied origin already contains its mount and takes precedence. Sharing the running server removes the port-release race and avoids a readiness loop against a different URL. The browser and owned server close in a finally block, including a failed Chromium launch. The supplied server belongs to the caller.
+
+The real-browser regression runs the unchanged story assertions against an interactive route fixture at root, one Pages prefix, a nested prefix and an explicit origin with a conflicting local mount. It requires numbered active steps, all direct links, play/pause on input and an exit with case state. It does not model scientific outputs. Run it with an external CAOS_TEMP_ROOT via `node --test tests/browser/story_preview_base.mjs`. Product example checks reuse the same shared server boundary.

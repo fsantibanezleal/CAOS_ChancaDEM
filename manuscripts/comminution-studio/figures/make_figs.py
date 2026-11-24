@@ -31,6 +31,16 @@ figure needs a curve no artifact stores, from the product's own engine code (nam
                        finite differences. Calls pipeline.model.crusher.evaluate, .campaign and .classification.
   fig-replacement.pdf  the particle-replacement walk on the chamber of case S01 against the Whiten product, by number of
                        parcels (five seeds each). Calls pipeline.model.crusher.whiten.replacement_walk and evaluate.
+  fig-labjaw.pdf       (a) the capacity of the laboratory jaw of Barrios et al. against the stroke frequency for the three narrow
+                       feeds, by the jaw capacity model of Sastri, with the critical speed and the operating speed marked;
+                       (b) the classification curve of the first estimate at the closed side of 7.5 mm and the spread of the
+                       curve over the eight corners of the published ranges. Calls pipeline.model.crusher.labjaw.
+  fig-dem-points.pdf   the three operating points of the laboratory jaw on shared axes: throughput, net power and P80 of the measurement
+                       (with its band), the particle simulation (with its standard error) and the population balance (with its spread).
+  fig-dem-products.pdf the product size distribution of the three sides at each operating point.
+  fig-dem-series.pdf   the per-stroke swing-plate power and cumulative mass passed of the three runs, with the steady window.
+  fig-dem-frame.pdf    one frame of a replay, decoded from the frames file with the document's encoding, in the jaw's section.
+                       These four read data/derived/dem/jaw-lab.json and its frames files.
 
 Run:  python manuscripts/comminution-studio/figures/make_figs.py     (any working directory)
 Deps: matplotlib, numpy (the notebook environment of the product carries both).
@@ -40,6 +50,7 @@ from __future__ import annotations
 import csv
 import json
 import sys
+from itertools import product as itertools_product
 from pathlib import Path
 
 import matplotlib
@@ -60,6 +71,7 @@ from pipeline.model.crusher.breakage import appearance_cum, phi_from_t10  # noqa
 from pipeline.model.crusher.classification import classification_params, classify  # noqa: E402
 from pipeline.model.crusher.engine import grid_f80  # noqa: E402
 from pipeline.model.crusher.types import Operating  # noqa: E402
+from pipeline.model.crusher import labjaw  # noqa: E402
 from pipeline.model.crusher.whiten import assemble_chamber, replacement_walk  # noqa: E402
 
 INK = "#1a1a2e"
@@ -122,36 +134,40 @@ def fig_dataflow() -> None:
     ax.text(1, 57.5, "Inputs", fontsize=7.6, fontweight="bold")
     ax.text(27, 57.5, "Offline pipeline (data-pipeline/run.py)", fontsize=7.6, fontweight="bold")
     ax.text(75, 57.5, "Readers", fontsize=7.6, fontweight="bold")
-    box(1, 44, 19, 9, "params.csv\n(params-record,\n17 circuit cases)", "#eef3f8")
-    box(1, 31, 19, 9, "hp500-surveys.csv\n(hp500-survey,\nten surveys)", "#eef3f8")
+    box(1, 47, 19, 7, "params.csv\n(params-record,\n17 circuit cases)", "#eef3f8")
+    box(1, 38, 19, 7, "hp500-surveys.csv\n(hp500-survey,\nten surveys)", "#eef3f8")
     n_schemas = len(list((ROOT / "docs" / "contracts" / "schemas").glob("*.schema.json")))
-    box(1, 14, 19, 11, f"docs/contracts/\ncatalog.md and\n{n_schemas} schema files", "#eef3f8")
-    box(26, 44, 20, 9, "preprocess:\nvalidate the rows", "#f4f4f6")
-    box(26, 31, 20, 9, "infer: the engine\n(Whiten, capacity,\npower, envelope)", "#f4f4f6", bold=True)
-    box(26, 18, 20, 9, "hp500: backbone,\nleave-one-out,\nCrusherBayes, comparison", "#f4f4f6")
-    box(26, 5, 20, 9, "models (torch, local):\ntrain, export ONNX,\nevaluate held out", "#f4f4f6")
-    box(51, 44, 19, 9, "export: trace.json\nand manifest per case,\nindex.json", "#fdf3ea")
-    box(51, 31, 19, 9, "readiness.json\n(state per\ncontract)", "#fdf3ea")
-    box(51, 18, 19, 9, "backbone.json, loo.json,\ncrusherbayes.json,\ncomparison.json", "#fdf3ea")
-    box(51, 5, 19, 9, "surrogate, psd-ae\n(.json + .onnx),\nmodel-metrics.json", "#fdf3ea")
+    box(1, 17, 19, 9, f"docs/contracts/\ncatalog.md and\n{n_schemas} schema files", "#eef3f8")
+    box(1, 28, 19, 7, "barrios2020 digitised\nfigures (package data\nof crushdem)", "#eef3f8")
+    box(26, 47, 20, 7, "preprocess:\nvalidate the rows", "#f4f4f6")
+    box(26, 38, 20, 7, "infer: the engine\n(Whiten, capacity,\npower, envelope)", "#f4f4f6", bold=True)
+    box(26, 29, 20, 7, "hp500: backbone,\nleave-one-out,\nCrusherBayes, comparison", "#f4f4f6")
+    box(26, 20, 20, 7, "dem: the particle runs\n(crushdem) and the\nlaboratory-jaw engine", "#f4f4f6")
+    box(26, 8, 20, 7, "models (torch, local):\ntrain, export ONNX,\nevaluate held out", "#f4f4f6")
+    box(51, 47, 19, 7, "export: trace.json\nand manifest per case,\nindex.json", "#fdf3ea")
+    box(51, 38, 19, 7, "readiness.json\n(state per\ncontract)", "#fdf3ea")
+    box(51, 29, 19, 7, "backbone.json, loo.json,\ncrusherbayes.json,\ncomparison.json", "#fdf3ea")
+    box(51, 20, 19, 7, "dem/jaw-lab.json and\nthree replay files\n(.frames.bin)", "#fdf3ea")
+    box(51, 8, 19, 7, "surrogate, psd-ae\n(.json + .onnx),\nmodel-metrics.json", "#fdf3ea")
     box(76, 40, 22, 13, "Web (static site):\nreplay of the documents,\nlive TypeScript engine,\nonnxruntime-web", "#eef6ee")
     box(76, 22, 22, 12, "Dormant API (app/):\nGET only, 503 with the\nstate when a document\nis absent", "#eef6ee")
     box(76, 5, 22, 12, "Notebooks, report\nfigures and tables\n(read the same\ndocuments)", "#eef6ee")
-    arrow(20, 48.5, 26, 48.5)
-    arrow(36, 44, 36, 40)
-    arrow(20, 35.5, 25.6, 25.0)
-    arrow(46, 35.5, 51, 48.5)
-    arrow(36, 31, 36, 27)
-    arrow(46, 22.5, 51, 22.5)
-    arrow(36, 18, 36, 14)
-    arrow(46, 9.5, 51, 9.5)
-    ax.plot([20.4, 23.0, 48.5], [21.0, 29.0, 29.0], color=INK, lw=0.8, ls="--")
-    arrow(48.5, 29.0, 50.6, 32.0, ls="--")
-    for y in (48.5, 22.5, 9.5):
-        arrow(70, y, 76, 46.5 if y > 30 else (28 if y > 15 else 11))
-    arrow(70, 35.5, 76, 28)
-    arrow(70, 35.5, 76, 46.5)
-    ax.text(48.5, 0.6, "dashed: the readiness document is computed from the catalog and the repository state",
+    arrow(20, 50.5, 26, 50.5)
+    arrow(36, 47, 36, 45)
+    arrow(20, 41.5, 26, 41.5)
+    arrow(46, 41.5, 51, 50.5)
+    arrow(36, 38, 36, 36)
+    arrow(46, 32.5, 51, 32.5)
+    arrow(20, 31.5, 26, 23.5)
+    arrow(46, 23.5, 51, 23.5)
+    arrow(36, 29, 36, 27)
+    arrow(46, 11.5, 51, 11.5)
+    ax.plot([20.4, 23.0, 48.5], [21.0, 17.5, 17.5], color=INK, lw=0.8, ls="--")
+    arrow(48.5, 17.5, 50.6, 38.0, ls="--")
+    for y, ty in ((50.5, 46.5), (32.5, 28), (23.5, 28), (11.5, 11)):
+        arrow(70, y, 76, ty)
+    arrow(70, 41.5, 76, 46.5)
+    ax.text(48.5, 1.2, "dashed: the readiness document is computed from the catalog and the repository state",
             ha="center", fontsize=6.3, style="italic")
     _save(fig, "fig-dataflow.pdf")
 
@@ -558,6 +574,197 @@ def fig_replacement() -> None:
           f"{errs.mean(axis=1)[-1]:.5f}")
 
 
+def fig_labjaw() -> None:
+    jaw, css, speed_op = labjaw.OTSUKA_BARRIOS_2020, 7.5, 360.0
+    g, s_m, t_m = jaw.gape_mm / 1e3, css / 1e3, jaw.throw_mm / 1e3
+    nc = labjaw.critical_speed_rpm(g, s_m, t_m, labjaw.depth_between_jaws_m(g))
+    n = np.linspace(100.0, 700.0, 601)
+    fig, (a1, a2) = plt.subplots(1, 2, figsize=(7.0, 2.9))
+    for (dmax, dmin), col, ls in (((63.0, 52.0), BLUE, "-"), ((31.5, 26.5), GREEN, "--"), ((16.0, 13.2), ORANGE, ":")):
+        fav = labjaw.class_mean_mm(dmin, dmax) / 1e3
+        q = [1e3 * labjaw.jaw_capacity_tph(float(x), jaw.width_mm / 1e3, s_m, t_m, g, fav, jaw.density_t_m3, jaw.material_k3).w_tph
+             for x in n]
+        a1.plot(n, q, color=col, ls=ls, lw=1.5, label=f"feed {dmax:g}/{dmin:g} mm")
+    a1.axvline(nc, color=INK, lw=0.9, ls="-.")
+    a1.annotate(f"$N_c$ = {nc:.0f}", (nc, a1.get_ylim()[1] * 0.97), xytext=(4, -2), textcoords="offset points", fontsize=7,
+                va="top")
+    a1.axvline(speed_op, color=GREY, lw=0.9, ls=":")
+    a1.annotate("360 (6.0 Hz)", (speed_op, 0.04), xycoords=("data", "axes fraction"), xytext=(-4, 0),
+                textcoords="offset points", fontsize=7, ha="right", va="bottom", rotation=90)
+    a1.set_ylim(0.0, 1020.0)
+    a1.set_xlabel("strokes per minute $N$")
+    a1.set_ylabel("capacity (kg/h)")
+    a1.set_title("(a) capacity model of Sastri", fontsize=8.6)
+    a1.legend(fontsize=6.5, frameon=True, facecolor="white", edgecolor=GRID, loc="lower right")
+    _clean(a1)
+    d = np.linspace(0.0, 25.0, 501)
+    first = labjaw.lab_classification(css, jaw.throw_mm)
+    curves = []
+    for a1c, a2c, kn in itertools_product(labjaw.KING_RANGES.alpha1, labjaw.KING_RANGES.alpha2, labjaw.KING_RANGES.n):
+        c = labjaw.lab_classification(css, jaw.throw_mm, alpha1=a1c, alpha2=a2c, n=kn)
+        curves.append([classify(float(x), c) for x in d])
+    lo, hi = np.min(curves, axis=0), np.max(curves, axis=0)
+    a2.fill_between(d, lo, hi, color=BLUE, alpha=0.18, lw=0, label="spread over the 8 corners of the ranges")
+    a2.plot(d, [classify(float(x), first) for x in d], color=BLUE, lw=1.6,
+            label=f"first estimate ($K_1$ {first.k1:.1f}, $K_2$ {first.k2:.1f} mm, $K_3$ {first.k3:g})")
+    a2.axvline(css, color=INK, lw=0.7, ls=":")
+    a2.set_xlabel("particle size $d$ (mm)")
+    a2.set_ylabel("classification $C(d)$")
+    a2.set_title("(b) classification at a 7.5 mm setting", fontsize=8.6)
+    a2.legend(fontsize=6.3, frameon=True, facecolor="white", edgecolor=GRID, loc="upper center", bbox_to_anchor=(0.5, -0.3))
+    _clean(a2)
+    _save(fig, "fig-labjaw.pdf")
+
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# the laboratory jaw: figures read from the committed document of the contract dem-run (data/derived/dem/jaw-lab.json)
+# ---------------------------------------------------------------------------------------------------------------------
+DEM = DER / "dem"
+
+
+def _dem() -> dict:
+    """The committed document, each measured value that carries its source reduced to the value."""
+    d = _json(DEM / "jaw-lab.json")
+    for p in d["points"]:
+        m = p["measured"]
+        for k in list(m):
+            if isinstance(m[k], dict) and "digitisation_noise" in m[k]:
+                m[k] = m[k]["value"]
+    return d
+
+
+def fig_dem_points() -> None:
+    d = _dem()
+    pts = d["points"]
+    x = np.arange(len(pts))
+    labels = [p["id"].replace("-", "/") for p in pts]
+    fig, axes = plt.subplots(1, 3, figsize=(7.2, 2.9))
+    specs = (("throughput_kg_h", "throughput (kg/h)", "throughput_relative", None), ("net_power_kw", "net power (kW)", "net_power_relative", None),
+             ("p80_mm", "product $P_{80}$ (mm)", None, "p80_mm"))
+    for ax, (key, ylab, bkey, pbk) in zip(axes, specs):
+        for i, p in enumerate(pts):
+            m = p["measured"][key]
+            if bkey:
+                b = d["bands"][bkey]
+                ax.add_patch(plt.Rectangle((i - 0.32, m * (1 - b)), 0.64, 2 * m * b, color=GREY, alpha=0.25, lw=0, label="band around the measurement" if i == 0 else None))
+            ax.plot([i - 0.32, i + 0.32], [m, m], color=INK, lw=1.6, label="measured" if i == 0 else None)
+            s = p["simulation"]
+            sv = s.get(key)
+            if sv is not None:
+                se = s.get({"throughput_kg_h": "throughput_se_kg_h", "net_power_kw": "net_power_se_kw"}.get(key, ""), 0.0) or 0.0
+                stopped = s["status"] != "complete"
+                ax.errorbar(i - 0.12, sv, yerr=se, fmt="o", color=ORANGE, mfc="white" if stopped else ORANGE, ms=4.5, capsize=2.5,
+                            label=("particle simulation, stopped run (hollow)" if stopped else "particle simulation") if (i == 0 or stopped) and key == "p80_mm" or (i == 0 and key != "p80_mm") else None)
+            if pbk or key == "throughput_kg_h":
+                pb = p["population_balance"]
+                pv = pb["throughput_kg_h"] if key == "throughput_kg_h" else pb["p80_mm"]
+                if pbk:
+                    lo, hi = pb["band"]["p80_mm"]
+                    ax.vlines(i + 0.12, lo, hi, color=BLUE, lw=1.2)
+                ax.plot([i + 0.12], [pv], "s", color=BLUE, ms=4.2, label="population balance" if i == 0 else None)
+        ax.set_xticks(x)
+        ax.set_xticklabels(labels, fontsize=7)
+        ax.set_xlabel("feed class (mm)", fontsize=7.5)
+        ax.set_ylabel(ylab, fontsize=7.5)
+        ax.set_xlim(-0.6, len(pts) - 0.4)
+        _clean(ax)
+    h, lab = axes[0].get_legend_handles_labels()
+    h2, lab2 = axes[2].get_legend_handles_labels()
+    seen = dict(zip(lab, h))
+    seen.update(dict(zip(lab2, h2)))
+    fig.legend(list(seen.values()), list(seen.keys()), fontsize=6.5, frameon=False, loc="upper center", bbox_to_anchor=(0.5, 0.02), ncol=4)
+    _save(fig, "fig-dem-points.pdf")
+
+
+def fig_dem_products() -> None:
+    d = _dem()
+    fig, axes = plt.subplots(1, 3, figsize=(7.2, 2.7), sharey=True)
+    for ax, p in zip(axes, d["points"]):
+        m, s, b = p["measured"]["product"], p["simulation"]["product"], p["population_balance"]
+        pbs = b["product"]
+        ax.fill_between(pbs["sieves_mm"], b["band"]["passing_low_pct"], b["band"]["passing_high_pct"], color=BLUE, alpha=0.18, lw=0,
+                        label="population balance, spread")
+        ax.plot(pbs["sieves_mm"], pbs["passing_pct"], color=BLUE, lw=1.2, label="population balance")
+        ax.plot(m["sieves_mm"], m["passing_pct"], "o-", color=INK, ms=3, lw=1.2, label="measured")
+        if s:
+            sv = [(a, c) for a, c in zip(s["sieves_mm"], s["passing_pct"]) if c is not None]
+            ax.plot([a for a, _ in sv], [c for _, c in sv], "^-", color=ORANGE, ms=3.2, lw=1.2,
+                    label="particle simulation" + (" (stopped run)" if p["simulation"]["status"] != "complete" else ""))
+        ax.set_xscale("log")
+        ax.set_xlim(1, 70)
+        ax.set_ylim(0, 102)
+        ax.set_xlabel("size (mm)", fontsize=7.5)
+        ax.set_title(f"({'abc'[d['points'].index(p)]}) feed {p['id'].replace('-', '/')} mm", fontsize=8)
+        _clean(ax)
+    axes[0].set_ylabel("cumulative passing (%)", fontsize=7.5)
+    h, lab = axes[0].get_legend_handles_labels()
+    h2, lab2 = axes[1].get_legend_handles_labels()
+    seen = dict(zip(lab + lab2, h + h2))
+    fig.legend(list(seen.values()), list(seen.keys()), fontsize=6.5, frameon=False, loc="upper center", bbox_to_anchor=(0.5, 0.02), ncol=4)
+    _save(fig, "fig-dem-products.pdf")
+
+
+def fig_dem_series() -> None:
+    d = _dem()
+    fig, axes = plt.subplots(1, 3, figsize=(7.2, 2.8))
+    for ax, p in zip(axes, d["points"]):
+        s = p["simulation"]
+        ser = s["series"]
+        k = np.array(ser["stroke"])
+        ax.plot(k, np.array(ser["plate_power_w"]), color=ORANGE, lw=1.1)
+        if s["window"]:
+            ax.axvspan(s["window"]["first_stroke"], s["window"]["last_stroke"], color=GREY, alpha=0.22, lw=0)
+            ax.axhline(1e3 * p["measured"]["net_power_kw"], color=INK, lw=0.9, ls=":")
+        ax.set_xlabel("stroke", fontsize=7.5)
+        ax.set_ylabel("swing-plate power (W)", fontsize=7.5, color=ORANGE)
+        ax.set_title(f"({'abc'[d['points'].index(p)]}) feed {p['id'].replace('-', '/')} mm: {s['status'].replace('_', ' ')}", fontsize=7.6)
+        _clean(ax)
+        a2 = ax.twinx()
+        a2.plot(k, np.array(ser["passed_kg"]), color=BLUE, lw=1.1)
+        a2.set_ylabel("mass passed (kg)", fontsize=7.5, color=BLUE)
+        a2.set_ylim(0, 6.5)
+        for sp in ("top",):
+            a2.spines[sp].set_visible(False)
+    _save(fig, "fig-dem-series.pdf")
+
+
+def fig_dem_frame() -> None:
+    import numpy as _np
+    sys.path.insert(0, str(ROOT / "data-pipeline"))
+    from pipeline.dem.replay import decode
+
+    d = _dem()
+    fig, axes = plt.subplots(1, 2, figsize=(7.2, 3.6))
+    for ax, pid in zip(axes, ("63-52", "16-13.2")):
+        p = next(q for q in d["points"] if q["id"] == pid)
+        rp = p["simulation"]["replay"]
+        data = decode((DER / rp["file"]).read_bytes(), rp)
+        w = p["simulation"]["window"]
+        mid = (w["first_stroke"] + w["last_stroke"]) // 2
+        stroke = _np.array(rp["stroke"])
+        idx = [i for i in range(len(stroke)) if stroke[i] == mid]
+        # the frame of that stroke at which the swing plate is most open
+        i = max(idx, key=lambda j: rp["plate_bottom_x_mm"][j])
+        off = _np.concatenate([[0], _np.cumsum(rp["count"])])
+        a, b = off[i], off[i + 1]
+        x, z, r = data["x"][a:b], data["z"][a:b], data["radius"][a:b]
+        g = rp["geometry"]
+        for xs, zs in zip(x, zip(z, r)):
+            ax.add_patch(plt.Circle((xs, zs[0]), zs[1], fc="#d9c7a8", ec="#7a6a50", lw=0.3))
+        ax.plot([g["fixed_plate_x_mm"]] * 2, g["fixed_plate_z_mm"], color=INK, lw=2.0)
+        ax.plot([g["swing_pivot_mm"][0], rp["plate_bottom_x_mm"][i]], [g["swing_pivot_mm"][1], rp["plate_bottom_z_mm"][i]], color=RED, lw=2.0)
+        ax.axhline(g["discharge_z_mm"], color=GREY, lw=0.8, ls=":")
+        ax.set_xlim(-20, 120)
+        ax.set_ylim(-60, 340)
+        ax.set_aspect("equal")
+        ax.set_xlabel("x across the chamber (mm)", fontsize=7.5)
+        ax.set_ylabel("z up (mm)", fontsize=7.5)
+        ax.set_title(f"({'ab'[('63-52', '16-13.2').index(pid)]}) feed {pid.replace('-', '/')} mm, stroke {mid}, {len(x)} spheres", fontsize=7.8)
+        _clean(ax)
+    _save(fig, "fig-dem-frame.pdf")
+
+
 if __name__ == "__main__":
     fig_dataflow()
     fig_physics()
@@ -573,4 +780,9 @@ if __name__ == "__main__":
     fig_drift()
     fig_drift_response()
     fig_replacement()
+    fig_labjaw()
+    fig_dem_points()
+    fig_dem_products()
+    fig_dem_series()
+    fig_dem_frame()
     print("figures written to", HERE)

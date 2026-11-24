@@ -1,6 +1,6 @@
 // The build copies what the index declares: one artifact or several per manifest, and the index's further files.
 // A product takes this file verbatim: it tests the base script scripts/declared.mjs (0.15.003).
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterAll, describe, expect, it } from 'vitest';
@@ -125,4 +125,25 @@ describe('a declared-partial bake builds', () => {
     putPartial('readiness.json', 'not an object');
     expect(declaredFiles(partial).tolerated).toEqual([]);
   });
+});
+
+describe('the replay files of the particle simulation are declared by the index and so copied by the build', () => {
+  const roots = [
+    ['the bake', join(__dirname, '../../../data/derived')],
+    ['the provider tree', join(__dirname, '../../../docs/contracts/fixtures/data/derived')],
+  ] as const;
+  for (const [label, root] of roots) {
+    it(`${label}: the three frames files and the document are declared and exist`, () => {
+      if (!existsSync(join(root, 'dem/jaw-lab.json'))) return; // the bake may hold no particle simulation (readiness says missing)
+      const doc = JSON.parse(readFileSync(join(root, 'dem/jaw-lab.json'), 'utf8')) as { points: Array<{ simulation: { replay: { file: string } | null } }> };
+      const named = doc.points.flatMap((p) => (p.simulation.replay ? [p.simulation.replay.file] : []));
+      const r = declaredFiles(root);
+      expect(named.length).toBeGreaterThan(0);
+      expect(r.declared).toContain('dem/jaw-lab.json');
+      for (const f of named) {
+        expect(r.declared, f).toContain(f);
+        expect(r.missing, f).not.toContain(f);
+      }
+    });
+  }
 });

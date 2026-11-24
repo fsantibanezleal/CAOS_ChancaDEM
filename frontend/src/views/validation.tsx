@@ -9,6 +9,7 @@ import { Stack } from './draw';
 import { bare, GroupFrame, Pending, provenanceOf, ReplayMissing, useNum, useT, useView, type Sub } from './shared';
 import { asc, FEED_COLOR, finAll, LIVE_COLOR, REPLAY_COLOR, REPLAY_DASH } from './series';
 import { CompareView as MethodsView } from './compare';
+import { DemView } from './dem';
 
 function ParityView() {
   const { sel } = useView();
@@ -217,6 +218,7 @@ export function ValidationGroup() {
   const tabs: Sub[] = [
     { id: 'compare', label: { en: 'Methods compared', es: 'Métodos comparados' }, content: <MethodsView /> },
     { id: 'parity', label: { en: 'Live against replay', es: 'En vivo contra replay' }, content: <ParityView /> },
+    { id: 'particles', label: { en: 'Particle simulation', es: 'Simulación de partículas' }, content: <DemView /> },
   ];
   if (sel?.data.manifest.real_or_synthetic === 'real') tabs.push({ id: 'measured', label: { en: 'Measured against model', es: 'Medido contra modelo' }, content: <MeasuredView /> });
   return <GroupFrame group="validation" ariaLabel={{ en: 'Validation views', es: 'Vistas de validación' }} tabs={tabs} />;

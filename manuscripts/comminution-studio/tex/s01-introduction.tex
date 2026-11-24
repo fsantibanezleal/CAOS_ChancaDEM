@@ -67,7 +67,7 @@ The engine runs in the browser in a TypeScript port held to the canonical Python
 operating points. Two learned models, a multilayer perceptron that emulates the engine in the manner of Koh et
 al.~\cite{koh2021} and a denoising autoencoder that scores how far a result lies from the training manifold, run in the
 browser through ONNX Runtime. A projection of the hours until the product leaves a size target as the setting drifts
-open, with the drift rate supplied by the user, completes the operating view.
+open, with the drift rate supplied by the user, completes the operating view. For one laboratory jaw crusher the studio also runs, offline, a discrete element simulation with particle-replacement breakage through the published package \texttt{crushdem}~\cite{crushdem2026,barrios2020}, and sets its throughput, net power and product beside the measurement and an unfitted population balance with a laboratory preset.
 
 \subsection{Contributions}\label{sec:intro-contrib}
 
@@ -91,6 +91,7 @@ and a differential-evolution sampler, whose held-out $80\%$ intervals cover eigh
 coverage at the upper edge of the acceptable range) and are narrower than the residual band, and whose posterior shows which
 scalars ten surveys contract and that the capacity base is contracted only through the prior scale of the discrepancy; the
 method is reported in full in its own manuscript~\cite{crusherbayes2026} and summarised here.
+\item A comparison, at three operating points of a laboratory jaw crusher, of a discrete element simulation with particle-replacement breakage and of a population balance with a laboratory preset, against the measured throughput, net power and product, with decisions against bands set before the runs (no input of the product's code reads a measurement and no ore property was tuned to reach a band, although two choices of the simulation's ore were made after jaw results of its package were known and their sensitivity was not run): of $\demDecAll$ decisions $\demDecMet$ are met, $\demDecNotMet$ are not met and $\demDecNotComp$ are not compared; the simulation completes two of its three batches, both only at the relaxed overlap limit of $0.5$ with most window strokes above $0.3$, and meets the net-power band at both by compensation of a throughput that is too high and an energy per kilogram that is too low (the second decision within two standard errors of the band edge, not resolved).
 \item An inventory of \ncontracts{} data contracts with their schemas, producers, consumers and missing-data behaviour, which
 lets a reader replace any component and keep the rest.
 \end{enumerate}
@@ -100,11 +101,11 @@ lets a reader replace any component and keep the rest.
 Section~\ref{sec:problem} states the problem as an estimation problem with its inputs, outputs and assumptions, and
 Section~\ref{sec:notation} collects the notation. Section~\ref{sec:data} describes the data sources and every data
 contract. Section~\ref{sec:arch} describes the pipeline, the engine, the web and the dormant interface. Section~\ref{sec:methods}
-gives one subsection per method, from the feed distribution to CrusherBayes. Section~\ref{sec:protocol} states the cases,
+gives one subsection per method, from the feed distribution to CrusherBayes, the discrete element method (Section~\ref{sec:m-dem}) and the laboratory-jaw evaluation (Section~\ref{sec:m-labjaw}). Section~\ref{sec:protocol} states the cases,
 the metrics, the baselines and the acceptance criterion of each method; Section~\ref{sec:results} reports every result the
 studio shows; Section~\ref{sec:validation} explains how the results are known to be correct. Sections~\ref{sec:discussion}
 and~\ref{sec:limits} discuss what the results mean and what bounds them, Section~\ref{sec:repro} lists the commands that
 rebuild every table and figure, and Section~\ref{sec:conclusions} concludes. The appendices hold the parameter tables, the derivation
 of the integrated discrepancy of CrusherBayes, and the field tables of every contract schema. A reader interested only in the evaluation
 on the measured surveys can read Sections~\ref{sec:m-hp500} to~\ref{sec:m-crushercal}, \ref{sec:m-crusherbayes} and~\ref{sec:results-bench}
-to~\ref{sec:results-cb}; a reader who wants to reimplement the engine needs Sections~\ref{sec:m-feed} to~\ref{sec:m-bond} and the appendices.
+to~\ref{sec:results-cb}; a reader interested only in the laboratory jaw can read Sections~\ref{sec:m-dem}, \ref{sec:m-labjaw}, \ref{sec:data-lab}, \ref{sec:protocol-dem}, \ref{sec:results-dem} and~\ref{sec:disc-dem}; a reader who wants to reimplement the engine needs Sections~\ref{sec:m-feed} to~\ref{sec:m-bond} and the appendices.

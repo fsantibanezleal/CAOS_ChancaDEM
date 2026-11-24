@@ -34,7 +34,7 @@ the same. An out-of-domain operating point returns a flagged result in both lang
 
 - The live engine computes only what the reader changes: a case's result with other knob values, a variant, and the sweeps
   of the views. Everything baked stays baked; the replay curves are drawn dashed beside the live ones.
-- The two ONNX models run in the browser through onnxruntime-web 1.27.0 (single-threaded WASM served by the site). They
+- The two ONNX models run in the browser through onnxruntime-web 1.31.1 (single-threaded WASM served by the site). They
   load only when the Learned group opens, and each answer is labelled with the model that gave it
   ([framework card](../frameworks/03_onnx-onnxruntime/onnx.md)). The inverse "target $P_{80}$ to a setting" is a bisection on
   the engine, not on a model (`recommendCss` in `frontend/src/engine/surrogate.ts`).

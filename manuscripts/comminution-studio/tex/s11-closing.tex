@@ -10,6 +10,7 @@ everything derived from it). Every number of the report is read from the artifac
 \item \texttt{python data-pipeline/\allowbreak{}run.py all} bakes the $27$ cases, the four HP500 documents (the sampler of CrusherBayes runs in this step), the index
 and the readiness document; \texttt{python data-pipeline/\allowbreak{}run.py hp500} rebuilds only the four HP500 documents, and
 \texttt{python data-pipeline/\allowbreak{}run.py comparison} only the paired comparison, from the two documents it reads;
+\item \texttt{python data-pipeline/\allowbreak{}run.py dem} runs the three operating points of the laboratory jaw through the package \texttt{crushdem} and writes \texttt{data/\allowbreak{}derived/\allowbreak{}dem/\allowbreak{}jaw-lab.json} and its three replay files; with \texttt{--runs} (or the environment variable \texttt{CAOS\_DATA\_ROOT}, which names the folder \texttt{chancadem/\allowbreak{}dem-runs}) it loads the raw records whose key matches the point, the settings, the package version and the files of the installed package, and runs only the points that have none, which takes hours;
 \item \texttt{python data-pipeline/\allowbreak{}run.py models} draws the sweeps, trains and exports the two learned models and scores them held out (torch on the
 processor);
 \item \texttt{python manuscripts/\allowbreak{}comminution-studio/\allowbreak{}figures/\allowbreak{}make\_tables.py} regenerates every table of the report from the committed artifacts, the
@@ -17,16 +18,16 @@ catalog and the schemas, recomputes the engine parity figure, runs the bootstrap
 (\texttt{heldout\_uq.py}), and writes the digests of \texttt{data/\allowbreak{}sha256.txt};
 \item \texttt{python manuscripts/\allowbreak{}comminution-studio/\allowbreak{}figures/\allowbreak{}measure\_resources.py} records the measured resources of the stages, each run into a sandbox
 output root under a process-tree monitor, and the engine time per case, in \texttt{data/\allowbreak{}resources.json};
-\item \texttt{python manuscripts/\allowbreak{}comminution-studio/\allowbreak{}figures/\allowbreak{}make\_figs.py} regenerates the fourteen figures as vector PDF (matplotlib, from the
+\item \texttt{python manuscripts/\allowbreak{}comminution-studio/\allowbreak{}figures/\allowbreak{}make\_figs.py} regenerates the nineteen figures as vector PDF (matplotlib, from the
 notebook environment); three of them call the engine code (the chamber functions, the drift response of survey 1 and the
 particle-replacement walk);
 \item \texttt{latexmk -pdf main.tex}, run in \texttt{manuscripts/\allowbreak{}comminution-studio/\allowbreak{}tex}, builds the report.
 \end{itemize}
 
 \emph{Versions.} Python $\resPython$ in the pipeline and notebook environments of the workstation (Python $3.12$ in continuous integration), numpy $2.4.6$,
-emcee $3.1.6$, torch $2.12.1$ on the processor, onnx $1.22.0$, onnxruntime $1.27.0$ and onnxruntime-web $1.27.0$, matplotlib $3.11.2$, Node $24$. The
+emcee $3.1.6$, torch $2.15.0$ on the processor, onnx $1.23.2$, onnxruntime $1.32.0$ and onnxruntime-web $1.31.1$, \texttt{crushdem} \demPackageVersion{} with numba $0.68.1$, three.js $0.187.0$ in the web, matplotlib $3.11.2$, Node $24$. The
 committed artifacts record the release of the engine that baked them in their \texttt{engine\_version} field, which the readiness document compares with
-the product version to mark a document stale, and the seeds $42$ (surveys), $12345$ and $67890$ (learned models).
+the product version to mark a document stale, and the seeds $42$ (surveys), $12345$ and $67890$ (learned models) and $\demSeed$ (the laboratory-jaw runs). The three runs of the laboratory-jaw bake took $2{,}624$~s ($63/52$~mm, $83$ strokes), $375$~s ($31.5/26.5$~mm, which stops after $\demMidStrokes$ strokes in its last attempt) and $4{,}210$~s ($16/13.2$~mm, $54$ strokes), measured on one workstation (Windows 11, $32$ logical cores, the CPU path of the package) with the three runs in three processes while the machine was used for other work; these times are read from the wall-time files kept beside the raw records in the data root and from the report of the bake, not from the repository, so they are stated here and not generated.
 
 \emph{Archived artifacts.} Table~\ref{tab:hashes} gives the SHA-256 digests of the artifacts the report reads; the full digests are in
 \texttt{manuscripts/\allowbreak{}comminution-studio/\allowbreak{}data/\allowbreak{}sha256.txt}, and the CrusherBayes document records the digest of its own inputs
@@ -36,7 +37,7 @@ its index only in the list of model files, because a sandbox root holds no relea
 
 \emph{Notebooks.} \texttt{notebooks/\allowbreak{}en} and \texttt{notebooks/\allowbreak{}es} hold the same didactic notebooks, from getting started and the size distributions and the breakage and
 classification functions to the capacity and the power, the real surveys, the held-out validation, the learned models, Morrell's energy and CrusherBayes,
-on the product's own data and modules.
+on the product's own data and modules, and, for the laboratory jaw, the topic \texttt{09-discrete-element} (three levels, run on the package \texttt{crushdem} from PyPI).
 
 \begin{table}[!t]
 \centering
@@ -64,4 +65,4 @@ setting and on $f_{80}$; it contracts the capacity base only through the prior s
 and it leaves the classification and breakage scalars uncontracted. A leaky evaluation would have ordered the free-form fit first on both targets and
 the bounded residual second on throughput; held out, the bounded residual is not distinguishable from the backbone. The next steps are measurements, not models: the
 product size distribution of each survey, which the population balance needs to be calibrated; the crushing work index and the no-load power of the machine,
-which would turn Morrell's method into a prediction; and more surveys, which would resolve differences of a few points that ten cannot.
+which would turn Morrell's method into a prediction; and more surveys, which would resolve differences of a few points that ten cannot. On a laboratory jaw crusher at three feeds, a discrete element simulation with particle-replacement breakage, run through the package \texttt{crushdem} on an ore derived from the paper's single-particle tests, completes two of three batches, both only at the relaxed overlap limit of $0.5$ with most window strokes above $0.3$ of the radius, and meets a net-power band of $30$ percent at both ($-\demCoarseErrPsimAbs$ and $-\demFineErrPsimAbs$ percent, the second not resolved) while its throughput is $\demCoarseQratio$ and $\demFineQratio$ times the measured one, its energy per kilogram $\demCoarseEratio$ and $\demFineEratio$ of the measured one and its product coarser, so the power agreement is a compensation; the source paper's own simulation, as far as the package holds a reading of it at the $63/52$~mm feed, gave $\demCoarsePaperP$~kW and about $\demCoarsePaperQ$~kg/h against the measured $\demCoarsePmeas$~kW and $\demCoarseQmeas$~kg/h ($\demCoarsePaperPerr$ and $+\demCoarsePaperQerr$ percent), and this result concerns the particle simulation as the package implements it and does not refute that study; the third batch stops with the package's overlap error. A population balance with an unfitted preset gives a throughput low by $\demCoarsePbQerrAbs$, $\demMidPbQerrAbs$ and $\demFinePbQerrAbs$ percent and a reduction ratio inside its band at one of three feeds. Of the $\demDecAll$ decisions, $\demDecMet$ are met, $\demDecNotMet$ not met and $\demDecNotComp$ not compared. The next steps for that machine are a test of each candidate cause of the simulation's differences one at a time, a test of whether the middle feed's bed jams (for instance a batch fed at a rate and not at once), the sensitivity of the net-power decisions to the two choices of the ore's derivation made after jaw results of the package were known, and measurements that the paper does not report (a replicate of each test, the averaging window of the power and the work index of the ore).
