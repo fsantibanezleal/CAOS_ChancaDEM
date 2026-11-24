@@ -167,6 +167,46 @@ describe('the Introduction', () => {
     expect(Math.pow(0.1, 0.35)).toBeCloseTo(0.447, 3);
     // and the text states them
     const html = technical('en');
-    for (const stated of ['0.0156 mm', '647 t/h', '38 to 55 mm', '47 to 140 mm', '813 to 1639 t/h', '187 to 355 kW', '1500 ms', '256 KiB', '121 operating points']) expect(html, stated).toContain(stated);
+    for (const stated of ['0.0156 mm', '647 t/h', '38 to 55 mm', '47 to 140 mm', '813 to 1639 t/h', '187 to 355 kW', '1500 ms', '256 KiB']) expect(html, stated).toContain(stated);
+  });
+});
+
+describe('what the Introduction states about the shared reference and the manuscripts is held to their sources', () => {
+  const reference = JSON.parse(readFileSync(new URL('../../../tests/fixtures/engine-reference.json', import.meta.url), 'utf8')) as { points: unknown[] };
+  const product = JSON.parse(readFileSync(new URL('../../../product.json', import.meta.url), 'utf8')) as { manuscripts: { kind: string; concept_doi: string; title: string }[] };
+
+  it('adversarial: the count of reference points on the page is the count of the fixture, in both languages, and no other count is stated', () => {
+    const n = reference.points.length;
+    expect(n).toBeGreaterThan(100);
+    setLang('en');
+    const en = page(<TechnicalView />);
+    expect(en).toContain(`${n} reference operating points`);
+    expect(en).toContain(`a shared reference of ${n} operating points`);
+    expect(en).not.toContain(`${n - 3} reference operating points`);
+    setLang('es');
+    const es = page(<TechnicalView />);
+    expect(es).toContain(`${n} puntos de operación`);
+    // the sources of the three pages that state the count hold no other number before "operating points" or "puntos de operación"
+    for (const file of ['../content/introduction/honesty.tsx', '../content/introduction/pipeline.tsx', '../content/implementation/runs.tsx']) {
+      const src = readFileSync(new URL(file, import.meta.url), 'utf8');
+      const stated = [...src.matchAll(/(\d+) (?:reference operating points|operating points|puntos de operación)/g)].map((m) => Number(m[1]));
+      expect(stated.length, file).toBeGreaterThan(0);
+      expect(new Set(stated), file).toEqual(new Set([n]));
+    }
+  });
+
+  it('adversarial: every manuscript product.json declares is linked by its concept DOI, the report and each manuscript of the proposed method', () => {
+    setLang('en');
+    const html = page(<TechnicalView />);
+    const report = product.manuscripts.filter((m) => m.kind === 'technical-report');
+    const papers = product.manuscripts.filter((m) => m.kind === 'manuscript');
+    expect(report).toHaveLength(1);
+    expect(papers.length).toBeGreaterThan(1);
+    expect(html).toContain(`data-report-doi="${report[0].concept_doi}"`);
+    for (const m of papers) {
+      expect(html, m.concept_doi).toContain(`href="https://doi.org/${m.concept_doi}"`);
+      expect(html, m.concept_doi).toContain(`data-preprint-doi="${m.concept_doi}"`);
+    }
+    expect((html.match(/data-preprint-doi=/g) ?? []).length).toBe(papers.length);
   });
 });

@@ -80,6 +80,16 @@ open industrial data.
   mount, and the shell brings the configurable Focus stage, view state restored from the URL, stage geometry from the layout box and
   callouts drawn once measured.
 
+### Fixed
+
+- The shared engine reference has 124 operating points (`tests/fixtures/engine-reference.json`, since 0.12.000); the Introduction,
+  the Implementation page, the live-lane page of the architecture documents and the framework card on the engine still said 121.
+  A test now holds the count the pages state to the fixture. The largest relative difference between the two engines over the
+  124 points, measured again, is 2.3e-12.
+- The Introduction's technical view links the concept DOI of every manuscript the product declares: the theory and virtual-plant
+  study of CrusherBayes (10.5281/zenodo.24395171) was missing beside the report and the first manuscript. A test holds the links
+  to `product.json`.
+
 ## [0.14.000] · 2026-11-20
 
 ### Added
