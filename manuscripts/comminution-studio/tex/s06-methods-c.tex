@@ -293,7 +293,7 @@ Section~\ref{sec:results-cb}.
 
 \emph{Cost.} Each log-posterior evaluation runs the engine on the nine (or ten) training surveys, so one posterior costs $140{,}000\times9$ engine
 evaluations; the bake spreads the walkers of the eleven posteriors over the processor's threads, and the whole step takes about
-$\resHpMin$~minutes on the workstation (Table~\ref{tab:resources}). \emph{Limits.} With ten surveys and two targets the
+$\resHpMin$~minutes on the workstation under the load of Section~\ref{sec:arch-resources} (Table~\ref{tab:resources}). \emph{Limits.} With ten surveys and two targets the
 posterior of most scalars is the prior; the discrepancy can absorb what the engine cannot express, which is the known confounding of calibration
 and discrepancy; and the power form of the engine is the weak part, so most of any gain on power may come from the discrepancy, which the
 setting-only line already approximates.
